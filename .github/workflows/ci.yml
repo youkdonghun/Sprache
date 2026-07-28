@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "codex/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:api
+      - run: npm run test:api
+      - run: npm run build:api
+
+  flutter-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.8"
+          channel: stable
+          cache: true
+      - working-directory: apps/client
+        run: flutter pub get
+      - working-directory: apps/client
+        run: flutter analyze
+      - working-directory: apps/client
+        run: flutter test
+      - working-directory: apps/client
+        run: flutter build apk --release --dart-define=ENABLE_MOCK_MODE=true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sprache-android
+          path: apps/client/build/app/outputs/flutter-apk/app-release.apk
+
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.8"
+          channel: stable
+          cache: true
+      - uses: nuget/setup-nuget@v2
+      - working-directory: apps/client
+        run: flutter pub get
+      - working-directory: apps/client
+        run: flutter build windows --release --dart-define=ENABLE_MOCK_MODE=true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sprache-windows
+          path: apps/client/build/windows/x64/runner/Release/**
