@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -56,6 +55,6 @@ class _TolerantLocalFileComparator extends LocalFileComparator {
 
     final error = await generateFailureOutput(result, golden, basedir);
     result.dispose();
-    throw FlutterError(error);
+    throw TestFailure(error);
   }
 }
