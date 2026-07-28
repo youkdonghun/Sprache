@@ -48,10 +48,9 @@ jobs:
           flutter test "${test_files[@]}"
       - working-directory: apps/client
         run: flutter build apk --release --dart-define=ENABLE_MOCK_MODE=true
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sprache-android
-          path: apps/client/build/app/outputs/flutter-apk/app-release.apk
+      - name: Verify Android release output
+        working-directory: apps/client
+        run: test -s build/app/outputs/flutter-apk/app-release.apk
 
   windows-release:
     runs-on: windows-latest
@@ -69,7 +68,17 @@ jobs:
         run: flutter test test/visual
       - working-directory: apps/client
         run: flutter build windows --release --dart-define=ENABLE_MOCK_MODE=true
-      - uses: actions/upload-artifact@v4
-        with:
-          name: sprache-windows
-          path: apps/client/build/windows/x64/runner/Release/**
+      - name: Verify Windows release output
+        working-directory: apps/client
+        shell: pwsh
+        run: |
+          $required = @(
+            'build\windows\x64\runner\Release\sprache.exe',
+            'build\windows\x64\runner\Release\flutter_windows.dll',
+            'build\windows\x64\runner\Release\data\flutter_assets\AssetManifest.bin'
+          )
+          foreach ($path in $required) {
+            if (-not (Test-Path -LiteralPath $path)) {
+              throw "Missing Windows release file: $path"
+            }
+          }
