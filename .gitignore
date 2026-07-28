@@ -1,0 +1,40 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+**/generated_plugin_registrant.dart
+
+# IDE and OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Local databases and runtime data
+*.sqlite
+*.sqlite3
+*.db
+runtime-data/
+
+# Build outputs copied for local delivery
+artifacts/
+
+# Generated visual-test failure diagnostics
+**/test/visual/failures/

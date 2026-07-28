@@ -1,0 +1,23 @@
+{
+  "name": "sprache",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "services/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace @sprache/api run dev",
+    "build:api": "npm --workspace @sprache/api run build",
+    "test:api": "npm --workspace @sprache/api run test",
+    "lint:api": "npm --workspace @sprache/api run lint",
+    "run:client": "cd apps/client && flutter run",
+    "test:client": "cd apps/client && flutter test",
+    "analyze:client": "cd apps/client && flutter analyze",
+    "build:windows": "cd apps/client && flutter build windows --release",
+    "build:android": "cd apps/client && flutter build apk --release",
+    "test": "npm run test:api && npm run test:client"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

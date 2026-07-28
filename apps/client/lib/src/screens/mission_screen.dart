@@ -1,0 +1,1030 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:go_router/go_router.dart';
+
+import '../domain/course_path.dart';
+import '../domain/learning_item.dart';
+import '../state/app_state.dart';
+import '../widgets/course_picker.dart';
+
+class MissionCatalogScreen extends ConsumerWidget {
+  const MissionCatalogScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(appControllerProvider);
+    final controller = ref.read(appControllerProvider.notifier);
+    final path = controller.coursePath;
+    final recommended = path.recommendedUnit;
+
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          final padding = compact ? 18.0 : 28.0;
+          return CustomScrollView(
+            key: const Key('mission-catalog-scroll'),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(padding, 22, padding, 36),
+                sliver: SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 1040),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${state.selectedLanguage.koreanName} 실전 미션',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.headlineSmall,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '외운 표현을 짧은 상황 안에서 듣고, 이해하고, 말해 보세요.',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodyMedium,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              _MissionCountBadge(
+                                completed: controller.completedMissionCount,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          const CoursePicker(),
+                          const SizedBox(height: 18),
+                          _RecommendedMission(
+                            unit: recommended,
+                            definition: missionDefinitions[recommended.index],
+                            completed: controller.hasCompletedMission(
+                              recommended.index,
+                            ),
+                            onStart: () =>
+                                context.push('/mission/${recommended.index}'),
+                          ),
+                          const SizedBox(height: 26),
+                          Text(
+                            '상황별 3분 미션',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '순서대로 진행하거나 지금 필요한 상황부터 골라도 됩니다.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          LayoutBuilder(
+                            builder: (context, gridConstraints) {
+                              final columns = gridConstraints.maxWidth >= 760
+                                  ? 2
+                                  : 1;
+                              final width =
+                                  (gridConstraints.maxWidth -
+                                      (columns - 1) * 12) /
+                                  columns;
+                              return Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                children: [
+                                  for (final unit in path.units)
+                                    SizedBox(
+                                      width: width,
+                                      child: _MissionCard(
+                                        unit: unit,
+                                        definition:
+                                            missionDefinitions[unit.index],
+                                        recommended:
+                                            unit.index == recommended.index,
+                                        completed: controller
+                                            .hasCompletedMission(unit.index),
+                                        onTap: () => context.push(
+                                          '/mission/${unit.index}',
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class MissionPracticeScreen extends ConsumerStatefulWidget {
+  const MissionPracticeScreen({required this.unitIndex, super.key});
+
+  final int unitIndex;
+
+  @override
+  ConsumerState<MissionPracticeScreen> createState() =>
+      _MissionPracticeScreenState();
+}
+
+class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
+  final _tts = FlutterTts();
+  var _phraseIndex = 0;
+  var _meaningVisible = false;
+  var _completed = false;
+
+  @override
+  void dispose() {
+    unawaited(_stopTts());
+    super.dispose();
+  }
+
+  Future<void> _stopTts() async {
+    try {
+      await _tts.stop();
+    } catch (_) {
+      // The platform channel is absent in widget tests and headless runs.
+    }
+  }
+
+  Future<void> _speak(LearningItem item) async {
+    await _tts.setLanguage(item.learningLanguage.ttsLocale);
+    await _tts.setSpeechRate(
+      ref.read(appControllerProvider).preferences.ttsRate,
+    );
+    await _tts.speak(item.text);
+  }
+
+  void _nextPhrase(int phraseCount) {
+    if (_phraseIndex + 1 >= phraseCount) {
+      ref
+          .read(appControllerProvider.notifier)
+          .completeMission(widget.unitIndex);
+      setState(() {
+        _completed = true;
+        _meaningVisible = false;
+      });
+      return;
+    }
+    setState(() {
+      _phraseIndex += 1;
+      _meaningVisible = false;
+    });
+  }
+
+  void _restart() {
+    setState(() {
+      _phraseIndex = 0;
+      _meaningVisible = false;
+      _completed = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.watch(appControllerProvider);
+    final controller = ref.read(appControllerProvider.notifier);
+    final path = controller.coursePath;
+    if (widget.unitIndex < 0 || widget.unitIndex >= path.units.length) {
+      return Center(
+        child: FilledButton(
+          onPressed: () => context.go('/missions'),
+          child: const Text('실전 미션으로 돌아가기'),
+        ),
+      );
+    }
+
+    final unit = path.units[widget.unitIndex];
+    final definition = missionDefinitions[widget.unitIndex];
+    final phrases = missionPhrasesFor(unit);
+    if (phrases.isEmpty) {
+      return SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.forum_outlined,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        '미션에 사용할 표현이 없어요',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '단어장에서 이 단원의 표현을 학습에 다시 포함한 뒤 시작해 주세요.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 18),
+                      FilledButton.icon(
+                        onPressed: () => context.go('/library'),
+                        icon: const Icon(Icons.menu_book_rounded),
+                        label: const Text('단어장으로 이동'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    final phrase = phrases[_phraseIndex.clamp(0, phrases.length - 1)];
+    final showReadingAids = ref
+        .read(appControllerProvider)
+        .preferences
+        .showReadingAids;
+
+    return SafeArea(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 720;
+          final padding = compact ? 18.0 : 28.0;
+          return CustomScrollView(
+            key: const Key('mission-practice-scroll'),
+            slivers: [
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(padding, 14, padding, 36),
+                sliver: SliverToBoxAdapter(
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 900),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _MissionPracticeHeader(
+                            unitIndex: unit.index,
+                            title: definition.title,
+                            onBack: () => context.go('/missions'),
+                          ),
+                          const SizedBox(height: 18),
+                          _MissionBriefing(
+                            definition: definition,
+                            phraseCount: phrases.length,
+                          ),
+                          const SizedBox(height: 18),
+                          if (_completed)
+                            _MissionCompleteCard(
+                              definition: definition,
+                              phraseCount: phrases.length,
+                              onRestart: _restart,
+                              onPronunciation: () => context.push(
+                                '/pronunciation?unit=${unit.index}',
+                              ),
+                              onSentence: () => context.push(
+                                '/study?mode=cloze&unit=${unit.index}',
+                              ),
+                            )
+                          else
+                            _PhrasePracticeCard(
+                              phrase: phrase,
+                              phraseIndex: _phraseIndex,
+                              phraseCount: phrases.length,
+                              meaningVisible: _meaningVisible,
+                              showReadingAids: showReadingAids,
+                              onSpeak: () => _speak(phrase),
+                              onReveal: () => setState(
+                                () => _meaningVisible = !_meaningVisible,
+                              ),
+                              onNext: () => _nextPhrase(phrases.length),
+                            ),
+                          const SizedBox(height: 18),
+                          _MissionSupportActions(
+                            unitIndex: unit.index,
+                            onGuide: () => context.push('/unit/${unit.index}'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RecommendedMission extends StatelessWidget {
+  const _RecommendedMission({
+    required this.unit,
+    required this.definition,
+    required this.completed,
+    required this.onStart,
+  });
+
+  final CourseUnitSnapshot unit;
+  final MissionDefinition definition;
+  final bool completed;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      color: colors.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 640;
+            final copy = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '지금 추천하는 실전',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: colors.onSecondaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  definition.title,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: colors.onSecondaryContainer,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  definition.briefing,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.onSecondaryContainer.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            );
+            final button = FilledButton.icon(
+              key: const Key('start-recommended-mission'),
+              onPressed: onStart,
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.onSecondaryContainer,
+                foregroundColor: colors.secondaryContainer,
+                minimumSize: const Size(156, 48),
+              ),
+              icon: const Icon(Icons.forum_rounded),
+              label: Text(completed ? '다시 연습' : '미션 시작'),
+            );
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [copy, const SizedBox(height: 16), button],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: copy),
+                const SizedBox(width: 20),
+                button,
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionCard extends StatelessWidget {
+  const _MissionCard({
+    required this.unit,
+    required this.definition,
+    required this.recommended,
+    required this.completed,
+    required this.onTap,
+  });
+
+  final CourseUnitSnapshot unit;
+  final MissionDefinition definition;
+  final bool recommended;
+  final bool completed;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final accent = completed ? const Color(0xFF2E7D78) : colors.primary;
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(17),
+        side: BorderSide(
+          color: completed || recommended ? accent : colors.outlineVariant,
+          width: completed || recommended ? 1.5 : 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(17),
+        child: Padding(
+          padding: const EdgeInsets.all(17),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(definition.icon, color: colors.onPrimaryContainer),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            definition.setting,
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(color: colors.primary),
+                          ),
+                        ),
+                        if (completed)
+                          const _MissionPill(
+                            label: '완료',
+                            icon: Icons.check_rounded,
+                          )
+                        else if (recommended)
+                          const _MissionPill(label: '추천'),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      definition.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '${missionPhrasesFor(unit).length}개 표현 · 약 3분',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 11),
+                    LinearProgressIndicator(
+                      value: completed ? 1 : unit.progress,
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(6),
+                      color: completed ? accent : null,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right_rounded),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionPracticeHeader extends StatelessWidget {
+  const _MissionPracticeHeader({
+    required this.unitIndex,
+    required this.title,
+    required this.onBack,
+  });
+
+  final int unitIndex;
+  final String title;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 520;
+        return Row(
+          children: [
+            IconButton(
+              onPressed: onBack,
+              tooltip: '실전 미션으로',
+              icon: const Icon(Icons.arrow_back_rounded),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    compact
+                        ? 'Unit ${unitIndex + 1} · 실전 연습 · 약 3분'
+                        : 'Unit ${unitIndex + 1} · 실전 연습',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ],
+              ),
+            ),
+            if (!compact) ...[
+              const SizedBox(width: 10),
+              const _MissionPill(label: '약 3분'),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MissionBriefing extends StatelessWidget {
+  const _MissionBriefing({required this.definition, required this.phraseCount});
+
+  final MissionDefinition definition;
+  final int phraseCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      color: colors.primaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(19),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: colors.onPrimaryContainer.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(definition.icon, color: colors.onPrimaryContainer),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    definition.setting,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    definition.briefing,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '$phraseCount개 표현을 듣고 뜻을 확인한 뒤 직접 말합니다.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.onPrimaryContainer.withValues(alpha: 0.78),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PhrasePracticeCard extends StatelessWidget {
+  const _PhrasePracticeCard({
+    required this.phrase,
+    required this.phraseIndex,
+    required this.phraseCount,
+    required this.meaningVisible,
+    required this.showReadingAids,
+    required this.onSpeak,
+    required this.onReveal,
+    required this.onNext,
+  });
+
+  final LearningItem phrase;
+  final int phraseIndex;
+  final int phraseCount;
+  final bool meaningVisible;
+  final bool showReadingAids;
+  final VoidCallback onSpeak;
+  final VoidCallback onReveal;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final reading = showReadingAids && phrase.readings.isNotEmpty
+        ? phrase.readings.map((item) => item.value).toSet().join(' · ')
+        : null;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Text(
+                  '표현 ${phraseIndex + 1} / $phraseCount',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelLarge?.copyWith(color: colors.primary),
+                ),
+                const Spacer(),
+                Text(
+                  '듣기 → 이해 → 말하기',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            LinearProgressIndicator(
+              value: (phraseIndex + 1) / phraseCount,
+              minHeight: 7,
+              borderRadius: BorderRadius.circular(7),
+            ),
+            const SizedBox(height: 28),
+            Text(
+              phrase.text,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            if (reading != null) ...[
+              const SizedBox(height: 7),
+              Text(
+                reading,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+            const SizedBox(height: 22),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              constraints: const BoxConstraints(minHeight: 62),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: meaningVisible
+                    ? colors.secondaryContainer
+                    : colors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: colors.outlineVariant),
+              ),
+              child: Text(
+                meaningVisible ? phrase.primaryTranslation : '뜻을 떠올려 보세요',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: meaningVisible
+                      ? colors.onSecondaryContainer
+                      : colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('mission-listen'),
+                  onPressed: onSpeak,
+                  icon: const Icon(Icons.volume_up_rounded),
+                  label: const Text('발음 듣기'),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('mission-reveal'),
+                  onPressed: onReveal,
+                  icon: Icon(
+                    meaningVisible
+                        ? Icons.visibility_off_rounded
+                        : Icons.visibility_rounded,
+                  ),
+                  label: Text(meaningVisible ? '뜻 가리기' : '뜻 보기'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              key: const Key('mission-next-phrase'),
+              onPressed: onNext,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(52),
+              ),
+              icon: const Icon(Icons.record_voice_over_rounded),
+              label: Text(
+                phraseIndex + 1 == phraseCount
+                    ? '소리 내어 말했어요 · 완료'
+                    : '소리 내어 말했어요 · 다음',
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionCompleteCard extends StatelessWidget {
+  const _MissionCompleteCard({
+    required this.definition,
+    required this.phraseCount,
+    required this.onRestart,
+    required this.onPronunciation,
+    required this.onSentence,
+  });
+
+  final MissionDefinition definition;
+  final int phraseCount;
+  final VoidCallback onRestart;
+  final VoidCallback onPronunciation;
+  final VoidCallback onSentence;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      color: colors.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: colors.onSecondaryContainer.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.check_rounded,
+                size: 34,
+                color: colors.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              '실전 미션 완료',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                color: colors.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              '${definition.setting}에서 쓸 $phraseCount개 표현을 직접 말했습니다.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colors.onSecondaryContainer.withValues(alpha: 0.8),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: onRestart,
+                  icon: const Icon(Icons.replay_rounded),
+                  label: const Text('다시 연습'),
+                ),
+                FilledButton.icon(
+                  onPressed: onPronunciation,
+                  icon: const Icon(Icons.mic_rounded),
+                  label: const Text('발음 채점'),
+                ),
+                TextButton.icon(
+                  onPressed: onSentence,
+                  icon: const Icon(Icons.space_bar_rounded),
+                  label: const Text('문장 문제'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionSupportActions extends StatelessWidget {
+  const _MissionSupportActions({
+    required this.unitIndex,
+    required this.onGuide,
+  });
+
+  final int unitIndex;
+  final VoidCallback onGuide;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(17),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final copy = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '막히면 단원으로 돌아가도 괜찮아요',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  '핵심 단어와 문장을 다시 살펴본 뒤 같은 미션을 반복하세요.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            );
+            final button = TextButton.icon(
+              onPressed: onGuide,
+              icon: const Icon(Icons.menu_book_rounded),
+              label: Text('Unit ${unitIndex + 1} 가이드'),
+            );
+            if (constraints.maxWidth < 580) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  copy,
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerLeft, child: button),
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: copy),
+                const SizedBox(width: 14),
+                button,
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _MissionCountBadge extends StatelessWidget {
+  const _MissionCountBadge({required this.completed});
+
+  final int completed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 44),
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Text(
+        '$completed / 6 완료',
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+      ),
+    );
+  }
+}
+
+class _MissionPill extends StatelessWidget {
+  const _MissionPill({required this.label, this.icon});
+
+  final String label;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.primaryContainer,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 13, color: colors.onPrimaryContainer),
+            const SizedBox(width: 3),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              color: colors.onPrimaryContainer,
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MissionDefinition {
+  const MissionDefinition({
+    required this.setting,
+    required this.title,
+    required this.briefing,
+    required this.icon,
+  });
+
+  final String setting;
+  final String title;
+  final String briefing;
+  final IconData icon;
+}
+
+const missionDefinitions = [
+  MissionDefinition(
+    setting: '첫 만남',
+    title: '처음 만난 사람과 인사하기',
+    briefing: '인사하고 이름을 소개한 뒤 반갑다는 말을 건네 보세요.',
+    icon: Icons.waving_hand_rounded,
+  ),
+  MissionDefinition(
+    setting: '친구와 일상',
+    title: '나와 주변 사람 소개하기',
+    briefing: '내가 하는 일과 가까운 사람을 짧은 문장으로 소개해 보세요.',
+    icon: Icons.people_alt_rounded,
+  ),
+  MissionDefinition(
+    setting: '하루 계획',
+    title: '시간과 오늘 일정 말하기',
+    briefing: '시간을 묻고 오늘과 내일의 계획을 이어서 말해 보세요.',
+    icon: Icons.schedule_rounded,
+  ),
+  MissionDefinition(
+    setting: '카페와 식당',
+    title: '원하는 음식 주문하기',
+    briefing: '원하는 메뉴를 부탁하고 가격이나 예약을 확인해 보세요.',
+    icon: Icons.restaurant_rounded,
+  ),
+  MissionDefinition(
+    setting: '역과 거리',
+    title: '목적지와 이동 방법 묻기',
+    briefing: '역의 위치를 묻고 버스나 기차로 이동할 준비를 해 보세요.',
+    icon: Icons.train_rounded,
+  ),
+  MissionDefinition(
+    setting: '도움이 필요한 순간',
+    title: '이해하지 못했을 때 도움 요청하기',
+    briefing: '천천히 말해 달라고 부탁하고 필요한 도움을 구해 보세요.',
+    icon: Icons.support_agent_rounded,
+  ),
+];
+
+List<LearningItem> missionPhrasesFor(CourseUnitSnapshot unit) {
+  final phrases = unit.sentences.take(4).toList(growable: true);
+  if (phrases.length < 3) {
+    phrases.addAll(unit.words.take(3 - phrases.length));
+  }
+  return phrases.toList(growable: false);
+}
