@@ -40,7 +40,12 @@ jobs:
       - working-directory: apps/client
         run: flutter analyze
       - working-directory: apps/client
-        run: flutter test
+        shell: bash
+        run: |
+          mapfile -t test_files < <(
+            find test -type f -name '*_test.dart' ! -path 'test/visual/*' -print
+          )
+          flutter test "${test_files[@]}"
       - working-directory: apps/client
         run: flutter build apk --release --dart-define=ENABLE_MOCK_MODE=true
       - uses: actions/upload-artifact@v4
@@ -60,6 +65,8 @@ jobs:
       - uses: nuget/setup-nuget@v2
       - working-directory: apps/client
         run: flutter pub get
+      - working-directory: apps/client
+        run: flutter test test/visual
       - working-directory: apps/client
         run: flutter build windows --release --dart-define=ENABLE_MOCK_MODE=true
       - uses: actions/upload-artifact@v4
