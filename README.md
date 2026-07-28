@@ -16,6 +16,15 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 다국어 반�
 - Google Drive 폴더를 원본 저장소로 사용하는 기기 간 동기화
 - Railway API에는 HMAC 처리된 계정과 Drive 폴더 연결만 저장
 
+## 1.15.1 Google·Railway 실제 연결
+
+- Google Cloud `Sprache` 프로젝트에 Android·Web audience·Windows OAuth 클라이언트 구성
+- 로그인 기본 범위와 앱이 만든 Drive 파일만 다루는 `drive.file` 최소 권한 적용
+- 프로젝트 소유자 계정을 OAuth 테스트 사용자로 등록
+- Google Drive API와 Google Picker API 활성화 확인
+- Railway API가 실제 Web·Windows OAuth audience만 허용하도록 운영 변수 교체
+- `npm run build:real`로 Mock Mode가 꺼진 Android APK와 Windows ZIP을 한 번에 생성
+
 ## 1.15.0 끊어도 이어지는 학습 세션
 
 - 문제 화면에서 현재 위치를 저장하고 일시정지한 뒤, 원래 화면으로 안전하게 돌아가기
@@ -165,7 +174,11 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 다국어 반�
 
 ## 바로 실행하기
 
-로컬 `artifacts` 폴더에 기능 확인용 Mock 빌드가 있다.
+로컬 `artifacts` 폴더에 실제 Google·Railway 연결 빌드와 기능 확인용 Mock 빌드가 있다.
+
+- 실제 연결 Windows: `Sprache-Windows-1.15.1-google-x64.zip`
+- 실제 연결 Android: `Sprache-Android-1.15.1-google-debug-signed.apk`
+- 실제 연결 무결성: `SHA256SUMS-1.15.1-google.txt`
 
 - Windows: `Sprache-Windows-1.15.0-mock-x64.zip`을 풀고 폴더 안의 `sprache.exe`를 실행한다. DLL과 `data` 폴더를 EXE와 함께 유지해야 한다.
 - Android: `Sprache-Android-1.15.0-mock-debug-signed.apk`를 테스트 기기에 직접 설치한다. 현재 APK는 Play Store 배포용 서명이 아니다.

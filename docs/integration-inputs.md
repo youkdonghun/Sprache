@@ -1,7 +1,7 @@
 # Google·Railway 연동 입력 정보
 
 최종 수정: 2026-07-28  
-현재 상태: Railway API 운영 배포 완료, Google OAuth 입력 대기
+현재 상태: Railway API와 Google OAuth·Drive 테스트 연동 완료
 
 이 문서는 실제 연동에 필요한 항목과 수신 상태만 기록한다. **클라이언트 시크릿, 데이터베이스 URL, HMAC 시크릿, 개인 키의 실제 값은 저장소나 채팅에 기록하지 않는다.** 비밀값은 Google Cloud 또는 Railway의 비밀 변수 저장소에 직접 입력하고, 여기에는 `등록 완료`와 저장 위치만 남긴다.
 
@@ -11,16 +11,17 @@
 
 | 항목 | 필요한 값 | 상태 | 적용 위치 |
 | --- | --- | --- | --- |
-| 프로젝트 ID | Google Cloud project ID | 미입력 | 운영 기록 |
-| 앱 표시 이름 | OAuth 동의 화면 앱 이름 | 미입력 | Google Cloud |
-| 지원 이메일 | OAuth 동의 화면 지원 이메일 | 미입력 | Google Cloud |
+| 프로젝트 ID | Google Cloud project ID | `keen-answer-503804-d2` | 운영 기록 |
+| 앱 표시 이름 | OAuth 동의 화면 앱 이름 | `Sprache` | Google Cloud |
+| 지원 이메일 | OAuth 동의 화면 지원 이메일 | 프로젝트 소유자 계정 등록 완료 | Google Cloud |
 | 개인정보처리방침 URL | 운영 공개 URL | 미입력 | OAuth 동의 화면 |
-| Android OAuth client ID | 패키지 `com.youkdonghun.sprache`용 client ID | 미입력 | `GOOGLE_ANDROID_CLIENT_ID` |
-| Web/서버 OAuth client ID | ID token의 서버 audience용 client ID | 미입력 | `GOOGLE_SERVER_CLIENT_ID` |
-| Desktop OAuth client ID | Windows OAuth용 client ID | 미입력 | `GOOGLE_DESKTOP_CLIENT_ID` |
-| OAuth 테스트 사용자 | 테스트 계정 이메일 목록 | 미입력 | OAuth 동의 화면 |
-| Drive API | 활성화 여부 | 미확인 | Google Cloud API |
-| Google Picker API | 활성화 여부 | 미확인 | Google Cloud API |
+| Android OAuth client ID | 패키지 `com.youkdonghun.sprache`용 client ID | `1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com` | `GOOGLE_ANDROID_CLIENT_ID` |
+| Web/서버 OAuth client ID | ID token의 서버 audience용 client ID | `1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com` | `GOOGLE_SERVER_CLIENT_ID` |
+| Desktop OAuth client ID | Windows OAuth용 client ID | `1054343487948-791d7jh7m90rt4cs1ncgkf6l5eecehut.apps.googleusercontent.com` | `GOOGLE_DESKTOP_CLIENT_ID` |
+| OAuth 테스트 사용자 | 테스트 계정 이메일 목록 | 프로젝트 소유자 계정 1명 등록 완료 | OAuth 동의 화면 |
+| Drive API | 활성화 여부 | 활성화 완료 | Google Cloud API |
+| Google Picker API | 활성화 여부 | 활성화 완료 | Google Cloud API |
+| OAuth 데이터 액세스 | 로그인·Drive 최소 권한 | `openid`, `userinfo.email`, `userinfo.profile`, `drive.file` | Google Auth Platform |
 
 ### Android 인증서 지문
 
@@ -36,7 +37,7 @@
 | 항목 | 필요한 값 | 상태 | 적용 위치 |
 | --- | --- | --- | --- |
 | Railway 프로젝트 이름 | 프로젝트 식별용 이름 | `Sprache` (`cfb13a72-2f18-42a9-bfaa-9437079a752d`) | Railway |
-| API 서비스 이름 | Node API 서비스 이름 | `sprache-api` 운영 배포 완료 (`main` / `b8c7f65`) | Railway |
+| API 서비스 이름 | Node API 서비스 이름 | `sprache-api` 운영 배포 완료 (`main` / `31437e0`) | Railway |
 | PostgreSQL 서비스 이름 | DB 서비스 이름 | `Postgres` 생성 완료·Online | Railway |
 | Railway 공개 API URL | `https://...up.railway.app` 또는 커스텀 도메인 | `https://sprache-api-production.up.railway.app` | Flutter `API_BASE_URL` |
 | 커스텀 도메인 | 사용할 경우 도메인 | 미입력 | Railway/Flutter |
@@ -46,7 +47,7 @@
 
 | 확인 항목 | 결과 |
 | --- | --- |
-| GitHub 소스 | `youkdonghun/Sprache`, `main`, commit `b8c7f65` |
+| GitHub 소스 | `youkdonghun/Sprache`, `main`, commit `31437e0` |
 | Prisma migration | `20260727000000_init` 적용 완료 |
 | 런타임 포트 | Railway 주입 `PORT=8080` |
 | 공개 health check | `GET /health` → HTTP 200, `{"status":"ok","service":"sprache-api"}` |
@@ -58,7 +59,7 @@
 | 변수 | 요구사항 | 상태 | 비밀값 저장 위치 |
 | --- | --- | --- | --- |
 | `DATABASE_URL` | Railway PostgreSQL 연결 문자열 | 등록 완료 (`Postgres.DATABASE_URL` 참조) | Railway Variables |
-| `GOOGLE_ALLOWED_CLIENT_IDS` | 허용할 Android·Desktop·Web client ID의 쉼표 목록 | 임시 fail-closed 값 등록, 실제 OAuth ID로 교체 필요 | Railway Variables |
+| `GOOGLE_ALLOWED_CLIENT_IDS` | 허용할 Desktop·Web server client ID의 쉼표 목록 | 실제 OAuth ID 2개 등록·재배포 완료 | Railway Variables |
 | `USER_KEY_HMAC_SECRET` | 32바이트 이상 무작위 비밀값 | 등록 완료 | Railway Variables |
 | `NODE_ENV` | `production` | 등록 완료 | Railway Variables |
 | `LOG_LEVEL` | `info` | 등록 완료 | Railway Variables |
@@ -72,29 +73,32 @@ Mock 빌드는 이 값 없이 실행된다. 실연동 빌드는 아래 `--dart-d
 | --- | --- | --- |
 | `ENABLE_MOCK_MODE=false` | 준비됨 | 고정 |
 | `API_BASE_URL` | `https://sprache-api-production.up.railway.app` | Railway 공개 API URL |
-| `GOOGLE_ANDROID_CLIENT_ID` | 미입력 | Google Cloud |
-| `GOOGLE_DESKTOP_CLIENT_ID` | 미입력 | Google Cloud |
-| `GOOGLE_SERVER_CLIENT_ID` | 미입력 | Google Cloud |
+| `GOOGLE_ANDROID_CLIENT_ID` | 등록 완료 | Google Cloud |
+| `GOOGLE_DESKTOP_CLIENT_ID` | 등록 완료 | Google Cloud |
+| `GOOGLE_SERVER_CLIENT_ID` | 등록 완료 | Google Cloud |
 
 ```powershell
 Push-Location apps/client
 flutter build apk --release `
+  --dart-define=APP_ENV=production `
   --dart-define=ENABLE_MOCK_MODE=false `
-  --dart-define=API_BASE_URL=https://YOUR-API `
-  --dart-define=GOOGLE_ANDROID_CLIENT_ID=YOUR-ANDROID-ID `
-  --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR-WEB-ID
+  --dart-define=API_BASE_URL=https://sprache-api-production.up.railway.app `
+  --dart-define=GOOGLE_ANDROID_CLIENT_ID=1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com `
+  --dart-define=GOOGLE_SERVER_CLIENT_ID=1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com
 Pop-Location
 ```
 
 ```powershell
 Push-Location apps/client
 flutter build windows --release `
+  --dart-define=APP_ENV=production `
   --dart-define=ENABLE_MOCK_MODE=false `
-  --dart-define=API_BASE_URL=https://YOUR-API `
-  --dart-define=GOOGLE_DESKTOP_CLIENT_ID=YOUR-DESKTOP-ID `
-  --dart-define=GOOGLE_SERVER_CLIENT_ID=YOUR-WEB-ID
+  --dart-define=API_BASE_URL=https://sprache-api-production.up.railway.app `
+  --dart-define=GOOGLE_DESKTOP_CLIENT_ID=1054343487948-791d7jh7m90rt4cs1ncgkf6l5eecehut.apps.googleusercontent.com
 Pop-Location
 ```
+
+두 플랫폼을 한 번에 만들 때는 저장소 루트에서 `npm run build:real`을 실행한다.
 
 ## 입력을 받은 뒤 실행할 순서
 

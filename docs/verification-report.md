@@ -11,13 +11,29 @@
 | API production build | 통과 |
 | Flutter analyze | 이슈 0개 |
 | Flutter unit/widget/visual test | 178개 통과 |
-| Android release build | 통과, APK 70,488,856 bytes |
-| Windows release build | 통과, 런타임 파일 21개 |
+| Android release build | 실제 연결 모드 통과, APK 71,832,348 bytes |
+| Windows release build | 실제 연결 모드 통과, ZIP 항목 24개 |
 | Windows 실제 실행 | 통과, `sprache.exe` 프로세스 정상 유지 |
 | 반응형 화면 검증 | 모바일 `375×812`, `390×844`, `412×915`, `430×932`, Windows `380×520`, `1280×800` 통과 |
 | 접근성·테마 | 모바일 1.3배 글자 크기, 가져오기 필드 비교·맞춤 세션·세션 관리·일시정지 이어하기·메타데이터 단어장·4단계 카드 평가·복습 일정 포함 라이트·다크 골든 이미지 39개 통과 |
 | Windows ZIP 무결성 | ZIP 21개와 원본 21개의 SHA-256 전부 일치 |
 | CI YAML | Prettier YAML 파싱 통과 |
+| Google Auth Platform | 외부·테스트 모드, 테스트 사용자 1명, OAuth 클라이언트 3개 구성 |
+| OAuth 데이터 범위 | `openid`, `userinfo.email`, `userinfo.profile`, `drive.file`만 등록 |
+| Google API | Drive API·Picker API 활성화 확인 |
+| Railway 운영 API | 실제 Web·Windows audience 반영, `/health` HTTP 200 |
+
+## 1.15.1 Google·Railway 실제 연결
+
+- Google Cloud `Sprache` 프로젝트(`keen-answer-503804-d2`)에 Android·Web audience·Windows OAuth 클라이언트 생성
+- Android 클라이언트의 패키지 `com.youkdonghun.sprache`와 로컬 debug SHA-1 대조 완료
+- Google Auth Platform을 외부·테스트 모드로 구성하고 프로젝트 소유자 계정 1명을 테스트 사용자로 등록
+- 로그인 기본 범위와 앱이 생성·선택한 파일만 다루는 `drive.file` 최소 권한 저장
+- Google Drive API와 Google Picker API의 `API 사용 설정됨` 상태 확인
+- Railway `GOOGLE_ALLOWED_CLIENT_IDS`를 실제 Web server·Windows client ID로 교체하고 운영 재배포
+- Mock Mode를 끄고 `APP_ENV=production` 및 Railway API URL을 컴파일한 Android·Windows 릴리스 생성
+- Android APK의 패키지·버전·서명 인증서와 Windows ZIP 필수 런타임 파일·실행 상태 검증
+- 실제 연결 산출물 2개의 SHA-256을 다시 계산해 체크섬 파일과 일치 확인
 
 ## 1.15.0 학습 세션 연속성
 
@@ -156,35 +172,34 @@
 ## Android 패키지
 
 - 패키지: `com.youkdonghun.sprache`
-- 버전: `1.15.0` (`versionCode` 16)
+- 버전: `1.15.1` (`versionCode` 17)
 - 최소 SDK: 24
 - 대상·컴파일 SDK: 36
 - 서명: APK Signature Scheme v2
 - 현재 인증서: Android Debug
 - 권한 확인: `INTERNET`, `RECORD_AUDIO`, Bluetooth 음성 입력 권한 포함
-- APK SHA-256: `4C1CFD34C4A124B7FB4C32768EC3A1ADE11F65BF4E8C46AAA0F92A6F3183EDAE`
+- APK SHA-256: `48B1BF0B0F84D7F14BDA3D1BC77244F7050CFD9687DE42AEF1D8BFE83396B97E`
 - 인증서 SHA-256: `50F42478D5254AC6921811E25317833EF2DB18C411DC92C7B8EF7D8B0AB2A0D2`
 
-현재 APK는 기능 확인과 직접 설치용 Mock 빌드다. Play Store 배포 전에는 별도 release keystore로 서명하고 Google OAuth의 production SHA 인증서를 등록해야 한다.
+현재 APK는 실제 Google·Railway 연결이 켜진 직접 설치용 빌드다. 로컬 debug 인증서로 서명했으므로 Play Store 배포 전에는 별도 release keystore로 서명하고 Google OAuth의 production SHA 인증서를 등록해야 한다.
 
 ## Windows 패키지
 
 - 아키텍처: x64
-- EXE SHA-256: `B16A821F3BCA1CA6A723520F79AE410B177214CC386671A8B9EA8CC40C7B1FAB`
-- ZIP SHA-256: `048633B08459D108C36844D877C1C038A1E782FE353FB6928BE34A2E5BA65715`
+- 버전: `1.15.1+17`
+- EXE SHA-256: `8A5719E6E47A4B19EE543B3F89CB838C3C435E7345A426508412CA32155A2F66`
+- ZIP SHA-256: `718F78B917A7EEB346E9B480A7CA356C0196224A4EAE5ACA4CC44254E2244FB0`
 
 `sprache.exe`만 분리하면 실행되지 않는다. ZIP의 DLL과 `data` 폴더를 같은 위치에 유지해야 한다.
 
 ## 실서비스 전 남은 외부 작업
 
-코드와 설정 경로는 구현했지만 다음 작업은 소유자 계정과 비밀값이 필요해 로컬 Mock 검증 범위에 포함하지 않았다.
+개발·테스트 연결은 완료했지만 다음 항목은 공개 배포 또는 실제 기기가 필요하다.
 
-1. Google Cloud 프로젝트에서 Android·Desktop OAuth 클라이언트와 Drive Picker API를 설정한다.
-2. 실제 Android release 인증서 SHA-1/SHA-256을 OAuth 클라이언트에 등록한다.
-3. Railway 프로젝트에 PostgreSQL과 환경 변수를 등록하고 API를 배포한다.
-4. 실제 두 기기에서 같은 Drive 폴더를 선택해 동기화 충돌·복구를 확인한다.
-5. GitHub에 푸시한 뒤 Actions의 세 잡을 원격 실행한다.
-6. 실제 Android 기기에서 여섯 언어의 음성 인식 언어팩과 마이크 채점을 확인한다.
+1. 개인정보처리방침 공개 URL을 등록하고 OAuth 앱 게시·검증 여부를 결정한다.
+2. Play App Signing SHA-1/SHA-256용 Android OAuth 클라이언트를 추가한다.
+3. 실제 Android와 Windows에서 같은 Drive 폴더를 선택해 업로드·다운로드·충돌 복구를 확인한다.
+4. 실제 Android 기기에서 여섯 언어의 음성 인식 언어팩과 마이크 채점을 확인한다.
 
 구체적인 절차는 `docs/google-setup.md`, `docs/railway-deploy.md`, `docs/build-and-release.md`에 있다. 소유자에게 받을 공개 설정값과 비밀 변수의 등록 상태는 `docs/integration-inputs.md`에서 관리한다.
 

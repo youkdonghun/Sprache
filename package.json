@@ -15,6 +15,9 @@
     "analyze:client": "cd apps/client && flutter analyze",
     "build:windows": "cd apps/client && flutter build windows --release",
     "build:android": "cd apps/client && flutter build apk --release",
+    "build:real": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1",
+    "build:real:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target windows",
+    "build:real:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target android",
     "test": "npm run test:api && npm run test:client"
   },
   "engines": {
