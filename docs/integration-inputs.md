@@ -1,7 +1,7 @@
 # Google·Railway 연동 입력 정보
 
 최종 수정: 2026-07-28  
-현재 상태: Railway 인프라 생성 완료, API 소스 배포·Google OAuth 입력 대기
+현재 상태: Railway API 운영 배포 완료, Google OAuth 입력 대기
 
 이 문서는 실제 연동에 필요한 항목과 수신 상태만 기록한다. **클라이언트 시크릿, 데이터베이스 URL, HMAC 시크릿, 개인 키의 실제 값은 저장소나 채팅에 기록하지 않는다.** 비밀값은 Google Cloud 또는 Railway의 비밀 변수 저장소에 직접 입력하고, 여기에는 `등록 완료`와 저장 위치만 남긴다.
 
@@ -26,7 +26,7 @@
 
 | 용도 | 상태 | 값 또는 위치 |
 | --- | --- | --- |
-| 현재 로컬 debug SHA-1 | 확인됨 | `AB:64:B7:49:9B:8A:BA:A6:8E:65:2B:9C:36:BF:F5:65:48:0F:0C:27` |
+| 현재 로컬 debug SHA-1 | 확인됨 | `AB:64:24:D5:FC:BA:3F:76:2C:27:C2:BE:61:3D:1A:A9:C8:4F:1F:AE` |
 | 현재 로컬 debug SHA-256 | 확인됨 | `50:F4:24:78:D5:25:4A:C6:92:18:11:E2:53:17:83:3E:F2:DB:18:C4:11:DC:92:C7:B8:EF:7D:8B:0A:B2:A0:D2` |
 | Play App Signing SHA-1 | 미입력 | Play Console에서 발급 후 등록 |
 | Play App Signing SHA-256 | 미입력 | Play Console에서 발급 후 등록 |
@@ -36,11 +36,20 @@
 | 항목 | 필요한 값 | 상태 | 적용 위치 |
 | --- | --- | --- | --- |
 | Railway 프로젝트 이름 | 프로젝트 식별용 이름 | `Sprache` (`cfb13a72-2f18-42a9-bfaa-9437079a752d`) | Railway |
-| API 서비스 이름 | Node API 서비스 이름 | `sprache-api` 생성 완료, 소스 미배포 | Railway |
+| API 서비스 이름 | Node API 서비스 이름 | `sprache-api` 운영 배포 완료 (`main` / `b8c7f65`) | Railway |
 | PostgreSQL 서비스 이름 | DB 서비스 이름 | `Postgres` 생성 완료·Online | Railway |
-| Railway 공개 API URL | `https://...up.railway.app` 또는 커스텀 도메인 | 미발급 | Flutter `API_BASE_URL` |
+| Railway 공개 API URL | `https://...up.railway.app` 또는 커스텀 도메인 | `https://sprache-api-production.up.railway.app` | Flutter `API_BASE_URL` |
 | 커스텀 도메인 | 사용할 경우 도메인 | 미입력 | Railway/Flutter |
 | 배포 리전 | Railway 서비스 리전 | API `US East` | Railway |
+
+### Railway 배포 확인
+
+| 확인 항목 | 결과 |
+| --- | --- |
+| GitHub 소스 | `youkdonghun/Sprache`, `main`, commit `b8c7f65` |
+| Prisma migration | `20260727000000_init` 적용 완료 |
+| 런타임 포트 | Railway 주입 `PORT=8080` |
+| 공개 health check | `GET /health` → HTTP 200, `{"status":"ok","service":"sprache-api"}` |
 
 ## Railway 비밀 변수
 
@@ -49,7 +58,7 @@
 | 변수 | 요구사항 | 상태 | 비밀값 저장 위치 |
 | --- | --- | --- | --- |
 | `DATABASE_URL` | Railway PostgreSQL 연결 문자열 | 등록 완료 (`Postgres.DATABASE_URL` 참조) | Railway Variables |
-| `GOOGLE_ALLOWED_CLIENT_IDS` | 허용할 Android·Desktop·Web client ID의 쉼표 목록 | 미등록 | Railway Variables |
+| `GOOGLE_ALLOWED_CLIENT_IDS` | 허용할 Android·Desktop·Web client ID의 쉼표 목록 | 임시 fail-closed 값 등록, 실제 OAuth ID로 교체 필요 | Railway Variables |
 | `USER_KEY_HMAC_SECRET` | 32바이트 이상 무작위 비밀값 | 등록 완료 | Railway Variables |
 | `NODE_ENV` | `production` | 등록 완료 | Railway Variables |
 | `LOG_LEVEL` | `info` | 등록 완료 | Railway Variables |
@@ -62,7 +71,7 @@ Mock 빌드는 이 값 없이 실행된다. 실연동 빌드는 아래 `--dart-d
 | 변수 | 현재 상태 | 출처 |
 | --- | --- | --- |
 | `ENABLE_MOCK_MODE=false` | 준비됨 | 고정 |
-| `API_BASE_URL` | 미입력 | Railway 공개 API URL |
+| `API_BASE_URL` | `https://sprache-api-production.up.railway.app` | Railway 공개 API URL |
 | `GOOGLE_ANDROID_CLIENT_ID` | 미입력 | Google Cloud |
 | `GOOGLE_DESKTOP_CLIENT_ID` | 미입력 | Google Cloud |
 | `GOOGLE_SERVER_CLIENT_ID` | 미입력 | Google Cloud |
