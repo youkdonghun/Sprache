@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/active_study_session.dart';
+import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/routing/app_router.dart';
 import 'package:sprache/src/screens/study_screen.dart';
 import 'package:sprache/src/services/app_clock.dart';
@@ -86,6 +87,119 @@ void main() {
           StudySessionJourneyAction.paused,
           StudySessionJourneyAction.resumed,
         ]),
+      );
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('starting another study never silently replaces a session', (
+    tester,
+  ) async {
+    final container = await _pumpHarness(tester);
+    try {
+      final original = container.read(
+        appControllerProvider.select((state) => state.activeStudySession),
+      );
+      expect(original, isNotNull);
+
+      container.read(appRouterProvider).go('/learn');
+      await tester.pumpAndSettle();
+      container.read(appRouterProvider).go('/study?mode=production');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('active-session-conflict-dialog')),
+        findsOneWidget,
+      );
+      expect(
+        container.read(appControllerProvider).activeStudySession?.sessionId,
+        original?.sessionId,
+      );
+
+      await tester.tap(find.byKey(const Key('cancel-new-session')));
+      await tester.pumpAndSettle();
+      expect(find.text('영어 학습실'), findsOneWidget);
+      expect(
+        container.read(appControllerProvider).activeStudySession?.sessionId,
+        original?.sessionId,
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('replacing a session requires an explicit destructive choice', (
+    tester,
+  ) async {
+    final container = await _pumpHarness(tester);
+    try {
+      final originalId = container
+          .read(appControllerProvider)
+          .activeStudySession
+          ?.sessionId;
+
+      container.read(appRouterProvider).go('/learn');
+      await tester.pumpAndSettle();
+      container.read(appRouterProvider).go('/study?mode=production');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('replace-active-session')));
+      await tester.pumpAndSettle();
+
+      final replacement = container
+          .read(appControllerProvider)
+          .activeStudySession;
+      expect(replacement, isNotNull);
+      expect(replacement?.sessionId, isNot(originalId));
+      expect(replacement?.mode, StudyMode.production);
+      expect(replacement?.completedCount, 0);
+      expect(find.byType(StudyScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('a stale screen cannot mutate or clear a replacement session', (
+    tester,
+  ) async {
+    final container = await _pumpHarness(tester);
+    try {
+      final controller = container.read(appControllerProvider.notifier);
+      final original = container.read(appControllerProvider).activeStudySession;
+      expect(original, isNotNull);
+
+      final replacement = controller.beginActiveStudySession(
+        sessionId: 'remote-replacement',
+        mode: StudyMode.production,
+        unitIndex: null,
+        itemIds: original!.itemIds,
+        startedAt: DateTime.utc(2026, 7, 28, 12, 5),
+      );
+
+      final staleUpdate = controller.updateActiveStudySession(
+        itemIds: original.itemIds,
+        currentIndex: 1,
+        correctCount: 99,
+        wrongCount: 0,
+        earnedXp: 990,
+        updatedAt: DateTime.utc(2026, 7, 28, 12, 6),
+        expectedSessionId: original.sessionId,
+      );
+      final staleClear = controller.clearActiveStudySession(
+        expectedSessionId: original.sessionId,
+      );
+
+      expect(staleUpdate, isNull);
+      expect(staleClear, isFalse);
+      expect(
+        container.read(appControllerProvider).activeStudySession?.sessionId,
+        replacement.sessionId,
+      );
+      expect(
+        container.read(appControllerProvider).activeStudySession?.correctCount,
+        0,
       );
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());

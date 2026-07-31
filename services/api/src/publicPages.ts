@@ -159,7 +159,7 @@ export const privacyPolicyHtml = page(
       <li>OAuth 토큰: 운영체제 보안 저장소</li>
       <li>계정–폴더 연결: Railway PostgreSQL의 HMAC 계정 키와 폴더 연결 정보</li>
     </ul>
-    <p>연결 매핑은 사용자가 앱에서 Google 연결을 해제할 때 삭제합니다.</p>
+    <p>연결 매핑은 다른 기기와 재연결을 위해 유지되며, 사용자가 앱에서 <strong>계정–Drive 연결 기록 삭제</strong>를 확인하면 삭제합니다.</p>
   </section>
   <section>
     <h2>4. 음성·파일 권한</h2>
@@ -182,7 +182,8 @@ export const privacyPolicyHtml = page(
     <h2>6. 사용자의 선택과 삭제</h2>
     <ul>
       <li>Google 연결 없이 로컬 모드로 계속 사용할 수 있습니다.</li>
-      <li>앱에서 연결을 해제하면 로컬 토큰과 Railway 계정–폴더 매핑을 삭제합니다.</li>
+      <li><strong>이 기기에서 연결 해제</strong>를 선택하면 이 기기의 Google 토큰만 제거하고 다른 기기용 Railway 매핑은 유지합니다.</li>
+      <li><strong>계정–Drive 연결 기록 삭제</strong>를 확인하면 이 기기의 토큰과 Railway 계정–폴더 매핑을 함께 삭제합니다.</li>
       <li><a href="https://myaccount.google.com/connections">Google 계정 연결 관리</a>에서 Sprache 권한을 철회할 수 있습니다.</li>
       <li>학습 항목은 앱에서 삭제할 수 있고, Drive의 Sprache 폴더는 사용자가 직접 삭제할 수 있습니다.</li>
     </ul>

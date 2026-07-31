@@ -5,6 +5,12 @@
 **/.env
 **/.env.*
 !**/.env.example
+*.jks
+*.keystore
+*.pfx
+*.p12
+*.key
+**/key.properties
 
 # Node
 node_modules/
@@ -26,6 +32,7 @@ build/
 *.iml
 .DS_Store
 Thumbs.db
+**/hs_err_pid*.log
 
 # Local databases and runtime data
 *.sqlite
@@ -35,6 +42,7 @@ runtime-data/
 
 # Build outputs copied for local delivery
 artifacts/
+outputs/
 
 # Generated visual-test failure diagnostics
 **/test/visual/failures/

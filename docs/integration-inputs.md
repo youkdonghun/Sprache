@@ -1,7 +1,8 @@
 # Google·Railway 연동 입력 정보
 
-최종 수정: 2026-07-28  
-현재 상태: Railway API와 Google OAuth·Drive 테스트 연동 완료
+최종 수정: 2026-07-30
+현재 상태: Google Desktop OAuth secret과 Railway sealed variable 등록 완료,
+운영 broker `ready`, Windows 실계정 Drive 동기화 E2E 통과
 
 이 문서는 실제 연동에 필요한 항목과 수신 상태만 기록한다. **클라이언트 시크릿, 데이터베이스 URL, HMAC 시크릿, 개인 키의 실제 값은 저장소나 채팅에 기록하지 않는다.** 비밀값은 Google Cloud 또는 Railway의 비밀 변수 저장소에 직접 입력하고, 여기에는 `등록 완료`와 저장 위치만 남긴다.
 
@@ -14,10 +15,12 @@
 | 프로젝트 ID | Google Cloud project ID | `keen-answer-503804-d2` | 운영 기록 |
 | 앱 표시 이름 | OAuth 동의 화면 앱 이름 | `Sprache` | Google Cloud |
 | 지원 이메일 | OAuth 동의 화면 지원 이메일 | 프로젝트 소유자 계정 등록 완료 | Google Cloud |
-| 개인정보처리방침 URL | 운영 공개 URL | 미입력 | OAuth 동의 화면 |
+| 개인정보처리방침 URL | 운영 공개 URL | Railway `/privacy` 공개·앱 1.22.7 연결 완료, 소유 custom domain 대기 | OAuth 동의 화면 |
+| 앱 홈페이지 URL | 운영 공개 URL | Railway `/` 공개 완료, 소유 custom domain 대기 | OAuth 동의 화면 |
 | Android OAuth client ID | 패키지 `com.youkdonghun.sprache`용 client ID | `1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com` | `GOOGLE_ANDROID_CLIENT_ID` |
 | Web/서버 OAuth client ID | ID token의 서버 audience용 client ID | `1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com` | `GOOGLE_SERVER_CLIENT_ID` |
 | Desktop OAuth client ID | Windows OAuth용 client ID | `1054343487948-791d7jh7m90rt4cs1ncgkf6l5eecehut.apps.googleusercontent.com` | `GOOGLE_DESKTOP_CLIENT_ID` |
+| Desktop OAuth client secret | Windows 토큰 교환용 credential | Railway 등록 완료·값 미기록, 실전 검증 후 이전 secret 삭제·현재 secret 1개 활성 | Railway `GOOGLE_DESKTOP_CLIENT_SECRET` sealed variable |
 | OAuth 테스트 사용자 | 테스트 계정 이메일 목록 | 프로젝트 소유자 계정 1명 등록 완료 | OAuth 동의 화면 |
 | Drive API | 활성화 여부 | 활성화 완료 | Google Cloud API |
 | Google Picker API | 활성화 여부 | 활성화 완료 | Google Cloud API |
@@ -37,7 +40,7 @@
 | 항목 | 필요한 값 | 상태 | 적용 위치 |
 | --- | --- | --- | --- |
 | Railway 프로젝트 이름 | 프로젝트 식별용 이름 | `Sprache` (`cfb13a72-2f18-42a9-bfaa-9437079a752d`) | Railway |
-| API 서비스 이름 | Node API 서비스 이름 | `sprache-api` 운영 배포 완료 (`main` / `31437e0`) | Railway |
+| API 서비스 이름 | Node API 서비스 이름 | `sprache-api` 운영 배포 완료 (CLI 배포 `de1fcd7d-c65c-4bab-80ef-9aaa464bc2f7`) | Railway |
 | PostgreSQL 서비스 이름 | DB 서비스 이름 | `Postgres` 생성 완료·Online | Railway |
 | Railway 공개 API URL | `https://...up.railway.app` 또는 커스텀 도메인 | `https://sprache-api-production.up.railway.app` | Flutter `API_BASE_URL` |
 | 커스텀 도메인 | 사용할 경우 도메인 | 미입력 | Railway/Flutter |
@@ -47,10 +50,13 @@
 
 | 확인 항목 | 결과 |
 | --- | --- |
-| GitHub 소스 | `youkdonghun/Sprache`, `main`, commit `31437e0` |
+| GitHub 소스 | `youkdonghun/Sprache`, `main` 연결 유지. 현재 운영은 검증 중인 로컬 작업 트리를 CLI로 직접 배포 |
 | Prisma migration | `20260727000000_init` 적용 완료 |
 | 런타임 포트 | Railway 주입 `PORT=8080` |
-| 공개 health check | `GET /health` → HTTP 200, `{"status":"ok","service":"sprache-api"}` |
+| 현재 운영 배포 | `de1fcd7d-c65c-4bab-80ef-9aaa464bc2f7`, `SUCCESS`, 최신 OAuth broker route 포함 |
+| 공개 health check | 2026-07-29 HTTP 200, `desktopOAuthBroker=ready`, `WindowsGoogleLoginReady=True` |
+| 토큰 route | 빈 JSON 요청 HTTP 400 입력 검증, `Cache-Control: no-store` 확인 |
+| Windows 실계정 E2E | Google 동의 → BOM 폴더 선택 → `WordStudyData` 재사용 → pull/merge/push 통과 |
 
 ## Railway 비밀 변수
 
@@ -60,6 +66,8 @@
 | --- | --- | --- | --- |
 | `DATABASE_URL` | Railway PostgreSQL 연결 문자열 | 등록 완료 (`Postgres.DATABASE_URL` 참조) | Railway Variables |
 | `GOOGLE_ALLOWED_CLIENT_IDS` | 허용할 Desktop·Web server client ID의 쉼표 목록 | 실제 OAuth ID 2개 등록·재배포 완료 | Railway Variables |
+| `GOOGLE_DESKTOP_CLIENT_ID` | Google Cloud Desktop client ID | 운영 등록·재배포 완료 | Railway Variables |
+| `GOOGLE_DESKTOP_CLIENT_SECRET` | Google Cloud Desktop client secret | 운영 sealed variable 등록·실전 검증 완료·값 미기록 | Railway Variables |
 | `USER_KEY_HMAC_SECRET` | 32바이트 이상 무작위 비밀값 | 등록 완료 | Railway Variables |
 | `NODE_ENV` | `production` | 등록 완료 | Railway Variables |
 | `LOG_LEVEL` | `info` | 등록 완료 | Railway Variables |
@@ -105,6 +113,9 @@ Pop-Location
 1. 이 문서의 공개값과 상태를 갱신한다.
 2. Google API 활성화, OAuth 유형, 패키지명, 인증서 지문을 대조한다.
 3. Railway 환경 변수는 값 자체를 읽거나 출력하지 않고 등록 여부만 확인한다.
-4. Railway `/health`와 인증이 필요한 API의 성공·거부 경계를 확인한다.
-5. Android와 Windows 실연동 빌드를 각각 만든다.
-6. 같은 Google 계정으로 두 기기에서 Drive 폴더 선택·업로드·다운로드·충돌 복구를 검증한다.
+4. Railway에 중계 코드가 포함된 API를 배포하고 두 Desktop OAuth 변수를 sealed
+   variable로 등록한다.
+5. Railway `/health`의 `desktopOAuthBroker=ready`, 토큰 route의 입력 검증·
+   `no-store`, 기존 인증 API의 성공·거부 경계를 확인한다.
+6. Android와 Windows 실연동 빌드를 각각 만든다.
+7. 같은 Google 계정으로 두 기기에서 Drive 폴더 선택·업로드·다운로드·충돌 복구를 검증한다.

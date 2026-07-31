@@ -2,13 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/course_path.dart';
 import '../domain/learning_item.dart';
+import '../services/tts_service.dart';
 import '../state/app_state.dart';
-import '../widgets/course_picker.dart';
 
 class MissionCatalogScreen extends ConsumerWidget {
   const MissionCatalogScreen({super.key});
@@ -66,8 +65,6 @@ class MissionCatalogScreen extends ConsumerWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 18),
-                          const CoursePicker(),
                           const SizedBox(height: 18),
                           _RecommendedMission(
                             unit: recommended,
@@ -137,9 +134,14 @@ class MissionCatalogScreen extends ConsumerWidget {
 }
 
 class MissionPracticeScreen extends ConsumerStatefulWidget {
-  const MissionPracticeScreen({required this.unitIndex, super.key});
+  const MissionPracticeScreen({
+    required this.unitIndex,
+    this.ttsService,
+    super.key,
+  });
 
   final int unitIndex;
+  final TtsService? ttsService;
 
   @override
   ConsumerState<MissionPracticeScreen> createState() =>
@@ -147,10 +149,17 @@ class MissionPracticeScreen extends ConsumerStatefulWidget {
 }
 
 class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
-  final _tts = FlutterTts();
+  late final TtsService _tts;
   var _phraseIndex = 0;
   var _meaningVisible = false;
   var _completed = false;
+  String? _lastAutoPlayedQuestionId;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = widget.ttsService ?? TtsService.device();
+  }
 
   @override
   void dispose() {
@@ -167,11 +176,53 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
   }
 
   Future<void> _speak(LearningItem item) async {
-    await _tts.setLanguage(item.learningLanguage.ttsLocale);
-    await _tts.setSpeechRate(
-      ref.read(appControllerProvider).preferences.ttsRate,
-    );
-    await _tts.speak(item.text);
+    final preferences = ref.read(appControllerProvider).preferences;
+    try {
+      await _tts.speak(
+        language: item.learningLanguage,
+        text: item.text,
+        rate: preferences.ttsRate,
+        preferOfflineVoice: preferences.interaction.preferOfflineVoice,
+        repeatCount: preferences.interaction.audioRepeatCount,
+      );
+    } catch (_) {
+      // A missing voice must not block mission practice.
+    }
+  }
+
+  void _scheduleQuestionAudio(LearningItem item) {
+    final interaction = ref.read(appControllerProvider).preferences.interaction;
+    if (!interaction.autoPlayQuestionAudio ||
+        _lastAutoPlayedQuestionId == item.id) {
+      return;
+    }
+    _lastAutoPlayedQuestionId = item.id;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          _completed ||
+          _lastAutoPlayedQuestionId != item.id ||
+          !ref
+              .read(appControllerProvider)
+              .preferences
+              .interaction
+              .autoPlayQuestionAudio) {
+        return;
+      }
+      unawaited(_speak(item));
+    });
+  }
+
+  void _toggleMeaning(LearningItem item) {
+    final willShow = !_meaningVisible;
+    setState(() => _meaningVisible = willShow);
+    if (willShow &&
+        ref
+            .read(appControllerProvider)
+            .preferences
+            .interaction
+            .autoPlayAnswerAudio) {
+      unawaited(_speak(item));
+    }
   }
 
   void _nextPhrase(int phraseCount) {
@@ -196,6 +247,7 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
       _phraseIndex = 0;
       _meaningVisible = false;
       _completed = false;
+      _lastAutoPlayedQuestionId = null;
     });
   }
 
@@ -205,10 +257,12 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
     final controller = ref.read(appControllerProvider.notifier);
     final path = controller.coursePath;
     if (widget.unitIndex < 0 || widget.unitIndex >= path.units.length) {
-      return Center(
-        child: FilledButton(
-          onPressed: () => context.go('/missions'),
-          child: const Text('실전 미션으로 돌아가기'),
+      return Scaffold(
+        body: Center(
+          child: FilledButton(
+            onPressed: () => context.go('/missions'),
+            child: const Text('실전 미션으로 돌아가기'),
+          ),
         ),
       );
     }
@@ -217,41 +271,43 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
     final definition = missionDefinitions[widget.unitIndex];
     final phrases = missionPhrasesFor(unit);
     if (phrases.isEmpty) {
-      return SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 520),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.forum_outlined,
-                        size: 48,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        '미션에 사용할 표현이 없어요',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '단어장에서 이 단원의 표현을 학습에 다시 포함한 뒤 시작해 주세요.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 18),
-                      FilledButton.icon(
-                        onPressed: () => context.go('/library'),
-                        icon: const Icon(Icons.menu_book_rounded),
-                        label: const Text('단어장으로 이동'),
-                      ),
-                    ],
+      return Scaffold(
+        body: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.forum_outlined,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          '미션에 사용할 표현이 없어요',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '자료실에서 이 단원의 표현을 학습에 다시 포함한 뒤 시작해 주세요.',
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 18),
+                        FilledButton.icon(
+                          onPressed: () => context.go('/library'),
+                          icon: const Icon(Icons.menu_book_rounded),
+                          label: const Text('자료실로 이동'),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -261,78 +317,80 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
       );
     }
     final phrase = phrases[_phraseIndex.clamp(0, phrases.length - 1)];
-    final showReadingAids = ref
-        .read(appControllerProvider)
-        .preferences
-        .showReadingAids;
+    if (!_completed) _scheduleQuestionAudio(phrase);
+    final interaction = ref.watch(
+      appControllerProvider.select((state) => state.preferences.interaction),
+    );
+    final readingAidsLabel = phrase.readingAidsLabelFor(
+      showKoreanReading: interaction.showKoreanReading,
+      showNativeReading: interaction.showNativeReading,
+    );
 
-    return SafeArea(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 720;
-          final padding = compact ? 18.0 : 28.0;
-          return CustomScrollView(
-            key: const Key('mission-practice-scroll'),
-            slivers: [
-              SliverPadding(
-                padding: EdgeInsets.fromLTRB(padding, 14, padding, 36),
-                sliver: SliverToBoxAdapter(
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 900),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _MissionPracticeHeader(
-                            unitIndex: unit.index,
-                            title: definition.title,
-                            onBack: () => context.go('/missions'),
-                          ),
-                          const SizedBox(height: 18),
-                          _MissionBriefing(
-                            definition: definition,
-                            phraseCount: phrases.length,
-                          ),
-                          const SizedBox(height: 18),
-                          if (_completed)
-                            _MissionCompleteCard(
+    return Scaffold(
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 720;
+            final padding = compact ? 18.0 : 28.0;
+            return CustomScrollView(
+              key: const Key('mission-practice-scroll'),
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.fromLTRB(padding, 14, padding, 36),
+                  sliver: SliverToBoxAdapter(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 900),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _MissionPracticeHeader(
+                              unitIndex: unit.index,
+                              title: definition.title,
+                              onBack: () => context.go('/missions'),
+                            ),
+                            const SizedBox(height: 18),
+                            _MissionBriefing(
                               definition: definition,
                               phraseCount: phrases.length,
-                              onRestart: _restart,
-                              onPronunciation: () => context.push(
-                                '/pronunciation?unit=${unit.index}',
-                              ),
-                              onSentence: () => context.push(
-                                '/study?mode=cloze&unit=${unit.index}',
-                              ),
-                            )
-                          else
-                            _PhrasePracticeCard(
-                              phrase: phrase,
-                              phraseIndex: _phraseIndex,
-                              phraseCount: phrases.length,
-                              meaningVisible: _meaningVisible,
-                              showReadingAids: showReadingAids,
-                              onSpeak: () => _speak(phrase),
-                              onReveal: () => setState(
-                                () => _meaningVisible = !_meaningVisible,
-                              ),
-                              onNext: () => _nextPhrase(phrases.length),
+                              unitIndex: unit.index,
+                              onGuide: () =>
+                                  context.push('/unit/${unit.index}'),
                             ),
-                          const SizedBox(height: 18),
-                          _MissionSupportActions(
-                            unitIndex: unit.index,
-                            onGuide: () => context.push('/unit/${unit.index}'),
-                          ),
-                        ],
+                            const SizedBox(height: 18),
+                            if (_completed)
+                              _MissionCompleteCard(
+                                definition: definition,
+                                phraseCount: phrases.length,
+                                onRestart: _restart,
+                                onPronunciation: () => context.push(
+                                  '/pronunciation?unit=${unit.index}',
+                                ),
+                                onSentence: () => context.push(
+                                  '/study?mode=cloze&unit=${unit.index}',
+                                ),
+                              )
+                            else
+                              _PhrasePracticeCard(
+                                phrase: phrase,
+                                phraseIndex: _phraseIndex,
+                                phraseCount: phrases.length,
+                                meaningVisible: _meaningVisible,
+                                readingAidsLabel: readingAidsLabel,
+                                onSpeak: () => _speak(phrase),
+                                onReveal: () => _toggleMeaning(phrase),
+                                onNext: () => _nextPhrase(phrases.length),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -496,11 +554,17 @@ class _MissionCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 11),
-                    LinearProgressIndicator(
-                      value: completed ? 1 : unit.progress,
-                      minHeight: 6,
-                      borderRadius: BorderRadius.circular(6),
-                      color: completed ? accent : null,
+                    Semantics(
+                      label: '${definition.title} 미션 준비 진행률',
+                      value: completed ? '완료' : '${unit.progressPercent}퍼센트',
+                      child: ExcludeSemantics(
+                        child: LinearProgressIndicator(
+                          value: completed ? 1 : unit.progress,
+                          minHeight: 6,
+                          borderRadius: BorderRadius.circular(6),
+                          color: completed ? accent : null,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -570,56 +634,74 @@ class _MissionPracticeHeader extends StatelessWidget {
 }
 
 class _MissionBriefing extends StatelessWidget {
-  const _MissionBriefing({required this.definition, required this.phraseCount});
+  const _MissionBriefing({
+    required this.definition,
+    required this.phraseCount,
+    required this.unitIndex,
+    required this.onGuide,
+  });
 
   final MissionDefinition definition;
   final int phraseCount;
+  final int unitIndex;
+  final VoidCallback onGuide;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Card(
       color: colors.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(19),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: colors.onPrimaryContainer.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(definition.icon, color: colors.onPrimaryContainer),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          key: const Key('mission-briefing-disclosure'),
+          dense: true,
+          tilePadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+          leading: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: colors.onPrimaryContainer.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    definition.setting,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colors.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    definition.briefing,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: colors.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    '$phraseCount개 표현을 듣고 뜻을 확인한 뒤 직접 말합니다.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onPrimaryContainer.withValues(alpha: 0.78),
-                    ),
-                  ),
-                ],
+            child: Icon(definition.icon, color: colors.onPrimaryContainer),
+          ),
+          title: Text(
+            definition.briefing,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: colors.onPrimaryContainer,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          subtitle: Text(
+            '${definition.setting} · 표현 $phraseCount개',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colors.onPrimaryContainer.withValues(alpha: 0.78),
+            ),
+          ),
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                '표현을 듣고 뜻을 확인한 뒤 직접 말합니다. 막히면 단원 가이드에서 핵심 표현을 다시 볼 수 있어요.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.onPrimaryContainer.withValues(alpha: 0.85),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('mission-open-unit-guide'),
+                onPressed: onGuide,
+                icon: const Icon(Icons.menu_book_rounded),
+                label: Text('Unit ${unitIndex + 1} 가이드'),
               ),
             ),
           ],
@@ -635,7 +717,7 @@ class _PhrasePracticeCard extends StatelessWidget {
     required this.phraseIndex,
     required this.phraseCount,
     required this.meaningVisible,
-    required this.showReadingAids,
+    required this.readingAidsLabel,
     required this.onSpeak,
     required this.onReveal,
     required this.onNext,
@@ -645,7 +727,7 @@ class _PhrasePracticeCard extends StatelessWidget {
   final int phraseIndex;
   final int phraseCount;
   final bool meaningVisible;
-  final bool showReadingAids;
+  final String readingAidsLabel;
   final VoidCallback onSpeak;
   final VoidCallback onReveal;
   final VoidCallback onNext;
@@ -653,9 +735,6 @@ class _PhrasePracticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final reading = showReadingAids && phrase.readings.isNotEmpty
-        ? phrase.readings.map((item) => item.value).toSet().join(' · ')
-        : null;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -678,10 +757,16 @@ class _PhrasePracticeCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            LinearProgressIndicator(
-              value: (phraseIndex + 1) / phraseCount,
-              minHeight: 7,
-              borderRadius: BorderRadius.circular(7),
+            Semantics(
+              label: '실전 미션 표현 진행률',
+              value: '${phraseIndex + 1} / $phraseCount',
+              child: ExcludeSemantics(
+                child: LinearProgressIndicator(
+                  value: (phraseIndex + 1) / phraseCount,
+                  minHeight: 7,
+                  borderRadius: BorderRadius.circular(7),
+                ),
+              ),
             ),
             const SizedBox(height: 28),
             Text(
@@ -689,12 +774,14 @@ class _PhrasePracticeCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            if (reading != null) ...[
+            if (readingAidsLabel.isNotEmpty) ...[
               const SizedBox(height: 7),
               Text(
-                reading,
+                readingAidsLabel,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(height: 1.4),
               ),
             ],
             const SizedBox(height: 22),
@@ -841,65 +928,6 @@ class _MissionCompleteCard extends StatelessWidget {
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _MissionSupportActions extends StatelessWidget {
-  const _MissionSupportActions({
-    required this.unitIndex,
-    required this.onGuide,
-  });
-
-  final int unitIndex;
-  final VoidCallback onGuide;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(17),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final copy = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '막히면 단원으로 돌아가도 괜찮아요',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  '핵심 단어와 문장을 다시 살펴본 뒤 같은 미션을 반복하세요.',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            );
-            final button = TextButton.icon(
-              onPressed: onGuide,
-              icon: const Icon(Icons.menu_book_rounded),
-              label: Text('Unit ${unitIndex + 1} 가이드'),
-            );
-            if (constraints.maxWidth < 580) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  copy,
-                  const SizedBox(height: 10),
-                  Align(alignment: Alignment.centerLeft, child: button),
-                ],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: copy),
-                const SizedBox(width: 14),
-                button,
-              ],
-            );
-          },
         ),
       ),
     );

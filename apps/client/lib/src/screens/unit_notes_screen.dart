@@ -2,25 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/course_notes.dart';
 import '../domain/course_path.dart';
 import '../domain/language.dart';
+import '../services/tts_service.dart';
 import '../state/app_state.dart';
 
 class UnitNotesScreen extends ConsumerStatefulWidget {
-  const UnitNotesScreen({required this.unitIndex, super.key});
+  const UnitNotesScreen({required this.unitIndex, this.ttsService, super.key});
 
   final int unitIndex;
+  final TtsService? ttsService;
 
   @override
   ConsumerState<UnitNotesScreen> createState() => _UnitNotesScreenState();
 }
 
 class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
-  final _tts = FlutterTts();
+  late final TtsService _tts;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = widget.ttsService ?? TtsService.device();
+  }
 
   @override
   void dispose() {
@@ -37,11 +44,18 @@ class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
   }
 
   Future<void> _speak(String text, LanguageTag language) async {
-    await _tts.setLanguage(language.ttsLocale);
-    await _tts.setSpeechRate(
-      ref.read(appControllerProvider).preferences.ttsRate,
-    );
-    await _tts.speak(text);
+    final preferences = ref.read(appControllerProvider).preferences;
+    try {
+      await _tts.speak(
+        language: language,
+        text: text,
+        rate: preferences.ttsRate,
+        preferOfflineVoice: preferences.interaction.preferOfflineVoice,
+        repeatCount: preferences.interaction.audioRepeatCount,
+      );
+    } catch (_) {
+      // Reading notes remains usable when TTS is unavailable.
+    }
   }
 
   void _close(BuildContext context) {

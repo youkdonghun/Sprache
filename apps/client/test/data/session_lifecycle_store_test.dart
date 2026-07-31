@@ -13,22 +13,23 @@ void main() {
     final database = AppDatabase(NativeDatabase.memory());
     final store = DriftStudyStore(database);
     final startedAt = DateTime.utc(2026, 7, 28, 9);
-    final active = ActiveStudySession.started(
-      sessionId: 'root',
-      courseId: 'ko-en',
-      mode: StudyMode.mixed,
-      unitIndex: null,
-      itemIds: const ['a', 'b'],
-      startedAt: startedAt,
-    )
-        .pause(startedAt.add(const Duration(minutes: 1)))
-        .resume(startedAt.add(const Duration(minutes: 2)))
-        .derive(
-          newSessionId: 'branch',
-          nextOrigin: StudySessionOrigin.wrongAnswers,
-          selectedItemIds: const ['a'],
-          startedAt: startedAt.add(const Duration(minutes: 3)),
-        );
+    final active =
+        ActiveStudySession.started(
+              sessionId: 'root',
+              courseId: 'ko-en',
+              mode: StudyMode.mixed,
+              unitIndex: null,
+              itemIds: const ['a', 'b'],
+              startedAt: startedAt,
+            )
+            .pause(startedAt.add(const Duration(minutes: 1)))
+            .resume(startedAt.add(const Duration(minutes: 2)))
+            .derive(
+              newSessionId: 'branch',
+              nextOrigin: StudySessionOrigin.wrongAnswers,
+              selectedItemIds: const ['a'],
+              startedAt: startedAt.add(const Duration(minutes: 3)),
+            );
     final summary = StudySessionSummary(
       sessionId: active.sessionId,
       courseId: active.courseId,

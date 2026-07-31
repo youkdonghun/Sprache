@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 
@@ -6,10 +7,12 @@ import '../domain/content_validation.dart';
 import '../domain/language.dart';
 import '../domain/learning_item.dart';
 import '../domain/active_study_session.dart';
+import '../domain/local_storage.dart';
 import '../domain/progress.dart';
 import '../domain/study_history.dart';
 import '../domain/study_preferences.dart';
 import '../sync/pending_sync.dart';
+import '../sync/sync_policy.dart';
 import 'database/app_database.dart';
 
 class StoredProfile {
@@ -21,17 +24,25 @@ class StoredProfile {
     required this.badges,
     required this.driveConnected,
     required this.progress,
+    this.dailyXpByCourse = const {},
+    this.dailyXpByCourseAndReplica = const {},
+    this.replicaId = '',
+    this.xpByReplica = const {},
     this.lastStudyDate,
   });
 
-  factory StoredProfile.empty() => const StoredProfile(
+  factory StoredProfile.empty({String? replicaId}) => StoredProfile(
     selectedLanguage: LanguageTag.english,
     totalXp: 0,
     streakDays: 0,
     dailyXp: 0,
-    badges: {},
+    badges: const {},
     driveConnected: false,
-    progress: {},
+    progress: const {},
+    dailyXpByCourse: const {},
+    dailyXpByCourseAndReplica: const {},
+    replicaId: replicaId ?? _newReplicaId(),
+    xpByReplica: const {},
     lastStudyDate: null,
   );
 
@@ -39,6 +50,10 @@ class StoredProfile {
   final int totalXp;
   final int streakDays;
   final int dailyXp;
+  final Map<String, int> dailyXpByCourse;
+  final Map<String, Map<String, int>> dailyXpByCourseAndReplica;
+  final String replicaId;
+  final Map<String, int> xpByReplica;
   final Set<String> badges;
   final bool driveConnected;
   final Map<String, ProgressRecord> progress;
@@ -81,9 +96,24 @@ abstract interface class StudyStore {
 
   Future<void> savePreferences(StudyPreferences preferences);
 
+  Future<LocalStorageSettings> loadLocalStorageSettings();
+
+  Future<void> saveLocalStorageSettings(LocalStorageSettings settings);
+
+  Future<SyncDeviceSettings> loadSyncDeviceSettings();
+
+  Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings);
+
   Future<List<LearningItem>> loadCustomItems();
 
   Future<void> saveCustomItems(Iterable<LearningItem> items);
+
+  Future<void> replaceCustomContent({
+    required Iterable<LearningItem> items,
+    required Map<String, DateTime> tombstones,
+  });
+
+  Future<void> replaceProgress(Map<String, ProgressRecord> progress);
 
   Future<void> commitCustomItemImport({
     required Iterable<LearningItem> items,
@@ -102,6 +132,8 @@ abstract interface class StudyStore {
   Future<void> saveStudyEvent(StudyEventEntry event);
 
   Future<void> saveStudySession(StudySessionSummary session);
+
+  Future<void> replaceStudySessions(Iterable<StudySessionSummary> sessions);
 
   Future<List<StudySessionSummary>> loadRecentSessions({int limit = 20});
 
@@ -127,7 +159,10 @@ class MemoryStudyStore implements StudyStore {
     ActiveStudySession? activeStudySession,
     DateTime? activeStudySessionClearedAt,
     PendingSyncOperation? pendingSnapshotSync,
-  }) : _profile = profile ?? StoredProfile.empty(),
+    LocalStorageSettings? localStorageSettings,
+    SyncDeviceSettings? syncDeviceSettings,
+    String? replicaId,
+  }) : _profile = _profileWithReplicaId(profile, replicaId),
        _preferences = preferences ?? const StudyPreferences(),
        // The public constructor name is intentionally clearer for tests/callers.
        // ignore: prefer_initializing_formals
@@ -138,7 +173,10 @@ class MemoryStudyStore implements StudyStore {
        ),
        // The public constructor name is intentionally clearer for tests/callers.
        // ignore: prefer_initializing_formals
-       _pendingSnapshotSync = pendingSnapshotSync;
+       _pendingSnapshotSync = pendingSnapshotSync,
+       _localStorageSettings =
+           localStorageSettings ?? const LocalStorageSettings(),
+       _syncDeviceSettings = syncDeviceSettings ?? const SyncDeviceSettings();
 
   StoredProfile _profile;
   StudyPreferences _preferences;
@@ -149,6 +187,8 @@ class MemoryStudyStore implements StudyStore {
   final _sessions = <String, StudySessionSummary>{};
   final _imports = <String, ImportCommitRecord>{};
   PendingSyncOperation? _pendingSnapshotSync;
+  LocalStorageSettings _localStorageSettings;
+  SyncDeviceSettings _syncDeviceSettings;
 
   List<StudyEventEntry> get savedEvents => List.unmodifiable(_events.values);
 
@@ -188,6 +228,24 @@ class MemoryStudyStore implements StudyStore {
   }
 
   @override
+  Future<LocalStorageSettings> loadLocalStorageSettings() async =>
+      _localStorageSettings;
+
+  @override
+  Future<void> saveLocalStorageSettings(LocalStorageSettings settings) async {
+    _localStorageSettings = settings;
+  }
+
+  @override
+  Future<SyncDeviceSettings> loadSyncDeviceSettings() async =>
+      _syncDeviceSettings;
+
+  @override
+  Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings) async {
+    _syncDeviceSettings = settings;
+  }
+
+  @override
   Future<List<LearningItem>> loadCustomItems() async => _items.values.toList();
 
   @override
@@ -199,14 +257,64 @@ class MemoryStudyStore implements StudyStore {
   }
 
   @override
+  Future<void> replaceCustomContent({
+    required Iterable<LearningItem> items,
+    required Map<String, DateTime> tombstones,
+  }) async {
+    _items
+      ..clear()
+      ..addEntries(items.map((item) => MapEntry(item.id, item)));
+    _itemTombstones
+      ..clear()
+      ..addAll(tombstones);
+  }
+
+  @override
+  Future<void> replaceProgress(Map<String, ProgressRecord> progress) async {
+    _profile = StoredProfile(
+      selectedLanguage: _profile.selectedLanguage,
+      totalXp: _profile.totalXp,
+      streakDays: _profile.streakDays,
+      dailyXp: _profile.dailyXp,
+      badges: _profile.badges,
+      driveConnected: _profile.driveConnected,
+      progress: Map.unmodifiable(progress),
+      dailyXpByCourse: _profile.dailyXpByCourse,
+      dailyXpByCourseAndReplica: _profile.dailyXpByCourseAndReplica,
+      replicaId: _profile.replicaId,
+      xpByReplica: _profile.xpByReplica,
+      lastStudyDate: _profile.lastStudyDate,
+    );
+  }
+
+  @override
   Future<void> commitCustomItemImport({
     required Iterable<LearningItem> items,
     required Map<String, DateTime> tombstones,
     ImportCommitRecord? record,
   }) async {
-    await saveCustomItems(items);
-    await saveCustomItemTombstones(tombstones);
-    if (record != null) _imports[record.importId] = record;
+    final validatedItems = [
+      for (final item in items)
+        const LearningContentValidator().ensureValid(item),
+    ];
+    final nextItems = {..._items};
+    final nextTombstones = {...tombstones};
+    final nextImports = {..._imports};
+    for (final item in validatedItems) {
+      nextItems[item.id] = item;
+      nextTombstones.remove(item.id);
+    }
+    if (record != null) nextImports[record.importId] = record;
+
+    _items
+      ..clear()
+      ..addAll(nextItems);
+    _itemTombstones
+      ..clear()
+      ..addAll(nextTombstones);
+    _imports
+      ..clear()
+      ..addAll(nextImports);
   }
 
   @override
@@ -244,6 +352,17 @@ class MemoryStudyStore implements StudyStore {
   @override
   Future<void> saveStudySession(StudySessionSummary session) async {
     _sessions[session.sessionId] = session;
+  }
+
+  @override
+  Future<void> replaceStudySessions(
+    Iterable<StudySessionSummary> sessions,
+  ) async {
+    _sessions
+      ..clear()
+      ..addEntries(
+        sessions.map((session) => MapEntry(session.sessionId, session)),
+      );
   }
 
   @override
@@ -296,6 +415,30 @@ class MemoryStudyStore implements StudyStore {
   }
 }
 
+StoredProfile _profileWithReplicaId(
+  StoredProfile? profile,
+  String? requestedReplicaId,
+) {
+  if (profile == null) {
+    return StoredProfile.empty(replicaId: requestedReplicaId);
+  }
+  if (_safeReplicaId(profile.replicaId) != null) return profile;
+  return StoredProfile(
+    selectedLanguage: profile.selectedLanguage,
+    totalXp: profile.totalXp,
+    streakDays: profile.streakDays,
+    dailyXp: profile.dailyXp,
+    badges: profile.badges,
+    driveConnected: profile.driveConnected,
+    progress: profile.progress,
+    dailyXpByCourse: profile.dailyXpByCourse,
+    dailyXpByCourseAndReplica: profile.dailyXpByCourseAndReplica,
+    replicaId: _safeReplicaId(requestedReplicaId) ?? _newReplicaId(),
+    xpByReplica: profile.xpByReplica,
+    lastStudyDate: profile.lastStudyDate,
+  );
+}
+
 class DriftStudyStore implements StudyStore {
   DriftStudyStore(this.database);
 
@@ -321,6 +464,12 @@ class DriftStudyStore implements StudyStore {
       totalXp: profileJson['totalXp'] as int? ?? 0,
       streakDays: profileJson['streakDays'] as int? ?? 0,
       dailyXp: profileJson['dailyXp'] as int? ?? 0,
+      dailyXpByCourse: _safeXpMap(profileJson['dailyXpByCourse']),
+      dailyXpByCourseAndReplica: _safeDailyXpLedger(
+        profileJson['dailyXpByCourseAndReplica'],
+      ),
+      replicaId: _safeReplicaId(profileJson['replicaId']) ?? _newReplicaId(),
+      xpByReplica: _safeXpLedger(profileJson['xpByReplica']),
       badges: ((profileJson['badges'] as List<Object?>?) ?? const [])
           .whereType<String>()
           .toSet(),
@@ -362,6 +511,31 @@ class DriftStudyStore implements StudyStore {
                 'totalXp': profile.totalXp,
                 'streakDays': profile.streakDays,
                 'dailyXp': profile.dailyXp,
+                'dailyXpByCourse': {
+                  for (final entry
+                      in (profile.dailyXpByCourse.entries.toList()
+                        ..sort((left, right) => left.key.compareTo(right.key))))
+                    entry.key: entry.value,
+                },
+                'dailyXpByCourseAndReplica': {
+                  for (final courseEntry
+                      in (profile.dailyXpByCourseAndReplica.entries.toList()
+                        ..sort((left, right) => left.key.compareTo(right.key))))
+                    courseEntry.key: {
+                      for (final replicaEntry
+                          in (courseEntry.value.entries.toList()..sort(
+                            (left, right) => left.key.compareTo(right.key),
+                          )))
+                        replicaEntry.key: replicaEntry.value,
+                    },
+                },
+                'replicaId': profile.replicaId,
+                'xpByReplica': {
+                  for (final entry
+                      in (profile.xpByReplica.entries.toList()
+                        ..sort((left, right) => left.key.compareTo(right.key))))
+                    entry.key: entry.value,
+                },
                 'badges': profile.badges.toList()..sort(),
                 'driveConnected': profile.driveConnected,
                 'lastStudyDate': profile.lastStudyDate?.toIso8601String(),
@@ -374,6 +548,35 @@ class DriftStudyStore implements StudyStore {
         await database
             .into(database.progressRows)
             .insertOnConflictUpdate(
+              ProgressRowsCompanion.insert(
+                courseId: profile.selectedLanguage.courseId,
+                itemId: record.itemId,
+                status: record.status.name,
+                correctCount: Value(record.correctCount),
+                wrongCount: Value(record.wrongCount),
+                lapseCount: Value(record.lapseCount),
+                currentIntervalDays: Value(record.currentIntervalDays),
+                nextReviewAt: Value(record.nextReviewAt),
+                lastStudiedAt: Value(record.lastStudiedAt),
+                lastResult: Value(record.lastResult?.name),
+                deviceId: 'local-device',
+                updatedAt: now,
+              ),
+            );
+      }
+    });
+  }
+
+  @override
+  Future<void> replaceProgress(Map<String, ProgressRecord> progress) async {
+    final profile = await loadProfile();
+    final now = DateTime.now().toUtc();
+    await database.transaction(() async {
+      await database.delete(database.progressRows).go();
+      for (final record in progress.values) {
+        await database
+            .into(database.progressRows)
+            .insert(
               ProgressRowsCompanion.insert(
                 courseId: profile.selectedLanguage.courseId,
                 itemId: record.itemId,
@@ -425,6 +628,68 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
+  Future<LocalStorageSettings> loadLocalStorageSettings() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('local_storage_settings')))
+            .getSingleOrNull();
+    if (setting == null) return const LocalStorageSettings();
+    try {
+      return LocalStorageSettings.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const LocalStorageSettings();
+    }
+  }
+
+  @override
+  Future<void> saveLocalStorageSettings(LocalStorageSettings settings) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'local_storage_settings',
+            valueJson: jsonEncode(settings.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<SyncDeviceSettings> loadSyncDeviceSettings() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('sync_device_settings')))
+            .getSingleOrNull();
+    if (setting == null) return const SyncDeviceSettings();
+    try {
+      return SyncDeviceSettings.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const SyncDeviceSettings();
+    }
+  }
+
+  @override
+  Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'sync_device_settings',
+            valueJson: jsonEncode(settings.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
   Future<List<LearningItem>> loadCustomItems() async {
     final rows = await (database.select(
       database.contentItems,
@@ -458,6 +723,7 @@ class DriftStudyStore implements StudyStore {
               acceptedAnswers:
                   (jsonDecode(row.acceptedAnswersJson) as List<Object?>)
                       .cast<String>(),
+              subjectId: sourceJson['subjectId'] as String?,
               readings: readingsJson
                   .cast<Map<String, Object?>>()
                   .map(
@@ -554,9 +820,13 @@ class DriftStudyStore implements StudyStore {
 
   @override
   Future<void> saveCustomItems(Iterable<LearningItem> items) async {
+    final validatedItems = [
+      for (final item in items)
+        const LearningContentValidator().ensureValid(item),
+    ];
     final now = DateTime.now().toUtc();
     await database.batch((batch) {
-      for (final item in items) {
+      for (final item in validatedItems) {
         batch.insert(
           database.contentItems,
           ContentItemsCompanion.insert(
@@ -581,6 +851,7 @@ class DriftStudyStore implements StudyStore {
               'partOfSpeech': item.partOfSpeech?.name,
               'example': item.example,
               'exampleTranslation': item.exampleTranslation,
+              'subjectId': item.effectiveSubjectId,
               'capabilities': item.capabilities
                   .map((value) => value.name)
                   .toList(),
@@ -594,13 +865,29 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
+  Future<void> replaceCustomContent({
+    required Iterable<LearningItem> items,
+    required Map<String, DateTime> tombstones,
+  }) async {
+    await database.transaction(() async {
+      await database.delete(database.contentItems).go();
+      await saveCustomItems(items);
+      await saveCustomItemTombstones(tombstones);
+    });
+  }
+
+  @override
   Future<void> commitCustomItemImport({
     required Iterable<LearningItem> items,
     required Map<String, DateTime> tombstones,
     ImportCommitRecord? record,
   }) async {
+    final validatedItems = [
+      for (final item in items)
+        const LearningContentValidator().ensureValid(item),
+    ];
     await database.transaction(() async {
-      await saveCustomItems(items);
+      await saveCustomItems(validatedItems);
       await saveCustomItemTombstones(tombstones);
       if (record != null) {
         await database
@@ -683,6 +970,18 @@ class DriftStudyStore implements StudyStore {
             metadataJson: Value(jsonEncode(session.toJson())),
           ),
         );
+  }
+
+  @override
+  Future<void> replaceStudySessions(
+    Iterable<StudySessionSummary> sessions,
+  ) async {
+    await database.transaction(() async {
+      await database.delete(database.studySessions).go();
+      for (final session in sessions) {
+        await saveStudySession(session);
+      }
+    });
   }
 
   @override
@@ -867,4 +1166,78 @@ PendingSyncsCompanion _pendingSyncCompanion(PendingSyncOperation operation) {
     nextAttemptAt: operation.nextAttemptAt.toUtc(),
     createdAt: operation.createdAt.toUtc(),
   );
+}
+
+Map<String, int> _safeXpMap(Object? raw, {int maximumEntries = 200}) {
+  if (raw is! Map) return const {};
+  final values = <String, int>{};
+  for (final entry in raw.entries.take(maximumEntries)) {
+    final key = entry.key;
+    final value = entry.value;
+    if (key is! String ||
+        key.trim().isEmpty ||
+        key.runes.length > 160 ||
+        value is! num ||
+        !value.isFinite ||
+        value != value.round()) {
+      continue;
+    }
+    values[key] = value.toInt().clamp(0, 1000000000);
+  }
+  return Map.unmodifiable(values);
+}
+
+Map<String, int> _safeXpLedger(Object? raw) {
+  if (raw is! Map) return const {};
+  final values = <String, int>{};
+  for (final entry in raw.entries.take(500)) {
+    final key = _safeReplicaId(entry.key);
+    final value = entry.value;
+    if (key == null ||
+        value is! num ||
+        !value.isFinite ||
+        value != value.round()) {
+      continue;
+    }
+    values[key] = value.toInt().clamp(0, 1000000000);
+  }
+  return Map.unmodifiable(values);
+}
+
+Map<String, Map<String, int>> _safeDailyXpLedger(Object? raw) {
+  if (raw is! Map) return const {};
+  final values = <String, Map<String, int>>{};
+  for (final entry in raw.entries.take(200)) {
+    final courseId = entry.key;
+    if (courseId is! String ||
+        courseId.trim().isEmpty ||
+        courseId.runes.length > 160) {
+      continue;
+    }
+    final ledger = _safeXpLedger(entry.value);
+    if (ledger.isNotEmpty) values[courseId] = ledger;
+  }
+  return Map.unmodifiable(values);
+}
+
+String? _safeReplicaId(Object? raw) {
+  if (raw is! String) return null;
+  final value = raw.trim();
+  if (value.isEmpty || value.length > 80) return null;
+  final valid = value.codeUnits.every(
+    (code) =>
+        (code >= 48 && code <= 57) ||
+        (code >= 65 && code <= 90) ||
+        (code >= 97 && code <= 122) ||
+        code == 45 ||
+        code == 95,
+  );
+  return valid ? value : null;
+}
+
+String _newReplicaId() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  final encoded = base64UrlEncode(bytes).replaceAll('=', '');
+  return 'replica-$encoded';
 }

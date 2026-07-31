@@ -2,30 +2,69 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 
 import '../domain/active_study_session.dart';
+import '../domain/accessibility_input_profile.dart';
 import '../domain/answer_normalizer.dart';
+import '../domain/content_management.dart';
+import '../domain/course_path.dart';
 import '../domain/language.dart';
 import '../domain/learning_item.dart';
+import '../domain/progress.dart';
+import '../domain/quiz_support.dart';
+import '../domain/quiz_session_support.dart';
+import '../domain/session_enhancements.dart';
 import '../domain/study_history.dart';
+import '../domain/study_interaction_preferences.dart';
 import '../domain/study_preferences.dart';
+import '../domain/study_subject.dart';
+import '../services/app_feedback_service.dart';
 import '../services/app_clock.dart';
+import '../services/tts_service.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
+import '../state/local_storage_state.dart';
+import '../theme/study_accessibility_theme.dart';
 
 enum _ExerciseMode { recognition, production, cloze, sentenceOrder, listening }
 
-enum _SessionManagementAction { restart, wrongAnswers, remaining, finish }
+enum _SessionManagementAction {
+  options,
+  matchSprint,
+  restart,
+  wrongAnswers,
+  remaining,
+  finish,
+}
+
+enum _ExistingSessionAction { cancel, resume, replace }
+
+const _memoryHintField = 'memoryHint';
+const _baseContentCorrectionField = 'quizContent';
+
+final studyTtsServiceProvider = Provider<TtsService>(
+  (ref) => TtsService.device(),
+);
+
+final studyFeedbackServiceProvider = Provider<AppFeedbackService>(
+  (ref) => AppFeedbackService(
+    readPreferences: () =>
+        ref.read(appControllerProvider).preferences.experience,
+  ),
+);
 
 class StudyScreen extends ConsumerStatefulWidget {
   const StudyScreen({
     this.mode = StudyMode.mixed,
     this.unitIndex,
+    this.itemLimit,
+    this.queuePriority = StudyQueuePriority.dueFirst,
+    this.historyFilter = StudyHistoryFilter.all,
     this.resume = false,
     this.customPlan = false,
     super.key,
@@ -33,6 +72,9 @@ class StudyScreen extends ConsumerStatefulWidget {
 
   final StudyMode mode;
   final int? unitIndex;
+  final int? itemLimit;
+  final StudyQueuePriority queuePriority;
+  final StudyHistoryFilter historyFilter;
   final bool resume;
   final bool customPlan;
 
@@ -44,11 +86,20 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   final _answerController = TextEditingController();
   final _answerFocus = FocusNode();
   final _normalizer = const AnswerNormalizer();
+  final _choiceBuilder = const QuizChoiceBuilder();
+  final _hintBuilder = const QuizHintBuilder();
+  final _repairAdvisor = const QuizRepairAdvisor();
   final _uuid = const Uuid();
   DateTime get _now => ref.read(appClockProvider)();
-  final _tts = FlutterTts();
+  late final TtsService _baseTtsService;
+  Timer? _autoAdvanceTimer;
+  var _questionGeneration = 0;
+  var _autoPlayedQuestionGeneration = -1;
+  var _speechGeneration = 0;
+  var _subjectChangeHandled = false;
 
   late List<LearningItem> _queue;
+  late String _subjectIdAtStart;
   late int _plannedCount;
   late DateTime _sessionStartedAt;
   late String _sessionId;
@@ -58,12 +109,26 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   var _sessionCorrect = 0;
   var _sessionWrong = 0;
   var _sessionXp = 0;
+  var _combo = 0;
+  var _bestCombo = 0;
   var _completed = false;
   bool? _correct;
   String? _selectedChoice;
+  String? _submittedAnswer;
+  var _hintLevel = 0;
+  var _speechPlayCount = 0;
   var _remainingTokens = <String>[];
   var _orderedTokens = <String>[];
   final _wrongItemIds = <String>{};
+  final _finalCorrectItemIds = <String>{};
+  final _failureCountByItemId = <String, int>{};
+  final _attemptReviews = <QuizAttemptReview>[];
+  late StudyAnswerDirection _sessionAnswerDirection;
+  var _gradingStrength = StudyGradingStrictness.balanced;
+  var _recordProgress = true;
+  var _backlogRecovery = false;
+  var _inputProfile = PracticeInputProfile.standard;
+  _PendingQuizResponse? _pendingResponse;
 
   LearningItem get _item => _queue[_index];
   String get _returnRoute => widget.customPlan
@@ -83,6 +148,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       case StudyMode.sentenceOrder:
         return _ExerciseMode.sentenceOrder;
       case StudyMode.listening:
+      case StudyMode.pronunciation:
         return _ExerciseMode.listening;
       case StudyMode.mixed:
       case StudyMode.review:
@@ -92,6 +158,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       case StudyMode.words:
       case StudyMode.sentences:
         break;
+    }
+    if (_sessionAnswerDirection != StudyAnswerDirection.mixed) {
+      return _ExerciseMode.recognition;
     }
     final modes = <_ExerciseMode>[
       _ExerciseMode.recognition,
@@ -108,13 +177,22 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     return modes[_index % modes.length];
   }
 
+  bool get _recognitionIsReversed =>
+      _mode == _ExerciseMode.recognition &&
+      widget.mode != StudyMode.meaning &&
+      _sessionAnswerDirection == StudyAnswerDirection.meaningToLearning;
+
   bool get _isChoiceMode =>
       _mode == _ExerciseMode.recognition || _mode == _ExerciseMode.cloze;
+
+  bool get _isTextInputMode =>
+      _mode == _ExerciseMode.production || _mode == _ExerciseMode.listening;
 
   String get _clozeAnswer =>
       _item.sentenceTokens[_item.sentenceTokens.length ~/ 2];
 
   String get _expectedAnswer => switch (_mode) {
+    _ExerciseMode.recognition when _recognitionIsReversed => _item.text,
     _ExerciseMode.recognition => _item.primaryTranslation,
     _ExerciseMode.production => _item.text,
     _ExerciseMode.cloze => _clozeAnswer,
@@ -125,7 +203,60 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   @override
   void initState() {
     super.initState();
+    _baseTtsService = ref.read(studyTtsServiceProvider);
+    _sessionAnswerDirection = ref
+        .read(appControllerProvider)
+        .preferences
+        .interaction
+        .answerDirection;
     final controller = ref.read(appControllerProvider.notifier);
+    if (widget.customPlan) {
+      final plan = controller.activeSessionPlan;
+      _sessionAnswerDirection =
+          plan.answerDirectionOverride ?? _sessionAnswerDirection;
+      _gradingStrength = plan.gradingStrictness;
+      _recordProgress = plan.recordProgress;
+      _backlogRecovery = plan.backlogRecovery.enabled;
+    } else if (widget.resume) {
+      _backlogRecovery = controller.activeSessionPlan.backlogRecovery.enabled;
+    }
+    if (!widget.mode.allowsAnswerDirectionOverride) {
+      _sessionAnswerDirection = widget.mode.effectiveFixedAnswerDirection;
+    }
+    final persistedSession = ref.read(appControllerProvider).activeStudySession;
+    if (widget.resume &&
+        persistedSession != null &&
+        persistedSession.courseId !=
+            ref.read(appControllerProvider).activeCourseId) {
+      StudySubject? sessionSubject;
+      for (final subject in controller.availableSubjects) {
+        if (subject.courseId == persistedSession.courseId) {
+          sessionSubject = subject;
+          break;
+        }
+      }
+      if (sessionSubject != null) {
+        controller.selectSubject(sessionSubject.id);
+      }
+    }
+    _subjectIdAtStart = ref.read(appControllerProvider).activeSubjectId;
+    if (!widget.resume && persistedSession != null) {
+      _queue = const [];
+      _plannedCount = persistedSession.itemIds.length;
+      _sessionStartedAt = persistedSession.startedAt;
+      _sessionId = persistedSession.sessionId;
+      _activeSession = persistedSession;
+      _sessionCorrect = persistedSession.correctCount;
+      _sessionWrong = persistedSession.wrongCount;
+      _sessionXp = persistedSession.earnedXp;
+      _wrongItemIds.addAll(persistedSession.wrongItemIds);
+      _finalCorrectItemIds.addAll(persistedSession.finalCorrectItemIds);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showExistingSessionChoice(persistedSession);
+      });
+      return;
+    }
     final active = widget.resume
         ? ref.read(appControllerProvider).activeStudySession
         : null;
@@ -143,13 +274,16 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _sessionWrong = active.wrongCount;
       _sessionXp = active.earnedXp;
       _wrongItemIds.addAll(active.wrongItemIds);
+      _finalCorrectItemIds.addAll(active.finalCorrectItemIds);
       if (_queue.isNotEmpty) {
         if (active.currentIndex >= _queue.length) {
           _index = _queue.length - 1;
           _completed = true;
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
-            controller.clearActiveStudySession();
+            controller.clearActiveStudySession(
+              expectedSessionId: active.sessionId,
+            );
             unawaited(_saveSession());
           });
         } else {
@@ -158,7 +292,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           if (active.phase == ActiveStudySessionPhase.paused) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
-              final resumed = controller.resumeActiveStudySession(_now);
+              final resumed = controller.resumeActiveStudySession(
+                _now,
+                expectedSessionId: active.sessionId,
+              );
               if (resumed != null && mounted) {
                 setState(() => _activeSession = resumed);
               }
@@ -167,7 +304,11 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         }
       } else {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) controller.clearActiveStudySession();
+          if (mounted) {
+            controller.clearActiveStudySession(
+              expectedSessionId: active.sessionId,
+            );
+          }
         });
       }
     } else {
@@ -176,12 +317,11 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           _now,
           mode: widget.mode,
           unitIndex: widget.unitIndex,
+          itemLimit: widget.itemLimit,
+          queuePriority: widget.queuePriority,
+          historyFilter: widget.historyFilter,
           sessionPlan: widget.customPlan
-              ? ref
-                    .read(appControllerProvider)
-                    .preferences
-                    .sessionPlan
-                    .copyWith(mode: widget.mode)
+              ? controller.activeSessionPlan.copyWith(mode: widget.mode)
               : null,
         ),
         growable: true,
@@ -193,7 +333,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
             ? controller.selectedItems
             : controller.itemsForUnit(widget.unitIndex!);
         _queue = _queue
-            .take(ref.read(appControllerProvider).preferences.sessionItemLimit)
+            .take(
+              widget.itemLimit ??
+                  ref.read(appControllerProvider).preferences.sessionItemLimit,
+            )
             .toList(growable: true);
       }
       _plannedCount = _queue.length;
@@ -202,7 +345,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       if (_queue.isNotEmpty) {
         _activeSession = ActiveStudySession.started(
           sessionId: _sessionId,
-          courseId: ref.read(appControllerProvider).selectedLanguage.courseId,
+          courseId: ref.read(appControllerProvider).activeCourseId,
           mode: widget.mode,
           unitIndex: widget.unitIndex,
           itemIds: _queue.map((item) => item.id).toList(growable: false),
@@ -220,31 +363,170 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
             unitIndex: widget.unitIndex,
             itemIds: initialItemIds,
             startedAt: _sessionStartedAt,
+            courseId: _activeSession.courseId,
           );
         });
       }
     }
-    if (_queue.isNotEmpty &&
-        !_completed &&
-        widget.mode == StudyMode.listening) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _speak());
+    ref.listenManual<StudyInteractionPreferences>(
+      appControllerProvider.select((state) => state.preferences.interaction),
+      (previous, next) {
+        if (!next.autoPlayQuestionAudio) return;
+        _scheduleQuestionAudio();
+      },
+    );
+    ref.listenManual<String>(
+      appControllerProvider.select((state) => state.activeSubjectId),
+      (previous, next) {
+        if (next != _subjectIdAtStart) {
+          _handleSubjectChange();
+        }
+      },
+    );
+  }
+
+  void _handleSubjectChange() {
+    if (_subjectChangeHandled || _completed || _queue.isEmpty) return;
+    _subjectChangeHandled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _autoAdvanceTimer?.cancel();
+      _speechGeneration++;
+      unawaited(_baseTtsService.stop());
+      _commitPendingResponse();
+      final nextIndex = (_correct == null ? _index : _index + 1).clamp(
+        0,
+        _queue.length,
+      );
+      ref
+          .read(appControllerProvider.notifier)
+          .pauseActiveStudySession(
+            _now,
+            itemIds: _queue.map((item) => item.id).toList(growable: false),
+            currentIndex: nextIndex,
+            correctCount: _sessionCorrect,
+            wrongCount: _sessionWrong,
+            earnedXp: _sessionXp,
+            wrongItemIds: _wrongItemIds,
+            finalCorrectItemIds: _finalCorrectItemIds,
+            expectedSessionId: _sessionId,
+          );
+      context.go('/learn');
+    });
+  }
+
+  Future<void> _showExistingSessionChoice(ActiveStudySession existing) async {
+    final controller = ref.read(appControllerProvider.notifier);
+    final subject = controller.availableSubjects
+        .cast<StudySubject?>()
+        .firstWhere(
+          (candidate) => candidate?.courseId == existing.courseId,
+          orElse: () => null,
+        );
+    final progress = '${existing.completedCount}/${existing.itemIds.length}문제';
+    final action = await showDialog<_ExistingSessionAction>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('active-session-conflict-dialog'),
+        icon: const Icon(Icons.restore_rounded),
+        title: const Text('진행 중인 학습이 있어요'),
+        content: Text(
+          '${subject?.name ?? existing.courseId} · ${existing.mode.label} · $progress\n'
+          '새 학습을 시작하기 전에 기존 학습을 이어갈지 종료할지 선택해 주세요.',
+        ),
+        actions: [
+          TextButton(
+            key: const Key('cancel-new-session'),
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_ExistingSessionAction.cancel),
+            child: const Text('돌아가기'),
+          ),
+          OutlinedButton(
+            key: const Key('resume-existing-session'),
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_ExistingSessionAction.resume),
+            child: const Text('기존 학습 이어가기'),
+          ),
+          FilledButton(
+            key: const Key('replace-active-session'),
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(_ExistingSessionAction.replace),
+            child: const Text('기존 종료 후 새로 시작'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    switch (action) {
+      case _ExistingSessionAction.resume:
+        if (subject != null) controller.selectSubject(subject.id);
+        context.go('/study?resume=true');
+        return;
+      case _ExistingSessionAction.replace:
+        controller.clearActiveStudySession(
+          expectedSessionId: existing.sessionId,
+        );
+        final parameters = <String, String>{
+          'mode': widget.mode.name,
+          if (widget.unitIndex case final unit?) 'unit': '$unit',
+          if (widget.itemLimit case final limit?) 'limit': '$limit',
+          if (widget.queuePriority != StudyQueuePriority.dueFirst)
+            'queuePriority': widget.queuePriority.name,
+          if (widget.historyFilter != StudyHistoryFilter.all)
+            'historyFilter': widget.historyFilter.name,
+          if (widget.customPlan) 'custom': 'true',
+          'replace': '${_now.microsecondsSinceEpoch}',
+        };
+        context.go(Uri(path: '/study', queryParameters: parameters).toString());
+        return;
+      case _ExistingSessionAction.cancel:
+      case null:
+        context.go(_returnRoute);
+        return;
     }
   }
 
   @override
   void dispose() {
+    _autoAdvanceTimer?.cancel();
+    _questionGeneration++;
+    _speechGeneration++;
     _answerController.dispose();
     _answerFocus.dispose();
-    unawaited(_tts.stop());
+    unawaited(_baseTtsService.stop());
     super.dispose();
   }
 
   void _prepareExercise() {
+    _autoAdvanceTimer?.cancel();
+    _questionGeneration++;
+    _speechGeneration++;
+    unawaited(_baseTtsService.stop());
     _selectedChoice = null;
+    _submittedAnswer = null;
+    _hintLevel = 0;
+    _speechPlayCount = 0;
     _answerController.clear();
     _orderedTokens = [];
     _remainingTokens = [..._item.sentenceTokens];
     _remainingTokens.shuffle(Random(_stableSeed(_item.id)));
+    _scheduleQuestionAudio();
+  }
+
+  void _scheduleQuestionAudio() {
+    final generation = _questionGeneration;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted ||
+          generation != _questionGeneration ||
+          generation == _autoPlayedQuestionGeneration ||
+          _correct != null ||
+          !_interaction.autoPlayQuestionAudio) {
+        return;
+      }
+      _autoPlayedQuestionGeneration = generation;
+      unawaited(_speakQuestion());
+    });
   }
 
   int _stableSeed(String value) {
@@ -255,40 +537,220 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     return hash;
   }
 
-  Future<void> _speak() async {
-    await _tts.setLanguage(_item.learningLanguage.ttsLocale);
-    await _tts.setSpeechRate(
-      ref.read(appControllerProvider).preferences.ttsRate,
+  StudyInteractionPreferences get _interaction =>
+      ref.read(appControllerProvider).preferences.interaction;
+
+  Future<void> _speak({bool slow = false}) {
+    return _speakText(
+      language: _item.learningLanguage,
+      text: _item.text,
+      slow: slow,
     );
-    await _tts.speak(_item.text);
+  }
+
+  Future<void> _speakQuestion() {
+    final speech = _questionSpeech;
+    return _speakText(language: speech.language, text: speech.text);
+  }
+
+  ({LanguageTag language, String text}) get _questionSpeech {
+    return switch (_mode) {
+      _ExerciseMode.recognition when _recognitionIsReversed => (
+        language: LanguageTag.korean,
+        text: _item.primaryTranslation,
+      ),
+      _ExerciseMode.production || _ExerciseMode.sentenceOrder => (
+        language: LanguageTag.korean,
+        text: _item.primaryTranslation,
+      ),
+      _ExerciseMode.recognition ||
+      _ExerciseMode.cloze ||
+      _ExerciseMode.listening => (
+        language: _item.learningLanguage,
+        text: _item.text,
+      ),
+    };
+  }
+
+  Future<void> _speakText({
+    required LanguageTag language,
+    required String text,
+    bool slow = false,
+  }) async {
+    final request = ++_speechGeneration;
+    final preferredRate = ref.read(appControllerProvider).preferences.ttsRate;
+    final rate = slow
+        ? (preferredRate * 0.72).clamp(0.2, 0.7).toDouble()
+        : preferredRate;
+    final repeatCount = _interaction.audioRepeatCount.clamp(1, 3);
+    await _baseTtsService.speak(
+      language: language,
+      text: text,
+      rate: rate,
+      preferOfflineVoice: _interaction.preferOfflineVoice,
+      repeatCount: repeatCount,
+    );
+    if (!mounted || request != _speechGeneration) return;
+    setState(() => _speechPlayCount += repeatCount);
   }
 
   String _newSessionId() => 'session-${_uuid.v4()}';
 
   List<String> _choices() {
     final controller = ref.read(appControllerProvider.notifier);
+    final candidates = controller.selectedItems;
     if (_mode == _ExerciseMode.cloze) {
-      final alternatives = controller.selectedItems
-          .where((candidate) => candidate.id != _item.id)
-          .expand((candidate) => candidate.sentenceTokens)
-          .where((token) => token != _clozeAnswer)
-          .take(12)
-          .toList();
-      return <String>{_clozeAnswer, ...alternatives}.take(4).toList()..sort();
+      return _applyChoiceOrder(
+        _choiceBuilder.clozeChoices(
+          target: _item,
+          answer: _clozeAnswer,
+          candidates: candidates,
+        ),
+      );
     }
-    final alternatives = controller.selectedItems
-        .where((candidate) => candidate.id != _item.id)
-        .map((candidate) => candidate.primaryTranslation)
-        .take(3)
-        .toList();
-    return <String>{_item.primaryTranslation, ...alternatives}.toList()..sort();
+    if (_recognitionIsReversed) {
+      return _reverseRecognitionChoices(candidates);
+    }
+    return _applyChoiceOrder(
+      _choiceBuilder.recognitionChoices(target: _item, candidates: candidates),
+    );
+  }
+
+  List<String> _reverseRecognitionChoices(Iterable<LearningItem> candidates) {
+    final alternatives =
+        candidates
+            .where(
+              (candidate) =>
+                  candidate.id != _item.id &&
+                  candidate.learningLanguage == _item.learningLanguage &&
+                  candidate.kind == _item.kind &&
+                  candidate.text.trim().isNotEmpty,
+            )
+            .toList()
+          ..sort((left, right) => left.id.compareTo(right.id));
+    final byNormalized = <String, String>{
+      _normalizedChoice(_item.text): _item.text,
+    };
+    for (final candidate in alternatives) {
+      if (byNormalized.length >= 4) break;
+      byNormalized.putIfAbsent(
+        _normalizedChoice(candidate.text),
+        () => candidate.text,
+      );
+    }
+    final choices = byNormalized.values.toList(growable: false);
+    if (_interaction.shuffleChoices) {
+      return [...choices]..sort(
+        (left, right) => _stableSeed(
+          '${_item.id}|choice|$left',
+        ).compareTo(_stableSeed('${_item.id}|choice|$right')),
+      );
+    }
+    return choices;
+  }
+
+  List<String> _applyChoiceOrder(List<String> choices) {
+    if (_interaction.shuffleChoices) return choices;
+    final answer = _expectedAnswer;
+    final normalizedAnswer = _normalizedChoice(answer);
+    return [
+      answer,
+      for (final choice in choices)
+        if (_normalizedChoice(choice) != normalizedAnswer) choice,
+    ];
+  }
+
+  QuizHintMode get _quizHintMode => switch (_mode) {
+    _ExerciseMode.recognition => QuizHintMode.recognition,
+    _ExerciseMode.production => QuizHintMode.production,
+    _ExerciseMode.cloze => QuizHintMode.cloze,
+    _ExerciseMode.sentenceOrder => QuizHintMode.sentenceOrder,
+    _ExerciseMode.listening => QuizHintMode.listening,
+  };
+
+  String get _hintText {
+    final generated = _hintBuilder.build(
+      item: _item,
+      mode: _quizHintMode,
+      level: _hintLevel,
+      clozeAnswer: _mode == _ExerciseMode.cloze ? _clozeAnswer : null,
+      orderedTokenCount: _orderedTokens.length,
+      readingAidsLabel: _item.readingAidsLabelFor(
+        showKoreanReading: _interaction.showKoreanReading,
+        showNativeReading: _interaction.showNativeReading,
+      ),
+    );
+    final memoryHint = _correctionFor(_item.id, _memoryHintField);
+    final value = memoryHint?.proposedValue?.trim();
+    if (value == null || value.isEmpty) return generated;
+    return '$generated\n내 암기 단서: $value';
+  }
+
+  ContentCorrection? _correctionFor(String itemId, String field) {
+    final corrections = ref
+        .read(appControllerProvider)
+        .preferences
+        .contentCorrections;
+    ContentCorrection? latest;
+    for (final correction in corrections) {
+      if (correction.itemId != itemId ||
+          correction.field != field ||
+          correction.resolved) {
+        continue;
+      }
+      if (latest == null || correction.updatedAt.isAfter(latest.updatedAt)) {
+        latest = correction;
+      }
+    }
+    return latest;
+  }
+
+  void _showHint() {
+    if (_correct != null || _hintLevel >= 2) return;
+    setState(() => _hintLevel++);
+  }
+
+  void _resetOrderedTokens() {
+    if (_correct != null || _mode != _ExerciseMode.sentenceOrder) return;
+    setState(() {
+      _orderedTokens = [];
+      _remainingTokens = [..._item.sentenceTokens]
+        ..shuffle(Random(_stableSeed(_item.id)));
+    });
   }
 
   void _selectChoiceAt(int index) {
     if (_correct != null || !_isChoiceMode) return;
     final choices = _choices();
     if (index >= choices.length) return;
-    setState(() => _selectedChoice = choices[index]);
+    _selectChoice(choices[index]);
+  }
+
+  void _moveChoiceSelection(int delta) {
+    if (_correct != null || !_isChoiceMode) return;
+    final choices = _choices();
+    if (choices.isEmpty) return;
+    final currentIndex = _selectedChoice == null
+        ? (delta > 0 ? -1 : 0)
+        : choices.indexOf(_selectedChoice!);
+    final nextIndex = (currentIndex + delta) % choices.length;
+    _selectChoice(choices[nextIndex]);
+  }
+
+  void _selectChoice(String choice) {
+    if (_correct != null || _selectedChoice == choice) return;
+    setState(() => _selectedChoice = choice);
+    unawaited(ref.read(studyFeedbackServiceProvider).selection());
+  }
+
+  void _appendTokenFromShortcut(int index) {
+    if (_mode != _ExerciseMode.sentenceOrder) return;
+    _appendToken(index);
+  }
+
+  void _removeLastOrderedToken() {
+    if (_mode != _ExerciseMode.sentenceOrder || _orderedTokens.isEmpty) return;
+    _removeOrderedToken(_orderedTokens.length - 1);
   }
 
   void _appendToken(int index) {
@@ -296,6 +758,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     setState(() {
       _orderedTokens.add(_remainingTokens.removeAt(index));
     });
+    unawaited(ref.read(studyFeedbackServiceProvider).selection());
   }
 
   void _removeOrderedToken(int index) {
@@ -327,57 +790,234 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       }
       return;
     }
+    _recordResponse(answer);
+  }
+
+  void _submitDontKnow() {
+    if (_correct != null) return;
+    _recordResponse('', forceWrong: true);
+  }
+
+  void _recordResponse(String answer, {bool forceWrong = false}) {
     final accepted = switch (_mode) {
+      _ExerciseMode.recognition when _recognitionIsReversed => <String>[
+        _item.text,
+      ],
       _ExerciseMode.recognition => _item.acceptedAnswers,
       _ExerciseMode.production => <String>[_item.text],
       _ExerciseMode.cloze => <String>[_clozeAnswer],
       _ExerciseMode.sentenceOrder => <String>[_item.text],
       _ExerciseMode.listening => <String>[_item.text],
     };
-    final correct = _normalizer.matches(
-      input: answer,
-      acceptedAnswers: accepted,
-      language: _mode == _ExerciseMode.recognition
-          ? ref.read(appControllerProvider).selectedLanguage
-          : _item.learningLanguage,
-      policy: AnswerPolicy(
-        allowTypo:
-            _mode == _ExerciseMode.production ||
-            _mode == _ExerciseMode.recognition ||
-            _mode == _ExerciseMode.listening,
-      ),
-    );
-    ref
-        .read(appControllerProvider.notifier)
-        .recordAnswer(
-          item: _item,
-          correct: correct,
-          studiedAt: _now,
-          exerciseType: _mode.name,
+    final correct =
+        !forceWrong &&
+        _normalizer.matches(
+          input: answer,
+          acceptedAnswers: accepted,
+          language:
+              _mode == _ExerciseMode.recognition && !_recognitionIsReversed
+              ? LanguageTag.korean
+              : _item.learningLanguage,
+          policy: _gradingStrength.answerPolicy(
+            typedResponse: _isTextInputMode,
+          ),
         );
-    if (correct) {
+    final rating = correct
+        ? _hintLevel > 0
+              ? ReviewRating.hard
+              : ReviewRating.good
+        : ReviewRating.again;
+    final attempt = QuizAttemptReview(
+      sequence: _attemptReviews.length + 1,
+      itemId: _item.id,
+      prompt: _prompt,
+      expectedAnswer: _expectedAnswer,
+      userAnswer: answer,
+      exerciseType: forceWrong ? '${_mode.name}:gaveUp' : _mode.name,
+      correct: correct,
+      rating: rating,
+      usedHint: _hintLevel > 0,
+    );
+    final pending = _PendingQuizResponse(
+      item: _item,
+      originalAttempt: attempt,
+      currentAttempt: attempt,
+      previousCombo: _combo,
+      previousBestCombo: _bestCombo,
+      previousFailureCount: _failureCountByItemId[_item.id] ?? 0,
+      wasWrong: _wrongItemIds.contains(_item.id),
+      wasFinalCorrect: _finalCorrectItemIds.contains(_item.id),
+    );
+    setState(() {
+      _pendingResponse = pending;
+      _applyPendingOutcome(pending);
+      _submittedAnswer = answer;
+      _correct = correct;
+    });
+    unawaited(
+      correct
+          ? ref.read(studyFeedbackServiceProvider).success()
+          : ref.read(studyFeedbackServiceProvider).error(),
+    );
+    if (_interaction.autoPlayAnswerAudio) {
+      unawaited(_speak());
+    }
+    if (correct &&
+        _interaction.autoAdvanceCorrect &&
+        _inputProfile.allowsAutomaticAdvance &&
+        !ref.read(accessibilityInputProfileProvider).reduceMotion) {
+      _scheduleAutoAdvance();
+    }
+  }
+
+  void _applyPendingOutcome(_PendingQuizResponse pending) {
+    final attempt = pending.currentAttempt;
+    final earnedXp = _recordProgress ? attempt.earnedXp : 0;
+    if (attempt.correct) {
       _sessionCorrect++;
-      _sessionXp += 10;
+      _sessionXp += earnedXp;
+      _combo = pending.previousCombo + 1;
+      _bestCombo = max(pending.previousBestCombo, _combo);
+      _finalCorrectItemIds.add(pending.item.id);
+      _failureCountByItemId[pending.item.id] = pending.previousFailureCount;
+      return;
+    }
+
+    _sessionWrong++;
+    _sessionXp += earnedXp;
+    _combo = 0;
+    _bestCombo = pending.previousBestCombo;
+    _wrongItemIds.add(pending.item.id);
+    _finalCorrectItemIds.remove(pending.item.id);
+    _failureCountByItemId[pending.item.id] = pending.previousFailureCount + 1;
+    if (_queue.where((candidate) => candidate.id == pending.item.id).length <
+        3) {
+      _queue.add(pending.item);
+      pending.retryAppended = true;
+    }
+  }
+
+  void _restorePendingBaseline(_PendingQuizResponse pending) {
+    final attempt = pending.currentAttempt;
+    if (attempt.correct) {
+      _sessionCorrect--;
     } else {
-      _sessionWrong++;
-      _sessionXp += 5;
-      _wrongItemIds.add(_item.id);
+      _sessionWrong--;
     }
-    if (!correct &&
-        _queue.where((candidate) => candidate.id == _item.id).length < 2) {
-      _queue.add(_item);
+    if (_recordProgress) _sessionXp -= attempt.earnedXp;
+    _combo = pending.previousCombo;
+    _bestCombo = pending.previousBestCombo;
+    if (pending.wasWrong) {
+      _wrongItemIds.add(pending.item.id);
+    } else {
+      _wrongItemIds.remove(pending.item.id);
     }
+    if (pending.wasFinalCorrect) {
+      _finalCorrectItemIds.add(pending.item.id);
+    } else {
+      _finalCorrectItemIds.remove(pending.item.id);
+    }
+    _failureCountByItemId[pending.item.id] = pending.previousFailureCount;
+    if (pending.retryAppended) {
+      final retryIndex = _queue.lastIndexWhere(
+        (candidate) => candidate.id == pending.item.id,
+      );
+      if (retryIndex > _index) _queue.removeAt(retryIndex);
+      pending.retryAppended = false;
+    }
+  }
+
+  void _replacePendingOutcome({
+    required bool correct,
+    required ReviewRating rating,
+    required String correctionLabel,
+  }) {
+    final pending = _pendingResponse;
+    if (pending == null) return;
+    _autoAdvanceTimer?.cancel();
+    setState(() {
+      _restorePendingBaseline(pending);
+      pending.currentAttempt = pending.currentAttempt.copyWith(
+        correct: correct,
+        rating: rating,
+        correctionLabel: correctionLabel,
+      );
+      _applyPendingOutcome(pending);
+      _correct = correct;
+    });
+  }
+
+  void _restoreOriginalOutcome() {
+    final pending = _pendingResponse;
+    if (pending == null || pending.currentAttempt.correctionLabel == null) {
+      return;
+    }
+    _autoAdvanceTimer?.cancel();
+    setState(() {
+      _restorePendingBaseline(pending);
+      pending.currentAttempt = pending.originalAttempt;
+      _applyPendingOutcome(pending);
+      _correct = pending.currentAttempt.correct;
+    });
+    if (_correct == true &&
+        _interaction.autoAdvanceCorrect &&
+        _inputProfile.allowsAutomaticAdvance &&
+        !ref.read(accessibilityInputProfileProvider).reduceMotion) {
+      _scheduleAutoAdvance();
+    }
+  }
+
+  void _applyShortcutRating(ReviewRating rating) {
+    if (_pendingResponse == null) return;
+    _replacePendingOutcome(
+      correct: rating != ReviewRating.again,
+      rating: rating,
+      correctionLabel: switch (rating) {
+        ReviewRating.again => '단축키 · 다시',
+        ReviewRating.hard => '단축키 · 어려움',
+        ReviewRating.good => '단축키 · 좋음',
+        ReviewRating.easy => '단축키 · 쉬움',
+      },
+    );
+  }
+
+  void _commitPendingResponse() {
+    final pending = _pendingResponse;
+    if (pending == null) return;
+    final attempt = pending.currentAttempt;
+    if (_recordProgress) {
+      ref
+          .read(appControllerProvider.notifier)
+          .recordAnswer(
+            item: pending.item,
+            correct: attempt.correct,
+            studiedAt: _now,
+            exerciseType: attempt.correctionLabel == null
+                ? attempt.exerciseType
+                : '${attempt.exerciseType}:corrected',
+            rating: attempt.rating,
+          );
+    }
+    _attemptReviews.add(attempt);
+    _pendingResponse = null;
     _persistActiveSession((_index + 1).clamp(0, _queue.length));
-    setState(() => _correct = correct);
   }
 
   void _next() {
+    _autoAdvanceTimer?.cancel();
+    _speechGeneration++;
+    unawaited(_baseTtsService.stop());
+    _commitPendingResponse();
     if (_index + 1 >= _queue.length) {
-      ref.read(appControllerProvider.notifier).clearActiveStudySession();
+      ref
+          .read(appControllerProvider.notifier)
+          .clearActiveStudySession(expectedSessionId: _sessionId);
       unawaited(_saveSession());
       final connected = ref.read(appControllerProvider).driveConnected;
       if (connected) {
-        unawaited(ref.read(connectionControllerProvider.notifier).syncNow());
+        unawaited(
+          ref.read(connectionControllerProvider.notifier).syncAutomatically(),
+        );
       }
       setState(() => _completed = true);
       return;
@@ -395,7 +1035,18 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     }
   }
 
+  void _scheduleAutoAdvance() {
+    _autoAdvanceTimer?.cancel();
+    final questionIndex = _index;
+    final delay = _interaction.autoAdvanceDelayMs.clamp(300, 3000);
+    _autoAdvanceTimer = Timer(Duration(milliseconds: delay), () {
+      if (!mounted || _correct != true || _index != questionIndex) return;
+      _next();
+    });
+  }
+
   Future<void> _saveSession() async {
+    _commitPendingResponse();
     if (_sessionSaved || _sessionCorrect + _sessionWrong == 0) return;
     _sessionSaved = true;
     await ref
@@ -403,7 +1054,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         .finishSession(
           StudySessionSummary(
             sessionId: _sessionId,
-            courseId: ref.read(appControllerProvider).selectedLanguage.courseId,
+            courseId: _activeSession.courseId,
             startedAt: _sessionStartedAt,
             endedAt: _now,
             correctCount: _sessionCorrect,
@@ -416,11 +1067,23 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
             pauseCount: _activeSession.pauseCount,
             resumeCount: _activeSession.resumeCount,
             journey: _activeSession.journey,
+            itemIds: _orderedUnique(
+              _activeSession.originalItemIds.isEmpty
+                  ? _queue.map((item) => item.id)
+                  : _activeSession.originalItemIds,
+            ),
+            wrongItemIds: Set.unmodifiable(_wrongItemIds),
+            finalCorrectItemIds: Set.unmodifiable(_finalCorrectItemIds),
+            mode: widget.mode,
+            historyFilter: widget.historyFilter,
+            recordProgress: _recordProgress,
+            backlogRecovery: _backlogRecovery,
           ),
         );
   }
 
   void _pauseAndExit() {
+    _commitPendingResponse();
     final nextIndex = _correct == null ? _index : _index + 1;
     final paused = ref
         .read(appControllerProvider.notifier)
@@ -432,10 +1095,14 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           wrongCount: _sessionWrong,
           earnedXp: _sessionXp,
           wrongItemIds: _wrongItemIds,
+          finalCorrectItemIds: _finalCorrectItemIds,
+          expectedSessionId: _sessionId,
         );
     if (paused != null) _activeSession = paused;
     if (ref.read(appControllerProvider).driveConnected) {
-      unawaited(ref.read(connectionControllerProvider.notifier).syncNow());
+      unawaited(
+        ref.read(connectionControllerProvider.notifier).syncAutomatically(),
+      );
     }
     if (context.canPop()) {
       context.pop();
@@ -455,18 +1122,31 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           wrongCount: _sessionWrong,
           earnedXp: _sessionXp,
           wrongItemIds: _wrongItemIds,
+          finalCorrectItemIds: _finalCorrectItemIds,
           updatedAt: _now,
+          expectedSessionId: _sessionId,
         );
     if (next != null) _activeSession = next;
   }
 
   Future<void> _retryMistakes() async {
+    final unresolvedWrongIds = _wrongItemIds.difference(_finalCorrectItemIds);
     final mistakeIds = _orderedUnique([
       for (final item in _queue)
-        if (_wrongItemIds.contains(item.id)) item.id,
+        if (unresolvedWrongIds.contains(item.id)) item.id,
     ]);
     if (mistakeIds.isEmpty) return;
     await _deriveSession(StudySessionOrigin.wrongAnswers, mistakeIds);
+  }
+
+  void _openNextRecommendation() {
+    final controller = ref.read(appControllerProvider.notifier);
+    if (!controller.activeSubject.isLanguage) {
+      context.go('/learn');
+      return;
+    }
+    final recommended = controller.coursePath.recommendedUnit;
+    context.go(courseLessonRoute(recommended.nextLesson, recommended.index));
   }
 
   Future<void> _deriveSession(
@@ -505,9 +1185,12 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _sessionCorrect = 0;
       _sessionWrong = 0;
       _sessionXp = 0;
+      _combo = 0;
+      _bestCombo = 0;
       _completed = false;
       _correct = null;
       _wrongItemIds.clear();
+      _finalCorrectItemIds.clear();
       _sessionStartedAt = startedAt;
       _sessionId = newSessionId;
       _sessionSaved = false;
@@ -517,15 +1200,248 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   }
 
   Future<void> _finishCurrentSession() async {
+    _commitPendingResponse();
     final nextIndex = _correct == null ? _index : _index + 1;
     _persistActiveSession(nextIndex.clamp(0, _queue.length));
     await _saveSession();
     if (!mounted) return;
-    ref.read(appControllerProvider.notifier).clearActiveStudySession();
+    ref
+        .read(appControllerProvider.notifier)
+        .clearActiveStudySession(expectedSessionId: _sessionId);
     if (ref.read(appControllerProvider).driveConnected) {
-      unawaited(ref.read(connectionControllerProvider.notifier).syncNow());
+      unawaited(
+        ref.read(connectionControllerProvider.notifier).syncAutomatically(),
+      );
     }
     context.go('/home');
+  }
+
+  Future<void> _showSessionOptions() async {
+    if (_correct != null) return;
+    final options = await showModalBottomSheet<QuizSessionOptions>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _SessionQuizOptionsSheet(
+        mode: widget.mode,
+        initial: QuizSessionOptions(
+          answerDirection: _sessionAnswerDirection,
+          gradingStrength: _gradingStrength,
+          inputProfile: _inputProfile,
+        ),
+      ),
+    );
+    if (!mounted || options == null) return;
+    setState(() {
+      _sessionAnswerDirection = widget.mode.allowsAnswerDirectionOverride
+          ? options.answerDirection
+          : widget.mode.effectiveFixedAnswerDirection;
+      _gradingStrength = options.gradingStrength;
+      _inputProfile = options.inputProfile;
+      _correct = null;
+      _prepareExercise();
+    });
+  }
+
+  Future<void> _showMatchSprint() async {
+    final deck = MatchSprintDeck.fromItems(_queue);
+    if (!deck.canStart) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('매치 스프린트에는 서로 다른 표현이 2개 이상 필요해요.')),
+      );
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _MatchSprintDialog(
+        deck: deck,
+        allowTimedMode:
+            _inputProfile.allowsTimedChallenge &&
+            ref.read(accessibilityInputProfileProvider).allowsTimedChallenges,
+      ),
+    );
+  }
+
+  Future<void> _showRepairOptions() async {
+    final editable =
+        ref.read(appControllerProvider.notifier).customItemById(_item.id) !=
+        null;
+    final hasMemoryHint =
+        (_correctionFor(_item.id, _memoryHintField)?.proposedValue?.trim() ??
+                '')
+            .isNotEmpty;
+    final action = await showModalBottomSheet<_RepairAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => _RepairOptionsSheet(
+        item: _item,
+        editable: editable,
+        hasMemoryHint: hasMemoryHint,
+      ),
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _RepairAction.edit:
+        await _editItemSafely(_item);
+      case _RepairAction.memoryHint:
+        await _editMemoryHint(_item);
+      case _RepairAction.exclude:
+        final controller = ref.read(appControllerProvider.notifier);
+        if (!ref
+            .read(appControllerProvider)
+            .preferences
+            .excludedItemIds
+            .contains(_item.id)) {
+          controller.toggleItemSelection(_item.id);
+        }
+        setState(() {
+          for (var index = _queue.length - 1; index > _index; index--) {
+            if (_queue[index].id == _item.id) _queue.removeAt(index);
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('이 표현을 다음 학습부터 잠시 제외했어요.')),
+        );
+      case _RepairAction.continueStudy:
+        return;
+    }
+  }
+
+  Future<void> _editItemSafely(LearningItem item) async {
+    final controller = ref.read(appControllerProvider.notifier);
+    final custom = controller.customItemById(item.id);
+    if (custom == null) {
+      await _editBaseContentCorrection(item);
+      return;
+    }
+    final result = await showDialog<_CustomContentEditResult>(
+      context: context,
+      builder: (context) => _CustomContentEditDialog(item: custom),
+    );
+    if (!mounted || result == null) return;
+    final translations = <String>[
+      result.answer,
+      for (final value in custom.translations.skip(1))
+        if (_normalizedChoice(value) != _normalizedChoice(result.answer)) value,
+    ];
+    final acceptedAnswers = <String>[
+      result.answer,
+      for (final value in custom.acceptedAnswers)
+        if (_normalizedChoice(value) != _normalizedChoice(result.answer)) value,
+    ];
+    final updated = custom.copyWith(
+      text: result.question,
+      translations: translations,
+      acceptedAnswers: acceptedAnswers,
+    );
+    try {
+      await controller.upsertCustomItem(updated);
+    } on Object catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('자료를 저장하지 못했습니다: $error')));
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      for (var index = 0; index < _queue.length; index++) {
+        if (_queue[index].id == updated.id) _queue[index] = updated;
+      }
+    });
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('자료를 수정했고 현재 세션을 그대로 이어갑니다.')));
+  }
+
+  Future<void> _editBaseContentCorrection(LearningItem item) async {
+    final existing = _correctionFor(item.id, _baseContentCorrectionField);
+    final result = await showDialog<_BaseCorrectionEditResult>(
+      context: context,
+      builder: (context) =>
+          _BaseCorrectionEditDialog(item: item, existing: existing),
+    );
+    if (!mounted || result == null) return;
+    await ref
+        .read(appControllerProvider.notifier)
+        .upsertContentCorrection(
+          ContentCorrection(
+            itemId: item.id,
+            field: _baseContentCorrectionField,
+            note: result.note,
+            proposedValue: result.proposedValue,
+            updatedAt: _now,
+          ),
+        );
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('기본 언어팩 원본 대신 내 교정 메모에 저장했습니다.')),
+    );
+  }
+
+  Future<void> _editMemoryHint(LearningItem item) async {
+    final existing = _correctionFor(item.id, _memoryHintField);
+    final result = await showDialog<_MemoryHintEditResult>(
+      context: context,
+      builder: (context) => _MemoryHintDialog(
+        item: item,
+        initialHint: existing?.proposedValue ?? '',
+      ),
+    );
+    if (!mounted || result == null) return;
+    final controller = ref.read(appControllerProvider.notifier);
+    if (result.value.isEmpty) {
+      if (existing != null) {
+        await controller.deleteContentCorrection(
+          itemId: item.id,
+          field: _memoryHintField,
+        );
+      }
+    } else {
+      await controller.upsertContentCorrection(
+        ContentCorrection(
+          itemId: item.id,
+          field: _memoryHintField,
+          note: '사용자 암기 단서',
+          proposedValue: result.value,
+          updatedAt: _now,
+        ),
+      );
+    }
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.value.isEmpty ? '암기 단서를 지웠습니다.' : '암기 단서를 저장했습니다.',
+        ),
+      ),
+    );
+  }
+
+  void _openCurrentItemEditor() {
+    unawaited(_editItemSafely(_item));
+  }
+
+  void _openMemoryHintEditor() {
+    unawaited(_editMemoryHint(_item));
+  }
+
+  void _openReviewItem(String itemId) {
+    final controller = ref.read(appControllerProvider.notifier);
+    LearningItem? item = controller.customItemById(itemId);
+    if (item == null) {
+      for (final candidate in _queue) {
+        if (candidate.id == itemId) {
+          item = candidate;
+          break;
+        }
+      }
+    }
+    if (item == null) return;
+    unawaited(_editItemSafely(item));
   }
 
   Future<void> _showSessionManager() async {
@@ -538,7 +1454,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     ]);
     final wrongIds = _orderedUnique([
       for (final item in _queue)
-        if (_wrongItemIds.contains(item.id)) item.id,
+        if (_wrongItemIds.contains(item.id) &&
+            !_finalCorrectItemIds.contains(item.id))
+          item.id,
     ]);
     final action = await showModalBottomSheet<_SessionManagementAction>(
       context: context,
@@ -548,10 +1466,19 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         session: _activeSession,
         wrongCount: wrongIds.length,
         remainingCount: remainingIds.length,
+        answerDirection: _sessionAnswerDirection,
+        gradingStrength: _gradingStrength,
+        inputProfile: _inputProfile,
+        canChangeOptions: _correct == null,
+        canStartMatch: MatchSprintDeck.fromItems(_queue).canStart,
       ),
     );
     if (!mounted || action == null) return;
     switch (action) {
+      case _SessionManagementAction.options:
+        await _showSessionOptions();
+      case _SessionManagementAction.matchSprint:
+        await _showMatchSprint();
       case _SessionManagementAction.restart:
         await _deriveSession(
           StudySessionOrigin.restarted,
@@ -609,7 +1536,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                   widget.customPlan
                       ? '세션 빌더에서 덱·난이도·태그 조건을 조금 넓혀 보세요.'
                       : widget.mode == StudyMode.favorites
-                      ? '단어장에서 외우고 싶은 표현의 별표를 누르면 이곳에 모입니다.'
+                      ? '자료실에서 외우고 싶은 표현의 별표를 누르면 이곳에 모입니다.'
                       : '새 콘텐츠를 가져오거나 다른 언어 코스를 선택해 보세요.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -628,7 +1555,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                   ),
                   label: Text(
                     widget.mode == StudyMode.favorites
-                        ? '단어장에서 표현 저장'
+                        ? '자료실에서 표현 저장'
                         : widget.customPlan
                         ? '세션 빌더로 돌아가기'
                         : widget.unitIndex == null
@@ -655,9 +1582,14 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         xp: _sessionXp,
         accuracy: accuracy,
         minutes: elapsed,
+        bestCombo: _bestCombo,
         plannedCount: _plannedCount,
-        hasMistakes: _wrongItemIds.isNotEmpty,
+        hasMistakes: _wrongItemIds.difference(_finalCorrectItemIds).isNotEmpty,
+        attempts: List.unmodifiable(_attemptReviews),
+        recordProgress: _recordProgress,
         onRetryMistakes: _retryMistakes,
+        onOpenItem: _openReviewItem,
+        onNextRecommended: widget.customPlan ? null : _openNextRecommendation,
         onHome: () => context.go(_returnRoute),
         returnLabel: widget.customPlan
             ? '세션 빌더로 돌아가기'
@@ -672,22 +1604,90 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       );
     }
 
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.enter): _submit,
-        const SingleActivator(LogicalKeyboardKey.space): _speak,
-        const SingleActivator(LogicalKeyboardKey.escape): _pauseAndExit,
-        const SingleActivator(LogicalKeyboardKey.digit1): () =>
-            _selectChoiceAt(0),
-        const SingleActivator(LogicalKeyboardKey.digit2): () =>
-            _selectChoiceAt(1),
-        const SingleActivator(LogicalKeyboardKey.digit3): () =>
-            _selectChoiceAt(2),
-        const SingleActivator(LogicalKeyboardKey.digit4): () =>
-            _selectChoiceAt(3),
+    final interactionPreferences = ref.watch(
+      appControllerProvider.select((state) => state.preferences.interaction),
+    );
+    final readingAidsLabel = _item.readingAidsLabelFor(
+      showKoreanReading: interactionPreferences.showKoreanReading,
+      showNativeReading: interactionPreferences.showNativeReading,
+    );
+    final accessibilityProfile = ref.watch(accessibilityInputProfileProvider);
+    final accessibilityTheme = StudyAccessibilityTheme.of(context);
+    final keyboardBindings = <ShortcutActivator, VoidCallback>{
+      const SingleActivator(LogicalKeyboardKey.escape): _pauseAndExit,
+      const SingleActivator(LogicalKeyboardKey.keyH, control: true): _showHint,
+      const SingleActivator(LogicalKeyboardKey.keyG, control: true):
+          _submitDontKnow,
+      if (_isTextInputMode)
+        const SingleActivator(LogicalKeyboardKey.space, control: true): _speak,
+      if (_isTextInputMode)
         const SingleActivator(LogicalKeyboardKey.keyK, control: true): () =>
             _answerFocus.requestFocus(),
+      if (_isChoiceMode) ...{
+        const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
+            _moveChoiceSelection(1),
+        const SingleActivator(LogicalKeyboardKey.arrowRight): () =>
+            _moveChoiceSelection(1),
+        const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
+            _moveChoiceSelection(-1),
+        const SingleActivator(LogicalKeyboardKey.arrowLeft): () =>
+            _moveChoiceSelection(-1),
       },
+      if (_isChoiceMode || _mode == _ExerciseMode.sentenceOrder) ...{
+        const SingleActivator(LogicalKeyboardKey.digit1): () =>
+            _isChoiceMode ? _selectChoiceAt(0) : _appendTokenFromShortcut(0),
+        const SingleActivator(LogicalKeyboardKey.digit2): () =>
+            _isChoiceMode ? _selectChoiceAt(1) : _appendTokenFromShortcut(1),
+        const SingleActivator(LogicalKeyboardKey.digit3): () =>
+            _isChoiceMode ? _selectChoiceAt(2) : _appendTokenFromShortcut(2),
+        const SingleActivator(LogicalKeyboardKey.digit4): () =>
+            _isChoiceMode ? _selectChoiceAt(3) : _appendTokenFromShortcut(3),
+        const SingleActivator(LogicalKeyboardKey.numpad1): () =>
+            _isChoiceMode ? _selectChoiceAt(0) : _appendTokenFromShortcut(0),
+        const SingleActivator(LogicalKeyboardKey.numpad2): () =>
+            _isChoiceMode ? _selectChoiceAt(1) : _appendTokenFromShortcut(1),
+        const SingleActivator(LogicalKeyboardKey.numpad3): () =>
+            _isChoiceMode ? _selectChoiceAt(2) : _appendTokenFromShortcut(2),
+        const SingleActivator(LogicalKeyboardKey.numpad4): () =>
+            _isChoiceMode ? _selectChoiceAt(3) : _appendTokenFromShortcut(3),
+      },
+      if (_mode == _ExerciseMode.sentenceOrder) ...{
+        const SingleActivator(LogicalKeyboardKey.digit5): () =>
+            _appendTokenFromShortcut(4),
+        const SingleActivator(LogicalKeyboardKey.digit6): () =>
+            _appendTokenFromShortcut(5),
+        const SingleActivator(LogicalKeyboardKey.digit7): () =>
+            _appendTokenFromShortcut(6),
+        const SingleActivator(LogicalKeyboardKey.digit8): () =>
+            _appendTokenFromShortcut(7),
+        const SingleActivator(LogicalKeyboardKey.digit9): () =>
+            _appendTokenFromShortcut(8),
+        const SingleActivator(LogicalKeyboardKey.backspace):
+            _removeLastOrderedToken,
+        const SingleActivator(LogicalKeyboardKey.backspace, control: true):
+            _resetOrderedTokens,
+      },
+    };
+    keyboardBindings.addAll(
+      accessibilityProfile.bindingsFor({
+        StudyShortcutAction.revealAnswer: _showHint,
+        StudyShortcutAction.playAudio: _speak,
+        StudyShortcutAction.nextItem: _submit,
+        if (_pendingResponse != null) ...{
+          StudyShortcutAction.rateAgain: () =>
+              _applyShortcutRating(ReviewRating.again),
+          StudyShortcutAction.rateHard: () =>
+              _applyShortcutRating(ReviewRating.hard),
+          StudyShortcutAction.rateGood: () =>
+              _applyShortcutRating(ReviewRating.good),
+          StudyShortcutAction.rateEasy: () =>
+              _applyShortcutRating(ReviewRating.easy),
+        },
+      }),
+    );
+    return CallbackShortcuts(
+      key: const Key('study-screen'),
+      bindings: keyboardBindings,
       child: Focus(
         autofocus: true,
         child: Scaffold(
@@ -699,15 +1699,14 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
               tooltip: '일시정지하고 홈으로 (Esc)',
             ),
             titleSpacing: 4,
-            title: Semantics(
-              label: '학습 진행 ${_index + 1}/${_queue.length}',
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: (_index + 1) / _queue.length,
-                  minHeight: 9,
-                ),
-              ),
+            title: _CompactStudyHud(
+              current: _index + 1,
+              total: _queue.length,
+              correct: _sessionCorrect,
+              wrong: _sessionWrong,
+              combo: _combo,
+              comboGoal: min(3, _plannedCount),
+              xp: _sessionXp,
             ),
             actions: [
               IconButton(
@@ -716,138 +1715,286 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                 icon: const Icon(Icons.more_horiz_rounded),
                 tooltip: '세션 관리',
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 12, right: 18),
-                child: Center(
-                  child: Text(
-                    '${_index + 1} / ${_queue.length}',
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ),
-              ),
             ],
           ),
           body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    constraints.maxWidth < 600 ? 16 : 24,
-                    12,
-                    constraints.maxWidth < 600 ? 16 : 24,
-                    24,
-                  ),
-                  child: Center(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 760),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Row(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.fromLTRB(
+                        constraints.maxWidth < 600 ? 16 : 24,
+                        12,
+                        constraints.maxWidth < 600 ? 16 : 24,
+                        24,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 760),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              _ExercisePill(
-                                icon: _modeIcon,
-                                label: _instruction,
-                              ),
-                              const Spacer(),
-                              Text(
-                                '${_item.learningLanguage.symbol} · ${_item.kind == LearningItemKind.word ? '단어' : '문장'}',
-                                style: Theme.of(context).textTheme.labelMedium
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Card(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: constraints.maxWidth < 600
-                                    ? 18
-                                    : 30,
-                                vertical: constraints.maxWidth < 600 ? 24 : 34,
-                              ),
-                              child: Column(
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 8,
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  Text(
-                                    _prompt,
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.displaySmall,
+                                  _ExercisePill(
+                                    icon: _modeIcon,
+                                    label: _instruction,
                                   ),
-                                  if (ref
-                                          .watch(appControllerProvider)
-                                          .preferences
-                                          .showReadingAids &&
-                                      _mode == _ExerciseMode.recognition &&
-                                      _item.readings.isNotEmpty) ...[
-                                    const SizedBox(height: 9),
-                                    Text(
-                                      _item.readings
-                                          .map((value) => value.value)
-                                          .join(' · '),
-                                      textAlign: TextAlign.center,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                          ),
-                                    ),
-                                  ],
-                                  const SizedBox(height: 16),
-                                  OutlinedButton.icon(
-                                    onPressed: _speak,
-                                    icon: const Icon(
-                                      Icons.volume_up_rounded,
-                                      size: 20,
-                                    ),
-                                    label: const Text('발음 듣기'),
-                                  ),
-                                  const SizedBox(height: 8),
                                   Text(
-                                    'Space',
+                                    '${_item.learningLanguage.symbol} · ${_item.kind == LearningItemKind.word ? '단어' : '문장'}',
                                     style: Theme.of(context)
                                         .textTheme
-                                        .labelSmall
+                                        .labelMedium
                                         ?.copyWith(
                                           color: Theme.of(
                                             context,
-                                          ).colorScheme.outline,
+                                          ).colorScheme.onSurfaceVariant,
                                         ),
                                   ),
                                 ],
                               ),
-                            ),
+                              const SizedBox(height: 12),
+                              Card(
+                                key: const Key('study-question-card'),
+                                shape: accessibilityTheme.highContrast
+                                    ? RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        side: BorderSide(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.outline,
+                                          width: 2,
+                                        ),
+                                      )
+                                    : null,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal:
+                                        (constraints.maxWidth < 600 ? 18 : 30) *
+                                        accessibilityTheme.cardScaleFactor,
+                                    vertical:
+                                        (constraints.maxWidth < 600 ? 24 : 34) *
+                                        accessibilityTheme.cardScaleFactor,
+                                  ),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        _prompt,
+                                        key: const Key('study-question-prompt'),
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .displaySmall
+                                            ?.copyWith(
+                                              fontSize:
+                                                  (Theme.of(context)
+                                                          .textTheme
+                                                          .displaySmall
+                                                          ?.fontSize ??
+                                                      32) *
+                                                  accessibilityTheme
+                                                      .cardScaleFactor,
+                                            ),
+                                      ),
+                                      if (_mode == _ExerciseMode.recognition &&
+                                          !_recognitionIsReversed &&
+                                          readingAidsLabel.isNotEmpty) ...[
+                                        const SizedBox(height: 9),
+                                        Text(
+                                          readingAidsLabel,
+                                          key: const Key(
+                                            'study-question-reading-aids',
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                height: 1.4,
+                                                fontSize:
+                                                    (Theme.of(context)
+                                                            .textTheme
+                                                            .titleMedium
+                                                            ?.fontSize ??
+                                                        16) *
+                                                    accessibilityTheme
+                                                        .cardScaleFactor,
+                                              ),
+                                        ),
+                                      ],
+                                      const SizedBox(height: 16),
+                                      Wrap(
+                                        alignment: WrapAlignment.center,
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        children: [
+                                          OutlinedButton.icon(
+                                            onPressed: () => _speak(),
+                                            icon: const Icon(
+                                              Icons.volume_up_rounded,
+                                              size: 20,
+                                            ),
+                                            label: Text(
+                                              _speechPlayCount == 0
+                                                  ? '발음 듣기'
+                                                  : '다시 듣기',
+                                            ),
+                                          ),
+                                          if (_mode == _ExerciseMode.listening)
+                                            OutlinedButton.icon(
+                                              key: const Key(
+                                                'slow-listening-playback',
+                                              ),
+                                              onPressed: () =>
+                                                  _speak(slow: true),
+                                              icon: const Icon(
+                                                Icons.slow_motion_video_rounded,
+                                                size: 20,
+                                              ),
+                                              label: const Text('느리게'),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _speechPlayCount == 0
+                                            ? _isTextInputMode
+                                                  ? 'Ctrl+Space'
+                                                  : 'Space'
+                                            : '재생 $_speechPlayCount회',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.outline,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (_hintLevel > 0) ...[
+                                const SizedBox(height: 12),
+                                _HintCard(level: _hintLevel, text: _hintText),
+                              ],
+                              const SizedBox(height: 18),
+                              GestureDetector(
+                                key: const Key('study-exercise-gesture-region'),
+                                behavior: HitTestBehavior.translucent,
+                                onHorizontalDragEnd:
+                                    accessibilityProfile
+                                                .androidSelectionGesture ==
+                                            AndroidSelectionGesture
+                                                .swipeAndButtons &&
+                                        _isChoiceMode
+                                    ? (details) {
+                                        final velocity =
+                                            details.primaryVelocity ?? 0;
+                                        if (velocity.abs() < 80) return;
+                                        _moveChoiceSelection(
+                                          velocity < 0 ? 1 : -1,
+                                        );
+                                      }
+                                    : null,
+                                child: _exerciseInput(),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
                           ),
-                          const SizedBox(height: 18),
-                          _exerciseInput(),
-                          const SizedBox(height: 8),
-                        ],
+                        ),
                       ),
-                    ),
+                    );
+                  },
+                ),
+                if (_correct case final correct?)
+                  _StudyFeedbackOverlay(
+                    correct: correct,
+                    answer: _expectedAnswer,
+                    userAnswer: _submittedAnswer ?? '',
+                    item: _item,
+                    readingAidsLabel: readingAidsLabel,
+                    usedHint: _hintLevel > 0,
+                    combo: _combo,
+                    rating:
+                        _pendingResponse?.currentAttempt.rating ??
+                        (correct ? ReviewRating.good : ReviewRating.again),
+                    correctionLabel:
+                        _pendingResponse?.currentAttempt.correctionLabel,
+                    recordProgress: _recordProgress,
+                    minimumControlHeight:
+                        accessibilityTheme.minimumRatingControlHeight,
+                    showRepair:
+                        !correct &&
+                        _repairAdvisor.shouldOfferRepair(
+                          _failureCountByItemId[_item.id] ?? 0,
+                        ),
+                    favorite: ref
+                        .watch(appControllerProvider)
+                        .preferences
+                        .isFavorite(_item.id),
+                    onSpeak: () => _speak(),
+                    onToggleFavorite: () => ref
+                        .read(appControllerProvider.notifier)
+                        .toggleFavorite(_item.id),
+                    onEditContent: _openCurrentItemEditor,
+                    onEditMemoryHint: _openMemoryHintEditor,
+                    onMarkTypo:
+                        !correct && (_submittedAnswer ?? '').trim().isNotEmpty
+                        ? () => _replacePendingOutcome(
+                            correct: true,
+                            rating: ReviewRating.hard,
+                            correctionLabel: '오타였음',
+                          )
+                        : null,
+                    onMarkHard:
+                        correct &&
+                            _pendingResponse?.currentAttempt.rating !=
+                                ReviewRating.hard
+                        ? () => _replacePendingOutcome(
+                            correct: true,
+                            rating: ReviewRating.hard,
+                            correctionLabel: '맞았지만 어려웠음',
+                          )
+                        : null,
+                    onRestore:
+                        _pendingResponse?.currentAttempt.correctionLabel != null
+                        ? _restoreOriginalOutcome
+                        : null,
+                    onRepair: _showRepairOptions,
+                    onNext: _submit,
                   ),
-                );
-              },
+              ],
             ),
           ),
-          bottomNavigationBar: _StudyActionBar(
-            correct: _correct,
-            answer: _expectedAnswer,
-            onPressed: _submit,
-          ),
+          bottomNavigationBar: _correct == null
+              ? _StudyActionBar(
+                  hintLevel: _hintLevel,
+                  inputProfile: _inputProfile,
+                  minimumControlHeight:
+                      accessibilityTheme.minimumRatingControlHeight,
+                  onHint: _showHint,
+                  onDontKnow: _submitDontKnow,
+                  onSubmit: _submit,
+                )
+              : null,
         ),
       ),
     );
   }
 
   String get _instruction => switch (_mode) {
+    _ExerciseMode.recognition when _recognitionIsReversed => '알맞은 학습어를 고르세요',
     _ExerciseMode.recognition => '알맞은 뜻을 고르세요',
     _ExerciseMode.production => '외국어로 입력하세요',
     _ExerciseMode.cloze => '빈칸에 들어갈 표현을 고르세요',
@@ -864,6 +2011,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   };
 
   String get _prompt => switch (_mode) {
+    _ExerciseMode.recognition when _recognitionIsReversed =>
+      _item.primaryTranslation,
     _ExerciseMode.recognition => _item.text,
     _ExerciseMode.production ||
     _ExerciseMode.sentenceOrder => _item.primaryTranslation,
@@ -878,23 +2027,61 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
 
   Widget _exerciseInput() {
     if (_isChoiceMode) {
-      return Column(
-        children: [
-          for (final (index, choice) in _choices().indexed)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _ChoiceButton(
-                shortcut: '${index + 1}',
-                label: choice,
-                selected: _selectedChoice == choice,
-                submitted: _correct != null,
-                correctAnswer: choice == _expectedAnswer,
-                onPressed: _correct == null
-                    ? () => setState(() => _selectedChoice = choice)
-                    : null,
+      final choices = _choices();
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final textScale = MediaQuery.textScalerOf(context).scale(1);
+          final automaticGrid =
+              constraints.maxWidth >= 340 &&
+              textScale <= 1.25 &&
+              choices.every(
+                (choice) => !choice.contains('\n') && choice.runes.length <= 18,
+              );
+          final useGrid = switch (_interaction.choiceLayout) {
+            StudyChoiceLayout.automatic => automaticGrid,
+            StudyChoiceLayout.list => false,
+            StudyChoiceLayout.grid => true,
+          };
+          final spacing = useGrid ? 10.0 : 0.0;
+          final choiceWidth = useGrid
+              ? (constraints.maxWidth - spacing) / 2
+              : constraints.maxWidth;
+          return Semantics(
+            label: useGrid
+                ? '선택지 ${choices.length}개, 두 열 배치'
+                : '선택지 ${choices.length}개, 한 열 배치',
+            container: true,
+            explicitChildNodes: true,
+            child: Wrap(
+              key: Key(
+                useGrid ? 'study-choice-grid' : 'study-choice-single-column',
               ),
+              spacing: spacing,
+              runSpacing: 10,
+              children: [
+                for (final (index, choice) in choices.indexed)
+                  Semantics(
+                    sortKey: OrdinalSortKey(index.toDouble()),
+                    child: SizedBox(
+                      width: choiceWidth,
+                      child: _ChoiceButton(
+                        key: Key('study-choice-$index'),
+                        shortcut: '${index + 1}',
+                        label: choice,
+                        selected: _selectedChoice == choice,
+                        submitted: _correct != null,
+                        correctAnswer: choice == _expectedAnswer,
+                        minimumHeight: _inputProfile.minimumControlHeight,
+                        onPressed: _correct == null
+                            ? () => _selectChoice(choice)
+                            : null,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-        ],
+          );
+        },
       );
     }
     if (_mode == _ExerciseMode.sentenceOrder) {
@@ -904,6 +2091,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         enabled: _correct == null,
         onSelectedTap: _removeOrderedToken,
         onRemainingTap: _appendToken,
+        onUndo: _removeLastOrderedToken,
+        onReset: _resetOrderedTokens,
       );
     }
     return TextField(
@@ -916,7 +2105,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         prefixIcon: const Icon(Icons.edit_rounded),
         labelText: '${_item.learningLanguage.koreanName} 답안',
         hintText: '정답을 입력하세요',
-        helperText: '철자와 띄어쓰기를 확인한 뒤 Enter를 누르세요.',
+        helperText: 'Enter 제출 · Ctrl+Space 발음 다시 듣기',
       ),
     );
   }
@@ -927,11 +2116,21 @@ class _SessionManagementSheet extends StatelessWidget {
     required this.session,
     required this.wrongCount,
     required this.remainingCount,
+    required this.answerDirection,
+    required this.gradingStrength,
+    required this.inputProfile,
+    required this.canChangeOptions,
+    required this.canStartMatch,
   });
 
   final ActiveStudySession session;
   final int wrongCount;
   final int remainingCount;
+  final StudyAnswerDirection answerDirection;
+  final StudyGradingStrictness gradingStrength;
+  final PracticeInputProfile inputProfile;
+  final bool canChangeOptions;
+  final bool canStartMatch;
 
   @override
   Widget build(BuildContext context) {
@@ -961,6 +2160,37 @@ class _SessionManagementSheet extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 16),
+                _SessionManagementTile(
+                  key: const Key('study-session-options'),
+                  icon: Icons.tune_rounded,
+                  title: '이번 세션 출제·입력 설정',
+                  subtitle:
+                      '${_answerDirectionLabel(answerDirection)} · '
+                      '${gradingStrength.koreanLabel} 채점 · '
+                      '${inputProfile.koreanLabel}',
+                  onTap: canChangeOptions
+                      ? () => Navigator.pop(
+                          context,
+                          _SessionManagementAction.options,
+                        )
+                      : null,
+                ),
+                const SizedBox(height: 8),
+                _SessionManagementTile(
+                  key: const Key('start-match-sprint'),
+                  icon: Icons.grid_view_rounded,
+                  title: '매치 스프린트',
+                  subtitle: inputProfile.allowsTimedChallenge
+                      ? '60초 또는 10쌍으로 표현과 뜻을 빠르게 연결합니다.'
+                      : '시간 제한 없이 표현과 뜻을 편하게 연결합니다.',
+                  onTap: canStartMatch
+                      ? () => Navigator.pop(
+                          context,
+                          _SessionManagementAction.matchSprint,
+                        )
+                      : null,
+                ),
+                const SizedBox(height: 8),
                 _SessionManagementTile(
                   key: const Key('restart-study-session'),
                   icon: Icons.restart_alt_rounded,
@@ -1089,20 +2319,207 @@ class _SessionManagementTile extends StatelessWidget {
   }
 }
 
-class _StudyActionBar extends StatelessWidget {
-  const _StudyActionBar({
+class _CompactStudyHud extends StatelessWidget {
+  const _CompactStudyHud({
+    required this.current,
+    required this.total,
     required this.correct,
-    required this.answer,
-    required this.onPressed,
+    required this.wrong,
+    required this.combo,
+    required this.comboGoal,
+    required this.xp,
   });
 
-  final bool? correct;
-  final String answer;
-  final VoidCallback onPressed;
+  final int current;
+  final int total;
+  final int correct;
+  final int wrong;
+  final int combo;
+  final int comboGoal;
+  final int xp;
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = (total - current).clamp(0, total);
+    final minutes = ((remaining * 25) + 59) ~/ 60;
+    final colors = Theme.of(context).colorScheme;
+    final comboAchieved = comboGoal > 0 && combo >= comboGoal;
+    final comboColor = comboAchieved
+        ? const Color(0xFFD97706)
+        : colors.onSurfaceVariant;
+    final description =
+        '$current/$total 문제, 정답 $correct개, 오답 $wrong개, '
+        '현재 $combo콤보, 연속 목표 $comboGoal개, 획득 $xp XP, '
+        '약 $minutes분 남음';
+    return Semantics(
+      key: const Key('compact-study-hud'),
+      label: description,
+      container: true,
+      child: Tooltip(
+        message:
+            '$current/$total · 정답 $correct · 오답 $wrong · '
+            '$combo/$comboGoal콤보 · $xp XP',
+        child: ExcludeSemantics(
+          child: MediaQuery.withClampedTextScaling(
+            maxScaleFactor: 1,
+            child: Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: current / total,
+                      minHeight: 7,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                _HudText('$current/$total'),
+                const SizedBox(width: 6),
+                _HudMetric(icon: Icons.check_rounded, value: '$correct'),
+                const SizedBox(width: 4),
+                _HudMetric(icon: Icons.close_rounded, value: '$wrong'),
+                const SizedBox(width: 4),
+                _HudMetric(
+                  icon: Icons.local_fire_department_rounded,
+                  value: '$combo/$comboGoal',
+                  color: comboColor,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HudText extends StatelessWidget {
+  const _HudText(this.value);
+
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      value,
+      maxLines: 1,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurface,
+        fontSize: 10.5,
+        fontWeight: FontWeight.w900,
+      ),
+    );
+  }
+}
+
+class _HudMetric extends StatelessWidget {
+  const _HudMetric({required this.icon, required this.value, this.color});
+
+  final IconData icon;
+  final String value;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final tone = color ?? Theme.of(context).colorScheme.onSurfaceVariant;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: tone),
+        const SizedBox(width: 1),
+        Text(
+          value,
+          style: TextStyle(
+            color: tone,
+            fontSize: 10.5,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HintCard extends StatelessWidget {
+  const _HintCard({required this.level, required this.text});
+
+  final int level;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      liveRegion: true,
+      label: '힌트 $level단계. $text',
+      child: Container(
+        key: const Key('study-hint-card'),
+        padding: const EdgeInsets.all(13),
+        decoration: BoxDecoration(
+          color: colors.tertiaryContainer,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: colors.tertiary.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.lightbulb_rounded,
+              color: colors.onTertiaryContainer,
+              size: 20,
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '힌트 $level/2',
+                    style: TextStyle(
+                      color: colors.onTertiaryContainer,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    text,
+                    style: TextStyle(color: colors.onTertiaryContainer),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StudyActionBar extends StatelessWidget {
+  const _StudyActionBar({
+    required this.hintLevel,
+    required this.inputProfile,
+    required this.minimumControlHeight,
+    required this.onHint,
+    required this.onDontKnow,
+    required this.onSubmit,
+  });
+
+  final int hintLevel;
+  final PracticeInputProfile inputProfile;
+  final double minimumControlHeight;
+  final VoidCallback onHint;
+  final VoidCallback onDontKnow;
+  final VoidCallback onSubmit;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final effectiveControlHeight = max(
+      inputProfile.minimumControlHeight,
+      minimumControlHeight,
+    );
     return SafeArea(
       top: false,
       child: Material(
@@ -1120,47 +2537,77 @@ class _StudyActionBar extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 760),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final feedback = AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 180),
-                    child: correct == null
-                        ? Text(
-                            '답을 고른 뒤 확인하세요.',
-                            key: const ValueKey('study-hint'),
-                            style: Theme.of(context).textTheme.bodySmall,
-                          )
-                        : _FeedbackCard(
-                            key: ValueKey(correct),
-                            correct: correct!,
-                            answer: answer,
-                          ),
-                  );
-                  final button = FilledButton.icon(
-                    onPressed: onPressed,
-                    icon: Icon(
-                      correct == null
-                          ? Icons.check_rounded
-                          : Icons.arrow_forward_rounded,
+                  final hintButton = TextButton.icon(
+                    key: const Key('show-study-hint'),
+                    onPressed: hintLevel >= 2 ? null : onHint,
+                    icon: const Icon(Icons.lightbulb_outline_rounded, size: 19),
+                    label: Text(
+                      hintLevel == 0
+                          ? '힌트'
+                          : hintLevel == 1
+                          ? '힌트 한 번 더'
+                          : '힌트 사용',
                     ),
-                    label: Text(correct == null ? '정답 확인' : '다음 문제'),
+                    style: TextButton.styleFrom(
+                      minimumSize: Size(0, effectiveControlHeight),
+                    ),
                   );
-                  if (constraints.maxWidth < 620) {
+                  final giveUpButton = TextButton.icon(
+                    key: const Key('give-up-study-question'),
+                    onPressed: onDontKnow,
+                    icon: const Icon(Icons.visibility_outlined, size: 19),
+                    label: const Text('모르겠어요'),
+                    style: TextButton.styleFrom(
+                      minimumSize: Size(0, effectiveControlHeight),
+                    ),
+                  );
+                  final submitButton = FilledButton.icon(
+                    key: const Key('submit-study-answer'),
+                    onPressed: onSubmit,
+                    icon: const Icon(Icons.check_rounded),
+                    label: const Text('정답 확인'),
+                    style: FilledButton.styleFrom(
+                      minimumSize: Size(0, effectiveControlHeight),
+                    ),
+                  );
+                  if (constraints.maxWidth < 620 ||
+                      inputProfile == PracticeInputProfile.accessible) {
+                    final largeText =
+                        MediaQuery.textScalerOf(context).scale(1) > 1.5;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (correct != null) ...[
-                          feedback,
-                          const SizedBox(height: 10),
-                        ],
-                        button,
+                        if (largeText) ...[
+                          hintButton,
+                          giveUpButton,
+                        ] else
+                          Row(
+                            children: [
+                              Expanded(child: hintButton),
+                              const SizedBox(width: 6),
+                              Expanded(child: giveUpButton),
+                            ],
+                          ),
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          height: effectiveControlHeight,
+                          child: submitButton,
+                        ),
                       ],
                     );
                   }
                   return Row(
                     children: [
-                      Expanded(child: feedback),
-                      const SizedBox(width: 16),
-                      SizedBox(width: 190, child: button),
+                      hintButton,
+                      const SizedBox(width: 6),
+                      giveUpButton,
+                      const Spacer(),
+                      SizedBox(
+                        width: 190,
+                        height: effectiveControlHeight,
+                        child: submitButton,
+                      ),
                     ],
                   );
                 },
@@ -1173,10 +2620,220 @@ class _StudyActionBar extends StatelessWidget {
   }
 }
 
+class _StudyFeedbackOverlay extends StatelessWidget {
+  const _StudyFeedbackOverlay({
+    required this.correct,
+    required this.answer,
+    required this.userAnswer,
+    required this.item,
+    required this.readingAidsLabel,
+    required this.usedHint,
+    required this.combo,
+    required this.rating,
+    required this.correctionLabel,
+    required this.recordProgress,
+    required this.minimumControlHeight,
+    required this.showRepair,
+    required this.favorite,
+    required this.onSpeak,
+    required this.onToggleFavorite,
+    required this.onEditContent,
+    required this.onEditMemoryHint,
+    required this.onMarkTypo,
+    required this.onMarkHard,
+    required this.onRestore,
+    required this.onRepair,
+    required this.onNext,
+  });
+
+  final bool correct;
+  final String answer;
+  final String userAnswer;
+  final LearningItem item;
+  final String readingAidsLabel;
+  final bool usedHint;
+  final int combo;
+  final ReviewRating rating;
+  final String? correctionLabel;
+  final bool recordProgress;
+  final double minimumControlHeight;
+  final bool showRepair;
+  final bool favorite;
+  final VoidCallback onSpeak;
+  final VoidCallback onToggleFavorite;
+  final VoidCallback onEditContent;
+  final VoidCallback onEditMemoryHint;
+  final VoidCallback? onMarkTypo;
+  final VoidCallback? onMarkHard;
+  final VoidCallback? onRestore;
+  final VoidCallback onRepair;
+  final VoidCallback onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final compactControlStyle = ButtonStyle(
+      minimumSize: WidgetStatePropertyAll(Size(0, minimumControlHeight)),
+    );
+    return Semantics(
+      liveRegion: true,
+      scopesRoute: true,
+      namesRoute: true,
+      explicitChildNodes: true,
+      label: correct ? '정답 결과' : '오답 결과',
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ModalBarrier(
+            dismissible: false,
+            color: colors.scrim.withValues(alpha: 0.28),
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: 420,
+                      maxHeight: min(560, constraints.maxHeight - 32),
+                    ),
+                    child: Material(
+                      key: const Key('study-feedback-popup'),
+                      color: colors.surface,
+                      elevation: 18,
+                      shadowColor: colors.shadow.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(20),
+                      clipBehavior: Clip.antiAlias,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(18),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _FeedbackCard(
+                              correct: correct,
+                              answer: answer,
+                              userAnswer: userAnswer,
+                              item: item,
+                              readingAidsLabel: readingAidsLabel,
+                              usedHint: usedHint,
+                              combo: combo,
+                              rating: rating,
+                              correctionLabel: correctionLabel,
+                              recordProgress: recordProgress,
+                              favorite: favorite,
+                              onSpeak: onSpeak,
+                              onToggleFavorite: onToggleFavorite,
+                            ),
+                            const SizedBox(height: 10),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                OutlinedButton.icon(
+                                  key: const Key('edit-content-from-feedback'),
+                                  onPressed: onEditContent,
+                                  style: compactControlStyle,
+                                  icon: const Icon(
+                                    Icons.edit_note_rounded,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    item.source == ContentSource.userCreated
+                                        ? '자료 수정'
+                                        : '교정 메모',
+                                  ),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const Key('edit-memory-hint'),
+                                  onPressed: onEditMemoryHint,
+                                  style: compactControlStyle,
+                                  icon: const Icon(
+                                    Icons.lightbulb_outline_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text('암기 단서'),
+                                ),
+                                if (onMarkTypo case final action?)
+                                  OutlinedButton.icon(
+                                    key: const Key('correct-as-typo'),
+                                    onPressed: action,
+                                    style: compactControlStyle,
+                                    icon: const Icon(
+                                      Icons.spellcheck_rounded,
+                                      size: 18,
+                                    ),
+                                    label: const Text('오타였음'),
+                                  ),
+                                if (onMarkHard case final action?)
+                                  OutlinedButton.icon(
+                                    key: const Key('correct-as-hard'),
+                                    onPressed: action,
+                                    style: compactControlStyle,
+                                    icon: const Icon(
+                                      Icons.psychology_alt_rounded,
+                                      size: 18,
+                                    ),
+                                    label: const Text('맞았지만 어려웠음'),
+                                  ),
+                                if (onRestore case final action?)
+                                  TextButton.icon(
+                                    key: const Key('restore-answer-result'),
+                                    onPressed: action,
+                                    style: compactControlStyle,
+                                    icon: const Icon(
+                                      Icons.undo_rounded,
+                                      size: 18,
+                                    ),
+                                    label: const Text('판정 복원'),
+                                  ),
+                                if (showRepair)
+                                  TextButton.icon(
+                                    key: const Key('repair-repeated-mistake'),
+                                    onPressed: onRepair,
+                                    style: compactControlStyle,
+                                    icon: const Icon(
+                                      Icons.build_circle_outlined,
+                                      size: 18,
+                                    ),
+                                    label: const Text('이 문제 수선'),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            FilledButton.icon(
+                              key: const Key('next-question-from-feedback'),
+                              onPressed: onNext,
+                              autofocus: true,
+                              style: FilledButton.styleFrom(
+                                minimumSize: Size(0, minimumControlHeight),
+                              ),
+                              icon: const Icon(Icons.arrow_forward_rounded),
+                              label: const Text('다음 문제'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 String _joinTokens(List<String> tokens, LanguageTag language) {
   final separator = LanguageProfile.of(language).usesSpaces ? ' ' : '';
   return tokens.join(separator);
 }
+
+String _normalizedChoice(String value) =>
+    value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
 
 class _ExercisePill extends StatelessWidget {
   const _ExercisePill({required this.icon, required this.label});
@@ -1198,12 +2855,16 @@ class _ExercisePill extends StatelessWidget {
         children: [
           Icon(icon, size: 17, color: colors.onPrimaryContainer),
           const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.onPrimaryContainer,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: colors.onPrimaryContainer,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],
@@ -1219,9 +2880,14 @@ class _CompletionScreen extends StatelessWidget {
     required this.xp,
     required this.accuracy,
     required this.minutes,
+    required this.bestCombo,
     required this.plannedCount,
     required this.hasMistakes,
+    required this.attempts,
+    required this.recordProgress,
     required this.onRetryMistakes,
+    required this.onOpenItem,
+    required this.onNextRecommended,
     required this.onHome,
     required this.returnLabel,
     required this.returnIcon,
@@ -1232,9 +2898,14 @@ class _CompletionScreen extends StatelessWidget {
   final int xp;
   final int accuracy;
   final int minutes;
+  final int bestCombo;
   final int plannedCount;
   final bool hasMistakes;
+  final List<QuizAttemptReview> attempts;
+  final bool recordProgress;
   final VoidCallback onRetryMistakes;
+  final ValueChanged<String> onOpenItem;
+  final VoidCallback? onNextRecommended;
   final VoidCallback onHome;
   final String returnLabel;
   final IconData returnIcon;
@@ -1286,6 +2957,8 @@ class _CompletionScreen extends StatelessWidget {
                       const SizedBox(height: 7),
                       Text(
                         '$plannedCount개로 시작한 세션의 결과예요. '
+                        '최고 $bestCombo콤보 · $minutes분. '
+                        '${recordProgress ? '' : '진도 비기록 연습 · '}'
                         '${hasMistakes ? '틀린 표현은 바로 다시 다질 수 있어요.' : '모든 표현을 정확히 기억했어요.'}',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -1306,8 +2979,12 @@ class _CompletionScreen extends StatelessWidget {
                                   Icons.track_changes_rounded,
                                 ),
                                 ('정답', '$correct', Icons.check_circle_rounded),
+                                (
+                                  '최고 콤보',
+                                  '$bestCombo',
+                                  Icons.local_fire_department_rounded,
+                                ),
                                 ('획득 XP', '+$xp', Icons.bolt_rounded),
-                                ('소요 시간', '$minutes분', Icons.timer_outlined),
                               ];
                               return GridView.count(
                                 crossAxisCount: compact ? 2 : 4,
@@ -1367,20 +3044,73 @@ class _CompletionScreen extends StatelessWidget {
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: onHome,
-                          icon: Icon(returnIcon),
-                          label: Text(returnLabel),
+                        child: OutlinedButton.icon(
+                          key: const Key('completion-review-attempts'),
+                          onPressed: attempts.isEmpty
+                              ? null
+                              : () => showModalBottomSheet<void>(
+                                  context: context,
+                                  showDragHandle: true,
+                                  isScrollControlled: true,
+                                  builder: (context) => CompletionReviewSheet(
+                                    attempts: attempts,
+                                    onOpenItem: onOpenItem,
+                                  ),
+                                ),
+                          icon: const Icon(Icons.fact_check_outlined),
+                          label: Text('문항별 결과 ${attempts.length}개 보기'),
                         ),
                       ),
+                      const SizedBox(height: 10),
                       if (hasMistakes) ...[
-                        const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
-                          child: OutlinedButton.icon(
+                          child: FilledButton.icon(
+                            key: const Key('completion-retry-mistakes'),
                             onPressed: onRetryMistakes,
                             icon: const Icon(Icons.replay_rounded),
                             label: const Text('틀린 문제만 다시 풀기'),
+                          ),
+                        ),
+                      ],
+                      if (onNextRecommended case final onNext?) ...[
+                        if (hasMistakes) const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: hasMistakes
+                              ? OutlinedButton.icon(
+                                  key: const Key('completion-next-recommended'),
+                                  onPressed: onNext,
+                                  icon: const Icon(Icons.arrow_forward_rounded),
+                                  label: const Text('다음 추천 학습'),
+                                )
+                              : FilledButton.icon(
+                                  key: const Key('completion-next-recommended'),
+                                  onPressed: onNext,
+                                  icon: const Icon(Icons.arrow_forward_rounded),
+                                  label: const Text('다음 추천 학습'),
+                                ),
+                        ),
+                      ],
+                      if (!hasMistakes && onNextRecommended == null)
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            key: const Key('completion-return'),
+                            onPressed: onHome,
+                            icon: Icon(returnIcon),
+                            label: Text(returnLabel),
+                          ),
+                        )
+                      else ...[
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: TextButton.icon(
+                            key: const Key('completion-return'),
+                            onPressed: onHome,
+                            icon: Icon(returnIcon),
+                            label: Text(returnLabel),
                           ),
                         ),
                       ],
@@ -1403,6 +3133,8 @@ class _SentenceOrderInput extends StatelessWidget {
     required this.enabled,
     required this.onSelectedTap,
     required this.onRemainingTap,
+    required this.onUndo,
+    required this.onReset,
   });
 
   final List<String> selected;
@@ -1410,6 +3142,8 @@ class _SentenceOrderInput extends StatelessWidget {
   final bool enabled;
   final ValueChanged<int> onSelectedTap;
   final ValueChanged<int> onRemainingTap;
+  final VoidCallback onUndo;
+  final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
@@ -1425,7 +3159,7 @@ class _SentenceOrderInput extends StatelessWidget {
             border: Border.all(color: Theme.of(context).dividerColor),
           ),
           child: selected.isEmpty
-              ? const Center(child: Text('아래 단어를 눌러 문장을 만드세요'))
+              ? const Center(child: Text('아래 단어를 누르거나 숫자키 1~9로 문장을 만드세요'))
               : Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -1447,9 +3181,33 @@ class _SentenceOrderInput extends StatelessWidget {
             for (final (index, token) in remaining.indexed)
               ActionChip(
                 onPressed: enabled ? () => onRemainingTap(index) : null,
-                label: Text(token),
+                label: Text(index < 9 ? '${index + 1} · $token' : token),
               ),
           ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton.icon(
+              key: const Key('undo-sentence-token'),
+              onPressed: enabled && selected.isNotEmpty ? onUndo : null,
+              icon: const Icon(Icons.undo_rounded, size: 18),
+              label: const Text('한 칸 되돌리기'),
+            ),
+            const SizedBox(width: 6),
+            TextButton.icon(
+              key: const Key('reset-sentence-order'),
+              onPressed: enabled && selected.isNotEmpty ? onReset : null,
+              icon: const Icon(Icons.restart_alt_rounded, size: 18),
+              label: const Text('처음부터'),
+            ),
+          ],
+        ),
+        Text(
+          '1~9 선택 · Backspace 되돌리기 · Ctrl+Backspace 초기화 · Enter 제출',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.labelSmall,
         ),
       ],
     );
@@ -1463,7 +3221,9 @@ class _ChoiceButton extends StatelessWidget {
     required this.selected,
     required this.submitted,
     required this.correctAnswer,
+    required this.minimumHeight,
     required this.onPressed,
+    super.key,
   });
 
   final String shortcut;
@@ -1471,6 +3231,7 @@ class _ChoiceButton extends StatelessWidget {
   final bool selected;
   final bool submitted;
   final bool correctAnswer;
+  final double minimumHeight;
   final VoidCallback? onPressed;
 
   @override
@@ -1496,7 +3257,7 @@ class _ChoiceButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(56),
+        minimumSize: Size.fromHeight(minimumHeight),
         alignment: Alignment.centerLeft,
         backgroundColor: background,
         foregroundColor: colors.onSurface,
@@ -1544,14 +3305,60 @@ class _ChoiceButton extends StatelessWidget {
 }
 
 class _FeedbackCard extends StatelessWidget {
-  const _FeedbackCard({required this.correct, required this.answer, super.key});
+  const _FeedbackCard({
+    required this.correct,
+    required this.answer,
+    required this.userAnswer,
+    required this.item,
+    required this.readingAidsLabel,
+    required this.usedHint,
+    required this.combo,
+    required this.rating,
+    required this.correctionLabel,
+    required this.recordProgress,
+    required this.favorite,
+    required this.onSpeak,
+    required this.onToggleFavorite,
+  });
 
   final bool correct;
   final String answer;
+  final String userAnswer;
+  final LearningItem item;
+  final String readingAidsLabel;
+  final bool usedHint;
+  final int combo;
+  final ReviewRating rating;
+  final String? correctionLabel;
+  final bool recordProgress;
+  final bool favorite;
+  final VoidCallback onSpeak;
+  final VoidCallback onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
     final color = correct ? const Color(0xFF238B57) : const Color(0xFFC2414B);
+    final xp = recordProgress
+        ? switch (rating) {
+            ReviewRating.again => 5,
+            ReviewRating.hard => 8,
+            ReviewRating.good => 10,
+            ReviewRating.easy => 15,
+          }
+        : 0;
+    final title = correctionLabel != null
+        ? '$correctionLabel · 최종 판정을 반영해요'
+        : correct
+        ? usedHint
+              ? '힌트와 함께 기억했어요'
+              : combo >= 3
+              ? '$combo콤보! 흐름이 좋아요'
+              : combo == 2
+              ? '2콤보! 감을 잡았어요'
+              : '정답이에요'
+        : userAnswer.trim().isEmpty
+        ? '지금 정답을 익혀 두세요'
+        : '답을 비교해 보세요';
     return DecoratedBox(
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.09),
@@ -1560,41 +3367,1153 @@ class _FeedbackCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(15),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: SizedBox.square(
-                dimension: 36,
-                child: Icon(
-                  correct ? Icons.check_rounded : Icons.refresh_rounded,
-                  color: color,
-                  size: 20,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox.square(
+                    dimension: 36,
+                    child: Icon(
+                      correct ? Icons.check_rounded : Icons.refresh_rounded,
+                      color: color,
+                      size: 20,
+                    ),
+                  ),
                 ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      color: color,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Text(
+                  recordProgress ? '+$xp XP' : '진도 비기록',
+                  style: TextStyle(color: color, fontWeight: FontWeight.w900),
+                ),
+              ],
+            ),
+            const SizedBox(height: 13),
+            if (!correct)
+              _FeedbackAnswerRow(
+                label: '내 답',
+                value: userAnswer.trim().isEmpty ? '모르겠어요' : userAnswer,
+              ),
+            if (!correct) const SizedBox(height: 7),
+            _FeedbackAnswerRow(label: '정답', value: answer, emphasized: true),
+            if (readingAidsLabel.isNotEmpty) ...[
+              const SizedBox(height: 7),
+              _FeedbackAnswerRow(label: '읽기', value: readingAidsLabel),
+            ],
+            if (item.primaryTranslation.trim().isNotEmpty &&
+                item.primaryTranslation != answer) ...[
+              const SizedBox(height: 7),
+              _FeedbackAnswerRow(label: '뜻', value: item.primaryTranslation),
+            ],
+            if ((item.example ?? '').trim().isNotEmpty) ...[
+              const SizedBox(height: 7),
+              _FeedbackAnswerRow(
+                label: '예문',
+                value:
+                    '${item.example}'
+                    '${(item.exampleTranslation ?? '').trim().isEmpty ? '' : '\n${item.exampleTranslation}'}',
+              ),
+            ],
+            const SizedBox(height: 11),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.surface.withValues(alpha: 0.7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                correct
+                    ? correctionLabel != null
+                          ? '다음 문제로 이동할 때 수정한 최종 판정만 한 번 기록합니다.'
+                          : usedHint
+                          ? '힌트를 사용해 “어려움”으로 기록했습니다. 너무 늦지 않게 다시 복습합니다.'
+                          : '기억에 성공해 다음 복습 간격이 늘어났습니다.'
+                    : recordProgress
+                    ? '이 표현은 세션 뒤쪽에 다시 나옵니다. 최대 세 번 안에 회상할 수 있게 돕습니다.'
+                    : '연습 결과는 이번 완료 검토에만 표시하고 XP·복습 일정은 바꾸지 않습니다.',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    correct ? '정답이에요 · +10 XP' : '한 번 더 기억해 볼까요?',
-                    style: TextStyle(color: color, fontWeight: FontWeight.w900),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('feedback-listen-again'),
+                  onPressed: onSpeak,
+                  icon: const Icon(Icons.volume_up_rounded, size: 18),
+                  label: const Text('다시 듣기'),
+                ),
+                const Spacer(),
+                TextButton.icon(
+                  key: const Key('feedback-toggle-favorite'),
+                  onPressed: onToggleFavorite,
+                  icon: Icon(
+                    favorite ? Icons.star_rounded : Icons.star_border_rounded,
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    correct ? '좋아요. 다음 복습 간격이 늘어났어요.' : '정답: $answer',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                  label: Text(favorite ? '저장됨' : '저장'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedbackAnswerRow extends StatelessWidget {
+  const _FeedbackAnswerRow({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: emphasized
+            ? colors.primaryContainer.withValues(alpha: 0.72)
+            : colors.surface.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 42,
+            child: Text(
+              label,
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(width: 7),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: emphasized ? FontWeight.w900 : FontWeight.w600,
+                height: 1.35,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingQuizResponse {
+  _PendingQuizResponse({
+    required this.item,
+    required this.originalAttempt,
+    required this.currentAttempt,
+    required this.previousCombo,
+    required this.previousBestCombo,
+    required this.previousFailureCount,
+    required this.wasWrong,
+    required this.wasFinalCorrect,
+  });
+
+  final LearningItem item;
+  final QuizAttemptReview originalAttempt;
+  QuizAttemptReview currentAttempt;
+  final int previousCombo;
+  final int previousBestCombo;
+  final int previousFailureCount;
+  final bool wasWrong;
+  final bool wasFinalCorrect;
+  bool retryAppended = false;
+}
+
+String _answerDirectionLabel(StudyAnswerDirection direction) =>
+    switch (direction) {
+      StudyAnswerDirection.learningToMeaning => '학습어 → 한국어',
+      StudyAnswerDirection.meaningToLearning => '한국어 → 학습어',
+      StudyAnswerDirection.mixed => '양방향',
+    };
+
+class _SessionQuizOptionsSheet extends StatefulWidget {
+  const _SessionQuizOptionsSheet({required this.mode, required this.initial});
+
+  final StudyMode mode;
+  final QuizSessionOptions initial;
+
+  @override
+  State<_SessionQuizOptionsSheet> createState() =>
+      _SessionQuizOptionsSheetState();
+}
+
+class _SessionQuizOptionsSheetState extends State<_SessionQuizOptionsSheet> {
+  late QuizSessionOptions _options;
+
+  @override
+  void initState() {
+    super.initState();
+    _options = widget.initial;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 620),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '이번 세션 설정',
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 4),
+                const Text('전역 설정은 바꾸지 않고 현재 세션에만 적용합니다.'),
+                const SizedBox(height: 20),
+                _OptionSection(
+                  title: '출제 방향',
+                  description: widget.mode.answerDirectionExplanation,
+                  children: widget.mode.allowsAnswerDirectionOverride
+                      ? [
+                          for (final direction in StudyAnswerDirection.values)
+                            ChoiceChip(
+                              key: Key('session-direction-${direction.name}'),
+                              label: Text(_answerDirectionLabel(direction)),
+                              selected: _options.answerDirection == direction,
+                              onSelected: (_) => setState(
+                                () => _options = _options.copyWith(
+                                  answerDirection: direction,
+                                ),
+                              ),
+                            ),
+                        ]
+                      : [
+                          Chip(
+                            key: const Key('session-direction-locked'),
+                            avatar: const Icon(Icons.lock_outline_rounded),
+                            label: Text(
+                              _answerDirectionLabel(
+                                widget.mode.effectiveFixedAnswerDirection,
+                              ),
+                            ),
+                          ),
+                        ],
+                ),
+                const SizedBox(height: 16),
+                _OptionSection(
+                  title: '채점 강도',
+                  description: _options.gradingStrength.description,
+                  children: [
+                    for (final strength in StudyGradingStrictness.values)
+                      ChoiceChip(
+                        key: Key('session-grading-${strength.name}'),
+                        label: Text(strength.koreanLabel),
+                        selected: _options.gradingStrength == strength,
+                        onSelected: (_) => setState(
+                          () => _options = _options.copyWith(
+                            gradingStrength: strength,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _OptionSection(
+                  title: '입력 프로필',
+                  description: _options.inputProfile.description,
+                  children: [
+                    for (final profile in PracticeInputProfile.values)
+                      ChoiceChip(
+                        key: Key('session-input-profile-${profile.name}'),
+                        avatar: Icon(
+                          profile == PracticeInputProfile.accessible
+                              ? Icons.accessibility_new_rounded
+                              : Icons.touch_app_rounded,
+                          size: 18,
+                        ),
+                        label: Text(profile.koreanLabel),
+                        selected: _options.inputProfile == profile,
+                        onSelected: (_) => setState(
+                          () => _options = _options.copyWith(
+                            inputProfile: profile,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 22),
+                FilledButton.icon(
+                  key: const Key('apply-session-quiz-options'),
+                  onPressed: () => Navigator.pop(context, _options),
+                  icon: const Icon(Icons.check_rounded),
+                  label: const Text('이 세션에 적용'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OptionSection extends StatelessWidget {
+  const _OptionSection({
+    required this.title,
+    required this.description,
+    required this.children,
+  });
+
+  final String title;
+  final String description;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      explicitChildNodes: true,
+      label: '$title. $description',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 3),
+          Text(description, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 9),
+          Wrap(spacing: 8, runSpacing: 8, children: children),
+        ],
+      ),
+    );
+  }
+}
+
+class _MatchSprintDialog extends StatefulWidget {
+  const _MatchSprintDialog({required this.deck, required this.allowTimedMode});
+
+  final MatchSprintDeck deck;
+  final bool allowTimedMode;
+
+  @override
+  State<_MatchSprintDialog> createState() => _MatchSprintDialogState();
+}
+
+class _MatchSprintDialogState extends State<_MatchSprintDialog> {
+  late final List<MatchSprintPair> _learningPairs;
+  late final List<MatchSprintPair> _meaningPairs;
+  final _matchedIds = <String>{};
+  MatchSprintPair? _selectedLearning;
+  MatchSprintPair? _selectedMeaning;
+  MatchSprintMode _mode = MatchSprintMode.tenPairs;
+  Timer? _timer;
+  var _remainingSeconds = 60;
+  var _mistakes = 0;
+  var _started = false;
+  var _finished = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _learningPairs = [...widget.deck.pairs];
+    _meaningPairs = [...widget.deck.pairs]
+      ..shuffle(Random(_deckSeed(widget.deck.pairs)));
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _start() {
+    setState(() {
+      _started = true;
+      _remainingSeconds = 60;
+    });
+    if (_mode != MatchSprintMode.timed) return;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_remainingSeconds <= 1) {
+        timer.cancel();
+        setState(() {
+          _remainingSeconds = 0;
+          _finished = true;
+        });
+      } else {
+        setState(() => _remainingSeconds--);
+      }
+    });
+  }
+
+  void _selectLearning(MatchSprintPair pair) {
+    if (_finished || _matchedIds.contains(pair.itemId)) return;
+    setState(() => _selectedLearning = pair);
+    _evaluatePair();
+  }
+
+  void _selectMeaning(MatchSprintPair pair) {
+    if (_finished || _matchedIds.contains(pair.itemId)) return;
+    setState(() => _selectedMeaning = pair);
+    _evaluatePair();
+  }
+
+  void _evaluatePair() {
+    final learning = _selectedLearning;
+    final meaning = _selectedMeaning;
+    if (learning == null || meaning == null) return;
+    setState(() {
+      if (learning.itemId == meaning.itemId) {
+        _matchedIds.add(learning.itemId);
+        if (_matchedIds.length == widget.deck.pairs.length) {
+          _finished = true;
+          _timer?.cancel();
+        }
+      } else {
+        _mistakes++;
+      }
+      _selectedLearning = null;
+      _selectedMeaning = null;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: SizedBox(
+        width: min(760, MediaQuery.sizeOf(context).width - 32),
+        height: min(720, MediaQuery.sizeOf(context).height - 32),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '매치 스프린트',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    tooltip: '닫기',
+                    icon: const Icon(Icons.close_rounded),
                   ),
                 ],
               ),
+              if (!_started) ...[
+                const Text('표현과 뜻을 한 쌍씩 연결하세요. 원본 자료와 복습 일정은 바뀌지 않습니다.'),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      key: const Key('match-mode-ten-pairs'),
+                      label: const Text('10쌍 · 시간 제한 없음'),
+                      selected: _mode == MatchSprintMode.tenPairs,
+                      onSelected: (_) =>
+                          setState(() => _mode = MatchSprintMode.tenPairs),
+                    ),
+                    if (widget.allowTimedMode)
+                      ChoiceChip(
+                        key: const Key('match-mode-timed'),
+                        label: const Text('60초 도전'),
+                        selected: _mode == MatchSprintMode.timed,
+                        onSelected: (_) =>
+                            setState(() => _mode = MatchSprintMode.timed),
+                      ),
+                  ],
+                ),
+                if (!widget.allowTimedMode) ...[
+                  const SizedBox(height: 8),
+                  const Text('편한 입력 프로필에서는 시간 제한을 사용하지 않습니다.'),
+                ],
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  key: const Key('begin-match-sprint'),
+                  onPressed: _start,
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text('${widget.deck.pairs.length}쌍 시작'),
+                ),
+              ] else ...[
+                Row(
+                  children: [
+                    Text(
+                      '${_matchedIds.length}/${widget.deck.pairs.length}쌍',
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    const Spacer(),
+                    Text(
+                      _mode == MatchSprintMode.timed
+                          ? '$_remainingSeconds초'
+                          : '오선택 $_mistakes회',
+                      style: TextStyle(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (_finished)
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _matchedIds.length == widget.deck.pairs.length
+                                ? Icons.emoji_events_rounded
+                                : Icons.timer_off_outlined,
+                            size: 58,
+                            color: colors.primary,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            _matchedIds.length == widget.deck.pairs.length
+                                ? '모든 쌍을 연결했어요'
+                                : '60초 도전을 마쳤어요',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          const SizedBox(height: 5),
+                          Text('성공 ${_matchedIds.length}쌍 · 오선택 $_mistakes회'),
+                          const SizedBox(height: 18),
+                          FilledButton(
+                            key: const Key('close-match-result'),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('퀴즈로 돌아가기'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _MatchColumn(
+                              title: '표현',
+                              pairs: _learningPairs,
+                              matchedIds: _matchedIds,
+                              selectedId: _selectedLearning?.itemId,
+                              labelOf: (pair) => pair.learningText,
+                              onSelect: _selectLearning,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _MatchColumn(
+                              title: '뜻',
+                              pairs: _meaningPairs,
+                              matchedIds: _matchedIds,
+                              selectedId: _selectedMeaning?.itemId,
+                              labelOf: (pair) => pair.meaningText,
+                              onSelect: _selectMeaning,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MatchColumn extends StatelessWidget {
+  const _MatchColumn({
+    required this.title,
+    required this.pairs,
+    required this.matchedIds,
+    required this.selectedId,
+    required this.labelOf,
+    required this.onSelect,
+  });
+
+  final String title;
+  final List<MatchSprintPair> pairs;
+  final Set<String> matchedIds;
+  final String? selectedId;
+  final String Function(MatchSprintPair pair) labelOf;
+  final ValueChanged<MatchSprintPair> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        const SizedBox(height: 8),
+        for (final pair in pairs) ...[
+          OutlinedButton(
+            onPressed: matchedIds.contains(pair.itemId)
+                ? null
+                : () => onSelect(pair),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+              backgroundColor: selectedId == pair.itemId
+                  ? Theme.of(context).colorScheme.primaryContainer
+                  : null,
+              alignment: Alignment.center,
+            ),
+            child: Text(
+              matchedIds.contains(pair.itemId) ? '✓' : labelOf(pair),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 7),
+        ],
+      ],
+    );
+  }
+}
+
+int _deckSeed(List<MatchSprintPair> pairs) {
+  var seed = 17;
+  for (final pair in pairs) {
+    for (final unit in pair.itemId.codeUnits) {
+      seed = (seed * 37 + unit) & 0x7fffffff;
+    }
+  }
+  return seed;
+}
+
+enum _RepairAction { edit, memoryHint, exclude, continueStudy }
+
+class _RepairOptionsSheet extends StatelessWidget {
+  const _RepairOptionsSheet({
+    required this.item,
+    required this.editable,
+    required this.hasMemoryHint,
+  });
+
+  final LearningItem item;
+  final bool editable;
+  final bool hasMemoryHint;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('반복 오답 수선'),
+              subtitle: Text('“${item.text}”을 계속 반복하기 전에 원인을 정리해 보세요.'),
+            ),
+            ListTile(
+              key: const Key('repair-edit-content'),
+              leading: const Icon(Icons.edit_rounded),
+              title: Text(editable ? '문제 수정' : '교정 메모 작성'),
+              subtitle: Text(
+                editable
+                    ? '문제와 정답을 고치고 현재 세션을 그대로 이어갑니다.'
+                    : '기본 언어팩 원본은 보호하고 내 제안만 별도로 저장합니다.',
+              ),
+              onTap: () => Navigator.pop(context, _RepairAction.edit),
+            ),
+            ListTile(
+              key: const Key('repair-memory-hint'),
+              leading: const Icon(Icons.lightbulb_outline_rounded),
+              title: Text(hasMemoryHint ? '암기 단서 수정' : '암기 단서 추가'),
+              subtitle: const Text('내 방식으로 기억할 짧은 단서를 저장합니다.'),
+              onTap: () => Navigator.pop(context, _RepairAction.memoryHint),
+            ),
+            ListTile(
+              key: const Key('repair-exclude-item'),
+              leading: const Icon(Icons.pause_circle_outline_rounded),
+              title: const Text('잠시 제외'),
+              subtitle: const Text('다음 학습부터 이 표현을 출제하지 않습니다.'),
+              onTap: () => Navigator.pop(context, _RepairAction.exclude),
+            ),
+            ListTile(
+              leading: const Icon(Icons.arrow_forward_rounded),
+              title: const Text('계속 학습'),
+              onTap: () => Navigator.pop(context, _RepairAction.continueStudy),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MemoryHintDialog extends StatefulWidget {
+  const _MemoryHintDialog({required this.item, required this.initialHint});
+
+  final LearningItem item;
+  final String initialHint;
+
+  @override
+  State<_MemoryHintDialog> createState() => _MemoryHintDialogState();
+}
+
+class _MemoryHintDialogState extends State<_MemoryHintDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialHint);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final reading = item.readingAidsLabel.trim();
+    final example = item.example?.trim() ?? '';
+    final translation = item.exampleTranslation?.trim() ?? '';
+    return AlertDialog(
+      title: const Text('암기 단서 편집'),
+      content: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _FeedbackAnswerRow(label: '표현', value: item.text, emphasized: true),
+            const SizedBox(height: 8),
+            _FeedbackAnswerRow(label: '뜻', value: item.primaryTranslation),
+            if (reading.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _FeedbackAnswerRow(label: '읽기', value: reading),
+            ],
+            if (example.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _FeedbackAnswerRow(
+                label: '예문',
+                value: '$example${translation.isEmpty ? '' : '\n$translation'}',
+              ),
+            ],
+            if (item.tags.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              _FeedbackAnswerRow(label: '태그', value: item.tags.join(', ')),
+            ],
+            const SizedBox(height: 14),
+            TextField(
+              key: const Key('memory-hint-input'),
+              controller: _controller,
+              autofocus: true,
+              minLines: 2,
+              maxLines: 4,
+              maxLength: 240,
+              decoration: const InputDecoration(
+                labelText: '내 암기 단서',
+                hintText: '예: 공항에서 탑승구를 다시 물을 때 쓰는 문장',
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('save-memory-hint'),
+          onPressed: () => Navigator.pop(
+            context,
+            _MemoryHintEditResult(_controller.text.trim()),
+          ),
+          child: Text(_controller.text.trim().isEmpty ? '비우기' : '저장'),
+        ),
+      ],
+    );
+  }
+}
+
+class _CustomContentEditDialog extends StatefulWidget {
+  const _CustomContentEditDialog({required this.item});
+
+  final LearningItem item;
+
+  @override
+  State<_CustomContentEditDialog> createState() =>
+      _CustomContentEditDialogState();
+}
+
+class _CustomContentEditDialogState extends State<_CustomContentEditDialog> {
+  late final TextEditingController _questionController;
+  late final TextEditingController _answerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _questionController = TextEditingController(text: widget.item.text);
+    _answerController = TextEditingController(
+      text: widget.item.primaryTranslation,
+    );
+  }
+
+  @override
+  void dispose() {
+    _questionController.dispose();
+    _answerController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final question = _questionController.text.trim();
+    final answer = _answerController.text.trim();
+    if (question.isEmpty || answer.isEmpty) return;
+    Navigator.pop(
+      context,
+      _CustomContentEditResult(question: question, answer: answer),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('quiz-custom-content-editor'),
+      title: const Text('학습 자료 수정'),
+      content: SizedBox(
+        width: 480,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              key: const Key('quiz-edit-question'),
+              controller: _questionController,
+              autofocus: true,
+              maxLength: 500,
+              decoration: const InputDecoration(labelText: '문제 · 표현'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: const Key('quiz-edit-answer'),
+              controller: _answerController,
+              maxLength: 500,
+              onSubmitted: (_) => _save(),
+              decoration: const InputDecoration(labelText: '대표 정답 · 뜻'),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('save-quiz-custom-content'),
+          onPressed: _save,
+          child: const Text('수정하고 계속'),
+        ),
+      ],
+    );
+  }
+}
+
+class _BaseCorrectionEditDialog extends StatefulWidget {
+  const _BaseCorrectionEditDialog({required this.item, required this.existing});
+
+  final LearningItem item;
+  final ContentCorrection? existing;
+
+  @override
+  State<_BaseCorrectionEditDialog> createState() =>
+      _BaseCorrectionEditDialogState();
+}
+
+class _BaseCorrectionEditDialogState extends State<_BaseCorrectionEditDialog> {
+  late final TextEditingController _proposalController;
+  late final TextEditingController _noteController;
+
+  @override
+  void initState() {
+    super.initState();
+    _proposalController = TextEditingController(
+      text:
+          widget.existing?.proposedValue ??
+          '${widget.item.text} → ${widget.item.primaryTranslation}',
+    );
+    _noteController = TextEditingController(text: widget.existing?.note ?? '');
+  }
+
+  @override
+  void dispose() {
+    _proposalController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final proposal = _proposalController.text.trim();
+    final note = _noteController.text.trim();
+    if (proposal.isEmpty || note.isEmpty) return;
+    Navigator.pop(
+      context,
+      _BaseCorrectionEditResult(proposedValue: proposal, note: note),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('base-content-correction-editor'),
+      title: const Text('기본 언어팩 교정 메모'),
+      content: SizedBox(
+        width: 500,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '원본은 변경하지 않습니다. 내 제안은 이 항목에 연결되어 다음에도 다시 편집할 수 있습니다.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('base-correction-proposal'),
+                controller: _proposalController,
+                autofocus: true,
+                maxLength: 1000,
+                minLines: 2,
+                maxLines: 4,
+                decoration: const InputDecoration(labelText: '제안 내용'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                key: const Key('base-correction-note'),
+                controller: _noteController,
+                maxLength: 500,
+                minLines: 2,
+                maxLines: 4,
+                onSubmitted: (_) => _save(),
+                decoration: const InputDecoration(labelText: '왜 수정이 필요한가요?'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('save-base-content-correction'),
+          onPressed: _save,
+          child: const Text('교정 메모 저장'),
+        ),
+      ],
+    );
+  }
+}
+
+class _MemoryHintEditResult {
+  const _MemoryHintEditResult(this.value);
+
+  final String value;
+}
+
+class _CustomContentEditResult {
+  const _CustomContentEditResult({
+    required this.question,
+    required this.answer,
+  });
+
+  final String question;
+  final String answer;
+}
+
+class _BaseCorrectionEditResult {
+  const _BaseCorrectionEditResult({
+    required this.proposedValue,
+    required this.note,
+  });
+
+  final String proposedValue;
+  final String note;
+}
+
+@visibleForTesting
+class CompletionReviewSheet extends StatefulWidget {
+  const CompletionReviewSheet({
+    required this.attempts,
+    required this.onOpenItem,
+    super.key,
+  });
+
+  final List<QuizAttemptReview> attempts;
+  final ValueChanged<String> onOpenItem;
+
+  @override
+  State<CompletionReviewSheet> createState() => _CompletionReviewSheetState();
+}
+
+class _CompletionReviewSheetState extends State<CompletionReviewSheet> {
+  var _wrongOnly = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = _wrongOnly
+        ? widget.attempts.where((attempt) => !attempt.correct).toList()
+        : widget.attempts;
+    return SafeArea(
+      top: false,
+      child: SizedBox(
+        height: MediaQuery.sizeOf(context).height * 0.86,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '문항별 완료 검토',
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ),
+                      FilterChip(
+                        key: const Key('completion-review-wrong-only'),
+                        selected: _wrongOnly,
+                        label: const Text('오답만'),
+                        onSelected: (value) =>
+                            setState(() => _wrongOnly = value),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: visible.isEmpty
+                      ? const Center(child: Text('검토할 오답이 없어요.'))
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+                          itemCount: visible.length,
+                          separatorBuilder: (_, _) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final attempt = visible[index];
+                            return Card(
+                              child: ExpansionTile(
+                                key: Key(
+                                  'completion-attempt-${attempt.sequence}',
+                                ),
+                                leading: Icon(
+                                  attempt.correct
+                                      ? Icons.check_circle_rounded
+                                      : Icons.cancel_rounded,
+                                  color: attempt.correct
+                                      ? const Color(0xFF238B57)
+                                      : Theme.of(context).colorScheme.error,
+                                ),
+                                title: Text(
+                                  '${attempt.sequence}. ${attempt.prompt}',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  attempt.correctionLabel ??
+                                      (attempt.usedHint
+                                          ? '힌트 사용'
+                                          : attempt.exerciseType),
+                                ),
+                                childrenPadding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  0,
+                                  16,
+                                  14,
+                                ),
+                                children: [
+                                  _FeedbackAnswerRow(
+                                    label: '내 답',
+                                    value: attempt.userAnswer.trim().isEmpty
+                                        ? '모르겠어요'
+                                        : attempt.userAnswer,
+                                  ),
+                                  const SizedBox(height: 7),
+                                  _FeedbackAnswerRow(
+                                    label: '정답',
+                                    value: attempt.expectedAnswer,
+                                    emphasized: true,
+                                  ),
+                                  const SizedBox(height: 9),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton.icon(
+                                      key: Key(
+                                        'completion-edit-${attempt.sequence}',
+                                      ),
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        widget.onOpenItem(attempt.itemId);
+                                      },
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        size: 18,
+                                      ),
+                                      label: const Text('자료 확인·수정'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'src/app.dart';
+import 'src/app_bootstrap.dart';
+import 'src/data/database/database_bootstrap.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +16,7 @@ Future<void> main() async {
       size: Size(1040, 760),
       minimumSize: Size(380, 520),
       center: true,
-      title: '작업 보드',
+      title: 'Sprache',
       titleBarStyle: TitleBarStyle.normal,
     );
     unawaited(
@@ -28,5 +28,5 @@ Future<void> main() async {
     );
   }
 
-  runApp(const ProviderScope(child: SpracheApp()));
+  runApp(SpracheBootstrap(bootstrapper: DatabaseBootstrapService()));
 }

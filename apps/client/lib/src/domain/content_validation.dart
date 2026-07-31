@@ -2,6 +2,7 @@ import 'package:unorm_dart/unorm_dart.dart' as unicode;
 
 import 'language.dart';
 import 'learning_item.dart';
+import 'study_subject.dart';
 
 enum ContentIssueSeverity { warning, error }
 
@@ -46,6 +47,168 @@ class LearningContentValidationException implements Exception {
   String toString() => issues.map((issue) => issue.message).join(' ');
 }
 
+ContentValidationIssue? inspectReadingFormat(
+  ReadingScheme scheme,
+  String source,
+) {
+  final value = unicode.nfkc(source).trim().replaceAll(RegExp(r'\s+'), ' ');
+  if (value.isEmpty) return null;
+
+  ContentValidationIssue error(String code, String message) {
+    return ContentValidationIssue(
+      code: code,
+      field: 'readings',
+      message: message,
+      severity: ContentIssueSeverity.error,
+    );
+  }
+
+  bool isAsciiLetter(int rune) =>
+      (rune >= 0x41 && rune <= 0x5a) || (rune >= 0x61 && rune <= 0x7a);
+  bool isSharedSeparator(int rune) => const {
+    0x20, // space
+    0x2d, // -
+    0x27, // '
+    0x2019, // ’
+    0x2e, // .
+    0x2c, // ,
+    0x21, // !
+    0x3f, // ?
+  }.contains(rune);
+
+  switch (scheme) {
+    case ReadingScheme.kana:
+      final valid = value.runes.every(
+        (rune) =>
+            (rune >= 0x3040 && rune <= 0x30ff) ||
+            (rune >= 0x31f0 && rune <= 0x31ff) ||
+            isSharedSeparator(rune) ||
+            const {
+              0x20,
+              0x3001, // 、
+              0x3002, // 。
+              0x30fb, // ・
+              0xff01, // ！
+              0xff1f, // ？
+              0x301c, // 〜
+              0xff5e, // ～
+            }.contains(rune),
+      );
+      if (!valid) {
+        return error('kana_format', '가나 읽기에는 히라가나·가타카나와 문장부호만 입력하세요. 예: みず');
+      }
+      break;
+    case ReadingScheme.romaji:
+      const romanizationLetters = 'āīūēōĀĪŪĒŌâîûêôÂÎÛÊÔ';
+      final hasLetter = value.runes.any(isAsciiLetter);
+      final valid = value.runes.every(
+        (rune) =>
+            isAsciiLetter(rune) ||
+            romanizationLetters.runes.contains(rune) ||
+            isSharedSeparator(rune),
+      );
+      if (!valid || !hasLetter) {
+        return error(
+          'romaji_format',
+          '로마자에는 라틴 문자와 장음 부호만 입력하세요. 예: mizu 또는 Tōkyō',
+        );
+      }
+      break;
+    case ReadingScheme.pinyin:
+      const markedPinyinLetters =
+          'āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜüê'
+          'ĀÁǍÀĒÉĚÈĪÍǏÌŌÓǑÒŪÚǓÙǕǗǙǛÜÊ';
+      final hasLetter = value.runes.any(
+        (rune) =>
+            isAsciiLetter(rune) || markedPinyinLetters.runes.contains(rune),
+      );
+      final hasToneMark = value.runes.any(markedPinyinLetters.runes.contains);
+      final hasToneNumber = value.runes.any(
+        (rune) => rune >= 0x31 && rune <= 0x35,
+      );
+      final hasInvalidNumber = value.runes.any(
+        (rune) => rune >= 0x30 && rune <= 0x39 && (rune < 0x31 || rune > 0x35),
+      );
+      final validCharacters = value.runes.every(
+        (rune) =>
+            isAsciiLetter(rune) ||
+            markedPinyinLetters.runes.contains(rune) ||
+            (rune >= 0x31 && rune <= 0x35) ||
+            rune == 0x3a ||
+            isSharedSeparator(rune),
+      );
+      if (!validCharacters || !hasLetter || hasInvalidNumber) {
+        return error(
+          'pinyin_format',
+          '병음에는 라틴 문자와 성조 부호 또는 음절 끝 숫자 1~5만 입력하세요. 예: shuǐ 또는 shui3',
+        );
+      }
+      if (hasToneMark && hasToneNumber) {
+        return error(
+          'pinyin_mixed_tone',
+          '병음 성조 부호와 숫자 표기를 한 읽기 안에서 섞지 마세요. shuǐ 또는 shui3 중 하나를 사용하세요.',
+        );
+      }
+      final withoutUmlautShortcut = value
+          .replaceAll('u:', 'u')
+          .replaceAll('U:', 'U');
+      if (withoutUmlautShortcut.contains(':')) {
+        return error(
+          'pinyin_umlaut_format',
+          '병음의 콜론 표기는 u:에만 사용할 수 있습니다. 가능하면 ü를 사용하세요.',
+        );
+      }
+      if (hasToneNumber) {
+        final syllables = value
+            .split(RegExp(r"[\s\-'\u2019.,!?]+"))
+            .where((part) => part.isNotEmpty);
+        final numericSyllable = RegExp(r'^[A-Za-züÜvV:]+[1-5]$', unicode: true);
+        if (syllables.any(
+          (syllable) =>
+              RegExp(r'[1-5]').hasMatch(syllable) &&
+              !numericSyllable.hasMatch(syllable),
+        )) {
+          return error(
+            'pinyin_tone_number',
+            '숫자 성조는 각 병음 음절의 끝에 한 번만 적으세요. 예: ni3 hao3',
+          );
+        }
+      }
+      break;
+    case ReadingScheme.hangul:
+      final hasHangul = value.runes.any(
+        (rune) =>
+            (rune >= 0x1100 && rune <= 0x11ff) ||
+            (rune >= 0x3130 && rune <= 0x318f) ||
+            (rune >= 0xac00 && rune <= 0xd7a3),
+      );
+      final valid = value.runes.every(
+        (rune) =>
+            (rune >= 0x1100 && rune <= 0x11ff) ||
+            (rune >= 0x3130 && rune <= 0x318f) ||
+            (rune >= 0xac00 && rune <= 0xd7a3) ||
+            isSharedSeparator(rune) ||
+            const {
+              0x2f, // /
+              0x28, // (
+              0x29, // )
+              0xb7, // ·
+              0x3001, // 、
+              0x3002, // 。
+              0xff01, // ！
+              0xff1f, // ？
+            }.contains(rune),
+      );
+      if (!valid || !hasHangul) {
+        return error(
+          'hangul_reading_format',
+          '한국어 발음에는 한글과 문장부호만 입력하세요. 예: 헬로우, 니 하오',
+        );
+      }
+  }
+  return null;
+}
+
 class LearningContentValidator {
   const LearningContentValidator();
 
@@ -55,6 +218,18 @@ class LearningContentValidator {
     final profile = LanguageProfile.of(item.learningLanguage);
 
     _requiredLength(issues, value: item.id, field: 'id', label: 'ID', max: 160);
+    _requiredLength(
+      issues,
+      value: item.effectiveSubjectId,
+      field: 'subjectId',
+      label: '학습 주제 ID',
+      max: 80,
+    );
+    try {
+      normalizeStudySubjectId(item.effectiveSubjectId);
+    } on FormatException catch (error) {
+      _error(issues, 'subject_id_format', 'subjectId', error.message);
+    }
     if (item.id.contains(RegExp(r'[\x00-\x20]'))) {
       _error(issues, 'id_format', 'id', 'ID에는 공백이나 제어 문자를 사용할 수 없습니다.');
     }
@@ -125,6 +300,10 @@ class LearningContentValidator {
         label: '읽기 표기',
         max: 300,
       );
+      final formatIssue = inspectReadingFormat(reading.scheme, reading.value);
+      if (formatIssue != null) {
+        issues.add(formatIssue);
+      }
     }
     if (item.tags.length > 24) {
       _error(issues, 'tag_limit', 'tags', '태그는 항목당 24개까지 저장할 수 있습니다.');
@@ -161,6 +340,47 @@ class LearningContentValidator {
       label: '출처 버전',
       max: 80,
     );
+    _optionalLength(
+      issues,
+      value: item.source.sourceId,
+      field: 'source.sourceId',
+      label: '원문 ID',
+      max: 240,
+    );
+    _optionalLength(
+      issues,
+      value: item.source.sourceUrl,
+      field: 'source.sourceUrl',
+      label: '원문 URL',
+      max: 1000,
+    );
+    _optionalLength(
+      issues,
+      value: item.source.author,
+      field: 'source.author',
+      label: '원문 작성자',
+      max: 240,
+    );
+    _optionalLength(
+      issues,
+      value: item.source.attribution,
+      field: 'source.attribution',
+      label: '출처 표시문',
+      max: 1000,
+    );
+    final sourceUrl = item.source.sourceUrl;
+    final parsedSourceUrl = sourceUrl == null ? null : Uri.tryParse(sourceUrl);
+    if (sourceUrl != null &&
+        (parsedSourceUrl == null ||
+            !parsedSourceUrl.hasAuthority ||
+            !const {'http', 'https'}.contains(parsedSourceUrl.scheme))) {
+      _error(
+        issues,
+        'source_url_format',
+        'source.sourceUrl',
+        '원문 URL은 http 또는 https 주소여야 합니다.',
+      );
+    }
     if (item.source.contentVersion < 1 ||
         item.source.contentVersion > 1000000) {
       _error(
@@ -269,11 +489,23 @@ class LearningContentValidator {
   String duplicateKey(LearningItem item) {
     final normalized = _normalize(item);
     return [
+      normalized.effectiveSubjectId,
       normalized.learningLanguage.code,
       normalized.kind.name,
       _comparable(normalized.text),
       if (normalized.translations.isNotEmpty)
         _comparable(normalized.translations.first),
+      normalized.partOfSpeech?.name ?? '',
+    ].join('|');
+  }
+
+  String identityKey(LearningItem item) {
+    final normalized = _normalize(item);
+    return [
+      normalized.effectiveSubjectId,
+      normalized.learningLanguage.code,
+      normalized.kind.name,
+      _comparable(normalized.text),
       normalized.partOfSpeech?.name ?? '',
     ].join('|');
   }
@@ -298,6 +530,7 @@ class LearningContentValidator {
       id: _singleLine(item.id),
       kind: item.kind,
       learningLanguage: item.learningLanguage,
+      subjectId: normalizeStudySubjectId(item.effectiveSubjectId),
       text: _singleLine(item.text),
       translations: translations,
       acceptedAnswers: acceptedAnswers,
@@ -318,6 +551,10 @@ class LearningContentValidator {
         license: _singleLine(item.source.license),
         sourceVersion: _singleLine(item.source.sourceVersion),
         contentVersion: item.source.contentVersion,
+        sourceId: _optional(item.source.sourceId),
+        sourceUrl: _optional(item.source.sourceUrl),
+        author: _optional(item.source.author),
+        attribution: _optional(item.source.attribution),
       ),
       updatedAt: item.updatedAt?.toUtc(),
     );
@@ -361,6 +598,18 @@ class LearningContentValidator {
     if (value.isEmpty) {
       _error(issues, '${field}_required', field, '$label이 비어 있습니다.');
     } else if (value.runes.length > max) {
+      _error(issues, '${field}_length', field, '$label은 $max자 이하여야 합니다.');
+    }
+  }
+
+  void _optionalLength(
+    List<ContentValidationIssue> issues, {
+    required String? value,
+    required String field,
+    required String label,
+    required int max,
+  }) {
+    if (value != null && value.runes.length > max) {
       _error(issues, '${field}_length', field, '$label은 $max자 이하여야 합니다.');
     }
   }

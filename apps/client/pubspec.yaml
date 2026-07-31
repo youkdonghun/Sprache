@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.15.1+17
+version: 1.29.0+53
 
 environment:
   sdk: ^3.12.2
@@ -45,12 +45,20 @@ dependencies:
   uuid: ^4.6.0
   intl: ^0.20.3
   collection: ^1.19.1
+  path: ^1.9.1
   # 11.x requires AGP 9 built-in Kotlin, while flutter_tts still requires the
   # compatibility mode. 10.3.10 includes the current Android security fixes.
   file_picker: 10.3.10
   csv: ^8.0.0
+  archive: ^3.6.1
+  xml: ^6.6.1
   flutter_tts: ^4.2.5
   speech_to_text: ^7.4.0
+  record: ^7.1.1
+  audioplayers: ^6.8.1
+  flutter_local_notifications: ^22.2.0
+  flutter_timezone: ^5.1.0
+  timezone: ^0.11.1
   json_annotation: ^4.12.0
   unorm_dart: ^0.3.2
   url_launcher: ^6.3.2
@@ -59,6 +67,8 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -87,6 +97,14 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/templates/Sprache-easy-import-template.xlsx
+    - assets/templates/Sprache-word-import-template.xlsx
+    - assets/content/tatoeba-korean-sentence-pack-2026-07-28.json
+    - assets/content/tatoeba-practical-sentence-pack-2026-07-29.json
+    - assets/content/baseball-starter-pack-2026-07-28.json
+    - assets/content/idol-fandom-starter-pack-2026-07-28.json
 
   fonts:
     - family: NotoSansKR

@@ -6,6 +6,8 @@ class AppConfig {
     required this.googleServerClientId,
     required this.appEnvironment,
     required this.mockMode,
+    this.appVersion = '개발 빌드',
+    this.privacyPolicyUrl = '',
   });
 
   factory AppConfig.fromEnvironment() => const AppConfig(
@@ -21,6 +23,8 @@ class AppConfig {
       defaultValue: 'development',
     ),
     mockMode: bool.fromEnvironment('ENABLE_MOCK_MODE', defaultValue: true),
+    appVersion: String.fromEnvironment('APP_VERSION', defaultValue: '개발 빌드'),
+    privacyPolicyUrl: String.fromEnvironment('PRIVACY_POLICY_URL'),
   );
 
   final String apiBaseUrl;
@@ -29,6 +33,8 @@ class AppConfig {
   final String googleServerClientId;
   final String appEnvironment;
   final bool mockMode;
+  final String appVersion;
+  final String privacyPolicyUrl;
 
   bool get hasDesktopGoogleCredentials => googleDesktopClientId.isNotEmpty;
   bool get hasAndroidGoogleCredentials =>

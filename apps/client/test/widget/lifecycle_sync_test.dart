@@ -40,15 +40,83 @@ void main() {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
   });
+
+  testWidgets('a saved Drive link restores and syncs after cold start', (
+    tester,
+  ) async {
+    final store = MemoryStudyStore();
+    final empty = StoredProfile.empty(replicaId: 'replica-android');
+    await store.saveProfile(
+      StoredProfile(
+        selectedLanguage: empty.selectedLanguage,
+        totalXp: empty.totalXp,
+        streakDays: empty.streakDays,
+        dailyXp: empty.dailyXp,
+        badges: empty.badges,
+        driveConnected: true,
+        progress: empty.progress,
+        dailyXpByCourse: empty.dailyXpByCourse,
+        dailyXpByCourseAndReplica: empty.dailyXpByCourseAndReplica,
+        replicaId: empty.replicaId,
+        xpByReplica: empty.xpByReplica,
+        lastStudyDate: empty.lastStudyDate,
+      ),
+    );
+    final service = _CountingGoogleService();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          studyStoreProvider.overrideWithValue(store),
+          googleConnectionServiceProvider.overrideWithValue(service),
+        ],
+        child: const SpracheApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(SpracheApp)),
+    );
+
+    expect(service.restoreCount, 1);
+    expect(service.connectCount, 0);
+    expect(service.pullCount, 1);
+    expect(service.pushCount, 1);
+    expect(
+      container.read(connectionControllerProvider).phase,
+      ConnectionPhase.connected,
+    );
+    expect(container.read(connectionControllerProvider).runtimeReady, isTrue);
+  });
 }
 
-class _CountingGoogleService implements GoogleConnectionService {
+class _CountingGoogleService
+    implements GoogleConnectionService, RestorableGoogleConnectionService {
   Map<String, Object?>? snapshot;
+  int connectCount = 0;
+  int restoreCount = 0;
   int pullCount = 0;
   int pushCount = 0;
 
   @override
-  Future<GoogleConnectionResult> connect() async {
+  Future<GoogleConnectionResult> connect({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    connectCount++;
+    return const GoogleConnectionResult(
+      folderId: 'lifecycle-folder',
+      folderName: 'Lifecycle Drive',
+      mock: true,
+    );
+  }
+
+  @override
+  Future<GoogleConnectionResult?> restoreConnection({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    restoreCount++;
+    onStage?.call(GoogleConnectionStage.checkingConnection);
+    onStage?.call(GoogleConnectionStage.preparingDrive);
     return const GoogleConnectionResult(
       folderId: 'lifecycle-folder',
       folderName: 'Lifecycle Drive',

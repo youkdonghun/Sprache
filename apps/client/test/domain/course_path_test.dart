@@ -65,7 +65,9 @@ void main() {
   });
 
   test('every language has words and sentences in all six units', () {
-    for (final language in LanguageTag.values) {
+    for (final language in LanguageTag.values.where(
+      (language) => language.available,
+    )) {
       final path = builder.build(
         items: sampleContent
             .where((item) => item.learningLanguage == language)

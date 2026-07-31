@@ -4,10 +4,12 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import 'desktop_google_token_broker.dart';
 import 'oauth_tokens.dart';
+
+export 'desktop_google_token_broker.dart' show GoogleOAuthException;
 
 class OAuthAuthorizationResult {
   const OAuthAuthorizationResult({required this.tokens, this.pickedFolderId});
@@ -20,16 +22,30 @@ class DesktopGoogleOAuth {
   DesktopGoogleOAuth({
     required this.clientId,
     required this.tokenVault,
-    http.Client? httpClient,
-  }) : _httpClient = httpClient ?? http.Client();
+    required this.tokenBroker,
+    Future<bool> Function(Uri authorizationUri)? urlLauncher,
+  }) : _urlLauncher = urlLauncher ?? _launchExternalUrl;
 
   final String clientId;
   final TokenVault tokenVault;
-  final http.Client _httpClient;
+  final DesktopGoogleTokenBroker tokenBroker;
+  final Future<bool> Function(Uri authorizationUri) _urlLauncher;
 
   static const _authorizationEndpoint =
       'https://accounts.google.com/o/oauth2/v2/auth';
-  static const _tokenEndpoint = 'https://oauth2.googleapis.com/token';
+  static const authorizationTimeout = Duration(minutes: 10);
+
+  static String loopbackRedirectUri(int port) => 'http://127.0.0.1:$port';
+
+  Future<void> ensureReady() => tokenBroker.ensureReady();
+
+  Future<bool> hasStoredSession() async {
+    final tokens = await Future.wait([
+      tokenVault.read(GoogleTokenKind.identity),
+      tokenVault.read(GoogleTokenKind.drive),
+    ]);
+    return tokens.every((token) => token != null);
+  }
 
   Future<OAuthAuthorizationResult> signIn() {
     return _authorize(
@@ -60,24 +76,13 @@ class DesktopGoogleOAuth {
       throw StateError('Google ${kind.name} authorization expired');
     }
 
-    final response = await _httpClient.post(
-      Uri.parse(_tokenEndpoint),
-      body: {
-        'client_id': clientId,
-        'refresh_token': refreshToken,
-        'grant_type': 'refresh_token',
-      },
-    );
-    if (response.statusCode != 200) {
-      throw StateError('Google token refresh failed (${response.statusCode})');
-    }
-    final body = jsonDecode(response.body) as Map<String, Object?>;
+    final response = await tokenBroker.refresh(refreshToken: refreshToken);
     final refreshed = OAuthTokens(
-      accessToken: body['access_token']! as String,
+      accessToken: response.accessToken,
       refreshToken: refreshToken,
-      idToken: body['id_token'] as String? ?? stored.idToken,
+      idToken: response.idToken ?? stored.idToken,
       expiresAt: DateTime.now().toUtc().add(
-        Duration(seconds: body['expires_in']! as int),
+        Duration(seconds: response.expiresIn),
       ),
     );
     await tokenVault.write(kind, refreshed);
@@ -116,8 +121,7 @@ class DesktopGoogleOAuth {
       0,
       shared: false,
     );
-    final redirectUri =
-        'http://127.0.0.1:${callbackServer.port}/oauth2/callback';
+    final redirectUri = loopbackRedirectUri(callbackServer.port);
     final verifier = _randomUrlSafe(64);
     final challenge = base64Url
         .encode(sha256.convert(utf8.encode(verifier)).bytes)
@@ -145,33 +149,35 @@ class DesktopGoogleOAuth {
       _authorizationEndpoint,
     ).replace(queryParameters: parameters);
 
-    final launched = await launchUrl(
-      authorizationUri,
-      mode: LaunchMode.externalApplication,
-    );
+    final launched = await _urlLauncher(authorizationUri);
     if (!launched) {
       await callbackServer.close(force: true);
       throw StateError('Could not open the system browser');
     }
 
     try {
-      final request = await callbackServer.first.timeout(
-        const Duration(minutes: 5),
-      );
+      final request = await callbackServer.first.timeout(authorizationTimeout);
       final query = request.uri.queryParameters;
       final isValidState = query['state'] == state;
       final error = query['error'];
       final code = query['code'];
+      final isSuccess = isValidState && error == null && code != null;
+      final successHeading = usePicker
+          ? 'Drive 폴더 선택이 완료되었습니다.'
+          : 'Google 계정 확인을 마쳤습니다.';
+      final successBody = usePicker
+          ? '이 창을 닫고 Sprache로 돌아가세요.'
+          : '이 창을 닫아 주세요. 잠시 후 Drive 폴더 선택 화면이 한 번 더 열립니다.';
 
       request.response
-        ..statusCode = isValidState && error == null && code != null ? 200 : 400
+        ..statusCode = isSuccess ? 200 : 400
         ..headers.contentType = ContentType.html
         ..write(
           '<!doctype html><meta charset="utf-8">'
           '<title>Sprache</title>'
           '<body style="font-family:sans-serif;padding:40px">'
-          '<h2>${error == null ? 'Sprache 연결이 완료되었습니다.' : '연결이 취소되었습니다.'}</h2>'
-          '<p>이 창을 닫고 앱으로 돌아가세요.</p></body>',
+          '<h2>${isSuccess ? successHeading : '연결을 완료하지 못했습니다.'}</h2>'
+          '<p>${isSuccess ? successBody : '이 창을 닫고 Sprache의 진단 안내를 확인하세요.'}</p></body>',
         );
       await request.response.close();
 
@@ -185,30 +191,18 @@ class DesktopGoogleOAuth {
         throw StateError('Google authorization code is missing');
       }
 
-      final tokenResponse = await _httpClient.post(
-        Uri.parse(_tokenEndpoint),
-        body: {
-          'client_id': clientId,
-          'code': code,
-          'code_verifier': verifier,
-          'redirect_uri': redirectUri,
-          'grant_type': 'authorization_code',
-        },
+      final tokenResponse = await tokenBroker.exchangeAuthorizationCode(
+        authorizationCode: code,
+        codeVerifier: verifier,
+        redirectUri: redirectUri,
       );
-      if (tokenResponse.statusCode != 200) {
-        throw StateError(
-          'Google token exchange failed (${tokenResponse.statusCode})',
-        );
-      }
-      final body = jsonDecode(tokenResponse.body) as Map<String, Object?>;
       final previous = await tokenVault.read(kind);
       final tokens = OAuthTokens(
-        accessToken: body['access_token']! as String,
-        refreshToken:
-            body['refresh_token'] as String? ?? previous?.refreshToken,
-        idToken: body['id_token'] as String?,
+        accessToken: tokenResponse.accessToken,
+        refreshToken: tokenResponse.refreshToken ?? previous?.refreshToken,
+        idToken: tokenResponse.idToken,
         expiresAt: DateTime.now().toUtc().add(
-          Duration(seconds: body['expires_in']! as int),
+          Duration(seconds: tokenResponse.expiresIn),
         ),
       );
       await tokenVault.write(kind, tokens);
@@ -228,5 +222,9 @@ class DesktopGoogleOAuth {
     return base64Url
         .encode(List<int>.generate(bytes, (_) => random.nextInt(256)))
         .replaceAll('=', '');
+  }
+
+  static Future<bool> _launchExternalUrl(Uri authorizationUri) {
+    return launchUrl(authorizationUri, mode: LaunchMode.externalApplication);
   }
 }

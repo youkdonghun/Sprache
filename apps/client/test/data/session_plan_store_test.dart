@@ -5,6 +5,34 @@ import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 
 void main() {
+  test(
+    'Drift distinguishes a fresh install from legacy saved settings',
+    () async {
+      final database = AppDatabase(NativeDatabase.memory());
+      final store = DriftStudyStore(database);
+
+      try {
+        expect((await store.loadPreferences()).onboardingCompleted, isFalse);
+
+        await database
+            .into(database.appSettings)
+            .insert(
+              AppSettingsCompanion.insert(
+                key: 'study_preferences',
+                valueJson: '{"dailyGoal":150}',
+                updatedAt: DateTime.utc(2026, 7, 31),
+              ),
+            );
+
+        final migrated = await store.loadPreferences();
+        expect(migrated.onboardingCompleted, isTrue);
+        expect(migrated.dailyGoal, 150);
+      } finally {
+        await database.close();
+      }
+    },
+  );
+
   test('Drift preserves the complete custom session plan', () async {
     final database = AppDatabase(NativeDatabase.memory());
     final store = DriftStudyStore(database);
@@ -20,6 +48,9 @@ void main() {
         includeWords: false,
         sentenceRatio: 1,
         itemLimit: 15,
+        title: '문장 배열 일정',
+        scheduledAt: DateTime.utc(2026, 7, 30, 18),
+        selectedItemIds: const {'sentence-a', 'sentence-b'},
         updatedAt: updatedAt,
       ),
     );
@@ -38,6 +69,9 @@ void main() {
       expect(restored.includeSentences, isTrue);
       expect(restored.sentenceRatio, 1);
       expect(restored.itemLimit, 15);
+      expect(restored.title, '문장 배열 일정');
+      expect(restored.scheduledAt, DateTime.utc(2026, 7, 30, 18));
+      expect(restored.selectedItemIds, {'sentence-a', 'sentence-b'});
       expect(restored.updatedAt, updatedAt);
     } finally {
       await database.close();

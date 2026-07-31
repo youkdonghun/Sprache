@@ -1,3 +1,4 @@
-type,language,term,meaning,part_of_speech,accepted_answers,example_en,example_ko,tags,level,priority,source,license,source_version,content_version
-word,en,record,기록,noun,기록|기록물,I keep a record.,저는 기록을 남겨요.,업무|기초,초급,2,사용자 직접 정리,private,2026.1,1
-word,en,record,기록하다,verb,기록하다,Please record the result.,결과를 기록해 주세요.,업무|동사,초급,2,사용자 직접 정리,private,2026.1,1
+type,language,subject_id,term,meaning,part_of_speech,accepted_answers,korean_pronunciation,example_en,example_ko,tags,level,priority,source,license,source_version,source_id,source_url,author,attribution,content_version,distribution_key
+word,en,,record,기록,noun,기록|기록물,레코드,I keep a record.,저는 기록을 남겨요.,업무|기초,초급,2,사용자 직접 정리,private,2026.1,,,,,1,lang:en
+word,en,,record,기록하다,verb,기록하다,리코드,Please record the result.,결과를 기록해 주세요.,업무|동사,초급,2,사용자 직접 정리,private,2026.1,,,,,1,lang:en
+word,ko,general:baseball,WHIP,이닝당 볼넷과 안타 허용 수,other,이닝당 출루 허용률,,WHIP가 낮을수록 주자를 적게 내보낸다.,수치가 낮을수록 주자 허용이 적다는 뜻이다.,야구|투수 기록,입문,3,사용자 직접 정리,private,2026.1,,,,,1,baseball-core

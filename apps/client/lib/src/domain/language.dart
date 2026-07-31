@@ -1,4 +1,11 @@
 enum LanguageTag {
+  korean(
+    code: 'ko',
+    koreanName: '한국어',
+    nativeName: '한국어',
+    ttsLocale: 'ko-KR',
+    symbol: '한',
+  ),
   english(
     code: 'en',
     koreanName: '영어',
@@ -67,7 +74,16 @@ enum LanguageTag {
   String get courseId => 'ko-$code';
 }
 
-enum ReadingScheme { kana, romaji, pinyin }
+enum ReadingScheme { kana, romaji, pinyin, hangul }
+
+extension ReadingSchemeLabel on ReadingScheme {
+  String get koreanLabel => switch (this) {
+    ReadingScheme.kana => '가나',
+    ReadingScheme.romaji => '로마자',
+    ReadingScheme.pinyin => '병음',
+    ReadingScheme.hangul => '한국어 발음',
+  };
+}
 
 class Reading {
   const Reading({required this.scheme, required this.value});
@@ -90,14 +106,30 @@ class LanguageProfile {
   static LanguageProfile of(LanguageTag tag) => switch (tag) {
     LanguageTag.japanese => const LanguageProfile(
       tag: LanguageTag.japanese,
-      readingSchemes: {ReadingScheme.kana, ReadingScheme.romaji},
+      readingSchemes: {
+        ReadingScheme.kana,
+        ReadingScheme.romaji,
+        ReadingScheme.hangul,
+      },
       usesSpaces: false,
     ),
     LanguageTag.simplifiedChinese => const LanguageProfile(
       tag: LanguageTag.simplifiedChinese,
-      readingSchemes: {ReadingScheme.pinyin},
+      readingSchemes: {ReadingScheme.pinyin, ReadingScheme.hangul},
       usesSpaces: false,
     ),
-    _ => LanguageProfile(tag: tag, readingSchemes: const {}, usesSpaces: true),
+    LanguageTag.english ||
+    LanguageTag.german ||
+    LanguageTag.french ||
+    LanguageTag.spanish => LanguageProfile(
+      tag: tag,
+      readingSchemes: const {ReadingScheme.hangul},
+      usesSpaces: true,
+    ),
+    LanguageTag.korean => const LanguageProfile(
+      tag: LanguageTag.korean,
+      readingSchemes: {},
+      usesSpaces: true,
+    ),
   };
 }

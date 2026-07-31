@@ -6,6 +6,7 @@ import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/sample_content.dart';
 import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/active_study_session.dart';
+import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/routing/app_router.dart';
 import 'package:sprache/src/services/app_clock.dart';
@@ -36,30 +37,250 @@ void main() {
         matchesGoldenFile('goldens/mobile-home.png'),
       );
 
-      await tester.tap(find.text('단어장').last);
+      await tester.tap(find.byKey(const Key('home-settings')));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-settings.png'),
+      );
+
+      await tester.tap(find.text('자료실').last);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/mobile-library.png'),
       );
 
-      await tester.tap(find.text('연습').last);
+      await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/mobile-learning-hub.png'),
       );
 
-      await tester.drag(
-        find.byKey(const Key('learning-hub-scroll')),
-        const Offset(0, -620),
-      );
+      await tester.tap(find.byKey(const Key('quick-practice-quiz')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('뜻 고르기'));
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-practice-launch.png'),
+      );
+      await tester.tap(find.byTooltip('닫기'));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SpracheApp)),
+      );
+      container.read(appRouterProvider).go('/study?mode=meaning');
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/mobile-study.png'),
+      );
+      await tester.tap(find.text('감사합니다'));
+      await tester.tap(find.text('정답 확인'));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-study-feedback.png'),
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    }
+  });
+
+  for (final dark in [false, true]) {
+    testWidgets(
+      'mobile long reading details ${dark ? 'dark' : 'light'} stay stable',
+      (tester) async {
+        debugDefaultTargetPlatformOverride = TargetPlatform.android;
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = const Size(390, 844);
+        if (dark) {
+          tester.binding.platformDispatcher.platformBrightnessTestValue =
+              Brightness.dark;
+        }
+        final store = MemoryStudyStore(
+          profile: const StoredProfile(
+            selectedLanguage: LanguageTag.japanese,
+            totalXp: 0,
+            streakDays: 0,
+            dailyXp: 0,
+            badges: {},
+            driveConnected: false,
+            progress: {},
+          ),
+          preferences: const StudyPreferences(
+            onboardingCompleted: true,
+            activeSubjectId: 'language:ja',
+          ),
+        );
+        final item = sampleContent.singleWhere(
+          (candidate) => candidate.text == '日本語を勉強しています。',
+        );
+
+        try {
+          await tester.pumpWidget(
+            ProviderScope(
+              overrides: [
+                studyStoreProvider.overrideWithValue(store),
+                appClockProvider.overrideWithValue(_goldenNow),
+              ],
+              child: const SpracheApp(),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final container = ProviderScope.containerOf(
+            tester.element(find.byType(SpracheApp)),
+          );
+          container.read(appRouterProvider).go('/library');
+          await tester.pumpAndSettle();
+          await tester.enterText(
+            find.byKey(const Key('library-search-field')),
+            item.text,
+          );
+          await tester.pumpAndSettle();
+          final itemFinder = find.byKey(Key('library-item-${item.id}'));
+          await tester.ensureVisible(itemFinder);
+          await tester.pumpAndSettle();
+          await tester.tap(itemFinder);
+          await tester.pumpAndSettle();
+
+          await expectLater(
+            find.byType(MaterialApp),
+            matchesGoldenFile(
+              dark
+                  ? 'goldens/mobile-reading-details-dark.png'
+                  : 'goldens/mobile-reading-details.png',
+            ),
+          );
+        } finally {
+          if (dark) {
+            tester.binding.platformDispatcher
+                .clearPlatformBrightnessTestValue();
+          }
+          debugDefaultTargetPlatformOverride = null;
+          tester.view.reset();
+        }
+      },
+    );
+  }
+
+  for (final dark in [false, true]) {
+    testWidgets('mobile quick add ${dark ? 'dark' : 'light'} stays stable', (
+      tester,
+    ) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      if (dark) {
+        tester.binding.platformDispatcher.platformBrightnessTestValue =
+            Brightness.dark;
+      }
+
+      try {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              studyStoreProvider.overrideWithValue(MemoryStudyStore()),
+              appClockProvider.overrideWithValue(_goldenNow),
+            ],
+            child: const SpracheApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('nav-library')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('library-add-button')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('add-quick-word')));
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const Key('quick-content-text')),
+          'workaround',
+        );
+        await tester.enterText(
+          find.byKey(const Key('quick-content-meaning')),
+          '우회 방법',
+        );
+        await tester.pumpAndSettle();
+
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile(
+            dark
+                ? 'goldens/mobile-quick-add-dark.png'
+                : 'goldens/mobile-quick-add.png',
+          ),
+        );
+      } finally {
+        if (dark) {
+          tester.binding.platformDispatcher.clearPlatformBrightnessTestValue();
+        }
+        debugDefaultTargetPlatformOverride = null;
+        tester.view.reset();
+      }
+    });
+  }
+
+  testWidgets('compact mobile core screens stay visually stable', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+
+    try {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            studyStoreProvider.overrideWithValue(MemoryStudyStore()),
+            appClockProvider.overrideWithValue(_goldenNow),
+          ],
+          child: const SpracheApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-compact-home.png'),
+      );
+
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SpracheApp)),
+      );
+      container.read(appRouterProvider).go('/settings');
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-compact-settings.png'),
+      );
+
+      container.read(appRouterProvider).go('/library');
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-compact-library.png'),
+      );
+
+      container.read(appRouterProvider).go('/learn');
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-compact-learning-hub.png'),
+      );
+
+      container.read(appRouterProvider).go('/stats');
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-compact-stats.png'),
+      );
+
+      container.read(appRouterProvider).go('/session-builder');
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-compact-session-builder.png'),
       );
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -165,6 +386,46 @@ void main() {
     }
   });
 
+  testWidgets('desktop study feedback stays compact and modal', (tester) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1024, 720);
+
+    try {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            studyStoreProvider.overrideWithValue(MemoryStudyStore()),
+            appClockProvider.overrideWithValue(_goldenNow),
+          ],
+          child: const SpracheApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SpracheApp)),
+      );
+      container.read(appRouterProvider).go('/study?mode=meaning');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('감사합니다'));
+      await tester.tap(find.text('정답 확인'));
+      await tester.pumpAndSettle();
+
+      final popupSize = tester.getSize(
+        find.byKey(const Key('study-feedback-popup')),
+      );
+      expect(popupSize.width, lessThanOrEqualTo(420));
+      expect(popupSize.height, lessThanOrEqualTo(560));
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/desktop-study-feedback.png'),
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    }
+  });
+
   testWidgets('mobile session builder stays visually stable', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     tester.view.devicePixelRatio = 1;
@@ -181,7 +442,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('자유 학습'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
@@ -215,13 +478,15 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('자유 학습'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/mobile-session-builder-dark.png'),
+        matchesGoldenFile('goldens/mobile-session-builder-dark-v2.png'),
       );
     } finally {
       tester.binding.platformDispatcher.clearPlatformBrightnessTestValue();
@@ -246,7 +511,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('자유 학습'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
@@ -333,30 +600,43 @@ void main() {
         matchesGoldenFile('goldens/mobile-settings-dark.png'),
       );
 
-      await tester.tap(find.text('단어장'));
+      await tester.tap(find.text('자료실'));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/mobile-library-dark.png'),
       );
 
-      await tester.tap(find.text('연습'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/mobile-learning-hub-dark.png'),
+        matchesGoldenFile('goldens/mobile-learning-hub-dark-v2.png'),
       );
 
-      await tester.drag(
-        find.byKey(const Key('learning-hub-scroll')),
-        const Offset(0, -620),
-      );
+      await tester.tap(find.byKey(const Key('quick-practice-quiz')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('뜻 고르기'));
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-practice-launch-dark.png'),
+      );
+      await tester.tap(find.byTooltip('닫기'));
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(SpracheApp)),
+      );
+      container.read(appRouterProvider).go('/study?mode=meaning');
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/mobile-study-dark.png'),
+      );
+      await tester.tap(find.text('감사합니다'));
+      await tester.tap(find.text('정답 확인'));
+      await tester.pumpAndSettle();
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-study-feedback-dark.png'),
       );
     } finally {
       tester.binding.platformDispatcher.clearPlatformBrightnessTestValue();
@@ -383,27 +663,28 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('자유 학습'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('start-flashcards')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('start-flashcards')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/mobile-flashcard.png'),
+        matchesGoldenFile('goldens/mobile-flashcard-v2.png'),
       );
       await tester.tap(find.byKey(const Key('reveal-flashcard')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/mobile-flashcard-rating.png'),
+        matchesGoldenFile('goldens/mobile-flashcard-rating-v2.png'),
       );
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      await tester.drag(
-        find.byKey(const Key('learning-hub-scroll')),
-        const Offset(0, -1400),
-      );
+      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('발음 따라하기'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('발음 따라하기'));
       await tester.pumpAndSettle();
@@ -518,10 +799,12 @@ void main() {
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/mobile-resume-home-dark.png'),
+        matchesGoldenFile('goldens/mobile-resume-home-dark-v2.png'),
       );
 
-      await tester.tap(find.text('연습').last);
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('start-flashcards')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('start-flashcards')));
       await tester.pumpAndSettle();
@@ -565,7 +848,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('코스 여정'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('open-course-path')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -585,7 +870,7 @@ void main() {
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/mobile-unit-notes.png'),
+        matchesGoldenFile('goldens/mobile-unit-notes-v2.png'),
       );
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -613,7 +898,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('코스 여정'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('open-course-path')));
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -633,7 +920,7 @@ void main() {
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
-        matchesGoldenFile('goldens/mobile-unit-notes-dark.png'),
+        matchesGoldenFile('goldens/mobile-unit-notes-dark-v2.png'),
       );
     } finally {
       tester.binding.platformDispatcher.clearPlatformBrightnessTestValue();
@@ -658,7 +945,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('연습').last);
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('실전 상황 미션'));
       await tester.pumpAndSettle();
@@ -701,7 +990,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('연습').last);
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('실전 상황 미션'));
       await tester.pumpAndSettle();
@@ -736,7 +1027,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('연습').first);
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('실전 상황 미션'));
       await tester.pumpAndSettle();
@@ -770,7 +1063,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('코스 여정'));
+      await tester.tap(find.byKey(const Key('nav-learn')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('open-course-path')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('단원 가이드').first);
       await tester.pumpAndSettle();

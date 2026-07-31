@@ -1,14 +1,69 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/data/sample_content.dart';
 import 'package:sprache/src/data/study_store.dart';
+import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/progress.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/study_history.dart';
+import 'package:sprache/src/domain/study_interaction_preferences.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 void main() {
+  test(
+    'advanced settings persist locally and enter the sync snapshot',
+    () async {
+      final store = MemoryStudyStore();
+      final controller = AppController(store);
+      await Future<void>.delayed(Duration.zero);
+
+      controller.updateExperiencePreferences(
+        const AppExperiencePreferences(
+          colorMode: AppColorMode.dark,
+          accentPalette: AppAccentPalette.violet,
+          density: AppDensity.compact,
+          reduceMotion: true,
+        ),
+      );
+      controller.updateInteractionPreferences(
+        const StudyInteractionPreferences(
+          autoPlayQuestionAudio: true,
+          showKoreanReading: false,
+          choiceLayout: StudyChoiceLayout.grid,
+          autoAdvanceCorrect: true,
+        ),
+      );
+      controller.updateTtsRate(0.65);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+
+      final saved = store.savedPreferences;
+      expect(saved.experience.colorMode, AppColorMode.dark);
+      expect(saved.experience.accentPalette, AppAccentPalette.violet);
+      expect(saved.experience.density, AppDensity.compact);
+      expect(saved.experience.reduceMotion, isTrue);
+      expect(saved.experience.updatedAt, isNotNull);
+      expect(saved.interaction.autoPlayQuestionAudio, isTrue);
+      expect(saved.interaction.showKoreanReading, isFalse);
+      expect(saved.interaction.choiceLayout, StudyChoiceLayout.grid);
+      expect(saved.interaction.autoAdvanceCorrect, isTrue);
+      expect(saved.interaction.updatedAt, isNotNull);
+      expect(saved.ttsRate, 0.65);
+      expect(saved.settingsUpdatedAt, isNotNull);
+
+      final settings = Map<String, Object?>.from(
+        controller.exportSyncSnapshot()['settings']! as Map,
+      );
+      expect(settings['experience'], saved.experience.toJson());
+      expect(settings['interaction'], saved.interaction.toJson());
+      expect(settings['ttsRate'], 0.65);
+      controller.dispose();
+    },
+  );
+
   test('answer events, sessions, and preferences reach the store', () async {
     final store = MemoryStudyStore();
     final controller = AppController(store);
@@ -104,6 +159,25 @@ void main() {
     expect(controller.state.activeStudySession, isNull);
   });
 
+  test('custom session limit is not cut again by the global default', () async {
+    final store = MemoryStudyStore();
+    final controller = AppController(store);
+    await Future<void>.delayed(Duration.zero);
+    final startedAt = DateTime.utc(2026, 7, 27, 11, 30);
+
+    controller.updatePreferences(
+      controller.state.preferences.copyWith(sessionItemLimit: 10),
+    );
+    final queue = controller.queue(
+      startedAt,
+      sessionPlan: const StudySessionPlan(itemLimit: 37),
+    );
+
+    expect(controller.selectedItems.length, greaterThanOrEqualTo(37));
+    expect(queue, hasLength(37));
+    controller.dispose();
+  });
+
   test('custom item tombstones survive controller hydration', () async {
     final store = MemoryStudyStore();
     final first = AppController(store);
@@ -153,6 +227,84 @@ void main() {
     expect(store.savedEvents.single.result, 'correct');
   });
 
+  test('daily goals and earned XP stay separate by course', () async {
+    final store = MemoryStudyStore();
+    final controller = AppController(store);
+    await Future<void>.delayed(Duration.zero);
+    final english = sampleContent.firstWhere(
+      (item) => item.learningLanguage == LanguageTag.english,
+    );
+    final japanese = sampleContent.firstWhere(
+      (item) => item.learningLanguage == LanguageTag.japanese,
+    );
+    final firstDay = DateTime(2026, 7, 28, 10);
+
+    controller.recordAnswer(
+      item: english,
+      correct: true,
+      studiedAt: firstDay,
+      exerciseType: 'recognition',
+    );
+    controller.recordAnswer(
+      item: japanese,
+      correct: true,
+      studiedAt: firstDay.add(const Duration(minutes: 1)),
+      exerciseType: 'flashcard_easy',
+      rating: ReviewRating.easy,
+    );
+    controller.selectLanguage(LanguageTag.japanese);
+    controller.updateActiveDailyGoal(200);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(controller.state.dailyXp, 25);
+    expect(controller.state.dailyXpByCourse['ko-en'], 10);
+    expect(controller.state.dailyXpByCourse['ko-ja'], 15);
+    expect(controller.state.activeCourseDailyXp, 15);
+    expect(controller.state.dailyGoal, 200);
+    expect(
+      controller.state.preferences.dailyGoalFor('language:en'),
+      controller.state.preferences.dailyGoal,
+    );
+
+    controller.recordAnswer(
+      item: english,
+      correct: true,
+      studiedAt: firstDay.add(const Duration(days: 1)),
+      exerciseType: 'flashcard_hard',
+      rating: ReviewRating.hard,
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(controller.state.dailyXp, 8);
+    expect(controller.state.dailyXpByCourse, {'ko-en': 8});
+    expect(controller.state.activeCourseDailyXp, 0);
+    expect(
+      controller.state.dailyXpByCourseAndReplica['ko-en']?.values.single,
+      8,
+    );
+
+    final currentStreak = controller.state.streakDays;
+    controller.recordAnswer(
+      item: japanese,
+      correct: true,
+      studiedAt: firstDay.subtract(const Duration(days: 1)),
+      exerciseType: 'backdated',
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(controller.state.dailyXp, 8);
+    expect(controller.state.dailyXpByCourse, {'ko-en': 8});
+    expect(controller.state.lastStudyDate, DateTime(2026, 7, 29));
+    expect(controller.state.streakDays, currentStreak);
+
+    controller.dispose();
+    final restored = AppController(store);
+    await Future<void>.delayed(Duration.zero);
+    expect(restored.state.dailyXpByCourse, {'ko-en': 8});
+    expect(restored.state.preferences.dailyGoalFor('language:ja'), 200);
+    restored.dispose();
+  });
+
   test('pending snapshot survives controller recreation', () async {
     final store = MemoryStudyStore();
     final first = AppController(store);
@@ -183,6 +335,49 @@ void main() {
   });
 
   test(
+    'rapid profile writes keep the newest state in storage and pending sync',
+    () async {
+      final store = _DelayedFirstProfileStore();
+      final controller = AppController(store);
+      await Future<void>.delayed(Duration.zero);
+      final item = controller.selectedItems.first;
+      final firstAnswerAt = DateTime.utc(2026, 7, 31, 9);
+
+      controller.recordAnswer(
+        item: item,
+        correct: true,
+        studiedAt: firstAnswerAt,
+        exerciseType: 'recognition',
+      );
+      await store.firstProfileWriteStarted.future;
+
+      controller.recordAnswer(
+        item: item,
+        correct: true,
+        studiedAt: firstAnswerAt.add(const Duration(minutes: 1)),
+        exerciseType: 'recognition',
+      );
+      store.releaseFirstProfileWrite.complete();
+      await controller.flushPendingWrites();
+
+      final savedProfile = await store.loadProfile();
+      final pendingProfile =
+          store.pendingSnapshotSync?.payload['profile']
+              as Map<String, Object?>?;
+      expect(store.profileWriteCount, 2);
+      expect(savedProfile.totalXp, controller.state.totalXp);
+      expect(savedProfile.progress[item.id]?.attempts, 2);
+      expect(pendingProfile?['totalXp'], controller.state.totalXp);
+      expect(
+        (store.pendingSnapshotSync?.payload['progress'] as List<Object?>?)
+            ?.single,
+        containsPair('correctCount', 2),
+      );
+      controller.dispose();
+    },
+  );
+
+  test(
     'completing an older upload never deletes a newer queued snapshot',
     () async {
       final store = MemoryStudyStore();
@@ -206,6 +401,17 @@ void main() {
       );
       expect(failed?.attempts, 1);
       expect(failed?.nextAttemptAt, DateTime.utc(2026, 7, 28, 10, 2, 5));
+
+      final serverDelayed = await controller.markPendingSyncFailed(
+        second.operationId,
+        now: DateTime.utc(2026, 7, 28, 10, 3),
+        minimumDelay: const Duration(seconds: 45),
+      );
+      expect(serverDelayed?.attempts, 2);
+      expect(
+        serverDelayed?.nextAttemptAt,
+        DateTime.utc(2026, 7, 28, 10, 3, 45),
+      );
       controller.dispose();
     },
   );
@@ -328,4 +534,20 @@ void main() {
     expect(controller.state.customItems.single.source.contentVersion, 2);
     controller.dispose();
   });
+}
+
+class _DelayedFirstProfileStore extends MemoryStudyStore {
+  final firstProfileWriteStarted = Completer<void>();
+  final releaseFirstProfileWrite = Completer<void>();
+  int profileWriteCount = 0;
+
+  @override
+  Future<void> saveProfile(StoredProfile profile) async {
+    profileWriteCount += 1;
+    if (profileWriteCount == 1) {
+      firstProfileWriteStarted.complete();
+      await releaseFirstProfileWrite.future;
+    }
+    await super.saveProfile(profile);
+  }
 }

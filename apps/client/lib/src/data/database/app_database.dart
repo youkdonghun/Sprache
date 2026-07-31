@@ -147,12 +147,14 @@ class ImportedFiles extends Table {
   ],
 )
 final class AppDatabase extends _$AppDatabase {
+  static const currentSchemaVersion = 2;
+
   AppDatabase(super.executor);
 
   AppDatabase.defaults() : super(driftDatabase(name: 'sprache'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => currentSchemaVersion;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

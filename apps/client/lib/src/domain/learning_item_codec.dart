@@ -13,6 +13,7 @@ class LearningItemCodec {
       'id': normalized.id,
       'kind': normalized.kind.name,
       'language': normalized.learningLanguage.code,
+      'subjectId': normalized.effectiveSubjectId,
       'text': normalized.text,
       'translations': normalized.translations,
       'acceptedAnswers': normalized.acceptedAnswers,
@@ -109,6 +110,7 @@ class LearningItemCodec {
         text: text,
         translations: translations,
         acceptedAnswers: acceptedAnswers,
+        subjectId: _optionalString(json, 'subjectId'),
         readings: readings,
         sentenceTokens: _stringList(
           json['sentenceTokens'],

@@ -11,6 +11,8 @@ void main() {
       mode: StudyMode.meaning,
       unitIndex: 2,
       itemIds: const ['a', 'b', 'c'],
+      initialItemIds: const ['a', 'b', 'c'],
+      finalCorrectItemIds: const {'a'},
       currentIndex: 1,
       correctCount: 1,
       wrongCount: 0,
@@ -29,6 +31,7 @@ void main() {
     expect(restored.remainingCount, 2);
     expect(restored.progress, closeTo(1 / 3, 0.001));
     expect(restored.earnedXp, 10);
+    expect(restored.finalCorrectItemIds, {'a'});
   });
 
   test('active session rejects missing identity and item data', () {
@@ -125,6 +128,7 @@ void main() {
           ).copyWith(
             itemIds: const ['a', 'b', 'a'],
             wrongItemIds: const {'a'},
+            finalCorrectItemIds: const {'b'},
             currentIndex: 2,
             wrongCount: 1,
             updatedAt: startedAt.add(const Duration(minutes: 1)),
@@ -135,8 +139,70 @@ void main() {
       expect(restored.itemIds, ['a', 'b', 'a']);
       expect(restored.originalItemIds, ['a', 'b']);
       expect(restored.wrongItemIds, {'a'});
+      expect(restored.finalCorrectItemIds, {'b'});
+      expect(restored.unresolvedWrongItemIds, {'a'});
     },
   );
+
+  test('supports 100 initial items and 300 retry queue entries', () {
+    final startedAt = DateTime.utc(2026, 7, 28, 13);
+    final initial = [for (var index = 0; index < 100; index++) 'item-$index'];
+    final queue = [...initial, ...initial, ...initial];
+    final session = ActiveStudySession.started(
+      sessionId: 'hundred-session',
+      courseId: 'ko-en',
+      mode: StudyMode.mixed,
+      unitIndex: null,
+      itemIds: initial,
+      startedAt: startedAt,
+    ).copyWith(
+      itemIds: queue,
+      currentIndex: 150,
+      wrongItemIds: initial.take(10).toSet(),
+      finalCorrectItemIds: initial.skip(10).take(20).toSet(),
+    );
+
+    final paused = session.pause(startedAt.add(const Duration(minutes: 1)));
+    final restored = ActiveStudySession.fromJson(paused.toJson());
+
+    expect(restored.itemIds, hasLength(300));
+    expect(restored.initialItemIds, hasLength(100));
+    expect(restored.journey.last.itemCount, 100);
+
+    expect(
+      () => ActiveStudySession.fromJson({
+        ...paused.toJson(),
+        'itemIds': [...queue, 'overflow'],
+      }),
+      throwsFormatException,
+    );
+  });
+
+  test('started sessions require at most 100 unique initial items', () {
+    final startedAt = DateTime.utc(2026, 7, 28, 14);
+    expect(
+      () => ActiveStudySession.started(
+        sessionId: 'duplicates',
+        courseId: 'ko-en',
+        mode: StudyMode.mixed,
+        unitIndex: null,
+        itemIds: const ['a', 'a'],
+        startedAt: startedAt,
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => ActiveStudySession.started(
+        sessionId: 'too-many',
+        courseId: 'ko-en',
+        mode: StudyMode.mixed,
+        unitIndex: null,
+        itemIds: [for (var index = 0; index < 101; index++) 'item-$index'],
+        startedAt: startedAt,
+      ),
+      throwsArgumentError,
+    );
+  });
 
   test('rejects unknown lifecycle enum and duplicate journey event IDs', () {
     final startedAt = DateTime.utc(2026, 7, 28, 11);

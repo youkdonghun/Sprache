@@ -2,25 +2,32 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/course_notes.dart';
 import '../domain/course_path.dart';
 import '../domain/learning_item.dart';
+import '../services/tts_service.dart';
 import '../state/app_state.dart';
 
 class UnitGuideScreen extends ConsumerStatefulWidget {
-  const UnitGuideScreen({required this.unitIndex, super.key});
+  const UnitGuideScreen({required this.unitIndex, this.ttsService, super.key});
 
   final int unitIndex;
+  final TtsService? ttsService;
 
   @override
   ConsumerState<UnitGuideScreen> createState() => _UnitGuideScreenState();
 }
 
 class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
-  final _tts = FlutterTts();
+  late final TtsService _tts;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = widget.ttsService ?? TtsService.device();
+  }
 
   @override
   void dispose() {
@@ -37,11 +44,18 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
   }
 
   Future<void> _speak(LearningItem item) async {
-    await _tts.setLanguage(item.learningLanguage.ttsLocale);
-    await _tts.setSpeechRate(
-      ref.read(appControllerProvider).preferences.ttsRate,
-    );
-    await _tts.speak(item.text);
+    final preferences = ref.read(appControllerProvider).preferences;
+    try {
+      await _tts.speak(
+        language: item.learningLanguage,
+        text: item.text,
+        rate: preferences.ttsRate,
+        preferOfflineVoice: preferences.interaction.preferOfflineVoice,
+        repeatCount: preferences.interaction.audioRepeatCount,
+      );
+    } catch (_) {
+      // Unit browsing remains available when the device has no matching voice.
+    }
   }
 
   @override
@@ -58,6 +72,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
     }
     final unit = path.units[widget.unitIndex];
     final note = courseNoteFor(state.selectedLanguage, widget.unitIndex);
+    final interaction = state.preferences.interaction;
     final lessons = [
       CourseLessonKind.cards,
       CourseLessonKind.meaning,
@@ -130,6 +145,8 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                           const SizedBox(height: 10),
                           _WordPreviewGrid(
                             items: unit.words.take(8).toList(growable: false),
+                            showKoreanReading: interaction.showKoreanReading,
+                            showNativeReading: interaction.showNativeReading,
                             onSpeak: _speak,
                           ),
                           const SizedBox(height: 24),
@@ -149,6 +166,10 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: _SentencePreview(
                                   item: sentence,
+                                  showKoreanReading:
+                                      interaction.showKoreanReading,
+                                  showNativeReading:
+                                      interaction.showNativeReading,
                                   onSpeak: () => _speak(sentence),
                                 ),
                               ),
@@ -370,9 +391,16 @@ class _GoalCard extends StatelessWidget {
 }
 
 class _WordPreviewGrid extends StatelessWidget {
-  const _WordPreviewGrid({required this.items, required this.onSpeak});
+  const _WordPreviewGrid({
+    required this.items,
+    required this.showKoreanReading,
+    required this.showNativeReading,
+    required this.onSpeak,
+  });
 
   final List<LearningItem> items;
+  final bool showKoreanReading;
+  final bool showNativeReading;
   final ValueChanged<LearningItem> onSpeak;
 
   @override
@@ -407,6 +435,27 @@ class _WordPreviewGrid extends StatelessWidget {
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
+                              if (item
+                                  .readingAidsLabelFor(
+                                    showKoreanReading: showKoreanReading,
+                                    showNativeReading: showNativeReading,
+                                  )
+                                  .isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  item.readingAidsLabelFor(
+                                    showKoreanReading: showKoreanReading,
+                                    showNativeReading: showNativeReading,
+                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        height: 1.4,
+                                      ),
+                                ),
+                              ],
                               Text(
                                 item.primaryTranslation,
                                 style: Theme.of(context).textTheme.bodySmall,
@@ -432,13 +481,24 @@ class _WordPreviewGrid extends StatelessWidget {
 }
 
 class _SentencePreview extends StatelessWidget {
-  const _SentencePreview({required this.item, required this.onSpeak});
+  const _SentencePreview({
+    required this.item,
+    required this.showKoreanReading,
+    required this.showNativeReading,
+    required this.onSpeak,
+  });
 
   final LearningItem item;
+  final bool showKoreanReading;
+  final bool showNativeReading;
   final VoidCallback onSpeak;
 
   @override
   Widget build(BuildContext context) {
+    final readingAidsLabel = item.readingAidsLabelFor(
+      showKoreanReading: showKoreanReading,
+      showNativeReading: showNativeReading,
+    );
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -453,12 +513,13 @@ class _SentencePreview extends StatelessWidget {
                     item.text,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  if (item.readings.isNotEmpty) ...[
+                  if (readingAidsLabel.isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Text(
-                      item.readings.map((reading) => reading.value).join(' · '),
+                      readingAidsLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
+                        height: 1.4,
                       ),
                     ),
                   ],

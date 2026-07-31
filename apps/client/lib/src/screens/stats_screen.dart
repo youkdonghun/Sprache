@@ -5,7 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../domain/active_study_session.dart';
 import '../domain/progress.dart';
 import '../domain/study_history.dart';
+import '../domain/study_limits.dart';
+import '../domain/study_preferences.dart';
+import '../services/app_clock.dart';
 import '../state/app_state.dart';
+import '../state/app_state_view.dart';
 import '../theme/app_theme.dart';
 
 class StatsScreen extends ConsumerWidget {
@@ -13,8 +17,12 @@ class StatsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final narrow = MediaQuery.sizeOf(context).width < 360;
     final state = ref.watch(appControllerProvider);
-    final items = ref.read(appControllerProvider.notifier).selectedItems;
+    final calendarDay = ref.watch(calendarDayProvider);
+    final controller = ref.read(appControllerProvider.notifier);
+    final activeSubject = controller.activeSubject;
+    final items = controller.selectedItems;
     final itemIds = items.map((item) => item.id).toSet();
     final courseProgress = state.progress.values
         .where((progress) => itemIds.contains(progress.itemId))
@@ -42,7 +50,7 @@ class StatsScreen extends ConsumerWidget {
         .length;
     final newItems = items.length - learned;
     final sessions = state.recentSessions
-        .where((session) => session.courseId == state.selectedLanguage.courseId)
+        .where((session) => session.courseId == state.activeCourseId)
         .take(8)
         .toList(growable: false);
     final forecast = ref
@@ -51,7 +59,12 @@ class StatsScreen extends ConsumerWidget {
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+        padding: EdgeInsets.fromLTRB(
+          narrow ? 12 : 20,
+          narrow ? 12 : 24,
+          narrow ? 12 : 20,
+          narrow ? 20 : 28,
+        ),
         children: [
           Center(
             child: ConstrainedBox(
@@ -71,7 +84,9 @@ class StatsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${state.selectedLanguage.koreanName} 코스 · 기억이 쌓이는 흐름을 확인하세요.',
+                              activeSubject.isLanguage
+                                  ? '${activeSubject.name} 코스 · 기억이 쌓이는 흐름을 확인하세요.'
+                                  : '${activeSubject.symbol} ${activeSubject.name} · 기억이 쌓이는 흐름을 확인하세요.',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -86,12 +101,24 @@ class StatsScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 18),
+                  _ReviewForecastCard(
+                    dueNow: forecast.dueNow,
+                    laterToday: forecast.laterToday,
+                    tomorrow: forecast.tomorrow,
+                    nextSevenDays: forecast.nextSevenDays,
+                    nextReviewAt: forecast.nextReviewAt,
+                    onReview: forecast.dueNow == 0
+                        ? null
+                        : () => context.push('/study?mode=review'),
+                  ),
+                  const SizedBox(height: 16),
                   _LevelHero(
+                    subjectName: activeSubject.name,
                     level: state.level,
                     levelXp: state.levelXp,
                     totalXp: state.totalXp,
                     streakDays: state.streakDays,
-                    dailyXp: state.dailyXp,
+                    dailyXp: state.activeCourseDailyXpAt(calendarDay),
                     dailyGoal: state.dailyGoal,
                   ),
                   const SizedBox(height: 16),
@@ -136,6 +163,8 @@ class StatsScreen extends ConsumerWidget {
                         crossAxisSpacing: 12,
                         childAspectRatio: columns == 4
                             ? 1.85
+                            : constraints.maxWidth < 336
+                            ? 1
                             : constraints.maxWidth < 500
                             ? 1.15
                             : 1.6,
@@ -151,17 +180,6 @@ class StatsScreen extends ConsumerWidget {
                         ],
                       );
                     },
-                  ),
-                  const SizedBox(height: 18),
-                  _ReviewForecastCard(
-                    dueNow: forecast.dueNow,
-                    laterToday: forecast.laterToday,
-                    tomorrow: forecast.tomorrow,
-                    nextSevenDays: forecast.nextSevenDays,
-                    nextReviewAt: forecast.nextReviewAt,
-                    onReview: forecast.dueNow == 0
-                        ? null
-                        : () => context.push('/study?mode=review'),
                   ),
                   const SizedBox(height: 18),
                   LayoutBuilder(
@@ -195,7 +213,28 @@ class StatsScreen extends ConsumerWidget {
                     },
                   ),
                   const SizedBox(height: 18),
-                  _RecentSessionsCard(sessions: sessions),
+                  _RecentSessionsCard(
+                    sessions: sessions,
+                    onRepeat: (session) => _reuseSession(context, ref, session),
+                    onExcludeCorrect: (session) => _reuseSession(
+                      context,
+                      ref,
+                      session,
+                      historyFilter: StudyHistoryFilter.excludeCorrect,
+                    ),
+                    onWrongAnswers: (session) => _reuseSession(
+                      context,
+                      ref,
+                      session,
+                      historyFilter: StudyHistoryFilter.wrongOnly,
+                    ),
+                    onNewFirst: (session) => _reuseSession(
+                      context,
+                      ref,
+                      session,
+                      queuePriority: StudyQueuePriority.newFirst,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -203,6 +242,67 @@ class StatsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _reuseSession(
+    BuildContext context,
+    WidgetRef ref,
+    StudySessionSummary session, {
+    StudyHistoryFilter historyFilter = StudyHistoryFilter.all,
+    StudyQueuePriority queuePriority = StudyQueuePriority.dueFirst,
+  }) {
+    final controller = ref.read(appControllerProvider.notifier);
+    final availableIds = controller.courseItems.map((item) => item.id).toSet();
+    final sourceIds = switch (historyFilter) {
+      StudyHistoryFilter.all => session.itemIds.toSet(),
+      StudyHistoryFilter.excludeCorrect => session.notCorrectItemIds,
+      StudyHistoryFilter.wrongOnly => session.unresolvedWrongItemIds,
+    };
+    final selectedIds = sourceIds.intersection(availableIds);
+    if (selectedIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            historyFilter == StudyHistoryFilter.wrongOnly
+                ? '이 세션에는 아직 다시 풀 오답이 없습니다.'
+                : historyFilter == StudyHistoryFilter.excludeCorrect
+                ? '이 세션에는 맞히지 못한 항목이 없습니다.'
+                : '이전 세션의 항목 정보가 없거나 현재 코스에서 사용할 수 없습니다.',
+          ),
+        ),
+      );
+      return;
+    }
+    final local = session.startedAt.toLocal();
+    final current = ref.read(appControllerProvider).preferences.sessionPlan;
+    controller.updateSessionPlan(
+      current.copyWith(
+        planId: '',
+        title: historyFilter == StudyHistoryFilter.wrongOnly
+            ? '${local.month}/${local.day} 오답 다시 풀기'
+            : historyFilter == StudyHistoryFilter.excludeCorrect
+            ? '${local.month}/${local.day} 맞힌 항목 제외'
+            : queuePriority == StudyQueuePriority.newFirst
+            ? '${local.month}/${local.day} 새 자료 우선'
+            : '${local.month}/${local.day} 세션 다시 학습',
+        mode: StudyMode.mixed,
+        deck: StudyDeckScope.selected,
+        difficulty: StudyDifficulty.all,
+        queuePriority: queuePriority,
+        historyFilter: StudyHistoryFilter.all,
+        tags: {},
+        levels: {},
+        selectedItemIds: selectedIds,
+        includeWords: true,
+        includeSentences: true,
+        itemLimit: selectedIds.length.clamp(
+          StudyLimits.minSessionItems,
+          StudyLimits.maxSessionItems,
+        ),
+        scheduledAt: null,
+      ),
+    );
+    context.push('/session-builder');
   }
 }
 
@@ -355,9 +455,19 @@ String _nextReviewLabel(DateTime? reviewAt, DateTime now) {
 }
 
 class _RecentSessionsCard extends StatelessWidget {
-  const _RecentSessionsCard({required this.sessions});
+  const _RecentSessionsCard({
+    required this.sessions,
+    required this.onRepeat,
+    required this.onExcludeCorrect,
+    required this.onWrongAnswers,
+    required this.onNewFirst,
+  });
 
   final List<StudySessionSummary> sessions;
+  final ValueChanged<StudySessionSummary> onRepeat;
+  final ValueChanged<StudySessionSummary> onExcludeCorrect;
+  final ValueChanged<StudySessionSummary> onWrongAnswers;
+  final ValueChanged<StudySessionSummary> onNewFirst;
 
   @override
   Widget build(BuildContext context) {
@@ -411,7 +521,21 @@ class _RecentSessionsCard extends StatelessWidget {
             else
               for (final (index, session) in sessions.indexed) ...[
                 if (index > 0) const Divider(height: 1),
-                _SessionRow(session: session),
+                _SessionRow(
+                  session: session,
+                  onRepeat: session.itemIds.isEmpty
+                      ? null
+                      : () => onRepeat(session),
+                  onExcludeCorrect: session.notCorrectItemIds.isEmpty
+                      ? null
+                      : () => onExcludeCorrect(session),
+                  onWrongAnswers: session.unresolvedWrongItemIds.isEmpty
+                      ? null
+                      : () => onWrongAnswers(session),
+                  onNewFirst: session.itemIds.isEmpty
+                      ? null
+                      : () => onNewFirst(session),
+                ),
               ],
           ],
         ),
@@ -420,10 +544,22 @@ class _RecentSessionsCard extends StatelessWidget {
   }
 }
 
+enum _RecentSessionAction { repeat, excludeCorrect, wrongAnswers, newFirst }
+
 class _SessionRow extends StatelessWidget {
-  const _SessionRow({required this.session});
+  const _SessionRow({
+    required this.session,
+    required this.onRepeat,
+    required this.onExcludeCorrect,
+    required this.onWrongAnswers,
+    required this.onNewFirst,
+  });
 
   final StudySessionSummary session;
+  final VoidCallback? onRepeat;
+  final VoidCallback? onExcludeCorrect;
+  final VoidCallback? onWrongAnswers;
+  final VoidCallback? onNewFirst;
 
   @override
   Widget build(BuildContext context) {
@@ -490,6 +626,60 @@ class _SessionRow extends StatelessWidget {
               ),
             ],
           ),
+          PopupMenuButton<_RecentSessionAction>(
+            key: Key('recent-session-actions-${session.sessionId}'),
+            tooltip: '세션 다시 사용',
+            onSelected: (action) {
+              switch (action) {
+                case _RecentSessionAction.repeat:
+                  onRepeat?.call();
+                case _RecentSessionAction.excludeCorrect:
+                  onExcludeCorrect?.call();
+                case _RecentSessionAction.wrongAnswers:
+                  onWrongAnswers?.call();
+                case _RecentSessionAction.newFirst:
+                  onNewFirst?.call();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _RecentSessionAction.repeat,
+                enabled: onRepeat != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.restart_alt_rounded),
+                  title: Text('이 문제 묶음 다시 학습'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _RecentSessionAction.excludeCorrect,
+                enabled: onExcludeCorrect != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.filter_alt_off_rounded),
+                  title: Text('맞힌 항목 제외하고 학습'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _RecentSessionAction.wrongAnswers,
+                enabled: onWrongAnswers != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.replay_rounded),
+                  title: Text('이 세션 오답만 학습'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _RecentSessionAction.newFirst,
+                enabled: onNewFirst != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.fiber_new_rounded),
+                  title: Text('새 자료부터 다시 학습'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -500,6 +690,7 @@ String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
 class _LevelHero extends StatelessWidget {
   const _LevelHero({
+    required this.subjectName,
     required this.level,
     required this.levelXp,
     required this.totalXp,
@@ -508,6 +699,7 @@ class _LevelHero extends StatelessWidget {
     required this.dailyGoal,
   });
 
+  final String subjectName;
   final int level;
   final int levelXp;
   final int totalXp;
@@ -521,13 +713,9 @@ class _LevelHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colors.primary,
-            Color.lerp(colors.primary, colors.secondary, 0.62)!,
-          ],
-        ),
+        color: colors.primaryContainer,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.32)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -536,53 +724,62 @@ class _LevelHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'LEVEL $level',
+                'ACCOUNT LEVEL $level',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.72),
+                  color: colors.onPrimaryContainer,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                '지금까지 $totalXp XP를 쌓았어요',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(color: Colors.white),
+                '계정 전체에서 지금까지 $totalXp XP를 쌓았어요',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: colors.onPrimaryContainer,
+                ),
               ),
               const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: levelXp / 500,
-                  minHeight: 8,
-                  backgroundColor: Colors.white.withValues(alpha: 0.22),
-                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+              Semantics(
+                label: '계정 레벨 $level 진행률',
+                value: '${(levelXp / 5).round()}퍼센트',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: levelXp / 500,
+                    minHeight: 8,
+                    backgroundColor: colors.onPrimaryContainer.withValues(
+                      alpha: 0.18,
+                    ),
+                    valueColor: AlwaysStoppedAnimation(
+                      colors.onPrimaryContainer,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 '다음 레벨까지 ${500 - levelXp} XP',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: colors.onPrimaryContainer,
                   fontSize: 12,
                 ),
               ),
             ],
           );
-          final summary = Row(
-            mainAxisSize: MainAxisSize.min,
+          final summary = Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
             children: [
               _HeroMetric(
                 icon: Icons.local_fire_department_rounded,
                 value: '$streakDays일',
                 label: '연속 학습',
               ),
-              const SizedBox(width: 10),
               _HeroMetric(
                 icon: Icons.bolt_rounded,
                 value: '$dailyXp/$dailyGoal',
-                label: '오늘 XP',
+                label: '$subjectName 오늘 XP',
               ),
             ],
           );
@@ -618,31 +815,31 @@ class _HeroMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: 112,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: colors.primary, size: 20),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.onSurface,
               fontWeight: FontWeight.w900,
             ),
           ),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
-              fontSize: 11,
-            ),
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colors.onSurface, fontSize: 11),
           ),
         ],
       ),
