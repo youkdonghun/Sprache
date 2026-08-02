@@ -84,7 +84,9 @@ final class SpracheInboundIntentBridge {
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "SpracheInboundIntent")
+    guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "SpracheInboundIntent") else {
+      return
+    }
     SpracheInboundIntentBridge.shared.attach(to: registrar.messenger())
   }
 
