@@ -30,6 +30,7 @@ import '../state/app_state.dart';
 import '../state/connection_state.dart';
 import '../state/local_storage_state.dart';
 import '../theme/study_accessibility_theme.dart';
+import '../widgets/quick_content_sheet.dart';
 
 enum _ExerciseMode { recognition, production, cloze, sentenceOrder, listening }
 
@@ -67,6 +68,7 @@ class StudyScreen extends ConsumerStatefulWidget {
     this.historyFilter = StudyHistoryFilter.all,
     this.resume = false,
     this.customPlan = false,
+    this.startMatchSprint = false,
     super.key,
   });
 
@@ -77,6 +79,7 @@ class StudyScreen extends ConsumerStatefulWidget {
   final StudyHistoryFilter historyFilter;
   final bool resume;
   final bool customPlan;
+  final bool startMatchSprint;
 
   @override
   ConsumerState<StudyScreen> createState() => _StudyScreenState();
@@ -126,6 +129,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   late StudyAnswerDirection _sessionAnswerDirection;
   var _gradingStrength = StudyGradingStrictness.balanced;
   var _recordProgress = true;
+  var _choiceCount = 4;
+  var _hintsEnabled = true;
+  bool? _autoAdvanceOverride;
+  bool? _soundEffectsOverride;
   var _backlogRecovery = false;
   var _inputProfile = PracticeInputProfile.standard;
   _PendingQuizResponse? _pendingResponse;
@@ -188,6 +195,24 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   bool get _isTextInputMode =>
       _mode == _ExerciseMode.production || _mode == _ExerciseMode.listening;
 
+  bool get _autoAdvanceEnabled =>
+      _autoAdvanceOverride ?? _interaction.autoAdvanceCorrect;
+
+  AppFeedbackService get _feedbackService {
+    final base = ref.read(studyFeedbackServiceProvider);
+    final override = _soundEffectsOverride;
+    if (override == null) return base;
+    return AppFeedbackService(
+      readPreferences: () => ref
+          .read(appControllerProvider)
+          .preferences
+          .experience
+          .copyWith(soundEffectsEnabled: override),
+      emitHaptic: base.emitHaptic,
+      emitSound: base.emitSound,
+    );
+  }
+
   String get _clozeAnswer =>
       _item.sentenceTokens[_item.sentenceTokens.length ~/ 2];
 
@@ -216,6 +241,13 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           plan.answerDirectionOverride ?? _sessionAnswerDirection;
       _gradingStrength = plan.gradingStrictness;
       _recordProgress = plan.recordProgress;
+      _choiceCount = plan.choiceCount;
+      _hintsEnabled = plan.hintsEnabled;
+      _autoAdvanceOverride = plan.autoAdvanceOverride;
+      _soundEffectsOverride = plan.soundEffectsOverride;
+      if (plan.largeControls) {
+        _inputProfile = PracticeInputProfile.accessible;
+      }
       _backlogRecovery = plan.backlogRecovery.enabled;
     } else if (widget.resume) {
       _backlogRecovery = controller.activeSessionPlan.backlogRecovery.enabled;
@@ -383,6 +415,11 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         }
       },
     );
+    if (widget.startMatchSprint && _queue.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_showMatchSprint());
+      });
+    }
   }
 
   void _handleSubjectChange() {
@@ -605,6 +642,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           target: _item,
           answer: _clozeAnswer,
           candidates: candidates,
+          count: _choiceCount,
         ),
       );
     }
@@ -612,7 +650,11 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       return _reverseRecognitionChoices(candidates);
     }
     return _applyChoiceOrder(
-      _choiceBuilder.recognitionChoices(target: _item, candidates: candidates),
+      _choiceBuilder.recognitionChoices(
+        target: _item,
+        candidates: candidates,
+        count: _choiceCount,
+      ),
     );
   }
 
@@ -632,7 +674,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _normalizedChoice(_item.text): _item.text,
     };
     for (final candidate in alternatives) {
-      if (byNormalized.length >= 4) break;
+      if (byNormalized.length >= _choiceCount) break;
       byNormalized.putIfAbsent(
         _normalizedChoice(candidate.text),
         () => candidate.text,
@@ -706,7 +748,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   }
 
   void _showHint() {
-    if (_correct != null || _hintLevel >= 2) return;
+    if (!_hintsEnabled || _correct != null || _hintLevel >= 2) return;
     setState(() => _hintLevel++);
   }
 
@@ -740,7 +782,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   void _selectChoice(String choice) {
     if (_correct != null || _selectedChoice == choice) return;
     setState(() => _selectedChoice = choice);
-    unawaited(ref.read(studyFeedbackServiceProvider).selection());
+    unawaited(_feedbackService.selection());
   }
 
   void _appendTokenFromShortcut(int index) {
@@ -758,7 +800,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     setState(() {
       _orderedTokens.add(_remainingTokens.removeAt(index));
     });
-    unawaited(ref.read(studyFeedbackServiceProvider).selection());
+    unawaited(_feedbackService.selection());
   }
 
   void _removeOrderedToken(int index) {
@@ -854,16 +896,12 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _submittedAnswer = answer;
       _correct = correct;
     });
-    unawaited(
-      correct
-          ? ref.read(studyFeedbackServiceProvider).success()
-          : ref.read(studyFeedbackServiceProvider).error(),
-    );
+    unawaited(correct ? _feedbackService.success() : _feedbackService.error());
     if (_interaction.autoPlayAnswerAudio) {
       unawaited(_speak());
     }
     if (correct &&
-        _interaction.autoAdvanceCorrect &&
+        _autoAdvanceEnabled &&
         _inputProfile.allowsAutomaticAdvance &&
         !ref.read(accessibilityInputProfileProvider).reduceMotion) {
       _scheduleAutoAdvance();
@@ -960,7 +998,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _correct = pending.currentAttempt.correct;
     });
     if (_correct == true &&
-        _interaction.autoAdvanceCorrect &&
+        _autoAdvanceEnabled &&
         _inputProfile.allowsAutomaticAdvance &&
         !ref.read(accessibilityInputProfileProvider).reduceMotion) {
       _scheduleAutoAdvance();
@@ -1001,6 +1039,26 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _attemptReviews.add(attempt);
     _pendingResponse = null;
     _persistActiveSession((_index + 1).clamp(0, _queue.length));
+  }
+
+  void _deferCurrentQuestion() {
+    if (_correct != null || _index + 1 >= _queue.length) return;
+    _autoAdvanceTimer?.cancel();
+    _speechGeneration++;
+    unawaited(_baseTtsService.stop());
+    setState(() {
+      final deferred = _queue.removeAt(_index);
+      _queue.add(deferred);
+      _correct = null;
+      _prepareExercise();
+    });
+    _persistActiveSession(_index);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        duration: Duration(seconds: 2),
+        content: Text('이 문제를 감점 없이 세션 뒤로 미뤘습니다.'),
+      ),
+    );
   }
 
   void _next() {
@@ -1137,6 +1195,18 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     ]);
     if (mistakeIds.isEmpty) return;
     await _deriveSession(StudySessionOrigin.wrongAnswers, mistakeIds);
+  }
+
+  Future<void> _replayCompletedSession({required bool shuffle}) async {
+    final ids = _orderedUnique(
+      _activeSession.originalItemIds.isEmpty
+          ? _queue.map((item) => item.id)
+          : _activeSession.originalItemIds,
+    ).toList(growable: true);
+    if (shuffle) {
+      ids.shuffle(Random(_now.microsecondsSinceEpoch));
+    }
+    await _deriveSession(StudySessionOrigin.restarted, ids);
   }
 
   void _openNextRecommendation() {
@@ -1425,6 +1495,19 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     unawaited(_editItemSafely(_item));
   }
 
+  void _openQuickAddFromCurrentItem() {
+    unawaited(
+      showQuickContentSheet(
+        context: context,
+        initialKind: _item.kind,
+        initialText: _item.text,
+        initialMeaning: _item.primaryTranslation,
+        initialExample: _item.example ?? '',
+        initialExampleMeaning: _item.exampleTranslation ?? '',
+      ),
+    );
+  }
+
   void _openMemoryHintEditor() {
     unawaited(_editMemoryHint(_item));
   }
@@ -1588,6 +1671,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         attempts: List.unmodifiable(_attemptReviews),
         recordProgress: _recordProgress,
         onRetryMistakes: _retryMistakes,
+        onReplaySame: () => _replayCompletedSession(shuffle: false),
+        onReplayShuffled: () => _replayCompletedSession(shuffle: true),
         onOpenItem: _openReviewItem,
         onNextRecommended: widget.customPlan ? null : _openNextRecommendation,
         onHome: () => context.go(_returnRoute),
@@ -1618,6 +1703,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       const SingleActivator(LogicalKeyboardKey.keyH, control: true): _showHint,
       const SingleActivator(LogicalKeyboardKey.keyG, control: true):
           _submitDontKnow,
+      if (_index + 1 < _queue.length)
+        const SingleActivator(LogicalKeyboardKey.keyL, control: true):
+            _deferCurrentQuestion,
       if (_isTextInputMode)
         const SingleActivator(LogicalKeyboardKey.space, control: true): _speak,
       if (_isTextInputMode)
@@ -1948,6 +2036,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                         .read(appControllerProvider.notifier)
                         .toggleFavorite(_item.id),
                     onEditContent: _openCurrentItemEditor,
+                    onQuickAdd: _openQuickAddFromCurrentItem,
                     onEditMemoryHint: _openMemoryHintEditor,
                     onMarkTypo:
                         !correct && (_submittedAnswer ?? '').trim().isNotEmpty
@@ -1980,10 +2069,13 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           bottomNavigationBar: _correct == null
               ? _StudyActionBar(
                   hintLevel: _hintLevel,
+                  hintsEnabled: _hintsEnabled,
+                  canDefer: _index + 1 < _queue.length,
                   inputProfile: _inputProfile,
                   minimumControlHeight:
                       accessibilityTheme.minimumRatingControlHeight,
                   onHint: _showHint,
+                  onDefer: _deferCurrentQuestion,
                   onDontKnow: _submitDontKnow,
                   onSubmit: _submit,
                 )
@@ -2499,17 +2591,23 @@ class _HintCard extends StatelessWidget {
 class _StudyActionBar extends StatelessWidget {
   const _StudyActionBar({
     required this.hintLevel,
+    required this.hintsEnabled,
+    required this.canDefer,
     required this.inputProfile,
     required this.minimumControlHeight,
     required this.onHint,
+    required this.onDefer,
     required this.onDontKnow,
     required this.onSubmit,
   });
 
   final int hintLevel;
+  final bool hintsEnabled;
+  final bool canDefer;
   final PracticeInputProfile inputProfile;
   final double minimumControlHeight;
   final VoidCallback onHint;
+  final VoidCallback onDefer;
   final VoidCallback onDontKnow;
   final VoidCallback onSubmit;
 
@@ -2539,15 +2637,26 @@ class _StudyActionBar extends StatelessWidget {
                 builder: (context, constraints) {
                   final hintButton = TextButton.icon(
                     key: const Key('show-study-hint'),
-                    onPressed: hintLevel >= 2 ? null : onHint,
+                    onPressed: !hintsEnabled || hintLevel >= 2 ? null : onHint,
                     icon: const Icon(Icons.lightbulb_outline_rounded, size: 19),
                     label: Text(
-                      hintLevel == 0
+                      !hintsEnabled
+                          ? '힌트 꺼짐'
+                          : hintLevel == 0
                           ? '힌트'
                           : hintLevel == 1
                           ? '힌트 한 번 더'
                           : '힌트 사용',
                     ),
+                    style: TextButton.styleFrom(
+                      minimumSize: Size(0, effectiveControlHeight),
+                    ),
+                  );
+                  final deferButton = TextButton.icon(
+                    key: const Key('defer-study-question'),
+                    onPressed: canDefer ? onDefer : null,
+                    icon: const Icon(Icons.low_priority_rounded, size: 19),
+                    label: const Text('뒤로 미루기'),
                     style: TextButton.styleFrom(
                       minimumSize: Size(0, effectiveControlHeight),
                     ),
@@ -2580,14 +2689,12 @@ class _StudyActionBar extends StatelessWidget {
                       children: [
                         if (largeText) ...[
                           hintButton,
+                          deferButton,
                           giveUpButton,
                         ] else
-                          Row(
-                            children: [
-                              Expanded(child: hintButton),
-                              const SizedBox(width: 6),
-                              Expanded(child: giveUpButton),
-                            ],
+                          Wrap(
+                            alignment: WrapAlignment.spaceEvenly,
+                            children: [hintButton, deferButton, giveUpButton],
                           ),
                         const SizedBox(height: 6),
                         SizedBox(
@@ -2600,6 +2707,8 @@ class _StudyActionBar extends StatelessWidget {
                   return Row(
                     children: [
                       hintButton,
+                      const SizedBox(width: 6),
+                      deferButton,
                       const SizedBox(width: 6),
                       giveUpButton,
                       const Spacer(),
@@ -2638,6 +2747,7 @@ class _StudyFeedbackOverlay extends StatelessWidget {
     required this.onSpeak,
     required this.onToggleFavorite,
     required this.onEditContent,
+    required this.onQuickAdd,
     required this.onEditMemoryHint,
     required this.onMarkTypo,
     required this.onMarkHard,
@@ -2662,6 +2772,7 @@ class _StudyFeedbackOverlay extends StatelessWidget {
   final VoidCallback onSpeak;
   final VoidCallback onToggleFavorite;
   final VoidCallback onEditContent;
+  final VoidCallback onQuickAdd;
   final VoidCallback onEditMemoryHint;
   final VoidCallback? onMarkTypo;
   final VoidCallback? onMarkHard;
@@ -2744,6 +2855,18 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                         ? '자료 수정'
                                         : '교정 메모',
                                   ),
+                                ),
+                                OutlinedButton.icon(
+                                  key: const Key(
+                                    'quick-add-from-study-feedback',
+                                  ),
+                                  onPressed: onQuickAdd,
+                                  style: compactControlStyle,
+                                  icon: const Icon(
+                                    Icons.add_circle_outline_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text('빠른 추가로 복사'),
                                 ),
                                 OutlinedButton.icon(
                                   key: const Key('edit-memory-hint'),
@@ -2886,6 +3009,8 @@ class _CompletionScreen extends StatelessWidget {
     required this.attempts,
     required this.recordProgress,
     required this.onRetryMistakes,
+    required this.onReplaySame,
+    required this.onReplayShuffled,
     required this.onOpenItem,
     required this.onNextRecommended,
     required this.onHome,
@@ -2904,6 +3029,8 @@ class _CompletionScreen extends StatelessWidget {
   final List<QuizAttemptReview> attempts;
   final bool recordProgress;
   final VoidCallback onRetryMistakes;
+  final VoidCallback onReplaySame;
+  final VoidCallback onReplayShuffled;
   final ValueChanged<String> onOpenItem;
   final VoidCallback? onNextRecommended;
   final VoidCallback onHome;
@@ -3073,6 +3200,28 @@ class _CompletionScreen extends StatelessWidget {
                           ),
                         ),
                       ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              key: const Key('completion-replay-same'),
+                              onPressed: onReplaySame,
+                              icon: const Icon(Icons.replay_rounded),
+                              label: const Text('같은 순서'),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              key: const Key('completion-replay-shuffled'),
+                              onPressed: onReplayShuffled,
+                              icon: const Icon(Icons.shuffle_rounded),
+                              label: const Text('새로 섞기'),
+                            ),
+                          ),
+                        ],
+                      ),
                       if (onNextRecommended case final onNext?) ...[
                         if (hasMistakes) const SizedBox(height: 10),
                         SizedBox(

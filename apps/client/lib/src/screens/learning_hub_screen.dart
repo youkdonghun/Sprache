@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/learning_item.dart';
+import '../domain/quiz_session_support.dart';
 import '../domain/session_enhancements.dart';
 import '../domain/smart_collection.dart';
 import '../domain/study_history.dart';
+import '../domain/study_interaction_preferences.dart';
 import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
 import '../services/app_clock.dart';
@@ -386,6 +388,67 @@ class _PracticeCatalog extends ConsumerStatefulWidget {
 }
 
 class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
+  final _searchController = TextEditingController();
+  var _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  PracticeCatalogPreferences get _catalog =>
+      ref.read(appControllerProvider).preferences.interaction.practiceCatalog;
+
+  void _updateCatalog(PracticeCatalogPreferences catalog) {
+    final state = ref.read(appControllerProvider);
+    ref
+        .read(appControllerProvider.notifier)
+        .updateInteractionPreferences(
+          state.preferences.interaction.copyWith(practiceCatalog: catalog),
+        );
+  }
+
+  void _toggleFavorite(_Activity activity) {
+    final catalog = _catalog;
+    final favorites = {...catalog.favoriteActivityIds};
+    if (!favorites.remove(activity.id)) favorites.add(activity.id);
+    _updateCatalog(catalog.copyWith(favoriteActivityIds: favorites));
+  }
+
+  void _hideActivity(_Activity activity) {
+    final catalog = _catalog;
+    _updateCatalog(
+      catalog.copyWith(
+        favoriteActivityIds: {...catalog.favoriteActivityIds}
+          ..remove(activity.id),
+        hiddenActivityIds: {...catalog.hiddenActivityIds}..add(activity.id),
+      ),
+    );
+  }
+
+  void _restoreActivity(_Activity activity) {
+    final catalog = _catalog;
+    _updateCatalog(
+      catalog.copyWith(
+        hiddenActivityIds: {...catalog.hiddenActivityIds}..remove(activity.id),
+      ),
+    );
+  }
+
+  bool _matchesQuery(_Activity activity) {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return true;
+    return '${activity.title} ${activity.description} ${activity.badge}'
+        .toLowerCase()
+        .contains(query);
+  }
+
+  List<_Activity> get _allActivities => [
+    for (final category in _PracticeCategory.values)
+      ..._activitiesFor(category),
+  ];
+
   List<_PracticeRecommendation> _practiceRecommendations() {
     final state = ref.read(appControllerProvider);
     final controller = ref.read(appControllerProvider.notifier);
@@ -487,6 +550,22 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
 
   _ActivityAvailability _availabilityFor(_Activity activity) {
     final items = widget.items;
+    if (activity.route.contains('match=true')) {
+      final learning = <String>{};
+      final meanings = <String>{};
+      var pairs = 0;
+      for (final item in items) {
+        final term = item.text.trim().toLowerCase();
+        final meaning = item.primaryTranslation.trim().toLowerCase();
+        if (term.isEmpty || meaning.isEmpty) continue;
+        if (!learning.add(term) || !meanings.add(meaning)) continue;
+        pairs++;
+      }
+      return _ActivityAvailability(
+        availableCount: pairs >= 2 ? pairs.clamp(2, 10) : 0,
+        disabledReason: pairs >= 2 ? null : '서로 다른 표현과 뜻이 2쌍 이상 필요해요.',
+      );
+    }
     final uri = Uri.parse(activity.route);
     final modeName = uri.queryParameters['mode'];
     final progress = ref.read(appControllerProvider).progress;
@@ -602,9 +681,32 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     );
     final controller = ref.read(appControllerProvider.notifier);
     final now = ref.read(appClockProvider)();
+    final catalogPlan = controller.activeSessionPlan.copyWith(
+      planId: '',
+      subjectId: controller.activeSubject.id,
+      title: activity.title,
+      mode: mode,
+      deck: StudyDeckScope.course,
+      unitIndex: null,
+      difficulty: StudyDifficulty.all,
+      queuePriority: StudyQueuePriority.dueFirst,
+      historyFilter: StudyHistoryFilter.all,
+      groupIds: {},
+      tags: {},
+      levels: {},
+      selectedItemIds: {},
+      includeWords: true,
+      includeSentences: true,
+      sentenceRatio: ref.read(appControllerProvider).preferences.sentenceRatio,
+      itemLimit: StudyLimits.maxSessionItems,
+      lengthMode: StudySessionLengthMode.itemCount,
+      backlogRecovery: const BacklogRecoverySettings(),
+      examSchedule: null,
+      scheduledAt: null,
+    );
     final preview = controller.queue(
       now,
-      mode: mode,
+      sessionPlan: catalogPlan,
       itemLimit: StudyLimits.maxSessionItems,
     );
     final newCount = preview
@@ -629,14 +731,41 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         availableCount: preview.length,
         newCount: newCount,
         dueCount: dueCount,
+        initialPreferences: _catalog.launchFor(activity.id),
       ),
     );
     if (launch == null || !mounted) return;
+    final catalog = _catalog;
+    _updateCatalog(
+      catalog.copyWith(
+        launchByActivityId: {...catalog.launchByActivityId}
+          ..[activity.id] = launch.preferences,
+      ),
+    );
+    controller.updateSessionPlan(
+      catalogPlan.copyWith(
+        queuePriority: launch.queuePriority,
+        historyFilter: launch.historyFilter,
+        itemLimit: launch.itemLimit,
+        lengthMode: launch.lengthMode,
+        timeBudgetMinutes: launch.timeBudgetMinutes,
+        recordProgress: launch.preferences.recordProgress,
+        answerDirectionOverride: launch.preferences.answerDirection,
+        gradingStrictness: launch.preferences.gradingStrictness,
+        choiceCount: launch.preferences.choiceCount,
+        hintsEnabled: launch.preferences.hintsEnabled,
+        autoAdvanceOverride: launch.preferences.autoAdvance,
+        soundEffectsOverride: launch.preferences.soundEnabled,
+        largeControls: launch.preferences.largeControls,
+        scheduledAt: null,
+      ),
+    );
     final separator = activity.route.contains('?') ? '&' : '?';
     await context.push(
       '${activity.route}${separator}limit=${launch.itemLimit}'
       '&queuePriority=${launch.queuePriority.name}'
-      '&historyFilter=${launch.historyFilter.name}',
+      '&historyFilter=${launch.historyFilter.name}'
+      '&custom=true',
     );
   }
 
@@ -684,6 +813,13 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           description: '소리를 듣고 받아쓰기',
           route: '/study?mode=listening',
           badge: '듣기',
+        ),
+        _Activity(
+          icon: Icons.grid_view_rounded,
+          title: '매치 스프린트',
+          description: '표현과 뜻을 빠르게 연결',
+          route: '/study?mode=mixed&match=true',
+          badge: '매치',
         ),
       ],
       _PracticeCategory.memorize => [
@@ -769,14 +905,42 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     _PracticeCategory.apply => Icons.mic_rounded,
   };
 
+  List<_Activity> _visibleActivities(
+    _PracticeCategory category,
+    PracticeCatalogPreferences catalog,
+  ) => _activitiesFor(category)
+      .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
+      .where(_matchesQuery)
+      .toList(growable: false);
+
+  Future<void> _openSurpriseGame() async {
+    final catalog = _catalog;
+    final available = _allActivities
+        .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
+        .where((activity) => _availabilityFor(activity).enabled)
+        .toList(growable: false);
+    if (available.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('지금 시작할 수 있는 게임이 없습니다. 자료를 먼저 추가해 주세요.')),
+      );
+      return;
+    }
+    final now = ref.read(appClockProvider)().microsecondsSinceEpoch;
+    await _openActivity(available[now.abs() % available.length]);
+  }
+
   Widget _activityCard(_Activity activity, double width) {
     final availability = _availabilityFor(activity);
+    final catalog = _catalog;
     Widget card = SizedBox(
       width: width,
       child: _ActivityCard(
         activity: activity,
         disabledReason: availability.disabledReason,
         onPressed: availability.enabled ? () => _openActivity(activity) : null,
+        favorite: catalog.favoriteActivityIds.contains(activity.id),
+        onToggleFavorite: () => _toggleFavorite(activity),
+        onHide: () => _hideActivity(activity),
       ),
     );
     if (activity.title == '혼합 퀴즈') {
@@ -795,6 +959,19 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
 
   @override
   Widget build(BuildContext context) {
+    final catalog = ref.watch(
+      appControllerProvider.select(
+        (state) => state.preferences.interaction.practiceCatalog,
+      ),
+    );
+    final favorites = _allActivities
+        .where((activity) => catalog.favoriteActivityIds.contains(activity.id))
+        .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
+        .where(_matchesQuery)
+        .toList(growable: false);
+    final hidden = _allActivities
+        .where((activity) => catalog.hiddenActivityIds.contains(activity.id))
+        .toList(growable: false);
     final planTitle = widget.plan.title.trim();
     final planSummary = planTitle.isEmpty
         ? '맞춤 ${widget.itemCount}문제'
@@ -836,6 +1013,77 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           availabilityFor: _availabilityFor,
           onPressed: _openActivity,
         ),
+        const SizedBox(height: 14),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final search = TextField(
+              key: const Key('practice-game-search'),
+              controller: _searchController,
+              textInputAction: TextInputAction.search,
+              onChanged: (value) => setState(() => _query = value),
+              decoration: InputDecoration(
+                labelText: '게임 검색',
+                hintText: '쓰기, 듣기, 문장, 매치…',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: '검색 지우기',
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _query = '');
+                        },
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+              ),
+            );
+            final surprise = FilledButton.tonalIcon(
+              key: const Key('practice-surprise-game'),
+              onPressed: _openSurpriseGame,
+              icon: const Icon(Icons.casino_outlined),
+              label: const Text('깜짝 게임'),
+            );
+            if (constraints.maxWidth < 560) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [search, const SizedBox(height: 8), surprise],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: search),
+                const SizedBox(width: 10),
+                surprise,
+              ],
+            );
+          },
+        ),
+        if (favorites.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          const _PracticeSectionHeader(
+            icon: Icons.star_rounded,
+            title: '즐겨찾는 게임',
+            description: '자주 쓰는 게임을 위에 고정했습니다.',
+          ),
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth >= 620
+                  ? (constraints.maxWidth - 20) / 3
+                  : constraints.maxWidth >= 350
+                  ? (constraints.maxWidth - 10) / 2
+                  : constraints.maxWidth;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final activity in favorites)
+                    _activityCard(activity, width),
+                ],
+              );
+            },
+          ),
+        ],
         const SizedBox(height: 18),
         if (_hasMissingMaterialCapability) ...[
           _MissingMaterialNotice(
@@ -845,35 +1093,73 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           const SizedBox(height: 18),
         ],
         for (final category in _PracticeCategory.values) ...[
-          if (category != _PracticeCategory.quiz) const SizedBox(height: 20),
-          _PracticeSectionHeader(
-            key: Key('practice-category-${_categoryTitle(category)}'),
-            icon: _categoryIcon(category),
-            title: _categoryTitle(category),
-            description: _categoryDescription(category),
-          ),
-          const SizedBox(height: 8),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 900
-                  ? 4
-                  : defaultTargetPlatform == TargetPlatform.windows &&
-                        constraints.maxWidth >= 620
-                  ? 3
-                  : constraints.maxWidth >= 350
-                  ? 2
-                  : 1;
-              final width =
-                  (constraints.maxWidth - (columns - 1) * 10) / columns;
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final activity in _activitiesFor(category))
-                    _activityCard(activity, width),
-                ],
-              );
-            },
+          if (_visibleActivities(category, catalog).isNotEmpty) ...[
+            if (category != _PracticeCategory.quiz) const SizedBox(height: 20),
+            _PracticeSectionHeader(
+              key: Key('practice-category-${_categoryTitle(category)}'),
+              icon: _categoryIcon(category),
+              title: _categoryTitle(category),
+              description: _categoryDescription(category),
+            ),
+            const SizedBox(height: 8),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 900
+                    ? 4
+                    : defaultTargetPlatform == TargetPlatform.windows &&
+                          constraints.maxWidth >= 620
+                    ? 3
+                    : constraints.maxWidth >= 350
+                    ? 2
+                    : 1;
+                final width =
+                    (constraints.maxWidth - (columns - 1) * 10) / columns;
+                return Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final activity in _visibleActivities(
+                      category,
+                      catalog,
+                    ))
+                      _activityCard(activity, width),
+                  ],
+                );
+              },
+            ),
+          ],
+        ],
+        if (_query.trim().isNotEmpty &&
+            _PracticeCategory.values.every(
+              (category) => _visibleActivities(category, catalog).isEmpty,
+            )) ...[
+          const SizedBox(height: 18),
+          const Center(child: Text('검색 조건에 맞는 게임이 없습니다.')),
+        ],
+        if (hidden.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          ExpansionTile(
+            key: const Key('hidden-practice-games'),
+            tilePadding: EdgeInsets.zero,
+            title: Text('숨긴 게임 ${hidden.length}개'),
+            subtitle: const Text('원할 때 언제든 다시 표시할 수 있습니다.'),
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final activity in hidden)
+                      ActionChip(
+                        avatar: const Icon(Icons.visibility_outlined, size: 18),
+                        label: Text('${activity.title} 복원'),
+                        onPressed: () => _restoreActivity(activity),
+                      ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ],
       ],
@@ -909,6 +1195,13 @@ class _PersonalizedPracticeHub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    _PracticeRecommendation? primary;
+    for (final recommendation in recommendations) {
+      if (availabilityFor(recommendation.activity).enabled) {
+        primary = recommendation;
+        break;
+      }
+    }
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.primaryContainer.withValues(alpha: 0.28),
@@ -920,11 +1213,24 @@ class _PersonalizedPracticeHub extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              '오늘의 Practice Hub',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '오늘의 Practice Hub',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                if (primary case final recommendation?)
+                  FilledButton.tonalIcon(
+                    key: const Key('start-recommended-practice'),
+                    onPressed: () => onPressed(recommendation.activity),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                    label: const Text('알아서 추천'),
+                  ),
+              ],
             ),
             const SizedBox(height: 3),
             Text(
@@ -1075,11 +1381,17 @@ class _ActivityCard extends StatelessWidget {
     required this.activity,
     required this.disabledReason,
     required this.onPressed,
+    required this.favorite,
+    required this.onToggleFavorite,
+    required this.onHide,
   });
 
   final _Activity activity;
   final String? disabledReason;
   final VoidCallback? onPressed;
+  final bool favorite;
+  final VoidCallback onToggleFavorite;
+  final VoidCallback onHide;
 
   @override
   Widget build(BuildContext context) {
@@ -1091,7 +1403,7 @@ class _ActivityCard extends StatelessWidget {
         final textScale = MediaQuery.textScalerOf(context).scale(1);
         final scaleDelta = (textScale - 1).clamp(0.0, 2.0).toDouble();
         final cardHeight = compact
-            ? (enabled ? 92.0 : 112.0) + (scaleDelta * 46)
+            ? (enabled ? 108.0 : 128.0) + (scaleDelta * 46)
             : 72.0 + (scaleDelta * 32);
         final icon = Container(
           width: compact ? 36 : 44,
@@ -1133,59 +1445,91 @@ class _ActivityCard extends StatelessWidget {
             ],
           ],
         );
+        final menu = PopupMenuButton<String>(
+          key: Key('practice-menu-${activity.id}'),
+          tooltip: '${activity.title} 관리',
+          onSelected: (value) {
+            if (value == 'favorite') onToggleFavorite();
+            if (value == 'hide') onHide();
+          },
+          itemBuilder: (context) => [
+            PopupMenuItem(
+              value: 'favorite',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  favorite ? Icons.star_rounded : Icons.star_border_rounded,
+                ),
+                title: Text(favorite ? '즐겨찾기 해제' : '즐겨찾기에 고정'),
+              ),
+            ),
+            const PopupMenuItem(
+              value: 'hide',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.visibility_off_outlined),
+                title: Text('이 게임 숨기기'),
+              ),
+            ),
+          ],
+          icon: Icon(
+            favorite ? Icons.star_rounded : Icons.more_horiz_rounded,
+            color: favorite ? colors.primary : colors.onSurfaceVariant,
+          ),
+        );
         return Semantics(
           button: true,
           enabled: enabled,
           label: enabled
               ? '${activity.title}. ${activity.description}'
               : '${activity.title}. 사용 불가. $disabledReason',
-          child: ExcludeSemantics(
-            child: Tooltip(
-              message: disabledReason ?? activity.description,
-              child: Material(
-                key: Key('practice-activity-${activity.title}'),
-                color: enabled ? colors.surface : colors.surfaceContainerLow,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(color: colors.outlineVariant),
-                ),
-                child: InkWell(
-                  onTap: onPressed,
-                  borderRadius: BorderRadius.circular(14),
-                  child: SizedBox(
-                    height: cardHeight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(11),
-                      child: compact
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    icon,
-                                    const Spacer(),
-                                    _MiniBadge(
-                                      label: enabled ? activity.badge : '사용 불가',
-                                      muted: !enabled,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 7),
-                                copy,
-                              ],
-                            )
-                          : Row(
-                              children: [
-                                icon,
-                                const SizedBox(width: 11),
-                                Expanded(child: copy),
-                                _MiniBadge(
-                                  label: enabled ? activity.badge : '사용 불가',
-                                  muted: !enabled,
-                                ),
-                              ],
-                            ),
-                    ),
+          child: Tooltip(
+            message: disabledReason ?? activity.description,
+            child: Material(
+              key: Key('practice-activity-${activity.title}'),
+              color: enabled ? colors.surface : colors.surfaceContainerLow,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+                side: BorderSide(color: colors.outlineVariant),
+              ),
+              child: InkWell(
+                onTap: onPressed,
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox(
+                  height: cardHeight,
+                  child: Padding(
+                    padding: const EdgeInsets.all(11),
+                    child: compact
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  icon,
+                                  const Spacer(),
+                                  _MiniBadge(
+                                    label: enabled ? activity.badge : '사용 불가',
+                                    muted: !enabled,
+                                  ),
+                                  menu,
+                                ],
+                              ),
+                              const SizedBox(height: 7),
+                              copy,
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              icon,
+                              const SizedBox(width: 11),
+                              Expanded(child: copy),
+                              _MiniBadge(
+                                label: enabled ? activity.badge : '사용 불가',
+                                muted: !enabled,
+                              ),
+                              menu,
+                            ],
+                          ),
                   ),
                 ),
               ),
@@ -1202,11 +1546,17 @@ class _PracticeLaunchResult {
     required this.itemLimit,
     required this.queuePriority,
     required this.historyFilter,
+    required this.lengthMode,
+    required this.timeBudgetMinutes,
+    required this.preferences,
   });
 
   final int itemLimit;
   final StudyQueuePriority queuePriority;
   final StudyHistoryFilter historyFilter;
+  final StudySessionLengthMode lengthMode;
+  final int timeBudgetMinutes;
+  final PracticeLaunchPreferences preferences;
 }
 
 class _PracticeLaunchSheet extends StatefulWidget {
@@ -1216,6 +1566,7 @@ class _PracticeLaunchSheet extends StatefulWidget {
     required this.availableCount,
     required this.newCount,
     required this.dueCount,
+    required this.initialPreferences,
   });
 
   final _Activity activity;
@@ -1223,6 +1574,7 @@ class _PracticeLaunchSheet extends StatefulWidget {
   final int availableCount;
   final int newCount;
   final int dueCount;
+  final PracticeLaunchPreferences initialPreferences;
 
   @override
   State<_PracticeLaunchSheet> createState() => _PracticeLaunchSheetState();
@@ -1233,12 +1585,37 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
   late final TextEditingController _countController;
   var _queuePriority = StudyQueuePriority.dueFirst;
   var _historyFilter = StudyHistoryFilter.all;
+  late PracticeLaunchPreferences _preferences;
 
   @override
   void initState() {
     super.initState();
-    _selectedCount = widget.availableCount >= 10 ? 10 : widget.availableCount;
+    _preferences = widget.initialPreferences;
+    _selectedCount = _initialItemCount();
+    _queuePriority = switch (_preferences.queueOrder) {
+      PracticeQueueOrder.dueFirst => StudyQueuePriority.dueFirst,
+      PracticeQueueOrder.newFirst => StudyQueuePriority.newFirst,
+    };
+    _historyFilter = switch (_preferences.historyScope) {
+      PracticeHistoryScope.all => StudyHistoryFilter.all,
+      PracticeHistoryScope.excludeCorrect => StudyHistoryFilter.excludeCorrect,
+      PracticeHistoryScope.wrongOnly => StudyHistoryFilter.wrongOnly,
+    };
     _countController = TextEditingController(text: '$_selectedCount');
+  }
+
+  int _initialItemCount() {
+    if (widget.availableCount <= 0) return 0;
+    final requested = switch (_preferences.length) {
+      PracticeSessionLength.fiveItems ||
+      PracticeSessionLength.tenItems ||
+      PracticeSessionLength.twentyItems => _preferences.itemCount,
+      PracticeSessionLength.allItems => widget.availableCount,
+      PracticeSessionLength.threeMinutes => 7,
+      PracticeSessionLength.fiveMinutes => 12,
+      PracticeSessionLength.tenMinutes => 24,
+    };
+    return requested.clamp(1, widget.availableCount);
   }
 
   @override
@@ -1250,9 +1627,18 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
   void _setCount(int value) {
     final next = value.clamp(
       StudyLimits.minSessionItems,
-      StudyLimits.maxSessionItems,
+      widget.availableCount.clamp(
+        StudyLimits.minSessionItems,
+        StudyLimits.maxSessionItems,
+      ),
     );
-    setState(() => _selectedCount = next);
+    setState(() {
+      _selectedCount = next;
+      _preferences = _preferences.copyWith(
+        itemCount: next,
+        length: _itemLengthForCount(next),
+      );
+    });
     _countController.value = TextEditingValue(
       text: '$next',
       selection: TextSelection.collapsed(offset: '$next'.length),
@@ -1260,7 +1646,77 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
   }
 
   void _commitCount() {
-    _setCount(int.tryParse(_countController.text) ?? _selectedCount);
+    final parsed = int.tryParse(_countController.text) ?? _selectedCount;
+    if (parsed == _selectedCount) return;
+    _setCount(parsed);
+  }
+
+  PracticeSessionLength _itemLengthForCount(int count) => switch (count) {
+    5 => PracticeSessionLength.fiveItems,
+    10 => PracticeSessionLength.tenItems,
+    20 => PracticeSessionLength.twentyItems,
+    _ when count == widget.availableCount => PracticeSessionLength.allItems,
+    _ => PracticeSessionLength.tenItems,
+  };
+
+  void _setLength(PracticeSessionLength length) {
+    final count = switch (length) {
+      PracticeSessionLength.fiveItems => 5,
+      PracticeSessionLength.tenItems => 10,
+      PracticeSessionLength.twentyItems => 20,
+      PracticeSessionLength.allItems => widget.availableCount,
+      PracticeSessionLength.threeMinutes => 7,
+      PracticeSessionLength.fiveMinutes => 12,
+      PracticeSessionLength.tenMinutes => 24,
+    };
+    setState(() => _preferences = _preferences.copyWith(length: length));
+    _setCount(count);
+    setState(() => _preferences = _preferences.copyWith(length: length));
+  }
+
+  int get _timeBudgetMinutes => switch (_preferences.length) {
+    PracticeSessionLength.threeMinutes => 3,
+    PracticeSessionLength.fiveMinutes => 5,
+    PracticeSessionLength.tenMinutes => 10,
+    _ => 5,
+  };
+
+  bool get _usesTimeBudget => switch (_preferences.length) {
+    PracticeSessionLength.threeMinutes ||
+    PracticeSessionLength.fiveMinutes ||
+    PracticeSessionLength.tenMinutes => true,
+    _ => false,
+  };
+
+  void _applyDifficulty(PracticeDifficultyPreset difficulty) {
+    setState(() {
+      _preferences = switch (difficulty) {
+        PracticeDifficultyPreset.relaxed => _preferences.copyWith(
+          difficulty: difficulty,
+          gradingStrictness: StudyGradingStrictness.lenient,
+          choiceCount: 2,
+          hintsEnabled: true,
+          autoAdvance: false,
+          largeControls: true,
+        ),
+        PracticeDifficultyPreset.balanced => _preferences.copyWith(
+          difficulty: difficulty,
+          gradingStrictness: StudyGradingStrictness.balanced,
+          choiceCount: 4,
+          hintsEnabled: true,
+          autoAdvance: false,
+          largeControls: false,
+        ),
+        PracticeDifficultyPreset.challenge => _preferences.copyWith(
+          difficulty: difficulty,
+          gradingStrictness: StudyGradingStrictness.strict,
+          choiceCount: 6,
+          hintsEnabled: false,
+          autoAdvance: true,
+          largeControls: false,
+        ),
+      };
+    });
   }
 
   List<int> get _countOptions {
@@ -1387,6 +1843,10 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                       fontWeight: FontWeight.w900,
                     ),
                   ),
+                  Text(
+                    '문제 수 또는 3·5·10분 시간 예산을 선택하세요.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     key: const Key('practice-count-options'),
@@ -1399,6 +1859,31 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           selected: _selectedCount == count,
                           label: Text('$count문제'),
                           onSelected: (_) => _setCount(count),
+                        ),
+                      ChoiceChip(
+                        key: const Key('practice-count-all'),
+                        selected:
+                            _preferences.length ==
+                            PracticeSessionLength.allItems,
+                        label: Text('전체 ${widget.availableCount}개'),
+                        onSelected: (_) =>
+                            _setLength(PracticeSessionLength.allItems),
+                      ),
+                      for (final option in const [
+                        PracticeSessionLength.threeMinutes,
+                        PracticeSessionLength.fiveMinutes,
+                        PracticeSessionLength.tenMinutes,
+                      ])
+                        ChoiceChip(
+                          key: Key('practice-time-${option.name}'),
+                          selected: _preferences.length == option,
+                          avatar: const Icon(Icons.timer_outlined, size: 17),
+                          label: Text(switch (option) {
+                            PracticeSessionLength.threeMinutes => '3분',
+                            PracticeSessionLength.fiveMinutes => '5분',
+                            _ => '10분',
+                          }),
+                          onSelected: (_) => _setLength(option),
                         ),
                     ],
                   ),
@@ -1435,7 +1920,20 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                             if (parsed != null &&
                                 parsed >= StudyLimits.minSessionItems &&
                                 parsed <= StudyLimits.maxSessionItems) {
-                              setState(() => _selectedCount = parsed);
+                              final next = parsed.clamp(
+                                StudyLimits.minSessionItems,
+                                widget.availableCount.clamp(
+                                  StudyLimits.minSessionItems,
+                                  StudyLimits.maxSessionItems,
+                                ),
+                              );
+                              setState(() {
+                                _selectedCount = next;
+                                _preferences = _preferences.copyWith(
+                                  itemCount: next,
+                                  length: _itemLengthForCount(next),
+                                );
+                              });
                             }
                           },
                           onEditingComplete: _commitCount,
@@ -1453,6 +1951,29 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                     ],
                   ),
                   const SizedBox(height: 14),
+                  Text(
+                    '난이도 프리셋',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 7),
+                  Wrap(
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      for (final difficulty in PracticeDifficultyPreset.values)
+                        ChoiceChip(
+                          key: Key('practice-difficulty-${difficulty.name}'),
+                          selected: _preferences.difficulty == difficulty,
+                          label: Text(switch (difficulty) {
+                            PracticeDifficultyPreset.relaxed => '편안함',
+                            PracticeDifficultyPreset.balanced => '기본',
+                            PracticeDifficultyPreset.challenge => '도전',
+                          }),
+                          onSelected: (_) => _applyDifficulty(difficulty),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
                   Text('학습 기록', style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 7),
                   Wrap(
@@ -1464,8 +1985,19 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           key: Key('practice-history-${filter.name}'),
                           label: Text(filter.label),
                           selected: _historyFilter == filter,
-                          onSelected: (_) =>
-                              setState(() => _historyFilter = filter),
+                          onSelected: (_) => setState(() {
+                            _historyFilter = filter;
+                            _preferences = _preferences.copyWith(
+                              historyScope: switch (filter) {
+                                StudyHistoryFilter.all =>
+                                  PracticeHistoryScope.all,
+                                StudyHistoryFilter.excludeCorrect =>
+                                  PracticeHistoryScope.excludeCorrect,
+                                StudyHistoryFilter.wrongOnly =>
+                                  PracticeHistoryScope.wrongOnly,
+                              },
+                            );
+                          }),
                         ),
                     ],
                   ),
@@ -1481,15 +2013,186 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           key: Key('practice-priority-${priority.name}'),
                           label: Text(priority.label),
                           selected: _queuePriority == priority,
-                          onSelected: (_) =>
-                              setState(() => _queuePriority = priority),
+                          onSelected: (_) => setState(() {
+                            _queuePriority = priority;
+                            _preferences = _preferences.copyWith(
+                              queueOrder:
+                                  priority == StudyQueuePriority.dueFirst
+                                  ? PracticeQueueOrder.dueFirst
+                                  : PracticeQueueOrder.newFirst,
+                            );
+                          }),
                         ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile.adaptive(
+                    key: const Key('practice-record-progress'),
+                    contentPadding: EdgeInsets.zero,
+                    value: _preferences.recordProgress,
+                    title: const Text('XP·복습 진도 기록'),
+                    subtitle: Text(
+                      _preferences.recordProgress
+                          ? '학습 결과를 로컬 진도에 반영합니다.'
+                          : '자유 연습: XP와 복습 일정을 바꾸지 않습니다.',
+                    ),
+                    onChanged: (value) => setState(
+                      () => _preferences = _preferences.copyWith(
+                        recordProgress: value,
+                      ),
+                    ),
+                  ),
+                  ExpansionTile(
+                    key: const Key('practice-quick-rules'),
+                    tilePadding: EdgeInsets.zero,
+                    childrenPadding: EdgeInsets.zero,
+                    title: const Text('빠른 게임 규칙'),
+                    subtitle: Text(
+                      '${_preferences.choiceCount}지선다 · '
+                      '${_preferences.gradingStrictness.koreanLabel} 채점 · '
+                      '${_preferences.hintsEnabled ? '힌트 켬' : '힌트 끔'}',
+                    ),
+                    children: [
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('출제 방향'),
+                      ),
+                      const SizedBox(height: 7),
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 7,
+                        children: [
+                          for (final direction in StudyAnswerDirection.values)
+                            ChoiceChip(
+                              key: Key('practice-direction-${direction.name}'),
+                              selected:
+                                  _preferences.answerDirection == direction,
+                              label: Text(switch (direction) {
+                                StudyAnswerDirection.learningToMeaning =>
+                                  '학습어 → 뜻',
+                                StudyAnswerDirection.meaningToLearning =>
+                                  '뜻 → 학습어',
+                                StudyAnswerDirection.mixed => '혼합',
+                              }),
+                              onSelected: (_) => setState(
+                                () => _preferences = _preferences.copyWith(
+                                  answerDirection: direction,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('채점'),
+                      ),
+                      const SizedBox(height: 7),
+                      Wrap(
+                        spacing: 7,
+                        runSpacing: 7,
+                        children: [
+                          for (final strictness
+                              in StudyGradingStrictness.values)
+                            ChoiceChip(
+                              key: Key('practice-grading-${strictness.name}'),
+                              selected:
+                                  _preferences.gradingStrictness == strictness,
+                              label: Text(strictness.koreanLabel),
+                              onSelected: (_) => setState(
+                                () => _preferences = _preferences.copyWith(
+                                  gradingStrictness: strictness,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text('객관식 선택지'),
+                      ),
+                      const SizedBox(height: 7),
+                      Wrap(
+                        spacing: 7,
+                        children: [
+                          for (final count in const [2, 4, 6])
+                            ChoiceChip(
+                              key: Key('practice-choice-count-$count'),
+                              selected: _preferences.choiceCount == count,
+                              label: Text('$count개'),
+                              onSelected: (_) => setState(
+                                () => _preferences = _preferences.copyWith(
+                                  choiceCount: count,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      SwitchListTile.adaptive(
+                        key: const Key('practice-time-budget-toggle'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _usesTimeBudget,
+                        title: const Text('시간 예산 모드'),
+                        subtitle: const Text(
+                          '문제 수 대신 3·5·10분 프리셋으로 학습량을 맞춥니다.',
+                        ),
+                        onChanged: (value) {
+                          if (value) {
+                            _setLength(PracticeSessionLength.fiveMinutes);
+                          } else {
+                            _setCount(_selectedCount);
+                          }
+                        },
+                      ),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: _preferences.hintsEnabled,
+                        title: const Text('힌트 허용'),
+                        onChanged: (value) => setState(
+                          () => _preferences = _preferences.copyWith(
+                            hintsEnabled: value,
+                          ),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: _preferences.autoAdvance,
+                        title: const Text('정답 뒤 자동 진행'),
+                        onChanged: (value) => setState(
+                          () => _preferences = _preferences.copyWith(
+                            autoAdvance: value,
+                          ),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: _preferences.soundEnabled,
+                        title: const Text('게임 효과음'),
+                        onChanged: (value) => setState(
+                          () => _preferences = _preferences.copyWith(
+                            soundEnabled: value,
+                          ),
+                        ),
+                      ),
+                      SwitchListTile.adaptive(
+                        contentPadding: EdgeInsets.zero,
+                        value: _preferences.largeControls,
+                        title: const Text('큰 조작 버튼'),
+                        onChanged: (value) => setState(
+                          () => _preferences = _preferences.copyWith(
+                            largeControls: value,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Semantics(
                     liveRegion: true,
-                    label: '$_selectedCount문제, 예상 $estimatedMinutes분, 즉시 피드백',
+                    label: _usesTimeBudget
+                        ? '$_timeBudgetMinutes분 자유 학습, 즉시 피드백'
+                        : '$_selectedCount문제, 예상 $estimatedMinutes분, 즉시 피드백',
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 13,
@@ -1505,7 +2208,9 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '약 $estimatedMinutes분 · 매 문제 즉시 피드백 · 오답은 세션 안에서 다시 출제',
+                              '${_usesTimeBudget ? '약 $_timeBudgetMinutes분' : '약 $estimatedMinutes분'} · '
+                              '매 문제 즉시 피드백 · '
+                              '${_preferences.recordProgress ? '오답은 세션 안에서 다시 출제' : '진도 비기록 자유 연습'}',
                             ),
                           ),
                         ],
@@ -1515,19 +2220,45 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     key: const Key('start-practice-session'),
-                    onPressed: () => Navigator.pop(
-                      context,
-                      _PracticeLaunchResult(
-                        itemLimit: _selectedCount,
-                        queuePriority: _queuePriority,
-                        historyFilter: _historyFilter,
-                      ),
-                    ),
+                    onPressed: () {
+                      _commitCount();
+                      Navigator.pop(
+                        context,
+                        _PracticeLaunchResult(
+                          itemLimit: _selectedCount,
+                          queuePriority: _queuePriority,
+                          historyFilter: _historyFilter,
+                          lengthMode: _usesTimeBudget
+                              ? StudySessionLengthMode.timeBudget
+                              : StudySessionLengthMode.itemCount,
+                          timeBudgetMinutes: _timeBudgetMinutes,
+                          preferences: _preferences.copyWith(
+                            itemCount: _selectedCount,
+                            historyScope: switch (_historyFilter) {
+                              StudyHistoryFilter.all =>
+                                PracticeHistoryScope.all,
+                              StudyHistoryFilter.excludeCorrect =>
+                                PracticeHistoryScope.excludeCorrect,
+                              StudyHistoryFilter.wrongOnly =>
+                                PracticeHistoryScope.wrongOnly,
+                            },
+                            queueOrder:
+                                _queuePriority == StudyQueuePriority.dueFirst
+                                ? PracticeQueueOrder.dueFirst
+                                : PracticeQueueOrder.newFirst,
+                          ),
+                        ),
+                      );
+                    },
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
                     ),
                     icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text('$_selectedCount문제 시작'),
+                    label: Text(
+                      _usesTimeBudget
+                          ? '$_timeBudgetMinutes분 시작'
+                          : '$_selectedCount문제 시작',
+                    ),
                   ),
                 ],
               ],
@@ -1726,4 +2457,6 @@ class _Activity {
   final String description;
   final String route;
   final String badge;
+
+  String get id => route;
 }

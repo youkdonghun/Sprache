@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sprache/src/domain/session_enhancements.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
 
 void main() {
@@ -15,6 +16,26 @@ void main() {
       shuffleChoices: false,
       autoAdvanceCorrect: true,
       autoAdvanceDelayMs: 1450,
+      practiceCatalog: const PracticeCatalogPreferences(
+        favoriteActivityIds: {'/study?mode=meaning'},
+        hiddenActivityIds: {'/path'},
+        launchByActivityId: {
+          '/study?mode=meaning': PracticeLaunchPreferences(
+            length: PracticeSessionLength.fiveMinutes,
+            difficulty: PracticeDifficultyPreset.challenge,
+            historyScope: PracticeHistoryScope.wrongOnly,
+            queueOrder: PracticeQueueOrder.newFirst,
+            answerDirection: StudyAnswerDirection.meaningToLearning,
+            gradingStrictness: StudyGradingStrictness.strict,
+            choiceCount: 6,
+            recordProgress: false,
+            hintsEnabled: false,
+            autoAdvance: true,
+            soundEnabled: true,
+            largeControls: true,
+          ),
+        },
+      ),
       updatedAt: DateTime.utc(2026, 7, 31, 10),
     );
 
@@ -31,6 +52,22 @@ void main() {
     expect(restored.shuffleChoices, isFalse);
     expect(restored.autoAdvanceCorrect, isTrue);
     expect(restored.autoAdvanceDelayMs, 1450);
+    expect(restored.practiceCatalog.favoriteActivityIds, {
+      '/study?mode=meaning',
+    });
+    expect(restored.practiceCatalog.hiddenActivityIds, {'/path'});
+    final launch = restored.practiceCatalog.launchFor('/study?mode=meaning');
+    expect(launch.length, PracticeSessionLength.fiveMinutes);
+    expect(launch.difficulty, PracticeDifficultyPreset.challenge);
+    expect(launch.historyScope, PracticeHistoryScope.wrongOnly);
+    expect(launch.queueOrder, PracticeQueueOrder.newFirst);
+    expect(launch.gradingStrictness, StudyGradingStrictness.strict);
+    expect(launch.choiceCount, 6);
+    expect(launch.recordProgress, isFalse);
+    expect(launch.hintsEnabled, isFalse);
+    expect(launch.autoAdvance, isTrue);
+    expect(launch.soundEnabled, isTrue);
+    expect(launch.largeControls, isTrue);
     expect(restored.updatedAt, DateTime.utc(2026, 7, 31, 10));
   });
 
@@ -46,5 +83,22 @@ void main() {
     expect(restored.autoAdvanceDelayMs, 300);
     expect(restored.answerDirection, StudyAnswerDirection.mixed);
     expect(restored.choiceLayout, StudyChoiceLayout.automatic);
+  });
+
+  test('practice catalog rejects unsafe ids and invalid choice counts', () {
+    final tooLong = List.filled(200, 'x').join();
+    final restored = PracticeCatalogPreferences.fromJson({
+      'favoriteActivityIds': ['/study?mode=mixed', '', tooLong],
+      'hiddenActivityIds': ['/study?mode=mixed'],
+      'launchByActivityId': {
+        '/study?mode=meaning': {'choiceCount': 5},
+        tooLong: {'choiceCount': 6},
+      },
+    });
+
+    expect(restored.favoriteActivityIds, isEmpty);
+    expect(restored.hiddenActivityIds, {'/study?mode=mixed'});
+    expect(restored.launchFor('/study?mode=meaning').choiceCount, 4);
+    expect(restored.launchByActivityId, hasLength(1));
   });
 }

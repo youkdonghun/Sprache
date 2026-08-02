@@ -158,6 +158,33 @@ void main() {
     },
   );
 
+  test(
+    'rejects incomplete explicit tokens even without token capabilities',
+    () {
+      const item = LearningItem(
+        id: 'en-incomplete-explicit-tokens',
+        kind: LearningItemKind.sentence,
+        learningLanguage: LanguageTag.english,
+        text: 'How are you?',
+        translations: ['잘 지내세요?'],
+        acceptedAnswers: ['잘 지내세요?'],
+        sentenceTokens: ['How are you?'],
+        capabilities: {
+          ExerciseCapability.recognition,
+          ExerciseCapability.production,
+        },
+      );
+
+      final result = validator.inspect(item);
+
+      expect(result.isValid, isFalse);
+      expect(
+        result.errors.map((issue) => issue.code),
+        contains('sentence_tokens_required'),
+      );
+    },
+  );
+
   test('all bundled items pass structural content validation', () {
     final invalid = [
       for (final item in sampleContent)

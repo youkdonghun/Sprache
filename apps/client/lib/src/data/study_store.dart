@@ -9,6 +9,8 @@ import '../domain/learning_item.dart';
 import '../domain/active_study_session.dart';
 import '../domain/local_storage.dart';
 import '../domain/progress.dart';
+import '../domain/quick_content_draft.dart';
+import '../domain/quick_content_preferences.dart';
 import '../domain/study_history.dart';
 import '../domain/study_preferences.dart';
 import '../sync/pending_sync.dart';
@@ -104,6 +106,18 @@ abstract interface class StudyStore {
 
   Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings);
 
+  Future<QuickContentDraft?> loadQuickContentDraft();
+
+  Future<void> saveQuickContentDraft(QuickContentDraft draft);
+
+  Future<void> clearQuickContentDraft();
+
+  Future<QuickContentLocalPreferences> loadQuickContentLocalPreferences();
+
+  Future<void> saveQuickContentLocalPreferences(
+    QuickContentLocalPreferences preferences,
+  );
+
   Future<List<LearningItem>> loadCustomItems();
 
   Future<void> saveCustomItems(Iterable<LearningItem> items);
@@ -161,6 +175,8 @@ class MemoryStudyStore implements StudyStore {
     PendingSyncOperation? pendingSnapshotSync,
     LocalStorageSettings? localStorageSettings,
     SyncDeviceSettings? syncDeviceSettings,
+    QuickContentDraft? quickContentDraft,
+    QuickContentLocalPreferences? quickContentLocalPreferences,
     String? replicaId,
   }) : _profile = _profileWithReplicaId(profile, replicaId),
        _preferences = preferences ?? const StudyPreferences(),
@@ -176,7 +192,12 @@ class MemoryStudyStore implements StudyStore {
        _pendingSnapshotSync = pendingSnapshotSync,
        _localStorageSettings =
            localStorageSettings ?? const LocalStorageSettings(),
-       _syncDeviceSettings = syncDeviceSettings ?? const SyncDeviceSettings();
+       _syncDeviceSettings = syncDeviceSettings ?? const SyncDeviceSettings(),
+       // The public constructor name is intentionally clearer for tests/callers.
+       // ignore: prefer_initializing_formals
+       _quickContentDraft = quickContentDraft,
+       _quickContentLocalPreferences =
+           quickContentLocalPreferences ?? const QuickContentLocalPreferences();
 
   StoredProfile _profile;
   StudyPreferences _preferences;
@@ -189,6 +210,8 @@ class MemoryStudyStore implements StudyStore {
   PendingSyncOperation? _pendingSnapshotSync;
   LocalStorageSettings _localStorageSettings;
   SyncDeviceSettings _syncDeviceSettings;
+  QuickContentDraft? _quickContentDraft;
+  QuickContentLocalPreferences _quickContentLocalPreferences;
 
   List<StudyEventEntry> get savedEvents => List.unmodifiable(_events.values);
 
@@ -243,6 +266,31 @@ class MemoryStudyStore implements StudyStore {
   @override
   Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings) async {
     _syncDeviceSettings = settings;
+  }
+
+  @override
+  Future<QuickContentDraft?> loadQuickContentDraft() async =>
+      _quickContentDraft;
+
+  @override
+  Future<void> saveQuickContentDraft(QuickContentDraft draft) async {
+    _quickContentDraft = draft;
+  }
+
+  @override
+  Future<void> clearQuickContentDraft() async {
+    _quickContentDraft = null;
+  }
+
+  @override
+  Future<QuickContentLocalPreferences>
+  loadQuickContentLocalPreferences() async => _quickContentLocalPreferences;
+
+  @override
+  Future<void> saveQuickContentLocalPreferences(
+    QuickContentLocalPreferences preferences,
+  ) async {
+    _quickContentLocalPreferences = preferences;
   }
 
   @override
@@ -684,6 +732,78 @@ class DriftStudyStore implements StudyStore {
           AppSettingsCompanion.insert(
             key: 'sync_device_settings',
             valueJson: jsonEncode(settings.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<QuickContentDraft?> loadQuickContentDraft() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('quick_content_draft')))
+            .getSingleOrNull();
+    if (setting == null) return null;
+    try {
+      return QuickContentDraft.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveQuickContentDraft(QuickContentDraft draft) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'quick_content_draft',
+            valueJson: jsonEncode(draft.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<void> clearQuickContentDraft() async {
+    await (database.delete(
+      database.appSettings,
+    )..where((table) => table.key.equals('quick_content_draft'))).go();
+  }
+
+  @override
+  Future<QuickContentLocalPreferences>
+  loadQuickContentLocalPreferences() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('quick_content_preferences')))
+            .getSingleOrNull();
+    if (setting == null) return const QuickContentLocalPreferences();
+    try {
+      return QuickContentLocalPreferences.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const QuickContentLocalPreferences();
+    }
+  }
+
+  @override
+  Future<void> saveQuickContentLocalPreferences(
+    QuickContentLocalPreferences preferences,
+  ) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'quick_content_preferences',
+            valueJson: jsonEncode(preferences.toJson()),
             updatedAt: DateTime.now().toUtc(),
           ),
         );

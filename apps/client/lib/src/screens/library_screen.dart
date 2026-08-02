@@ -1174,6 +1174,36 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final message = result.mergedWithExisting
         ? mergedMessage
         : '“${result.item.text}” 자료를 저장했습니다.';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: SnackBarAction(
+          label: '실행 취소',
+          onPressed: () => unawaited(_undoQuickContent(result)),
+        ),
+      ),
+    );
+    if (result.studyNow) {
+      final controller = ref.read(appControllerProvider.notifier);
+      final current = ref.read(appControllerProvider).preferences.sessionPlan;
+      controller.updateSessionPlan(
+        current.copyWith(
+          title: '방금 등록한 자료 학습',
+          mode: StudyMode.mixed,
+          deck: StudyDeckScope.selected,
+          difficulty: StudyDifficulty.all,
+          tags: {},
+          levels: {},
+          selectedItemIds: {result.item.id},
+          includeWords: result.item.kind == LearningItemKind.word,
+          includeSentences: result.item.kind == LearningItemKind.sentence,
+          itemLimit: StudyLimits.minSessionItems,
+          scheduledAt: null,
+        ),
+      );
+      context.push('/session-builder');
+      return;
+    }
     final nextAction = await showModalBottomSheet<_SavedNextAction>(
       context: context,
       useSafeArea: true,
@@ -1191,6 +1221,28 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       case null:
         return;
     }
+  }
+
+  Future<void> _undoQuickContent(QuickContentSaveResult result) async {
+    final controller = ref.read(appControllerProvider.notifier);
+    final status = await controller.undoQuickContentSave(result.undoToken);
+    if (!mounted) return;
+    if (status == QuickContentUndoStatus.restored &&
+        result.favoriteAdded &&
+        ref
+            .read(appControllerProvider)
+            .preferences
+            .isFavorite(result.item.id)) {
+      controller.toggleFavorite(result.item.id);
+    }
+    final message = switch (status) {
+      QuickContentUndoStatus.restored => '마지막 저장을 되돌렸습니다.',
+      QuickContentUndoStatus.conflict => '이후 수정된 자료라 안전하게 되돌리지 않았습니다.',
+      QuickContentUndoStatus.alreadyUndone => '이미 되돌린 저장입니다.',
+    };
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _organizeGroup({required bool copy}) async {
@@ -2370,7 +2422,8 @@ class _SavedContentActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 640),
-      child: Padding(
+      child: SingleChildScrollView(
+        key: const Key('saved-content-actions-scroll'),
         padding: const EdgeInsets.fromLTRB(18, 0, 18, 26),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import 'routing/app_router.dart';
 import 'domain/app_experience_preferences.dart';
+import 'domain/app_platform.dart';
 import 'services/app_clock.dart';
 import 'services/window_workspace_service.dart';
 import 'state/app_state.dart';
@@ -131,7 +132,7 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
         });
       }
     }
-    final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    final usesMobileTheme = usesMobileStudyExperience(defaultTargetPlatform);
     final isWindows = defaultTargetPlatform == TargetPlatform.windows;
     final experience = ref.watch(
       appControllerProvider.select((state) => state.preferences.experience),
@@ -139,7 +140,7 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
     final accessibilityProfile = ref.watch(accessibilityInputProfileProvider);
     final reduceMotion =
         experience.reduceMotion || accessibilityProfile.reduceMotion;
-    final lightTheme = isAndroid
+    final lightTheme = usesMobileTheme
         ? AppTheme.mobileFor(
             experience,
             brightness: Brightness.light,
@@ -150,7 +151,7 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
             brightness: Brightness.light,
             accessibilityProfile: accessibilityProfile,
           );
-    final darkTheme = isAndroid
+    final darkTheme = usesMobileTheme
         ? AppTheme.mobileFor(
             experience,
             brightness: Brightness.dark,

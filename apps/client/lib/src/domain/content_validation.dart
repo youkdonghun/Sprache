@@ -428,29 +428,35 @@ class LearningContentValidator {
           '같은 철자의 다른 용법을 구분하려면 품사를 지정하는 것이 좋습니다.',
         );
       }
-    } else if (item.partOfSpeech != null) {
-      _error(
-        issues,
-        'sentence_part_of_speech',
-        'partOfSpeech',
-        '문장 항목에는 품사를 지정할 수 없습니다.',
-      );
-    } else if (item.capabilities.contains(ExerciseCapability.sentenceOrder)) {
-      if (item.sentenceTokens.length < 2) {
+    } else {
+      if (item.partOfSpeech != null) {
         _error(
           issues,
-          'sentence_tokens_required',
-          'sentenceTokens',
-          '문장 배열 학습에는 두 개 이상의 명시적 토큰이 필요합니다.',
+          'sentence_part_of_speech',
+          'partOfSpeech',
+          '문장 항목에는 품사를 지정할 수 없습니다.',
         );
-      } else if (_comparable(item.sentenceTokens.join()) !=
-          _comparable(item.text)) {
-        _error(
-          issues,
-          'sentence_tokens_mismatch',
-          'sentenceTokens',
-          '문장 토큰을 합친 결과가 학습 문장과 일치하지 않습니다.',
-        );
+      }
+      final usesTokenExercise =
+          item.capabilities.contains(ExerciseCapability.sentenceOrder) ||
+          item.capabilities.contains(ExerciseCapability.cloze);
+      if (item.sentenceTokens.isNotEmpty || usesTokenExercise) {
+        if (item.sentenceTokens.length < 2) {
+          _error(
+            issues,
+            'sentence_tokens_required',
+            'sentenceTokens',
+            '문장 배열 학습에는 두 개 이상의 명시적 토큰이 필요합니다.',
+          );
+        } else if (_comparable(item.sentenceTokens.join()) !=
+            _comparable(item.text)) {
+          _error(
+            issues,
+            'sentence_tokens_mismatch',
+            'sentenceTokens',
+            '문장 토큰을 합친 결과가 학습 문장과 일치하지 않습니다.',
+          );
+        }
       }
     }
 

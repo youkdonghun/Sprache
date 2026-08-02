@@ -1519,6 +1519,40 @@ class _BulkPasteDialog extends StatefulWidget {
 
 class _BulkPasteDialogState extends State<_BulkPasteDialog> {
   final _controller = TextEditingController();
+  String? _clipboardMessage;
+
+  Future<void> _pasteFromSystemClipboard() async {
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      if (!mounted) return;
+      final text = data?.text;
+      if (text == null || text.trim().isEmpty) {
+        setState(() {
+          _clipboardMessage = '클립보드에 붙여넣을 텍스트가 없습니다.';
+        });
+        return;
+      }
+      _controller.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+      setState(() {
+        _clipboardMessage = '클립보드의 텍스트를 붙여넣었습니다.';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _clipboardMessage = '클립보드를 읽지 못했습니다. 직접 붙여넣어 주세요.';
+      });
+    }
+  }
+
+  void _clear() {
+    _controller.clear();
+    setState(() {
+      _clipboardMessage = '입력한 내용을 모두 지웠습니다.';
+    });
+  }
 
   @override
   void dispose() {
@@ -1542,49 +1576,189 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
       title: const Text('문제·정답 여러 줄 붙여넣기'),
       content: SizedBox(
         width: 680,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Excel 두 열을 그대로 붙여넣거나 “문제, 정답” 형식으로 입력하세요. '
-              '구분자가 없으면 두 줄씩 문제와 정답으로 묶습니다.',
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              key: const Key('bulk-paste-import-input'),
-              controller: _controller,
-              autofocus: true,
-              minLines: 8,
-              maxLines: 14,
-              onChanged: (_) => setState(() {}),
-              decoration: const InputDecoration(
-                hintText:
-                    'hello\t안녕하세요\n'
-                    'good morning\t좋은 아침\n'
-                    'thank you\t고마워요',
-                helperText: '탭·쉼표·세미콜론 지원 · 최대 100개',
-                alignLabelWithHint: true,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                error ??
-                    (preview == null
-                        ? '붙여넣으면 가져올 개수를 먼저 확인합니다.'
-                        : '가져올 수 있음 ${preview.entryCount}개'
-                              '${preview.issues.isEmpty ? '' : ' · 확인 필요 ${preview.issues.length}줄'}'),
-                style: TextStyle(
-                  color: error != null || (preview?.issues.isNotEmpty ?? false)
-                      ? Theme.of(context).colorScheme.error
-                      : Theme.of(context).colorScheme.primary,
-                  fontWeight: FontWeight.w700,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxHeight: 620),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Excel 두 열을 그대로 붙여넣거나 탭·쉼표·세미콜론·콜론·파이프·대시로 '
+                  '문제와 정답을 나누세요. 구분자가 없으면 두 줄씩 한 쌍으로 묶습니다.',
                 ),
-              ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    OutlinedButton.icon(
+                      key: const Key('bulk-paste-system-clipboard'),
+                      onPressed: _pasteFromSystemClipboard,
+                      icon: const Icon(Icons.content_paste_go_rounded),
+                      label: const Text('클립보드에서 붙여넣기'),
+                    ),
+                    TextButton.icon(
+                      key: const Key('clear-bulk-paste-input'),
+                      onPressed: _controller.text.isEmpty ? null : _clear,
+                      icon: const Icon(Icons.clear_all_rounded),
+                      label: const Text('모두 지우기'),
+                    ),
+                  ],
+                ),
+                if (_clipboardMessage != null) ...[
+                  const SizedBox(height: 4),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(
+                      _clipboardMessage!,
+                      key: const Key('bulk-paste-clipboard-message'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                TextField(
+                  key: const Key('bulk-paste-import-input'),
+                  controller: _controller,
+                  autofocus: true,
+                  minLines: 7,
+                  maxLines: 12,
+                  onChanged: (_) => setState(() {
+                    _clipboardMessage = null;
+                  }),
+                  decoration: const InputDecoration(
+                    hintText:
+                        'hello\t안녕하세요\n'
+                        'good morning | 좋은 아침\n'
+                        'thank you - 고마워요',
+                    helperText: '여러 구분자를 혼합해도 됩니다 · 최대 100개',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Semantics(
+                  liveRegion: true,
+                  child: Container(
+                    key: const Key('bulk-paste-summary'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      error ??
+                          (preview == null
+                              ? '붙여넣으면 형식·개수·오류를 미리 확인합니다.'
+                              : '감지 형식 ${preview.detectedFormat.label} · '
+                                    '가져올 ${preview.entryCount}개 · '
+                                    '확인 ${preview.problemCount}건'
+                                    '${preview.duplicateCount == 0 ? '' : ' · 중복 ${preview.duplicateCount}건 제외'}'),
+                      style: TextStyle(
+                        color: error != null || (preview?.problemCount ?? 0) > 0
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                if (preview != null && preview.entries.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    '최대 5행 미리보기',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    key: const Key('bulk-paste-entry-preview'),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        for (final entry in preview.entries.take(5))
+                          Padding(
+                            key: ValueKey(
+                              'bulk-paste-preview-row-${entry.line}',
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 7,
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 28,
+                                  child: Text(
+                                    '${entry.line}',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelSmall,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    entry.term,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 8),
+                                  child: Icon(
+                                    Icons.arrow_forward_rounded,
+                                    size: 16,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    entry.meaning,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+                if (preview != null && preview.issues.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text('확인할 내용', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 4),
+                  for (final issue in preview.issues.take(3))
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(
+                        '• ${issue.message}'
+                        '${issue.source.isEmpty ? '' : '\n  ${issue.source}'}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: issue.kind == BulkPasteIssueKind.duplicate
+                              ? Theme.of(context).colorScheme.onSurfaceVariant
+                              : Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  if (preview.issues.length > 3)
+                    Text(
+                      '외 ${preview.issues.length - 3}건',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
+              ],
             ),
-          ],
+          ),
         ),
       ),
       actions: [

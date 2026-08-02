@@ -136,6 +136,11 @@ class StudySessionPlan {
     this.recordProgress = true,
     this.answerDirectionOverride,
     this.gradingStrictness = StudyGradingStrictness.balanced,
+    this.choiceCount = 4,
+    this.hintsEnabled = true,
+    this.autoAdvanceOverride,
+    this.soundEffectsOverride,
+    this.largeControls = false,
     this.examSchedule,
     this.backlogRecovery = const BacklogRecoverySettings(),
     this.title = '',
@@ -164,6 +169,11 @@ class StudySessionPlan {
   final bool recordProgress;
   final StudyAnswerDirection? answerDirectionOverride;
   final StudyGradingStrictness gradingStrictness;
+  final int choiceCount;
+  final bool hintsEnabled;
+  final bool? autoAdvanceOverride;
+  final bool? soundEffectsOverride;
+  final bool largeControls;
   final ExamSchedule? examSchedule;
   final BacklogRecoverySettings backlogRecovery;
   final String title;
@@ -207,6 +217,11 @@ class StudySessionPlan {
     bool? recordProgress,
     Object? answerDirectionOverride = _sessionPlanValueNotProvided,
     StudyGradingStrictness? gradingStrictness,
+    int? choiceCount,
+    bool? hintsEnabled,
+    Object? autoAdvanceOverride = _sessionPlanValueNotProvided,
+    Object? soundEffectsOverride = _sessionPlanValueNotProvided,
+    bool? largeControls,
     Object? examSchedule = _sessionPlanValueNotProvided,
     BacklogRecoverySettings? backlogRecovery,
     String? title,
@@ -240,6 +255,17 @@ class StudySessionPlan {
           ? this.answerDirectionOverride
           : answerDirectionOverride as StudyAnswerDirection?,
       gradingStrictness: gradingStrictness ?? this.gradingStrictness,
+      choiceCount: choiceCount ?? this.choiceCount,
+      hintsEnabled: hintsEnabled ?? this.hintsEnabled,
+      autoAdvanceOverride:
+          identical(autoAdvanceOverride, _sessionPlanValueNotProvided)
+          ? this.autoAdvanceOverride
+          : autoAdvanceOverride as bool?,
+      soundEffectsOverride:
+          identical(soundEffectsOverride, _sessionPlanValueNotProvided)
+          ? this.soundEffectsOverride
+          : soundEffectsOverride as bool?,
+      largeControls: largeControls ?? this.largeControls,
       examSchedule: identical(examSchedule, _sessionPlanValueNotProvided)
           ? this.examSchedule
           : examSchedule as ExamSchedule?,
@@ -277,6 +303,12 @@ class StudySessionPlan {
     if (answerDirectionOverride != null)
       'answerDirectionOverride': answerDirectionOverride!.name,
     'gradingStrictness': gradingStrictness.name,
+    'choiceCount': choiceCount,
+    'hintsEnabled': hintsEnabled,
+    if (autoAdvanceOverride != null) 'autoAdvanceOverride': autoAdvanceOverride,
+    if (soundEffectsOverride != null)
+      'soundEffectsOverride': soundEffectsOverride,
+    'largeControls': largeControls,
     if (examSchedule != null) 'examSchedule': examSchedule!.toJson(),
     'backlogRecovery': backlogRecovery.toJson(),
     'title': title,
@@ -357,6 +389,18 @@ class StudySessionPlan {
         (value) => value.name == json['gradingStrictness'],
         orElse: () => StudyGradingStrictness.balanced,
       ),
+      choiceCount:
+          const {2, 4, 6}.contains((json['choiceCount'] as num?)?.toInt())
+          ? (json['choiceCount']! as num).toInt()
+          : 4,
+      hintsEnabled: json['hintsEnabled'] != false,
+      autoAdvanceOverride: json['autoAdvanceOverride'] is bool
+          ? json['autoAdvanceOverride']! as bool
+          : null,
+      soundEffectsOverride: json['soundEffectsOverride'] is bool
+          ? json['soundEffectsOverride']! as bool
+          : null,
+      largeControls: json['largeControls'] == true,
       examSchedule: switch (json['examSchedule']) {
         final Map value => ExamSchedule.fromJson(
           Map<String, Object?>.from(value),

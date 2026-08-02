@@ -46,8 +46,10 @@ void main() {
         expect(find.text('이 주제에 학습 자료가 없어요.'), findsWidgets);
         expect(_activityInkWell(tester, '혼합 퀴즈').onTap, isNull);
         expect(
-          find.bySemanticsLabel('혼합 퀴즈. 사용 불가. 이 주제에 학습 자료가 없어요.'),
-          findsOneWidget,
+          tester
+              .getSemantics(find.byKey(const Key('practice-activity-혼합 퀴즈')))
+              .label,
+          contains('혼합 퀴즈. 사용 불가. 이 주제에 학습 자료가 없어요.'),
         );
 
         await tester.tap(find.byKey(const Key('learning-hub-add-content')));
@@ -145,9 +147,10 @@ MemoryStudyStore _emptySubjectStore() {
 
 InkWell _activityInkWell(WidgetTester tester, String title) {
   final card = find.byKey(Key('practice-activity-$title'));
-  final inkWell = find.descendant(of: card, matching: find.byType(InkWell));
-  expect(inkWell, findsOneWidget);
-  return tester.widget<InkWell>(inkWell);
+  expect(card, findsOneWidget);
+  final material = tester.widget<Material>(card);
+  expect(material.child, isA<InkWell>());
+  return material.child! as InkWell;
 }
 
 const _emptySubject = StudySubject(

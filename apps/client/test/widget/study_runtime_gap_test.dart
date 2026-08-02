@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/accessibility_input_profile.dart';
 import 'package:sprache/src/domain/language.dart';
+import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/progress.dart';
 import 'package:sprache/src/domain/quiz_session_support.dart';
 import 'package:sprache/src/domain/session_enhancements.dart';
@@ -228,6 +229,144 @@ void main() {
     await tester.tap(find.byKey(const Key('completion-edit-1')));
     expect(opened, 'item-1');
   });
+
+  testWidgets('defer rotates the question without score or progress', (
+    tester,
+  ) async {
+    final harness = await _pumpStudy(
+      tester,
+      preferences: const StudyPreferences(
+        interaction: StudyInteractionPreferences(
+          answerDirection: StudyAnswerDirection.learningToMeaning,
+          shuffleChoices: false,
+          choiceLayout: StudyChoiceLayout.list,
+        ),
+      ),
+      screen: const StudyScreen(mode: StudyMode.meaning, itemLimit: 3),
+    );
+    final promptBefore = tester
+        .widget<Text>(find.byKey(const Key('study-question-prompt')))
+        .data!;
+    final deferredItem = harness.controller.selectedItems.singleWhere(
+      (candidate) => candidate.text == promptBefore,
+    );
+    final deferButton = tester.widget<TextButton>(
+      find.byKey(const Key('defer-study-question')),
+    );
+    expect(deferButton.onPressed, isNotNull);
+
+    await tester.tap(find.byKey(const Key('defer-study-question')));
+    await _settleBriefly(tester);
+
+    final promptAfter = tester
+        .widget<Text>(find.byKey(const Key('study-question-prompt')))
+        .data!;
+    expect(promptAfter, isNot(promptBefore));
+    expect(find.text('이 문제를 감점 없이 세션 뒤로 미뤘습니다.'), findsOneWidget);
+    expect(harness.store.savedEvents, isEmpty);
+    expect(harness.controller.state.progress, isEmpty);
+    expect(harness.controller.state.totalXp, 0);
+    final active = harness.store.savedActiveStudySession;
+    expect(active, isNotNull);
+    expect(active!.currentIndex, 0);
+    expect(active.correctCount, 0);
+    expect(active.wrongCount, 0);
+    expect(active.earnedXp, 0);
+    expect(active.itemIds.last, deferredItem.id);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('feedback quick add prefills the current item and example', (
+    tester,
+  ) async {
+    const item = LearningItem(
+      id: 'user-feedback-prefill',
+      kind: LearningItemKind.word,
+      learningLanguage: LanguageTag.english,
+      subjectId: 'language:en',
+      text: 'contextual',
+      translations: ['문맥의'],
+      acceptedAnswers: ['문맥의'],
+      example: 'The clue is contextual.',
+      exampleTranslation: '그 단서는 문맥에 따라 달라요.',
+      capabilities: {
+        ExerciseCapability.recognition,
+        ExerciseCapability.production,
+      },
+      source: ContentSource.userCreated,
+    );
+    final harness = await _pumpStudy(
+      tester,
+      preferences: const StudyPreferences(
+        sessionPlan: StudySessionPlan(
+          mode: StudyMode.meaning,
+          deck: StudyDeckScope.selected,
+          selectedItemIds: {'user-feedback-prefill'},
+          itemLimit: 1,
+        ),
+        interaction: StudyInteractionPreferences(
+          answerDirection: StudyAnswerDirection.learningToMeaning,
+          shuffleChoices: false,
+          choiceLayout: StudyChoiceLayout.list,
+        ),
+      ),
+      customItems: const [item],
+      screen: const StudyScreen(
+        mode: StudyMode.meaning,
+        itemLimit: 1,
+        customPlan: true,
+      ),
+    );
+    expect(harness.controller.selectedItems, contains(item));
+    expect(
+      tester.widget<Text>(find.byKey(const Key('study-question-prompt'))).data,
+      item.text,
+    );
+
+    await tester.tap(find.text(item.primaryTranslation));
+    await tester.tap(find.byKey(const Key('submit-study-answer')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('quick-add-from-study-feedback')));
+    await _settleBriefly(tester);
+
+    expect(find.byKey(const Key('quick-content-sheet')), findsOneWidget);
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('quick-content-text')))
+          .controller
+          ?.text,
+      item.text,
+    );
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('quick-content-meaning')))
+          .controller
+          ?.text,
+      item.primaryTranslation,
+    );
+
+    final more = find.byKey(const Key('quick-content-more'));
+    await tester.ensureVisible(more);
+    await tester.tap(more);
+    await _settleBriefly(tester);
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('quick-content-example')))
+          .controller
+          ?.text,
+      item.example,
+    );
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.byKey(const Key('quick-content-example-meaning')),
+          )
+          .controller
+          ?.text,
+      item.exampleTranslation,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _StudyHarness {
@@ -241,6 +380,7 @@ Future<_StudyHarness> _pumpStudy(
   WidgetTester tester, {
   required StudyPreferences preferences,
   required Widget screen,
+  List<LearningItem> customItems = const [],
   AccessibilityInputProfile profile = const AccessibilityInputProfile(),
 }) async {
   final store = MemoryStudyStore(
@@ -255,6 +395,7 @@ Future<_StudyHarness> _pumpStudy(
     ),
     preferences: preferences,
   );
+  if (customItems.isNotEmpty) await store.saveCustomItems(customItems);
   final controller = AppController(store);
   for (
     var attempt = 0;

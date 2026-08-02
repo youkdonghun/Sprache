@@ -8,7 +8,8 @@ param(
     }),
     [switch]$RequireAndroidReleaseSigning,
     [switch]$RequireWindowsCodeSigning,
-    [switch]$RunInstallerSmoke
+    [switch]$RunInstallerSmoke,
+    [switch]$CleanOldArtifacts
 )
 
 Set-StrictMode -Version Latest
@@ -271,6 +272,15 @@ if ($RunInstallerSmoke) {
     }
 }
 
+if ($CleanOldArtifacts) {
+    & (Join-Path $PSScriptRoot 'clean-release-artifacts.ps1') `
+        -KeepVersion $Version `
+        -Confirm:$false
+    if ($LASTEXITCODE -ne 0) {
+        throw "Old release artifact cleanup failed with exit code $LASTEXITCODE"
+    }
+}
+
 $binaryRows | Format-Table -AutoSize
 [pscustomobject]@{
     Version = "$Version+$versionCode"
@@ -281,4 +291,5 @@ $binaryRows | Format-Table -AutoSize
     ChecksumsVerified = $checksumEntries.Count
     PrivacyPolicyUrlEmbedded = -not [string]::IsNullOrWhiteSpace($ExpectedPrivacyPolicyUrl)
     InstallerSmokeRun = [bool]$RunInstallerSmoke
+    OldArtifactsCleanupRun = [bool]$CleanOldArtifacts
 }

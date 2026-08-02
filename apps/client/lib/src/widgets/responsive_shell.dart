@@ -15,6 +15,8 @@ import '../sync/sync_policy.dart';
 import '../services/app_feedback_service.dart';
 import 'course_picker.dart';
 import 'global_search_palette.dart';
+import 'quick_content_result_handler.dart';
+import 'quick_content_sheet.dart';
 
 class ResponsiveShell extends ConsumerStatefulWidget {
   const ResponsiveShell({
@@ -64,6 +66,16 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
 
   void _openGlobalSearch() {
     unawaited(showGlobalSearchPalette(context, ref));
+  }
+
+  void _openQuickAdd() {
+    unawaited(_openQuickAddAndHandleResult());
+  }
+
+  Future<void> _openQuickAddAndHandleResult() async {
+    final result = await showQuickContentSheet(context: context);
+    if (!mounted) return;
+    await handleQuickContentResult(context: context, ref: ref, result: result);
   }
 
   Future<void> _selectDestination(int index) async {
@@ -126,6 +138,8 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
         const SingleActivator(LogicalKeyboardKey.f6): _focusContent,
         const SingleActivator(LogicalKeyboardKey.keyK, control: true):
             _openGlobalSearch,
+        const SingleActivator(LogicalKeyboardKey.keyN, control: true):
+            _openQuickAdd,
       },
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -145,6 +159,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                     storageIndicator: storageIndicator,
                     onSubjectPressed: () => showSubjectPicker(context),
                     onSearchPressed: _openGlobalSearch,
+                    onQuickAddPressed: _openQuickAdd,
                     onSelected: _selectDestination,
                   ),
                   Expanded(child: _mainContent()),
@@ -164,6 +179,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                     storageIndicator: storageIndicator,
                     onPressed: () => showSubjectPicker(context),
                     onSearchPressed: _openGlobalSearch,
+                    onQuickAddPressed: _openQuickAdd,
                   ),
                   Expanded(child: _mainContent()),
                 ],
@@ -224,6 +240,7 @@ class _DesktopSidebar extends StatelessWidget {
     required this.storageIndicator,
     required this.onSubjectPressed,
     required this.onSearchPressed,
+    required this.onQuickAddPressed,
     required this.onSelected,
   });
 
@@ -233,6 +250,7 @@ class _DesktopSidebar extends StatelessWidget {
   final _StorageIndicator storageIndicator;
   final VoidCallback onSubjectPressed;
   final VoidCallback onSearchPressed;
+  final VoidCallback onQuickAddPressed;
   final ValueChanged<int> onSelected;
 
   @override
@@ -262,6 +280,16 @@ class _DesktopSidebar extends StatelessWidget {
             label: '전체 검색',
             tooltip: '전체 검색 · Ctrl+K',
             onTap: onSearchPressed,
+          ),
+          const SizedBox(height: 7),
+          _SidebarDestination(
+            key: const Key('shell-quick-add'),
+            extended: extended,
+            selected: false,
+            icon: Icons.add_circle_outline_rounded,
+            label: '빠른 추가',
+            tooltip: '빠른 자료 추가 · Ctrl+N',
+            onTap: onQuickAddPressed,
           ),
           const SizedBox(height: 12),
           for (final (index, destination)
@@ -428,6 +456,7 @@ class _SubjectContextBar extends StatelessWidget {
     required this.storageIndicator,
     required this.onPressed,
     required this.onSearchPressed,
+    required this.onQuickAddPressed,
   });
 
   final String subjectSymbol;
@@ -435,6 +464,7 @@ class _SubjectContextBar extends StatelessWidget {
   final _StorageIndicator storageIndicator;
   final VoidCallback onPressed;
   final VoidCallback onSearchPressed;
+  final VoidCallback onQuickAddPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -495,6 +525,16 @@ class _SubjectContextBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
+          SizedBox.square(
+            dimension: 44,
+            child: IconButton(
+              key: const Key('shell-quick-add'),
+              tooltip: '빠른 자료 추가',
+              onPressed: onQuickAddPressed,
+              icon: const Icon(Icons.add_circle_outline_rounded),
+            ),
+          ),
+          const SizedBox(width: 2),
           SizedBox.square(
             dimension: 44,
             child: IconButton(

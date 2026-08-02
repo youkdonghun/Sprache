@@ -570,7 +570,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
       expect(find.textContaining('사용 가능'), findsOneWidget);
-      await tester.tap(find.byKey(const Key('start-practice-session')));
+      final startSession = find.byKey(const Key('start-practice-session'));
+      await tester.ensureVisible(startSession);
+      await tester.pumpAndSettle();
+      await tester.tap(startSession);
       await tester.pumpAndSettle();
       expect(find.text('알맞은 뜻을 고르세요'), findsOneWidget);
       final compactHud = find.byKey(const Key('compact-study-hud'));
@@ -861,7 +864,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('practice-activity-문장 빈칸')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('start-practice-session')));
+      final startSession = find.byKey(const Key('start-practice-session'));
+      await tester.ensureVisible(startSession);
+      await tester.pumpAndSettle();
+      await tester.tap(startSession);
       await tester.pumpAndSettle();
 
       expect(find.text('빈칸에 들어갈 표현을 고르세요'), findsOneWidget);

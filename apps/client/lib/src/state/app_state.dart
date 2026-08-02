@@ -66,12 +66,44 @@ class QuickContentSaveResult {
     required this.item,
     required this.mergedWithExisting,
     required this.addedMeaningCount,
+    required this.undoToken,
+    this.studyNow = false,
+    this.favoriteAdded = false,
   });
 
   final LearningItem item;
   final bool mergedWithExisting;
   final int addedMeaningCount;
+  final QuickContentUndoToken undoToken;
+  final bool studyNow;
+  final bool favoriteAdded;
+
+  QuickContentSaveResult copyWith({bool? studyNow, bool? favoriteAdded}) =>
+      QuickContentSaveResult(
+        item: item,
+        mergedWithExisting: mergedWithExisting,
+        addedMeaningCount: addedMeaningCount,
+        undoToken: undoToken,
+        studyNow: studyNow ?? this.studyNow,
+        favoriteAdded: favoriteAdded ?? this.favoriteAdded,
+      );
 }
+
+class QuickContentUndoToken {
+  const QuickContentUndoToken({
+    required this.id,
+    required this.expectedItem,
+    required this.previousCustomItem,
+    required this.previousTombstone,
+  });
+
+  final String id;
+  final LearningItem expectedItem;
+  final LearningItem? previousCustomItem;
+  final DateTime? previousTombstone;
+}
+
+enum QuickContentUndoStatus { restored, conflict, alreadyUndone }
 
 class AppState {
   const AppState({
@@ -245,6 +277,7 @@ class AppController extends StateNotifier<AppState> {
   Future<void> _persistenceWriteTail = Future<void>.value();
   int _syncSequence = 0;
   final Set<String> _undoneDuplicateRepairIds = <String>{};
+  final Set<String> _undoneQuickContentSaveIds = <String>{};
   SyncMergeReport? lastMergeReport;
 
   Future<void> _hydrate() async {
@@ -3069,18 +3102,31 @@ class AppController extends StateNotifier<AppState> {
   }
 
   Future<QuickContentSaveResult> saveQuickContent(
-    LearningItem candidate,
-  ) async {
+    LearningItem candidate, {
+    bool allowDuplicate = false,
+  }) async {
     final normalized = _contentValidator.ensureValid(candidate);
     final existing = findContentIdentityMatch(normalized);
-    if (existing == null) {
+    if (existing == null || allowDuplicate) {
+      final previousCustom = customItemById(normalized.id);
+      final previousTombstone = state.customItemTombstones[normalized.id];
       await upsertCustomItem(normalized);
+      final saved = customItemById(normalized.id) ?? normalized;
       return QuickContentSaveResult(
-        item: customItemById(normalized.id) ?? normalized,
+        item: saved,
         mergedWithExisting: false,
         addedMeaningCount: normalized.translations.length,
+        undoToken: QuickContentUndoToken(
+          id: 'quick-${saved.id}-${saved.updatedAt?.microsecondsSinceEpoch ?? DateTime.now().microsecondsSinceEpoch}',
+          expectedItem: saved,
+          previousCustomItem: previousCustom,
+          previousTombstone: previousTombstone,
+        ),
       );
     }
+
+    final previousCustom = customItemById(existing.id);
+    final previousTombstone = state.customItemTombstones[existing.id];
 
     final previousMeanings = existing.translations
         .map((value) => value.trim().toLowerCase())
@@ -3132,12 +3178,55 @@ class AppController extends StateNotifier<AppState> {
       source: existing.source,
     );
     await upsertCustomItem(merged);
+    final saved = customItemById(existing.id) ?? merged;
     return QuickContentSaveResult(
-      item: customItemById(existing.id) ?? merged,
+      item: saved,
       mergedWithExisting: true,
       addedMeaningCount:
           mergedTranslations.length - existing.translations.length,
+      undoToken: QuickContentUndoToken(
+        id: 'quick-${saved.id}-${saved.updatedAt?.microsecondsSinceEpoch ?? DateTime.now().microsecondsSinceEpoch}',
+        expectedItem: saved,
+        previousCustomItem: previousCustom,
+        previousTombstone: previousTombstone,
+      ),
     );
+  }
+
+  Future<QuickContentUndoStatus> undoQuickContentSave(
+    QuickContentUndoToken token,
+  ) async {
+    if (_undoneQuickContentSaveIds.contains(token.id)) {
+      return QuickContentUndoStatus.alreadyUndone;
+    }
+    final current = customItemById(token.expectedItem.id);
+    if (current == null ||
+        jsonEncode(_itemCodec.toJson(current)) !=
+            jsonEncode(_itemCodec.toJson(token.expectedItem))) {
+      return QuickContentUndoStatus.conflict;
+    }
+    final nextItems = [
+      for (final item in state.customItems)
+        if (item.id != token.expectedItem.id) item,
+      ?token.previousCustomItem,
+    ];
+    final nextTombstones = {...state.customItemTombstones}
+      ..remove(token.expectedItem.id);
+    if (token.previousTombstone case final deletedAt?) {
+      nextTombstones[token.expectedItem.id] = deletedAt;
+    }
+    await _store.replaceCustomContent(
+      items: nextItems,
+      tombstones: nextTombstones,
+    );
+    if (!mounted) return QuickContentUndoStatus.conflict;
+    state = state.copyWith(
+      customItems: List.unmodifiable(nextItems),
+      customItemTombstones: Map.unmodifiable(nextTombstones),
+    );
+    _undoneQuickContentSaveIds.add(token.id);
+    await _queueSyncIfDriveConnected();
+    return QuickContentUndoStatus.restored;
   }
 
   Future<void> deleteCustomItem(String itemId) async {

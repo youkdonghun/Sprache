@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app.dart';
 import 'data/database/database_bootstrap.dart';
+import 'domain/app_platform.dart';
 import 'screens/database_recovery_screen.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
@@ -91,11 +92,11 @@ class _SpracheBootstrapState extends State<SpracheBootstrap> {
 class _BootstrapLoadingApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final android = defaultTargetPlatform == TargetPlatform.android;
+    final mobile = usesMobileStudyExperience(defaultTargetPlatform);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: android ? AppTheme.mobile : AppTheme.desktop,
-      darkTheme: android ? AppTheme.mobileDark : AppTheme.desktopDark,
+      theme: mobile ? AppTheme.mobile : AppTheme.desktop,
+      darkTheme: mobile ? AppTheme.mobileDark : AppTheme.desktopDark,
       themeMode: ThemeMode.system,
       home: const Scaffold(
         body: Center(
@@ -126,12 +127,12 @@ class _RecoveryApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final android = defaultTargetPlatform == TargetPlatform.android;
+    final mobile = usesMobileStudyExperience(defaultTargetPlatform);
     return MaterialApp(
       title: 'Sprache 복구',
       debugShowCheckedModeBanner: false,
-      theme: android ? AppTheme.mobile : AppTheme.desktop,
-      darkTheme: android ? AppTheme.mobileDark : AppTheme.desktopDark,
+      theme: mobile ? AppTheme.mobile : AppTheme.desktop,
+      darkTheme: mobile ? AppTheme.mobileDark : AppTheme.desktopDark,
       themeMode: ThemeMode.system,
       home: DatabaseRecoveryScreen(
         diagnostic: diagnostic,

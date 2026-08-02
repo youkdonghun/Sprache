@@ -261,6 +261,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             historyFilter: historyFilter,
             resume: activeSession != null,
             customPlan: state.uri.queryParameters['custom'] == 'true',
+            startMatchSprint: state.uri.queryParameters['match'] == 'true',
           );
         },
       ),

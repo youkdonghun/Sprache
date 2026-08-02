@@ -9,10 +9,12 @@ import '../domain/import_distribution.dart';
 import '../domain/language.dart';
 import '../domain/learning_group.dart';
 import '../domain/learning_item.dart';
+import '../domain/sentence_tokens.dart';
 import '../domain/study_subject.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
 import '../state/navigation_guard_state.dart';
+import '../widgets/sentence_token_editor.dart';
 
 class ItemEditorScreen extends ConsumerStatefulWidget {
   const ItemEditorScreen({this.itemId, super.key});
@@ -55,6 +57,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   var _saving = false;
   var _exitDialogOpen = false;
   var _savedSuccessfully = false;
+  var _sentenceTokens = <String>[];
   String? _selectedGroup;
   late String _subjectId;
   late final String _initialDraftFingerprint;
@@ -71,9 +74,16 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     _subjectId = ref.read(appControllerProvider).activeSubjectId;
     final itemId = widget.itemId;
     if (itemId != null) {
-      _original = ref
-          .read(appControllerProvider.notifier)
-          .customItemById(itemId);
+      final controller = ref.read(appControllerProvider.notifier);
+      _original = controller.customItemById(itemId);
+      if (_original == null) {
+        for (final item in controller.courseItems) {
+          if (item.id == itemId) {
+            _original = item;
+            break;
+          }
+        }
+      }
       final item = _original;
       if (item != null) {
         _subjectId = item.effectiveSubjectId;
@@ -81,6 +91,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
         _partOfSpeech = item.partOfSpeech ?? PartOfSpeech.noun;
         _priority = item.priority;
         _textController.text = item.text;
+        _sentenceTokens = [...item.sentenceTokens];
         _translationController.text = item.translations.join(', ');
         _acceptedController.text = item.acceptedAnswers.join(', ');
         _readingController.text = item.readings
@@ -272,6 +283,11 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                             key: const Key('item-text-field'),
                             controller: _textController,
                             autofocus: !_isEditing,
+                            onChanged: (_) {
+                              if (_kind == LearningItemKind.sentence) {
+                                setState(() {});
+                              }
+                            },
                             decoration: InputDecoration(
                               labelText: _kind == LearningItemKind.word
                                   ? generalTopic
@@ -290,6 +306,16 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                             ),
                             validator: _required,
                           ),
+                          if (_kind == LearningItemKind.sentence) ...[
+                            const SizedBox(height: 12),
+                            SentenceTokenEditor(
+                              sentenceText: _textController.text,
+                              language: language,
+                              tokens: _sentenceTokens,
+                              onChanged: (tokens) =>
+                                  setState(() => _sentenceTokens = tokens),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           DropdownButtonFormField<String>(
                             key: ValueKey(
@@ -672,6 +698,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     _partOfSpeech.name,
     _priority,
     _selectedGroup,
+    _sentenceTokens.join('\u001e'),
     _textController.text,
     _translationController.text,
     _acceptedController.text,
@@ -754,22 +781,36 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
 
   Future<void> _save(StudySubject subject) async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    setState(() => _saving = true);
     final language = subject.contentLanguage;
     final text = _textController.text.trim();
     final translations = _splitValues(_translationController.text);
     final accepted = _splitValues(_acceptedController.text);
     final readings = _buildReadings(language);
+    final tokenInspection = const SentenceTokenValidator().inspect(
+      sentence: text,
+      tokens: _kind == LearningItemKind.sentence
+          ? _sentenceTokens
+          : const <String>[],
+    );
+    if (!tokenInspection.canSave) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(tokenInspection.message!)));
+      return;
+    }
+    setState(() => _saving = true);
     final sentenceTokens = _kind == LearningItemKind.sentence
-        ? _tokenize(text, language)
+        ? tokenInspection.tokens
         : const <String>[];
     final capabilities = <ExerciseCapability>{
       ExerciseCapability.recognition,
       ExerciseCapability.production,
       ExerciseCapability.listening,
-      if (_kind == LearningItemKind.sentence && sentenceTokens.length >= 2)
+      if (_kind == LearningItemKind.sentence &&
+          tokenInspection.enablesSentenceExercises)
         ExerciseCapability.cloze,
-      if (_kind == LearningItemKind.sentence && sentenceTokens.length >= 2)
+      if (_kind == LearningItemKind.sentence &&
+          tokenInspection.enablesSentenceExercises)
         ExerciseCapability.sentenceOrder,
     };
     final item = LearningItem(
@@ -877,16 +918,6 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     LanguageTag.simplifiedChinese => '예: 니 하오',
     LanguageTag.korean => '',
   };
-
-  List<String> _tokenize(String value, LanguageTag language) {
-    if (LanguageProfile.of(language).usesSpaces) {
-      return value
-          .split(RegExp(r'\s+'))
-          .where((token) => token.isNotEmpty)
-          .toList(growable: false);
-    }
-    return value.runes.map(String.fromCharCode).toList(growable: false);
-  }
 
   List<String> _splitValues(String value) => value
       .split(RegExp(r'[,;\n]'))

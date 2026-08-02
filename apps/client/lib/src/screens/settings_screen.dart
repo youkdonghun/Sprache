@@ -14,6 +14,7 @@ import '../backup/study_data_csv_exporter.dart';
 import '../backup/study_data_xlsx_exporter.dart';
 import '../domain/app_experience_preferences.dart';
 import '../domain/accessibility_input_profile.dart';
+import '../domain/app_platform.dart';
 import '../domain/study_interaction_preferences.dart';
 import '../domain/study_preferences.dart';
 import '../domain/local_storage.dart';
@@ -399,7 +400,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: 10),
                         _StudyNotificationsCard(
                           plannedCount: notificationCount,
-                          platformName: isWindows ? 'Windows' : 'Android',
+                          platformName: appPlatformName(defaultTargetPlatform),
                           onConfigure: () =>
                               _configureStudyNotifications(context, ref),
                         ),
@@ -509,11 +510,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               _SettingRow(
                                 icon: Icons.devices_rounded,
                                 title: '현재 플랫폼',
-                                subtitle:
-                                    defaultTargetPlatform ==
-                                        TargetPlatform.windows
-                                    ? 'Windows x64 · 크기 조절 지원'
-                                    : 'Android · 모바일 학습 모드',
+                                subtitle: appPlatformDescription(
+                                  defaultTargetPlatform,
+                                ),
                                 trailing: config.appEnvironment,
                                 color: AppTheme.desktopPrimary,
                               ),

@@ -103,7 +103,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('직접 쓰기'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('start-practice-session')));
+      final startSession = find.byKey(const Key('start-practice-session'));
+      await tester.ensureVisible(startSession);
+      await tester.pumpAndSettle();
+      await tester.tap(startSession);
       await tester.pumpAndSettle();
 
       final shortcuts = tester.widget<CallbackShortcuts>(
@@ -149,7 +152,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('뜻 고르기'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('start-practice-session')));
+      final startSession = find.byKey(const Key('start-practice-session'));
+      await tester.ensureVisible(startSession);
+      await tester.pumpAndSettle();
+      await tester.tap(startSession);
       await tester.pumpAndSettle();
 
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);

@@ -1,0 +1,74 @@
+import 'package:flutter/material.dart';
+
+class DelimitedChipInput extends StatelessWidget {
+  const DelimitedChipInput({
+    super.key,
+    required this.controller,
+    required this.fieldKey,
+    required this.labelText,
+    required this.hintText,
+    this.required = false,
+    this.onSubmitted,
+  });
+
+  final TextEditingController controller;
+  final Key fieldKey;
+  final String labelText;
+  final String hintText;
+  final bool required;
+  final ValueChanged<String>? onSubmitted;
+
+  static List<String> parse(String value) => value
+      .split(RegExp(r'[,;\n]'))
+      .map((part) => part.trim())
+      .where((part) => part.isNotEmpty)
+      .toSet()
+      .toList(growable: false);
+
+  @override
+  Widget build(BuildContext context) {
+    final values = parse(controller.text);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          key: fieldKey,
+          controller: controller,
+          textInputAction: TextInputAction.done,
+          onFieldSubmitted: onSubmitted,
+          decoration: InputDecoration(
+            labelText: labelText,
+            hintText: hintText,
+            helperText: '쉼표를 입력하면 각 항목을 답안으로 인식합니다.',
+          ),
+          validator: required
+              ? (value) => value == null || parse(value).isEmpty
+                    ? '하나 이상 입력해 주세요.'
+                    : null
+              : null,
+        ),
+        if (values.length > 1) ...[
+          const SizedBox(height: 7),
+          Wrap(
+            key: Key('${fieldKey.toString()}-chips'),
+            spacing: 6,
+            runSpacing: 5,
+            children: [
+              for (final value in values)
+                InputChip(
+                  label: Text(value),
+                  onDeleted: () {
+                    final remaining = [...values]..remove(value);
+                    controller.text = remaining.join(', ');
+                    controller.selection = TextSelection.collapsed(
+                      offset: controller.text.length,
+                    );
+                  },
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}

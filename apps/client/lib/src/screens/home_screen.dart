@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/active_study_session.dart';
 import '../domain/language.dart';
+import '../domain/learning_item.dart';
 import '../domain/onboarding_profile.dart';
 import '../domain/progress.dart';
 import '../domain/session_enhancements.dart';
@@ -22,6 +23,7 @@ import '../state/connection_state.dart';
 import '../state/local_storage_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/learning_data_flow_card.dart';
+import '../widgets/quick_content_result_handler.dart';
 import '../widgets/quick_content_sheet.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -93,6 +95,63 @@ class HomeScreen extends ConsumerWidget {
     final pinnedCollections = controller.smartCollections
         .where((collection) => collection.pinned)
         .toList(growable: false);
+    final recentCustomItems =
+        state.customItems
+            .where((item) => item.effectiveSubjectId == activeSubject.id)
+            .toList()
+          ..sort(
+            (left, right) =>
+                (right.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0))
+                    .compareTo(
+                      left.updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0),
+                    ),
+          );
+
+    void studyRecentItem(LearningItem item) {
+      controller.updateSessionPlan(
+        controller.activeSessionPlan.copyWith(
+          planId: '',
+          mode: StudyMode.mixed,
+          deck: StudyDeckScope.selected,
+          selectedItemIds: {item.id},
+          groupIds: {},
+          tags: {},
+          levels: {},
+          includeWords: item.kind == LearningItemKind.word,
+          includeSentences: item.kind == LearningItemKind.sentence,
+          itemLimit: 1,
+          lengthMode: StudySessionLengthMode.itemCount,
+          recordProgress: true,
+          scheduledAt: null,
+        ),
+      );
+      context.push('/study?mode=mixed&limit=1&custom=true');
+    }
+
+    Future<void> trashRecentItem(LearningItem item) async {
+      final batch = await controller.trashCustomItems({item.id});
+      if (!context.mounted || batch.entries.isEmpty) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('“${item.text}”을 휴지통으로 옮겼습니다.'),
+          action: SnackBarAction(
+            label: '실행 취소',
+            onPressed: () => unawaited(controller.restoreTrashBatch(batch.id)),
+          ),
+        ),
+      );
+    }
+
+    Future<void> openQuickContent() async {
+      final result = await showQuickContentSheet(context: context);
+      if (!context.mounted) return;
+      await handleQuickContentResult(
+        context: context,
+        ref: ref,
+        result: result,
+      );
+    }
+
     final recommendedRoute =
         state.preferences.preferredMode == StudyMode.pronunciation
         ? '/pronunciation'
@@ -440,6 +499,17 @@ class HomeScreen extends ConsumerWidget {
                               onManage: () => context.go('/library'),
                             ),
                           ],
+                          if (recentCustomItems.isNotEmpty) ...[
+                            SizedBox(height: mobile ? 12 : 16),
+                            _RecentAdditionsTray(
+                              items: recentCustomItems.take(5).toList(),
+                              onOpen: (item) =>
+                                  context.push('/library/edit/${item.id}'),
+                              onStudy: studyRecentItem,
+                              onTrash: (item) =>
+                                  unawaited(trashRecentItem(item)),
+                            ),
+                          ],
                           if (!officeCompact) ...[
                             SizedBox(height: mobile ? 12 : 16),
                             LearningDataFlowCard(
@@ -452,9 +522,7 @@ class HomeScreen extends ConsumerWidget {
                                   : localCopyCount > 0 && groupCount == 0
                                   ? LearningDataStep.organize
                                   : LearningDataStep.learn,
-                              onAdd: () => unawaited(
-                                showQuickContentSheet(context: context),
-                              ),
+                              onAdd: () => unawaited(openQuickContent()),
                               onOrganize: () => context.go('/library/groups'),
                               onLearn: () => context.go('/learn'),
                               localFolderConfigured: localStorage.configured,
@@ -507,6 +575,97 @@ class HomeScreen extends ConsumerWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _RecentAdditionsTray extends StatelessWidget {
+  const _RecentAdditionsTray({
+    required this.items,
+    required this.onOpen,
+    required this.onStudy,
+    required this.onTrash,
+  });
+
+  final List<LearningItem> items;
+  final ValueChanged<LearningItem> onOpen;
+  final ValueChanged<LearningItem> onStudy;
+  final ValueChanged<LearningItem> onTrash;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      key: const Key('recent-additions-tray'),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.new_releases_outlined, color: colors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '최근 추가한 자료',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                Text(
+                  '${items.length}개',
+                  style: Theme.of(context).textTheme.labelLarge,
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              '다시 열거나 바로 한 문제로 익혀 보세요.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 10),
+            for (final item in items)
+              ListTile(
+                key: Key('recent-addition-${item.id}'),
+                contentPadding: EdgeInsets.zero,
+                minVerticalPadding: 6,
+                leading: CircleAvatar(
+                  child: Icon(
+                    item.kind == LearningItemKind.word
+                        ? Icons.text_fields_rounded
+                        : Icons.notes_rounded,
+                  ),
+                ),
+                title: Text(
+                  item.text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  item.primaryTranslation,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                onTap: () => onOpen(item),
+                trailing: Wrap(
+                  spacing: 2,
+                  children: [
+                    IconButton(
+                      tooltip: '${item.text} 바로 학습',
+                      onPressed: () => onStudy(item),
+                      icon: const Icon(Icons.play_arrow_rounded),
+                    ),
+                    IconButton(
+                      tooltip: '${item.text} 휴지통으로 이동',
+                      onPressed: () => onTrash(item),
+                      icon: const Icon(Icons.delete_outline_rounded),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

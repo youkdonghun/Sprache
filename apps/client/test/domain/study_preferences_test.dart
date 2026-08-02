@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/learning_group.dart';
+import 'package:sprache/src/domain/session_enhancements.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 
@@ -82,6 +83,13 @@ void main() {
         includeSentences: false,
         sentenceRatio: 0.2,
         itemLimit: 20,
+        answerDirectionOverride: StudyAnswerDirection.meaningToLearning,
+        gradingStrictness: StudyGradingStrictness.strict,
+        choiceCount: 6,
+        hintsEnabled: false,
+        autoAdvanceOverride: true,
+        soundEffectsOverride: true,
+        largeControls: true,
         title: '여행 단어 퀴즈',
         scheduledAt: DateTime.utc(2026, 7, 30, 10),
         selectedItemIds: {'word-1', 'sentence-2'},
@@ -148,6 +156,15 @@ void main() {
     expect(
       restored.interaction.answerDirection,
       StudyAnswerDirection.meaningToLearning,
+    );
+    expect(restored.sessionPlan.choiceCount, 6);
+    expect(restored.sessionPlan.hintsEnabled, isFalse);
+    expect(restored.sessionPlan.autoAdvanceOverride, isTrue);
+    expect(restored.sessionPlan.soundEffectsOverride, isTrue);
+    expect(restored.sessionPlan.largeControls, isTrue);
+    expect(
+      restored.sessionPlan.gradingStrictness,
+      StudyGradingStrictness.strict,
     );
     expect(restored.interaction.choiceLayout, StudyChoiceLayout.grid);
     expect(restored.interaction.shuffleChoices, isFalse);

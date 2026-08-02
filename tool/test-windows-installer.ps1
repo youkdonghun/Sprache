@@ -9,6 +9,60 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
+$spracheUninstallRegistryKey = '{07105448-EEAE-4779-8358-BE6573C587FC}_is1'
+
+function Get-SpracheInstallations {
+    $registryRoots = @(
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall',
+        'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall',
+        'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall'
+    )
+
+    foreach ($registryRoot in $registryRoots) {
+        if (-not (Test-Path -LiteralPath $registryRoot)) {
+            continue
+        }
+
+        foreach ($entry in Get-ChildItem -LiteralPath $registryRoot -ErrorAction SilentlyContinue) {
+            $properties = Get-ItemProperty -LiteralPath $entry.PSPath -ErrorAction SilentlyContinue
+            if ($null -eq $properties) {
+                continue
+            }
+
+            $displayNameProperty = $properties.PSObject.Properties['DisplayName']
+            $displayVersionProperty = $properties.PSObject.Properties['DisplayVersion']
+            $installLocationProperty = $properties.PSObject.Properties['InstallLocation']
+            $displayName = if ($null -eq $displayNameProperty) {
+                ''
+            }
+            else {
+                [string]$displayNameProperty.Value
+            }
+            $isSpracheAppId =
+                $entry.PSChildName -ieq $script:spracheUninstallRegistryKey
+            $isSpracheDisplayName = $displayName -match '^Sprache(?:\s|$)'
+            if ($isSpracheAppId -or $isSpracheDisplayName) {
+                [pscustomobject]@{
+                    RegistryPath = $entry.PSPath
+                    DisplayName = $displayName
+                    DisplayVersion = if ($null -eq $displayVersionProperty) {
+                        ''
+                    }
+                    else {
+                        [string]$displayVersionProperty.Value
+                    }
+                    InstallLocation = if ($null -eq $installLocationProperty) {
+                        ''
+                    }
+                    else {
+                        [string]$installLocationProperty.Value
+                    }
+                }
+            }
+        }
+    }
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $pubspecPath = Join-Path $repoRoot 'apps\client\pubspec.yaml'
 if ([string]::IsNullOrWhiteSpace($Version)) {
@@ -43,11 +97,25 @@ if (Test-Path -LiteralPath $installDir) {
     throw "Installer smoke target already exists: $installDir"
 }
 
-$existingInstallations = Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue |
-    Get-ItemProperty -ErrorAction SilentlyContinue |
-    Where-Object { $_.DisplayName -eq 'Sprache' }
+$existingInstallations = @(Get-SpracheInstallations)
 if (@($existingInstallations).Count -gt 0) {
-    throw 'A registered Sprache installation already exists. Refusing to replace its uninstall registration during the smoke test.'
+    $installationSummary = $existingInstallations |
+        ForEach-Object {
+            "$($_.DisplayName) $($_.DisplayVersion) at $($_.InstallLocation)"
+        }
+    throw "A registered Sprache installation already exists. Refusing to replace its uninstall registration during the smoke test: $($installationSummary -join '; ')"
+}
+$defaultInstallDirectory = Join-Path $env:LOCALAPPDATA 'Programs\Sprache'
+$orphanedInstallationFiles = @(
+    (Join-Path $defaultInstallDirectory 'sprache.exe'),
+    (Join-Path $defaultInstallDirectory 'unins000.exe')
+) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf }
+if (@($orphanedInstallationFiles).Count -gt 0) {
+    throw "Sprache installation files exist without a detected uninstall registration. Refusing a destructive smoke test: $defaultInstallDirectory"
+}
+$runningSprache = @(Get-Process -Name 'sprache' -ErrorAction SilentlyContinue)
+if ($runningSprache.Count -gt 0) {
+    throw 'A Sprache process is running. Close it before running the installer smoke test.'
 }
 
 New-Item -ItemType Directory -Path $outputsRoot -Force | Out-Null
@@ -159,9 +227,7 @@ finally {
     }
 }
 
-$registryEntries = Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall' -ErrorAction SilentlyContinue |
-    Get-ItemProperty -ErrorAction SilentlyContinue |
-    Where-Object { $_.DisplayName -eq 'Sprache' }
+$registryEntries = @(Get-SpracheInstallations)
 $registryEntryCount = @($registryEntries).Count
 if ($registryEntryCount -ne 0) {
     $registryMessage = "Installer smoke left $registryEntryCount uninstall registry entries."

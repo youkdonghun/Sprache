@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: ["main", "codex/**"]
+    branches: ["main", "codex/**", "agent/**"]
   pull_request:
 
 permissions:
@@ -82,3 +82,24 @@ jobs:
               throw "Missing Windows release file: $path"
             }
           }
+
+  ios-simulator:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.8"
+          channel: stable
+          cache: true
+      - working-directory: apps/client
+        run: flutter pub get
+      - name: Build unsigned iOS simulator app
+        working-directory: apps/client
+        run: >-
+          flutter build ios --simulator --debug
+          --dart-define=APP_ENV=ci
+          --dart-define=ENABLE_MOCK_MODE=true
+      - name: Verify iOS simulator output
+        working-directory: apps/client
+        run: test -d build/ios/iphonesimulator/Runner.app
