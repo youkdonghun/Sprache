@@ -133,6 +133,10 @@ jobs:
           } | sort -V | tail -n 1)"
           test -x "$sdkmanager"
           test -x "$avdmanager"
+          android_avd_home="$RUNNER_TEMP/sprache-android-avd"
+          mkdir -p "$android_avd_home"
+          echo "ANDROID_AVD_HOME=$android_avd_home" >> "$GITHUB_ENV"
+          export ANDROID_AVD_HOME="$android_avd_home"
           "$sdkmanager" --install \
             "platform-tools" \
             "emulator" \
@@ -149,7 +153,7 @@ jobs:
             echo "hw.gpu.enabled=yes"
             echo "hw.gpu.mode=swiftshader_indirect"
             echo "showDeviceFrame=no"
-          } >> "$HOME/.android/avd/SpracheCiApi35.avd/config.ini"
+          } >> "$ANDROID_AVD_HOME/SpracheCiApi35.avd/config.ini"
       - name: Build production-configured REAL APK with debug signing
         working-directory: apps/client
         shell: bash
