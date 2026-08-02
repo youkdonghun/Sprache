@@ -1,5 +1,7 @@
 import 'learning_item.dart';
 import 'library_search.dart';
+import 'local_search_query.dart';
+import 'progress.dart';
 import 'study_subject.dart';
 
 sealed class GlobalSearchResult {
@@ -30,16 +32,20 @@ List<GlobalSearchResult> searchAcrossSubjects({
   required String query,
   required Iterable<StudySubject> subjects,
   required Iterable<LearningItem> items,
+  Map<String, ProgressRecord> progressById = const {},
+  Set<String> favoriteItemIds = const {},
+  Set<String> excludedItemIds = const {},
+  DateTime? now,
   int limit = 60,
 }) {
-  final tokens = foldLibrarySearchText(
-    query,
-  ).split(' ').where((value) => value.isNotEmpty).toList(growable: false);
-  if (tokens.isEmpty) return const [];
+  final parsed = LocalSearchQuery.parse(query);
+  final tokens = parsed.textTokens;
+  if (parsed.isEmpty) return const [];
 
   final subjectById = {for (final subject in subjects) subject.id: subject};
   final results = <GlobalSearchResult>[];
   for (final subject in subjectById.values) {
+    if (parsed.hasOperators) continue;
     final text = foldLibrarySearchText(
       '${subject.name} ${subject.description} ${subject.symbol} '
       '${subject.contentLanguage.code} ${subject.contentLanguage.nativeName}',
@@ -55,6 +61,16 @@ List<GlobalSearchResult> searchAcrossSubjects({
   for (final item in items) {
     final subject = subjectById[item.effectiveSubjectId];
     if (subject == null) continue;
+    if (!localSearchItemMatches(
+      query: parsed,
+      item: item,
+      progress: progressById[item.id],
+      favorite: favoriteItemIds.contains(item.id),
+      excluded: excludedItemIds.contains(item.id),
+      now: now,
+    )) {
+      continue;
+    }
     final text = foldLibrarySearchText(
       [
         item.text,
@@ -69,12 +85,13 @@ List<GlobalSearchResult> searchAcrossSubjects({
         subject.name,
       ].join(' '),
     );
-    if (!tokens.every(text.contains)) continue;
     results.add(
       GlobalItemSearchResult(
         subject: subject,
         item: item,
-        score: _searchScore(text, tokens, item.text),
+        score:
+            _searchScore(text, tokens, item.text) +
+            (parsed.hasOperators ? 5 : 0),
       ),
     );
   }

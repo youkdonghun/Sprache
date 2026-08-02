@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,6 +12,7 @@ class StudyAccessibilityTheme extends ThemeExtension<StudyAccessibilityTheme> {
     required this.minimumRatingControlHeight,
     required this.highContrast,
     required this.reduceMotion,
+    required this.reduceTransparency,
     required this.visibleSelectionControls,
   });
 
@@ -22,6 +24,7 @@ class StudyAccessibilityTheme extends ThemeExtension<StudyAccessibilityTheme> {
       minimumRatingControlHeight: profile.minimumRatingControlHeight,
       highContrast: profile.highContrast,
       reduceMotion: profile.reduceMotion,
+      reduceTransparency: profile.reduceTransparency,
       visibleSelectionControls: profile.requiresVisibleSelectionControls,
     );
   }
@@ -35,6 +38,7 @@ class StudyAccessibilityTheme extends ThemeExtension<StudyAccessibilityTheme> {
   final double minimumRatingControlHeight;
   final bool highContrast;
   final bool reduceMotion;
+  final bool reduceTransparency;
   final bool visibleSelectionControls;
 
   @override
@@ -43,6 +47,7 @@ class StudyAccessibilityTheme extends ThemeExtension<StudyAccessibilityTheme> {
     double? minimumRatingControlHeight,
     bool? highContrast,
     bool? reduceMotion,
+    bool? reduceTransparency,
     bool? visibleSelectionControls,
   }) {
     return StudyAccessibilityTheme(
@@ -51,6 +56,7 @@ class StudyAccessibilityTheme extends ThemeExtension<StudyAccessibilityTheme> {
           minimumRatingControlHeight ?? this.minimumRatingControlHeight,
       highContrast: highContrast ?? this.highContrast,
       reduceMotion: reduceMotion ?? this.reduceMotion,
+      reduceTransparency: reduceTransparency ?? this.reduceTransparency,
       visibleSelectionControls:
           visibleSelectionControls ?? this.visibleSelectionControls,
     );
@@ -75,6 +81,9 @@ class StudyAccessibilityTheme extends ThemeExtension<StudyAccessibilityTheme> {
           minimumRatingControlHeight,
       highContrast: t < 0.5 ? highContrast : other.highContrast,
       reduceMotion: t < 0.5 ? reduceMotion : other.reduceMotion,
+      reduceTransparency: t < 0.5
+          ? reduceTransparency
+          : other.reduceTransparency,
       visibleSelectionControls: t < 0.5
           ? visibleSelectionControls
           : other.visibleSelectionControls,
@@ -99,11 +108,39 @@ extension StudyShortcutKeyFlutter on StudyShortcutKey {
     StudyShortcutKey.keyR => LogicalKeyboardKey.keyR,
     StudyShortcutKey.arrowLeft => LogicalKeyboardKey.arrowLeft,
     StudyShortcutKey.arrowRight => LogicalKeyboardKey.arrowRight,
+    StudyShortcutKey.escape => LogicalKeyboardKey.escape,
+    StudyShortcutKey.f6 => LogicalKeyboardKey.f6,
+    StudyShortcutKey.controlH => LogicalKeyboardKey.keyH,
+    StudyShortcutKey.controlG => LogicalKeyboardKey.keyG,
+    StudyShortcutKey.controlL => LogicalKeyboardKey.keyL,
+    StudyShortcutKey.controlK => LogicalKeyboardKey.keyK,
+    StudyShortcutKey.controlN => LogicalKeyboardKey.keyN,
+    StudyShortcutKey.controlSlash => LogicalKeyboardKey.slash,
+    StudyShortcutKey.controlShiftF => LogicalKeyboardKey.keyF,
+    StudyShortcutKey.controlShiftM => LogicalKeyboardKey.keyM,
   };
 
-  SingleActivator? get activator {
+  SingleActivator? get activator => activatorFor(defaultTargetPlatform);
+
+  SingleActivator? activatorFor(TargetPlatform platform) {
     final key = logicalKey;
-    return key == null ? null : SingleActivator(key);
+    if (key == null) return null;
+    final command = platform == TargetPlatform.macOS;
+    return switch (this) {
+      StudyShortcutKey.controlH ||
+      StudyShortcutKey.controlG ||
+      StudyShortcutKey.controlL ||
+      StudyShortcutKey.controlK ||
+      StudyShortcutKey.controlN ||
+      StudyShortcutKey.controlSlash => SingleActivator(
+        key,
+        control: !command,
+        meta: command,
+      ),
+      StudyShortcutKey.controlShiftF || StudyShortcutKey.controlShiftM =>
+        SingleActivator(key, control: !command, meta: command, shift: true),
+      _ => SingleActivator(key),
+    };
   }
 
   String get displayLabel => switch (this) {
@@ -122,18 +159,36 @@ extension StudyShortcutKeyFlutter on StudyShortcutKey {
     StudyShortcutKey.keyR => 'R',
     StudyShortcutKey.arrowLeft => '←',
     StudyShortcutKey.arrowRight => '→',
+    StudyShortcutKey.escape => 'Esc',
+    StudyShortcutKey.f6 => 'F6',
+    StudyShortcutKey.controlH => 'Ctrl+H',
+    StudyShortcutKey.controlG => 'Ctrl+G',
+    StudyShortcutKey.controlL => 'Ctrl+L',
+    StudyShortcutKey.controlK => 'Ctrl+K',
+    StudyShortcutKey.controlN => 'Ctrl+N',
+    StudyShortcutKey.controlSlash => 'Ctrl+/',
+    StudyShortcutKey.controlShiftF => 'Ctrl+Shift+F',
+    StudyShortcutKey.controlShiftM => 'Ctrl+Shift+M',
   };
+
+  String displayLabelFor(TargetPlatform platform) =>
+      platform == TargetPlatform.macOS
+      ? displayLabel.replaceFirst('Ctrl', '⌘')
+      : displayLabel;
 }
 
 extension AccessibilityShortcutBindings on AccessibilityInputProfile {
   /// Builds conflict-free CallbackShortcuts bindings for the supplied actions.
   Map<ShortcutActivator, VoidCallback> bindingsFor(
-    Map<StudyShortcutAction, VoidCallback> callbacks,
-  ) {
+    Map<StudyShortcutAction, VoidCallback> callbacks, {
+    TargetPlatform? platform,
+  }) {
     final bindings = <ShortcutActivator, VoidCallback>{};
     for (final entry in callbacks.entries) {
       final shortcut = shortcutFor(entry.key);
-      final activator = shortcut.activator;
+      final activator = shortcut.activatorFor(
+        platform ?? defaultTargetPlatform,
+      );
       if (activator != null) bindings[activator] = entry.value;
       final numpadKey = switch (shortcut) {
         StudyShortcutKey.digit1 => LogicalKeyboardKey.numpad1,
@@ -145,6 +200,22 @@ extension AccessibilityShortcutBindings on AccessibilityInputProfile {
       if (numpadKey != null) {
         bindings[SingleActivator(numpadKey)] = entry.value;
       }
+    }
+    return bindings;
+  }
+}
+
+extension AccessibilityGlobalShortcutBindings on AccessibilityInputProfile {
+  Map<ShortcutActivator, VoidCallback> globalBindingsFor(
+    Map<GlobalShortcutAction, VoidCallback> callbacks, {
+    TargetPlatform? platform,
+  }) {
+    final bindings = <ShortcutActivator, VoidCallback>{};
+    for (final entry in callbacks.entries) {
+      final activator = globalShortcutFor(
+        entry.key,
+      ).activatorFor(platform ?? defaultTargetPlatform);
+      if (activator != null) bindings[activator] = entry.value;
     }
     return bindings;
   }

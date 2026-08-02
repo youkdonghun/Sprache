@@ -10,6 +10,7 @@ import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/import/content_import_parser.dart';
 import 'package:sprache/src/screens/import_screen.dart';
 import 'package:sprache/src/screens/library_screen.dart';
+import 'package:sprache/src/services/recovery_checkpoint_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 import 'package:sprache/src/theme/app_theme.dart';
 
@@ -66,7 +67,12 @@ void main() {
         );
         await tester.pumpWidget(
           ProviderScope(
-            overrides: [studyStoreProvider.overrideWithValue(store)],
+            overrides: [
+              studyStoreProvider.overrideWithValue(store),
+              recoveryCheckpointServiceProvider.overrideWithValue(
+                _NoopRecoveryCheckpointService(),
+              ),
+            ],
             child: MaterialApp(
               theme: AppTheme.mobile,
               home: const Scaffold(body: ImportScreen()),
@@ -290,7 +296,12 @@ void main() {
     try {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [studyStoreProvider.overrideWithValue(store)],
+          overrides: [
+            studyStoreProvider.overrideWithValue(store),
+            recoveryCheckpointServiceProvider.overrideWithValue(
+              _NoopRecoveryCheckpointService(),
+            ),
+          ],
           child: MaterialApp(
             theme: AppTheme.mobile,
             home: const Scaffold(
@@ -331,6 +342,112 @@ void main() {
       await tester.drag(outerList, const Offset(0, -900));
       await tester.pumpAndSettle();
       expect(find.text('2개를 자료실에 반영합니다.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      tester.view.reset();
+    }
+  });
+
+  testWidgets('blocked import row can be edited and revalidated', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    final store = MemoryStudyStore();
+    await store.saveCustomItems(const [
+      LearningItem(
+        id: 'existing-alpha',
+        kind: LearningItemKind.word,
+        learningLanguage: LanguageTag.english,
+        text: 'alpha',
+        translations: ['first'],
+        acceptedAnswers: ['first'],
+        partOfSpeech: PartOfSpeech.noun,
+      ),
+      LearningItem(
+        id: 'existing-beta',
+        kind: LearningItemKind.word,
+        learningLanguage: LanguageTag.english,
+        text: 'beta',
+        translations: ['second'],
+        acceptedAnswers: ['second'],
+        partOfSpeech: PartOfSpeech.noun,
+      ),
+    ]);
+    const preview = ImportPreview(
+      entries: [
+        ParsedImportEntry(
+          row: 7,
+          item: LearningItem(
+            id: 'existing-alpha',
+            kind: LearningItemKind.word,
+            learningLanguage: LanguageTag.english,
+            text: 'beta',
+            translations: ['second'],
+            acceptedAnswers: ['second'],
+            partOfSpeech: PartOfSpeech.noun,
+          ),
+        ),
+      ],
+      issues: [],
+      duplicates: [],
+    );
+
+    try {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            studyStoreProvider.overrideWithValue(store),
+            recoveryCheckpointServiceProvider.overrideWithValue(
+              _NoopRecoveryCheckpointService(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.mobile,
+            home: const Scaffold(
+              body: ImportScreen(
+                initialPreview: preview,
+                initialFileName: 'blocked.csv',
+                initialSha256: 'blocked-sha256',
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final edit = find.byKey(const Key('edit-blocked-import-7'));
+      expect(edit, findsOneWidget);
+      await tester.scrollUntilVisible(
+        edit,
+        500,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(edit);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.byKey(const Key('blocked-import-id')),
+        'edited-gamma',
+      );
+      await tester.enterText(
+        find.byKey(const Key('blocked-import-text')),
+        'gamma',
+      );
+      await tester.enterText(
+        find.byKey(const Key('blocked-import-meaning')),
+        'third',
+      );
+      await tester.tap(find.byKey(const Key('confirm-blocked-import-edit')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('edit-blocked-import-7')), findsNothing);
+      expect(find.text('gamma'), findsWidgets);
+      final add = tester.widget<ChoiceChip>(
+        find.byKey(const Key('import-action-7-edited-gamma-add')),
+      );
+      expect(add.selected, isTrue);
       expect(tester.takeException(), isNull);
     } finally {
       tester.view.reset();
@@ -394,7 +511,12 @@ void main() {
       try {
         await tester.pumpWidget(
           ProviderScope(
-            overrides: [studyStoreProvider.overrideWithValue(store)],
+            overrides: [
+              studyStoreProvider.overrideWithValue(store),
+              recoveryCheckpointServiceProvider.overrideWithValue(
+                _NoopRecoveryCheckpointService(),
+              ),
+            ],
             child: MaterialApp(
               theme: AppTheme.mobile,
               home: const Scaffold(
@@ -510,7 +632,12 @@ void main() {
     try {
       await tester.pumpWidget(
         ProviderScope(
-          overrides: [studyStoreProvider.overrideWithValue(store)],
+          overrides: [
+            studyStoreProvider.overrideWithValue(store),
+            recoveryCheckpointServiceProvider.overrideWithValue(
+              _NoopRecoveryCheckpointService(),
+            ),
+          ],
           child: MaterialApp.router(
             theme: AppTheme.mobile,
             routerConfig: router,
@@ -536,3 +663,25 @@ void main() {
     }
   });
 }
+
+class _NoopRecoveryCheckpointService extends RecoveryCheckpointService {
+  _NoopRecoveryCheckpointService() : super(rootResolver: _unusedCheckpointRoot);
+
+  @override
+  Future<RecoveryCheckpointReceipt> create(
+    Map<String, Object?> archive, {
+    required RecoveryCheckpointReason reason,
+  }) async => RecoveryCheckpointReceipt(
+    id: 'test-checkpoint',
+    reason: reason,
+    createdAt: DateTime.utc(2026, 8, 2),
+    byteLength: 0,
+    sha256Hex: 'test',
+    customItemCount: 0,
+    progressCount: 0,
+    sessionCount: 0,
+    path: 'memory',
+  );
+}
+
+Future<String> _unusedCheckpointRoot() async => 'memory';

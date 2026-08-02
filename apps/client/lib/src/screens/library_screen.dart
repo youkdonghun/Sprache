@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -12,6 +13,9 @@ import '../domain/learning_item.dart';
 import '../domain/learning_item_codec.dart';
 import '../domain/learning_group.dart';
 import '../domain/library_search.dart';
+import '../domain/local_search_query.dart';
+import '../domain/platform_workspace.dart';
+import '../domain/search_preferences.dart';
 import '../domain/content_management.dart';
 import '../domain/duplicate_repair.dart';
 import '../domain/import_distribution.dart';
@@ -22,14 +26,20 @@ import '../domain/study_preferences.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
 import '../state/local_storage_state.dart';
+import '../services/platform_completion_service.dart';
+import '../services/recovery_checkpoint_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/content_selection_action_bar.dart';
 import '../widgets/learning_data_flow_card.dart';
+import '../widgets/highlighted_search_text.dart';
 import '../widgets/quick_content_sheet.dart';
+import '../widgets/privacy_mode_scope.dart';
 
 enum _LibraryFilter { all, favorites, word, sentence, weak, wrong }
 
 enum _AddContentAction { quickWord, quickSentence, fullEditor, importFile }
+
+enum _DesktopItemAction { open, edit, group, study, export }
 
 String _librarySyncLabel(AppState state, ConnectionState connection) {
   if (!state.driveConnected) return '이 기기에 저장';
@@ -63,6 +73,7 @@ class LibraryScreen extends ConsumerStatefulWidget {
 
 class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   static const _searchDebounceDuration = Duration(milliseconds: 200);
+  static const _resultPageSize = 40;
 
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode();
@@ -75,6 +86,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   String? _groupFilter;
   var _groupSelectionMode = false;
   final _selectedForGroup = <String>{};
+  String? _selectionAnchorId;
+  var _searchPreferences = const SearchLocalPreferences();
+  var _resultPage = 0;
+  String? _detailItemId;
 
   @override
   void initState() {
@@ -85,8 +100,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     if (initialQuery != null) {
       _searchController.text = initialQuery;
       _query = initialQuery;
+      _revealSearchResults();
     }
     _selectRouteSubject();
+    unawaited(_loadSearchPreferences());
   }
 
   @override
@@ -105,6 +122,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       _searchDebounce?.cancel();
       _searchController.text = query;
       _query = query;
+      _resultPage = 0;
+      if (query.isNotEmpty) _revealSearchResults();
     }
   }
 
@@ -143,7 +162,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     _searchDebounce?.cancel();
     if (_query.isNotEmpty || _searchController.text.isNotEmpty) {
       _searchController.clear();
-      setState(() => _query = '');
+      setState(() {
+        _query = '';
+        _resultPage = 0;
+      });
       _searchFocus.requestFocus();
       return;
     }
@@ -156,9 +178,157 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       if (!mounted) return;
       final query = value.trim();
       if (_query == query) return;
-      setState(() => _query = query);
+      setState(() {
+        _query = query;
+        _resultPage = 0;
+      });
       if (query.isNotEmpty) _revealSearchResults();
     });
+  }
+
+  Future<void> _loadSearchPreferences() async {
+    final preferences = await ref
+        .read(studyStoreProvider)
+        .loadSearchLocalPreferences();
+    if (!mounted) return;
+    setState(() => _searchPreferences = preferences);
+  }
+
+  Future<void> _rememberSubjectSearch(String rawQuery) async {
+    final query = rawQuery.trim();
+    if (query.isEmpty) return;
+    final next = _searchPreferences.rememberSubject(_activeSubjectId, query);
+    if (!mounted) return;
+    setState(() => _searchPreferences = next);
+    await ref.read(studyStoreProvider).saveSearchLocalPreferences(next);
+  }
+
+  Future<void> _removeSubjectSearch(String query) async {
+    final next = _searchPreferences.removeSubject(_activeSubjectId, query);
+    if (!mounted) return;
+    setState(() => _searchPreferences = next);
+    await ref.read(studyStoreProvider).saveSearchLocalPreferences(next);
+  }
+
+  Future<void> _setLibraryViewMode(LibraryViewMode mode) async {
+    final next = _searchPreferences.copyWith(libraryViewMode: mode);
+    if (!mounted) return;
+    setState(() => _searchPreferences = next);
+    await ref.read(studyStoreProvider).saveSearchLocalPreferences(next);
+  }
+
+  void _selectItems(Iterable<String> itemIds) {
+    setState(() {
+      _groupSelectionMode = true;
+      _selectedForGroup.addAll(itemIds);
+    });
+  }
+
+  void _invertItems(Iterable<String> itemIds) {
+    setState(() {
+      _groupSelectionMode = true;
+      for (final id in itemIds) {
+        if (!_selectedForGroup.add(id)) _selectedForGroup.remove(id);
+      }
+    });
+  }
+
+  void _selectOnly(String itemId) {
+    setState(() {
+      _groupSelectionMode = true;
+      _selectedForGroup
+        ..clear()
+        ..add(itemId);
+      _selectionAnchorId = itemId;
+    });
+  }
+
+  Future<void> _openDesktopItemMenu(
+    LearningItem item,
+    TapDownDetails details, {
+    required bool isCustom,
+  }) async {
+    if (!usesDesktopWorkspace(defaultTargetPlatform)) return;
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = details.globalPosition;
+    final action = await showMenu<_DesktopItemAction>(
+      context: context,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(position.dx, position.dy, 1, 1),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        const PopupMenuItem(
+          value: _DesktopItemAction.open,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.open_in_new_rounded),
+            title: Text('열기'),
+          ),
+        ),
+        if (isCustom)
+          const PopupMenuItem(
+            value: _DesktopItemAction.edit,
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.edit_outlined),
+              title: Text('수정'),
+            ),
+          ),
+        const PopupMenuItem(
+          value: _DesktopItemAction.group,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.drive_file_move_outline),
+            title: Text('그룹에 넣기'),
+          ),
+        ),
+        const PopupMenuItem(
+          value: _DesktopItemAction.study,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.play_arrow_rounded),
+            title: Text('이 자료 학습'),
+          ),
+        ),
+        const PopupMenuItem(
+          value: _DesktopItemAction.export,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.file_download_outlined),
+            title: Text('내보내기'),
+          ),
+        ),
+      ],
+    );
+    if (action == null || !mounted) return;
+    switch (action) {
+      case _DesktopItemAction.open:
+        setState(() => _detailItemId = item.id);
+      case _DesktopItemAction.edit:
+        context.go('/library/edit/${item.id}');
+      case _DesktopItemAction.group:
+        _selectOnly(item.id);
+        await _organizeGroup(copy: true);
+      case _DesktopItemAction.study:
+        _selectOnly(item.id);
+        _startSelected(memorize: true);
+      case _DesktopItemAction.export:
+        await _exportItems([item]);
+    }
+  }
+
+  void _applySearchSuggestion(String query) {
+    _searchDebounce?.cancel();
+    _searchController.text = query;
+    _searchController.selection = TextSelection.collapsed(offset: query.length);
+    setState(() {
+      _query = query;
+      _resultPage = 0;
+    });
+    _searchFocus.requestFocus();
+    unawaited(_rememberSubjectSearch(query));
+    _revealSearchResults();
   }
 
   void _revealSearchResults() {
@@ -203,6 +373,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       _groupFilter = nextGroupFilter;
       _groupSelectionMode = false;
       _selectedForGroup.clear();
+      _resultPage = 0;
     });
 
     if (!clearedVisibleState) return;
@@ -231,6 +402,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final mobile = screenWidth < 600;
     final narrow = screenWidth < 360;
+    final desktopMasterDetail = usesAdaptiveTwoPane(
+      platform: defaultTargetPlatform,
+      width: screenWidth,
+    );
     final controller = ref.read(appControllerProvider.notifier);
     final activeSubject = controller.activeSubject;
     final items = controller.courseItems;
@@ -270,6 +445,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       criteria: _advancedCriteria.copyWith(query: _query),
       now: DateTime.now().toUtc(),
       excludedItemIds: state.preferences.excludedItemIds,
+      favoriteItemIds: state.preferences.favoriteItemIds,
     );
     final availablePartsOfSpeech = items
         .map((item) => item.partOfSpeech)
@@ -289,38 +465,119 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       subjectId: activeSubject.id,
     );
     final filteredIds = filtered.map((item) => item.id).toSet();
+    final pageCount = filtered.isEmpty
+        ? 1
+        : (filtered.length + _resultPageSize - 1) ~/ _resultPageSize;
+    final effectivePage = _resultPage.clamp(0, pageCount - 1);
+    final pageItems = filtered
+        .skip(effectivePage * _resultPageSize)
+        .take(_resultPageSize)
+        .toList(growable: false);
+    final pageItemIds = pageItems.map((item) => item.id).toSet();
     final hiddenSelectedCount =
         _selectedForGroup.length -
         _selectedForGroup.intersection(filteredIds).length;
+    final offPageSelectedCount =
+        _selectedForGroup.length -
+        _selectedForGroup.intersection(pageItemIds).length;
+    LearningItem? detailItem;
+    final detailId = _detailItemId;
+    if (detailId != null) {
+      for (final item in items) {
+        if (item.id == detailId) {
+          detailItem = item;
+          break;
+        }
+      }
+    }
+    if (detailItem == null && pageItems.isNotEmpty) {
+      detailItem = pageItems.first;
+    }
     final studiedCount = items
         .where((item) => state.progress.containsKey(item.id))
         .length;
     final favoriteCount = items
         .where((item) => state.preferences.isFavorite(item.id))
         .length;
+    final recentSearches = _searchPreferences.recentForSubject(
+      activeSubject.id,
+    );
+    final sortedTags = availableTags.toList()..sort();
+    final emptySearchSuggestions = <String>[
+      'state:due',
+      'state:favorite',
+      'type:sentence',
+      if (sortedTags.isNotEmpty) 'tag:${sortedTags.first}',
+    ];
+    final similarSearches = filtered.isEmpty && _query.isNotEmpty
+        ? suggestSimilarSearches(
+            query: _query,
+            candidates: items.expand(
+              (item) => [item.text, ...item.translations],
+            ),
+          )
+        : const <String>[];
 
     final searchAndFilters = LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 680;
-        final search = TextField(
-          key: const Key('library-search-field'),
-          controller: _searchController,
-          focusNode: _searchFocus,
-          onChanged: _onSearchChanged,
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            hintText: mobile
-                ? '단어, 뜻, 읽기, 품사 검색'
-                : '단어, 뜻, 읽기, 품사, 출처 검색 · Ctrl+F',
-            prefixIcon: const Icon(Icons.search_rounded),
-            suffixIcon: _query.isEmpty
-                ? null
-                : IconButton(
-                    onPressed: _clearSearch,
-                    icon: const Icon(Icons.close_rounded),
-                    tooltip: '검색어 지우기',
-                  ),
-          ),
+        final search = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              key: const Key('library-search-field'),
+              controller: _searchController,
+              focusNode: _searchFocus,
+              onChanged: _onSearchChanged,
+              onSubmitted: _rememberSubjectSearch,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: mobile
+                    ? '단어, 뜻, 읽기, 품사 검색'
+                    : '검색 · tag: type: state: group: · Ctrl+F',
+                prefixIcon: const Icon(Icons.search_rounded),
+                suffixIcon: _query.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: _clearSearch,
+                        icon: const Icon(Icons.close_rounded),
+                        tooltip: '검색어 지우기',
+                      ),
+              ),
+            ),
+            if (_query.isEmpty &&
+                (recentSearches.isNotEmpty ||
+                    emptySearchSuggestions.isNotEmpty)) ...[
+              const SizedBox(height: 7),
+              SingleChildScrollView(
+                key: const Key('library-search-suggestions'),
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final query in recentSearches) ...[
+                      InputChip(
+                        key: Key('library-recent-search-$query'),
+                        label: Text(query),
+                        avatar: const Icon(Icons.history_rounded, size: 16),
+                        onPressed: () => _applySearchSuggestion(query),
+                        onDeleted: () => unawaited(_removeSubjectSearch(query)),
+                        deleteButtonTooltipMessage: '최근 검색에서 삭제',
+                      ),
+                      const SizedBox(width: 7),
+                    ],
+                    for (final suggestion in emptySearchSuggestions) ...[
+                      ActionChip(
+                        key: Key('library-search-suggestion-$suggestion'),
+                        label: Text(suggestion),
+                        onPressed: () => _applySearchSuggestion(suggestion),
+                      ),
+                      const SizedBox(width: 7),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
         );
         final filters = SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -329,27 +586,37 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               _FilterChip(
                 label: '전체',
                 selected: _filter == _LibraryFilter.all,
-                onSelected: () => setState(() => _filter = _LibraryFilter.all),
+                onSelected: () => setState(() {
+                  _filter = _LibraryFilter.all;
+                  _resultPage = 0;
+                }),
               ),
               const SizedBox(width: 7),
               _FilterChip(
                 label: '저장됨',
                 selected: _filter == _LibraryFilter.favorites,
-                onSelected: () =>
-                    setState(() => _filter = _LibraryFilter.favorites),
+                onSelected: () => setState(() {
+                  _filter = _LibraryFilter.favorites;
+                  _resultPage = 0;
+                }),
               ),
               const SizedBox(width: 7),
               _FilterChip(
                 label: '단어',
                 selected: _filter == _LibraryFilter.word,
-                onSelected: () => setState(() => _filter = _LibraryFilter.word),
+                onSelected: () => setState(() {
+                  _filter = _LibraryFilter.word;
+                  _resultPage = 0;
+                }),
               ),
               const SizedBox(width: 7),
               _FilterChip(
                 label: '문장',
                 selected: _filter == _LibraryFilter.sentence,
-                onSelected: () =>
-                    setState(() => _filter = _LibraryFilter.sentence),
+                onSelected: () => setState(() {
+                  _filter = _LibraryFilter.sentence;
+                  _resultPage = 0;
+                }),
               ),
               const SizedBox(width: 7),
               Badge(
@@ -365,6 +632,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   icon: const Icon(Icons.tune_rounded, size: 18),
                   label: const Text('상세 필터'),
                 ),
+              ),
+              const SizedBox(width: 7),
+              _LibraryViewModeControl(
+                value: _searchPreferences.libraryViewMode,
+                onChanged: _setLibraryViewMode,
               ),
             ],
           ),
@@ -461,6 +733,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 _filter = _LibraryFilter.all;
                 _groupFilter = null;
                 _advancedCriteria = const LibrarySearchCriteria();
+                _resultPage = 0;
               });
             },
           ),
@@ -483,8 +756,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             weakCount: weakItems.length,
             wrongCount: recentWrongItems.length,
             selectedFilter: _filter,
-            onSelectWeak: () => setState(() => _filter = _LibraryFilter.weak),
-            onSelectWrong: () => setState(() => _filter = _LibraryFilter.wrong),
+            onSelectWeak: () => setState(() {
+              _filter = _LibraryFilter.weak;
+              _resultPage = 0;
+            }),
+            onSelectWrong: () => setState(() {
+              _filter = _LibraryFilter.wrong;
+              _resultPage = 0;
+            }),
             onStart:
                 _filter == _LibraryFilter.weak ||
                     _filter == _LibraryFilter.wrong
@@ -538,6 +817,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           selectionMode: _groupSelectionMode,
           onGroupChanged: (group) => setState(() {
             _groupFilter = group;
+            _resultPage = 0;
             if (!_groupSelectionMode) {
               _selectedForGroup.clear();
             }
@@ -559,6 +839,23 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           onDelete: _groupFilter == null ? null : _deleteSelectedGroup,
         ),
         if (_groupSelectionMode) ...[
+          const SizedBox(height: 8),
+          _LibrarySelectionScopeToolbar(
+            filteredCount: filtered.length,
+            pageCount: pageItems.length,
+            selectedCount: _selectedForGroup.length,
+            hiddenSelectedCount: hiddenSelectedCount,
+            offPageSelectedCount: offPageSelectedCount,
+            onSelectFiltered: filtered.isEmpty
+                ? null
+                : () => _selectItems(filteredIds),
+            onSelectPage: pageItems.isEmpty
+                ? null
+                : () => _selectItems(pageItemIds),
+            onInvertFiltered: filtered.isEmpty
+                ? null
+                : () => _invertItems(filteredIds),
+          ),
           const SizedBox(height: 8),
           if (_selectedForGroup.isEmpty)
             Container(
@@ -597,67 +894,230 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       ],
     );
 
-    final results = Card(
-      child: filtered.isEmpty
-          ? _EmptyLibrary(query: _query, filter: _filter)
-          : ListView.separated(
-              padding: EdgeInsets.zero,
-              itemCount: filtered.length,
-              separatorBuilder: (_, _) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final item = filtered[index];
-                final progress = state.progress[item.id];
-                return _LibraryRow(
-                  item: item,
-                  progress: progress,
-                  selected: state.preferences.includes(item),
-                  favorite: state.preferences.isFavorite(item.id),
-                  isCustom: customItemIds.contains(item.id),
-                  onToggle: () => controller.toggleItemSelection(item.id),
-                  onFavorite: () => controller.toggleFavorite(item.id),
-                  onEdit: () => context.go('/library/edit/${item.id}'),
-                  onCorrect: () => _openCorrection(item),
-                  onDelete: () => _confirmDelete(context, item),
-                  selectionMode: _groupSelectionMode,
-                  bulkSelected: _selectedForGroup.contains(item.id),
-                  onBulkSelect: () => setState(() {
-                    if (!_selectedForGroup.add(item.id)) {
-                      _selectedForGroup.remove(item.id);
-                    }
-                  }),
-                  onTap: _groupSelectionMode
-                      ? () => setState(() {
-                          if (!_selectedForGroup.add(item.id)) {
-                            _selectedForGroup.remove(item.id);
-                          }
-                        })
-                      : () => _showDetails(
-                          context,
-                          item: item,
-                          progress: progress,
-                        ),
-                );
-              },
-            ),
-    );
+    void toggleBulkItem(LearningItem item) {
+      setState(() {
+        if (!_selectedForGroup.add(item.id)) {
+          _selectedForGroup.remove(item.id);
+        }
+        _selectionAnchorId = item.id;
+      });
+    }
 
-    return CallbackShortcuts(
-      bindings: {
-        const SingleActivator(LogicalKeyboardKey.keyF, control: true):
-            _focusSearch,
-        const SingleActivator(LogicalKeyboardKey.keyK, control: true):
-            _focusSearch,
-        const SingleActivator(LogicalKeyboardKey.escape): _clearSearch,
+    void openItem(LearningItem item) {
+      if (_query.isNotEmpty) unawaited(_rememberSubjectSearch(_query));
+      if (desktopMasterDetail) {
+        setState(() => _detailItemId = item.id);
+        return;
+      }
+      _showMobileDetails(
+        context,
+        items: filtered,
+        initialItemId: item.id,
+        progressById: state.progress,
+      );
+    }
+
+    void handleItemTap(LearningItem item) {
+      final keyboard = HardwareKeyboard.instance;
+      final commandPressed = usesCommandModifier(defaultTargetPlatform)
+          ? keyboard.isMetaPressed
+          : keyboard.isControlPressed;
+      if (usesDesktopWorkspace(defaultTargetPlatform) &&
+          keyboard.isShiftPressed) {
+        final range = inclusiveSelectionRange(
+          orderedIds: filtered.map((candidate) => candidate.id).toList(),
+          anchorId: _selectionAnchorId,
+          currentId: item.id,
+        );
+        setState(() {
+          _groupSelectionMode = true;
+          _selectedForGroup.addAll(range);
+          _selectionAnchorId ??= item.id;
+        });
+        return;
+      }
+      if (usesDesktopWorkspace(defaultTargetPlatform) && commandPressed) {
+        toggleBulkItem(item);
+        setState(() => _groupSelectionMode = true);
+        return;
+      }
+      if (_groupSelectionMode) {
+        toggleBulkItem(item);
+        return;
+      }
+      openItem(item);
+    }
+
+    Widget buildResultItem(LearningItem item, {required bool grid}) {
+      final progress = state.progress[item.id];
+      void onTap() => handleItemTap(item);
+      final isCustomItem = customItemIds.contains(item.id);
+      if (grid) {
+        return _LibraryGridCard(
+          item: item,
+          searchQuery: _query,
+          progress: progress,
+          selected: state.preferences.includes(item),
+          favorite: state.preferences.isFavorite(item.id),
+          isCustom: isCustomItem,
+          detailSelected: desktopMasterDetail && detailItem?.id == item.id,
+          selectionMode: _groupSelectionMode,
+          bulkSelected: _selectedForGroup.contains(item.id),
+          onToggle: () => controller.toggleItemSelection(item.id),
+          onFavorite: () => controller.toggleFavorite(item.id),
+          onEdit: () => context.go('/library/edit/${item.id}'),
+          onCorrect: () => _openCorrection(item),
+          onDelete: () => _confirmDelete(context, item),
+          onBulkSelect: () => toggleBulkItem(item),
+          onSecondaryTapDown: (details) => unawaited(
+            _openDesktopItemMenu(item, details, isCustom: isCustomItem),
+          ),
+          onTap: onTap,
+        );
+      }
+      return _LibraryRow(
+        item: item,
+        searchQuery: _query,
+        compactDensity:
+            _searchPreferences.libraryViewMode == LibraryViewMode.compact,
+        detailSelected: desktopMasterDetail && detailItem?.id == item.id,
+        progress: progress,
+        selected: state.preferences.includes(item),
+        favorite: state.preferences.isFavorite(item.id),
+        isCustom: isCustomItem,
+        onToggle: () => controller.toggleItemSelection(item.id),
+        onFavorite: () => controller.toggleFavorite(item.id),
+        onEdit: () => context.go('/library/edit/${item.id}'),
+        onCorrect: () => _openCorrection(item),
+        onDelete: () => _confirmDelete(context, item),
+        selectionMode: _groupSelectionMode,
+        bulkSelected: _selectedForGroup.contains(item.id),
+        onBulkSelect: () => toggleBulkItem(item),
+        onSecondaryTapDown: (details) => unawaited(
+          _openDesktopItemMenu(item, details, isCustom: isCustomItem),
+        ),
+        onTap: onTap,
+      );
+    }
+
+    Widget resultBody;
+    if (filtered.isEmpty) {
+      resultBody = _EmptyLibrary(
+        query: _query,
+        filter: _filter,
+        suggestions: similarSearches,
+        onSuggestion: _applySearchSuggestion,
+      );
+    } else if (_searchPreferences.libraryViewMode == LibraryViewMode.grid) {
+      resultBody = GridView.builder(
+        key: Key('library-results-grid-page-$effectivePage'),
+        padding: const EdgeInsets.all(10),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 280,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.35,
+        ),
+        itemCount: pageItems.length,
+        itemBuilder: (context, index) =>
+            buildResultItem(pageItems[index], grid: true),
+      );
+    } else {
+      resultBody = ListView.separated(
+        key: Key(
+          'library-results-${_searchPreferences.libraryViewMode.name}-page-$effectivePage',
+        ),
+        padding: EdgeInsets.zero,
+        itemCount: pageItems.length,
+        separatorBuilder: (_, _) => const Divider(height: 1),
+        itemBuilder: (context, index) =>
+            buildResultItem(pageItems[index], grid: false),
+      );
+    }
+
+    final pagedResults = Card(
+      margin: EdgeInsets.zero,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (pageCount > 1)
+            _LibraryResultPager(
+              page: effectivePage,
+              pageCount: pageCount,
+              totalCount: filtered.length,
+              onPrevious: effectivePage == 0
+                  ? null
+                  : () => setState(() => _resultPage = effectivePage - 1),
+              onNext: effectivePage == pageCount - 1
+                  ? null
+                  : () => setState(() => _resultPage = effectivePage + 1),
+            ),
+          Expanded(child: resultBody),
+        ],
+      ),
+    );
+    final results = desktopMasterDetail
+        ? Row(
+            key: const Key('desktop-library-master-detail'),
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(flex: 6, child: pagedResults),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 4,
+                child: Card(
+                  margin: EdgeInsets.zero,
+                  clipBehavior: Clip.antiAlias,
+                  child: detailItem == null
+                      ? const _DesktopDetailPlaceholder()
+                      : KeyedSubtree(
+                          key: Key('desktop-library-detail-${detailItem.id}'),
+                          child: _ItemDetails(
+                            item: detailItem,
+                            progress: state.progress[detailItem.id],
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          )
+        : pagedResults;
+
+    return PopScope(
+      canPop: !_groupSelectionMode && _selectedForGroup.isEmpty,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop || (!_groupSelectionMode && _selectedForGroup.isEmpty)) {
+          return;
+        }
+        setState(() {
+          _groupSelectionMode = false;
+          _selectedForGroup.clear();
+          _selectionAnchorId = null;
+        });
+        _showLibraryMessage('선택을 해제했습니다. 한 번 더 뒤로 가면 화면을 닫습니다.');
       },
-      child: Focus(
-        autofocus: true,
-        child: SafeArea(
-          child: _LibraryWorkspace(
-            mobile: mobile,
-            narrow: narrow,
-            scrollController: _workspaceScrollController,
-            controls: controls,
-            results: results,
+      child: CallbackShortcuts(
+        bindings: {
+          const SingleActivator(LogicalKeyboardKey.keyF, control: true):
+              _focusSearch,
+          const SingleActivator(LogicalKeyboardKey.keyF, meta: true):
+              _focusSearch,
+          const SingleActivator(LogicalKeyboardKey.keyK, control: true):
+              _focusSearch,
+          const SingleActivator(LogicalKeyboardKey.keyK, meta: true):
+              _focusSearch,
+          const SingleActivator(LogicalKeyboardKey.escape): _clearSearch,
+        },
+        child: Focus(
+          autofocus: true,
+          child: SafeArea(
+            child: _LibraryWorkspace(
+              mobile: mobile,
+              narrow: narrow,
+              scrollController: _workspaceScrollController,
+              controls: controls,
+              results: results,
+            ),
           ),
         ),
       ),
@@ -799,8 +1259,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       _filter = nextFilter;
       _groupFilter = group;
       _advancedCriteria = criteria;
-      _selectedForGroup.clear();
-      _groupSelectionMode = false;
+      _resultPage = 0;
     });
     if (collection.query.trim().isNotEmpty) _revealSearchResults();
   }
@@ -909,7 +1368,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       ),
     );
     if (result == null || !mounted) return;
-    setState(() => _advancedCriteria = result);
+    setState(() {
+      _advancedCriteria = result;
+      _resultPage = 0;
+    });
   }
 
   void _startFilteredResults(List<LearningItem> items) {
@@ -1041,6 +1503,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   Future<void> _exportSelected() async {
     final items = _selectedItems();
+    await _exportItems(items);
+  }
+
+  Future<void> _exportItems(List<LearningItem> items) async {
     if (items.isEmpty) return;
     final content = const JsonEncoder.withIndent('  ').convert({
       'schemaVersion': 1,
@@ -1052,21 +1518,97 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final now = DateTime.now();
     final date =
         '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final bytes = Uint8List.fromList(utf8.encode(content));
+    final fileName = 'Sprache-selected-$date.json';
     try {
       final path = await FilePicker.platform.saveFile(
         dialogTitle: '선택 자료 내보내기',
-        fileName: 'Sprache-selected-$date.json',
+        fileName: fileName,
         type: FileType.custom,
         allowedExtensions: const ['json'],
-        bytes: Uint8List.fromList(utf8.encode(content)),
+        bytes: bytes,
       );
       if (path != null && mounted) {
         _showLibraryMessage('${items.length}개 자료를 내보냈습니다.');
+        await _showExportCompletionActions(
+          path: path,
+          fileName: fileName,
+          bytes: bytes,
+        );
       }
     } catch (_) {
       if (mounted) {
         _showLibraryMessage('내보내지 못했습니다. 저장 위치 권한을 확인해 주세요.');
       }
+    }
+  }
+
+  Future<void> _showExportCompletionActions({
+    required String path,
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    final actions = completionActionsFor(defaultTargetPlatform);
+    final action = await showModalBottomSheet<PlatformCompletionAction>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(
+              leading: Icon(Icons.task_alt_rounded),
+              title: Text('내보내기 완료'),
+              subtitle: Text('이 기기에 맞는 다음 행동을 선택하세요.'),
+            ),
+            for (final candidate in actions)
+              ListTile(
+                key: Key('export-completion-${candidate.name}'),
+                leading: Icon(switch (candidate) {
+                  PlatformCompletionAction.share => Icons.ios_share_rounded,
+                  PlatformCompletionAction.openFile =>
+                    Icons.open_in_new_rounded,
+                  PlatformCompletionAction.openFolder =>
+                    Icons.folder_open_rounded,
+                  PlatformCompletionAction.copyPath => Icons.copy_rounded,
+                }),
+                title: Text(switch (candidate) {
+                  PlatformCompletionAction.share => '공유 화면 열기',
+                  PlatformCompletionAction.openFile => '내보낸 파일 열기',
+                  PlatformCompletionAction.openFolder => '저장 폴더 열기',
+                  PlatformCompletionAction.copyPath => '파일 경로 복사',
+                }),
+                onTap: () => Navigator.pop(sheetContext, candidate),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+    const service = PlatformCompletionService();
+    try {
+      switch (action) {
+        case PlatformCompletionAction.share:
+          final box = context.findRenderObject() as RenderBox?;
+          await service.shareFile(
+            fileName: fileName,
+            bytes: bytes,
+            origin: box == null
+                ? null
+                : box.localToGlobal(Offset.zero) & box.size,
+          );
+        case PlatformCompletionAction.openFile:
+          if (!await service.openFile(path)) throw StateError('open failed');
+        case PlatformCompletionAction.openFolder:
+          if (!await service.openContainingFolder(path)) {
+            throw StateError('open failed');
+          }
+        case PlatformCompletionAction.copyPath:
+          await Clipboard.setData(ClipboardData(text: path));
+          if (mounted) _showLibraryMessage('파일 경로를 복사했습니다.');
+      }
+    } on Object {
+      if (mounted) _showLibraryMessage('완료 행동을 열지 못했습니다. 파일은 저장되어 있어요.');
     }
   }
 
@@ -1103,7 +1645,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
     if (confirmed != true || !mounted) return;
     final controller = ref.read(appControllerProvider.notifier);
-    final batch = await controller.trashCustomItems(customIds);
+    TrashBatch batch;
+    try {
+      await RecoveryCheckpointService().create(
+        controller.exportArchive(),
+        reason: RecoveryCheckpointReason.bulkDelete,
+      );
+      batch = await controller.trashCustomItems(customIds);
+    } catch (_) {
+      if (mounted) {
+        _showLibraryMessage('안전 지점을 만들지 못해 삭제를 시작하지 않았습니다. 저장 공간을 확인해 주세요.');
+      }
+      return;
+    }
     if (!mounted) return;
     setState(() {
       _selectedForGroup.removeAll(customIds);
@@ -1547,16 +2101,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     context.push('/session-builder');
   }
 
-  void _showDetails(
+  void _showMobileDetails(
     BuildContext context, {
-    required LearningItem item,
-    required ProgressRecord? progress,
+    required List<LearningItem> items,
+    required String initialItemId,
+    required Map<String, ProgressRecord> progressById,
   }) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
-      builder: (context) => _ItemDetails(item: item, progress: progress),
+      builder: (context) => _MobileItemDetailsSheet(
+        items: items,
+        initialItemId: initialItemId,
+        progressById: progressById,
+      ),
     );
   }
 
@@ -2568,7 +3127,7 @@ class _LibraryWorkspace extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const maxWidth = 1120.0;
+    const maxWidth = 1360.0;
     final horizontal = narrow
         ? 12.0
         : mobile
@@ -2627,16 +3186,210 @@ class _LibraryWorkspace extends StatelessWidget {
         constraints: const BoxConstraints(maxWidth: maxWidth),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              controls,
-              const SizedBox(height: 10),
-              Expanded(child: results),
-              const SizedBox(height: 8),
-              footer,
-            ],
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final showFooter = constraints.maxHeight >= 750;
+              final reservedForResults = showFooter ? 250.0 : 180.0;
+              final maxControlsHeight =
+                  (constraints.maxHeight - reservedForResults).clamp(
+                    140.0,
+                    650.0,
+                  );
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxHeight: maxControlsHeight),
+                    child: SingleChildScrollView(
+                      key: const Key('desktop-library-controls-scroll'),
+                      child: controls,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(child: results),
+                  if (showFooter) ...[const SizedBox(height: 8), footer],
+                ],
+              );
+            },
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LibraryViewModeControl extends StatelessWidget {
+  const _LibraryViewModeControl({required this.value, required this.onChanged});
+
+  final LibraryViewMode value;
+  final ValueChanged<LibraryViewMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<LibraryViewMode>(
+      key: const Key('library-view-mode'),
+      segments: const [
+        ButtonSegment(
+          value: LibraryViewMode.spacious,
+          icon: Icon(Icons.view_list_rounded, size: 18),
+          tooltip: '여유 목록',
+        ),
+        ButtonSegment(
+          value: LibraryViewMode.compact,
+          icon: Icon(Icons.density_small_rounded, size: 18),
+          tooltip: '컴팩트 목록',
+        ),
+        ButtonSegment(
+          value: LibraryViewMode.grid,
+          icon: Icon(Icons.grid_view_rounded, size: 18),
+          tooltip: '카드 격자',
+        ),
+      ],
+      selected: {value},
+      showSelectedIcon: false,
+      onSelectionChanged: (selected) => onChanged(selected.single),
+      style: const ButtonStyle(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
+class _LibraryResultPager extends StatelessWidget {
+  const _LibraryResultPager({
+    required this.page,
+    required this.pageCount,
+    required this.totalCount,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final int page;
+  final int pageCount;
+  final int totalCount;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 5, 8, 5),
+        child: Row(
+          children: [
+            Text(
+              '${page + 1}/$pageCount 화면 · 전체 $totalCount개',
+              key: const Key('library-result-page-label'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const Spacer(),
+            IconButton(
+              key: const Key('library-result-previous-page'),
+              tooltip: '이전 화면',
+              onPressed: onPrevious,
+              icon: const Icon(Icons.chevron_left_rounded),
+            ),
+            IconButton(
+              key: const Key('library-result-next-page'),
+              tooltip: '다음 화면',
+              onPressed: onNext,
+              icon: const Icon(Icons.chevron_right_rounded),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LibrarySelectionScopeToolbar extends StatelessWidget {
+  const _LibrarySelectionScopeToolbar({
+    required this.filteredCount,
+    required this.pageCount,
+    required this.selectedCount,
+    required this.hiddenSelectedCount,
+    required this.offPageSelectedCount,
+    required this.onSelectFiltered,
+    required this.onSelectPage,
+    required this.onInvertFiltered,
+  });
+
+  final int filteredCount;
+  final int pageCount;
+  final int selectedCount;
+  final int hiddenSelectedCount;
+  final int offPageSelectedCount;
+  final VoidCallback? onSelectFiltered;
+  final VoidCallback? onSelectPage;
+  final VoidCallback? onInvertFiltered;
+
+  @override
+  Widget build(BuildContext context) {
+    final details = <String>[
+      '선택 $selectedCount개',
+      if (hiddenSelectedCount > 0) '필터 밖 $hiddenSelectedCount개',
+      if (offPageSelectedCount > 0) '현재 화면 밖 $offPageSelectedCount개',
+    ].join(' · ');
+    return Material(
+      key: const Key('library-selection-scope-toolbar'),
+      color: Theme.of(
+        context,
+      ).colorScheme.secondaryContainer.withValues(alpha: 0.45),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Wrap(
+          spacing: 7,
+          runSpacing: 7,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(details, style: const TextStyle(fontWeight: FontWeight.w800)),
+            OutlinedButton.icon(
+              key: const Key('library-select-filtered'),
+              onPressed: onSelectFiltered,
+              icon: const Icon(Icons.done_all_rounded, size: 18),
+              label: Text('필터 전체 $filteredCount'),
+            ),
+            OutlinedButton.icon(
+              key: const Key('library-select-current-page'),
+              onPressed: onSelectPage,
+              icon: const Icon(Icons.select_all_rounded, size: 18),
+              label: Text('현재 화면 $pageCount'),
+            ),
+            OutlinedButton.icon(
+              key: const Key('library-invert-filtered-selection'),
+              onPressed: onInvertFiltered,
+              icon: const Icon(Icons.swap_vert_rounded, size: 18),
+              label: const Text('선택 반전'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DesktopDetailPlaceholder extends StatelessWidget {
+  const _DesktopDetailPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.chrome_reader_mode_outlined,
+              size: 42,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            const SizedBox(height: 10),
+            const Text('목록에서 표현을 선택하면 상세 정보가 여기에 열립니다.'),
+          ],
         ),
       ),
     );
@@ -3120,7 +3873,10 @@ class _DuplicateGroupEditorState extends State<_DuplicateGroupEditor> {
                   child: Text(
                     similar
                         ? '유사 후보 · ${(widget.group.similarity * 100).round()}%'
-                        : widget.group.items.first.text,
+                        : PrivacyModeScope.redact(
+                            context,
+                            widget.group.items.first.text,
+                          ),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
@@ -3134,8 +3890,11 @@ class _DuplicateGroupEditorState extends State<_DuplicateGroupEditor> {
             const SizedBox(height: 5),
             Text(
               similar
-                  ? '${widget.group.items[0].text}  ↔  '
-                        '${widget.group.items[1].text}'
+                  ? PrivacyModeScope.redact(
+                      context,
+                      '${widget.group.items[0].text}  ↔  '
+                      '${widget.group.items[1].text}',
+                    )
                   : '같은 표현·언어·주제로 묶였습니다.',
             ),
             const SizedBox(height: 8),
@@ -3155,9 +3914,9 @@ class _DuplicateGroupEditorState extends State<_DuplicateGroupEditor> {
                       value: item.id,
                       dense: true,
                       contentPadding: EdgeInsets.zero,
-                      title: Text(item.text),
+                      title: Text(PrivacyModeScope.redact(context, item.text)),
                       subtitle: Text(
-                        '${item.translations.join(' · ')}'
+                        '${PrivacyModeScope.redact(context, item.translations.join(' · '))}'
                         ' · 학습 ${widget.progress[item.id]?.attempts ?? 0}회',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -3721,6 +4480,9 @@ class _LibraryHeader extends StatelessWidget {
 class _LibraryRow extends ConsumerWidget {
   const _LibraryRow({
     required this.item,
+    required this.searchQuery,
+    required this.compactDensity,
+    required this.detailSelected,
     required this.progress,
     required this.selected,
     required this.favorite,
@@ -3734,9 +4496,13 @@ class _LibraryRow extends ConsumerWidget {
     required this.selectionMode,
     required this.bulkSelected,
     required this.onBulkSelect,
+    required this.onSecondaryTapDown,
   });
 
   final LearningItem item;
+  final String searchQuery;
+  final bool compactDensity;
+  final bool detailSelected;
   final ProgressRecord? progress;
   final bool selected;
   final bool favorite;
@@ -3750,6 +4516,7 @@ class _LibraryRow extends ConsumerWidget {
   final bool selectionMode;
   final bool bulkSelected;
   final VoidCallback onBulkSelect;
+  final GestureTapDownCallback onSecondaryTapDown;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -3764,131 +4531,315 @@ class _LibraryRow extends ConsumerWidget {
     );
     return Semantics(
       button: true,
-      label: '${item.text}, ${item.primaryTranslation}, ${status.$1}',
+      label: PrivacyModeScope.enabledOf(context)
+          ? '숨긴 학습 자료, ${status.$1}'
+          : '${item.text}, ${item.primaryTranslation}, ${status.$1}',
       child: InkWell(
         key: Key('library-item-${item.id}'),
         onTap: onTap,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final compact = constraints.maxWidth < 600;
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                compact ? 11 : 14,
-                compact ? 9 : 11,
-                8,
-                compact ? 9 : 11,
-              ),
-              child: Row(
-                children: [
-                  if (selectionMode) ...[
-                    Checkbox(
-                      value: bulkSelected,
-                      onChanged: (_) => onBulkSelect(),
-                    ),
-                    const SizedBox(width: 4),
-                  ],
-                  Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? colors.primaryContainer
-                              : colors.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: SizedBox.square(
-                          dimension: compact ? 40 : 46,
-                          child: Center(
-                            child: Text(
-                              item.learningLanguage.symbol,
-                              style: TextStyle(
-                                color: selected
-                                    ? colors.onPrimaryContainer
-                                    : colors.outline,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          ),
-                        ),
+        onSecondaryTapDown: onSecondaryTapDown,
+        child: ColoredBox(
+          color: detailSelected
+              ? colors.primaryContainer.withValues(alpha: 0.28)
+              : Colors.transparent,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = compactDensity || constraints.maxWidth < 600;
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 11 : 14,
+                  compact ? 6 : 11,
+                  8,
+                  compact ? 6 : 11,
+                ),
+                child: Row(
+                  children: [
+                    if (selectionMode) ...[
+                      Checkbox(
+                        value: bulkSelected,
+                        onChanged: (_) => onBulkSelect(),
                       ),
-                      Positioned(
-                        right: -3,
-                        bottom: -3,
-                        child: DecoratedBox(
+                      const SizedBox(width: 4),
+                    ],
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        DecoratedBox(
                           decoration: BoxDecoration(
-                            color: selected ? AppTheme.success : colors.outline,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: colors.surface, width: 2),
+                            color: selected
+                                ? colors.primaryContainer
+                                : colors.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox.square(
-                            dimension: 17,
-                            child: Icon(
-                              selected
-                                  ? Icons.check_rounded
-                                  : Icons.remove_rounded,
-                              size: 11,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: compact ? 10 : 13),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Flexible(
+                            dimension: compact ? 40 : 46,
+                            child: Center(
                               child: Text(
-                                item.text,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
+                                item.learningLanguage.symbol,
+                                style: TextStyle(
+                                  color: selected
+                                      ? colors.onPrimaryContainer
+                                      : colors.outline,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ),
-                            if (isCustom) ...[
-                              const SizedBox(width: 7),
-                              Icon(
-                                Icons.person_outline_rounded,
-                                size: 15,
-                                color: colors.primary,
-                              ),
-                            ],
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          [
-                            item.primaryTranslation,
-                            if (readingLabel.isNotEmpty)
-                              readingLabel.replaceAll('\n', ' · '),
-                            if (item.partOfSpeech != null)
-                              item.partOfSpeech!.koreanLabel,
-                            item.kind == LearningItemKind.word ? '단어' : '문장',
-                          ].join(' · '),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        Positioned(
+                          right: -3,
+                          bottom: -3,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppTheme.success
+                                  : colors.outline,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: colors.surface,
+                                width: 2,
+                              ),
+                            ),
+                            child: SizedBox.square(
+                              dimension: 17,
+                              child: Icon(
+                                selected
+                                    ? Icons.check_rounded
+                                    : Icons.remove_rounded,
+                                size: 11,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  if (!compact) ...[
-                    const SizedBox(width: 10),
-                    _ProgressStatus(label: status.$1, color: status.$2),
+                    SizedBox(width: compact ? 10 : 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: HighlightedSearchText(
+                                  PrivacyModeScope.redact(context, item.text),
+                                  query: searchQuery,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              if (isCustom) ...[
+                                const SizedBox(width: 7),
+                                Icon(
+                                  Icons.person_outline_rounded,
+                                  size: 15,
+                                  color: colors.primary,
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 3),
+                          HighlightedSearchText(
+                            [
+                              PrivacyModeScope.redact(
+                                context,
+                                item.primaryTranslation,
+                              ),
+                              if (readingLabel.isNotEmpty)
+                                PrivacyModeScope.redact(
+                                  context,
+                                  readingLabel.replaceAll('\n', ' · '),
+                                ),
+                              if (item.partOfSpeech != null)
+                                item.partOfSpeech!.koreanLabel,
+                              item.kind == LearningItemKind.word ? '단어' : '문장',
+                            ].join(' · '),
+                            query: searchQuery,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (!compact) ...[
+                      const SizedBox(width: 10),
+                      _ProgressStatus(label: status.$1, color: status.$2),
+                    ],
+                    if (!selectionMode) ...[
+                      IconButton(
+                        key: Key('favorite-${item.id}'),
+                        onPressed: onFavorite,
+                        tooltip: favorite ? '저장 해제' : '표현 저장',
+                        icon: Icon(
+                          favorite
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: favorite ? AppTheme.warning : colors.outline,
+                        ),
+                      ),
+                      PopupMenuButton<_ItemAction>(
+                        tooltip: '표현 관리',
+                        onSelected: (action) {
+                          switch (action) {
+                            case _ItemAction.toggle:
+                              onToggle();
+                            case _ItemAction.edit:
+                              onEdit();
+                            case _ItemAction.correct:
+                              onCorrect();
+                            case _ItemAction.delete:
+                              onDelete();
+                          }
+                        },
+                        itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: _ItemAction.toggle,
+                            child: ListTile(
+                              dense: true,
+                              leading: Icon(
+                                selected
+                                    ? Icons.visibility_off_outlined
+                                    : Icons.visibility_outlined,
+                              ),
+                              title: Text(selected ? '학습에서 제외' : '학습에 포함'),
+                            ),
+                          ),
+                          if (isCustom) ...[
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              value: _ItemAction.edit,
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.edit_rounded),
+                                title: Text('수정'),
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: _ItemAction.delete,
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.delete_outline_rounded),
+                                title: Text('삭제'),
+                              ),
+                            ),
+                          ] else ...[
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              value: _ItemAction.correct,
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.rate_review_outlined),
+                                title: Text('교정 메모'),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
                   ],
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LibraryGridCard extends StatelessWidget {
+  const _LibraryGridCard({
+    required this.item,
+    required this.searchQuery,
+    required this.progress,
+    required this.selected,
+    required this.favorite,
+    required this.isCustom,
+    required this.detailSelected,
+    required this.selectionMode,
+    required this.bulkSelected,
+    required this.onToggle,
+    required this.onFavorite,
+    required this.onEdit,
+    required this.onCorrect,
+    required this.onDelete,
+    required this.onBulkSelect,
+    required this.onSecondaryTapDown,
+    required this.onTap,
+  });
+
+  final LearningItem item;
+  final String searchQuery;
+  final ProgressRecord? progress;
+  final bool selected;
+  final bool favorite;
+  final bool isCustom;
+  final bool detailSelected;
+  final bool selectionMode;
+  final bool bulkSelected;
+  final VoidCallback onToggle;
+  final VoidCallback onFavorite;
+  final VoidCallback onEdit;
+  final VoidCallback onCorrect;
+  final VoidCallback onDelete;
+  final VoidCallback onBulkSelect;
+  final GestureTapDownCallback onSecondaryTapDown;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final status = _statusFor(progress);
+    return Card(
+      key: Key('library-item-${item.id}'),
+      margin: EdgeInsets.zero,
+      color: detailSelected ? colors.primaryContainer : null,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        onSecondaryTapDown: onSecondaryTapDown,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 9, 8, 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  if (selectionMode)
+                    Checkbox(
+                      value: bulkSelected,
+                      onChanged: (_) => onBulkSelect(),
+                      visualDensity: VisualDensity.compact,
+                    )
+                  else
+                    Container(
+                      width: 30,
+                      height: 30,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? colors.primaryContainer
+                            : colors.surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Text(
+                        item.learningLanguage.symbol,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  const Spacer(),
                   if (!selectionMode) ...[
                     IconButton(
                       key: Key('favorite-${item.id}'),
-                      onPressed: onFavorite,
+                      visualDensity: VisualDensity.compact,
                       tooltip: favorite ? '저장 해제' : '표현 저장',
+                      onPressed: onFavorite,
                       icon: Icon(
                         favorite
                             ? Icons.star_rounded
@@ -3913,52 +4864,52 @@ class _LibraryRow extends ConsumerWidget {
                       itemBuilder: (context) => [
                         PopupMenuItem(
                           value: _ItemAction.toggle,
-                          child: ListTile(
-                            dense: true,
-                            leading: Icon(
-                              selected
-                                  ? Icons.visibility_off_outlined
-                                  : Icons.visibility_outlined,
-                            ),
-                            title: Text(selected ? '학습에서 제외' : '학습에 포함'),
-                          ),
+                          child: Text(selected ? '학습에서 제외' : '학습에 포함'),
                         ),
                         if (isCustom) ...[
-                          const PopupMenuDivider(),
                           const PopupMenuItem(
                             value: _ItemAction.edit,
-                            child: ListTile(
-                              dense: true,
-                              leading: Icon(Icons.edit_rounded),
-                              title: Text('수정'),
-                            ),
+                            child: Text('수정'),
                           ),
                           const PopupMenuItem(
                             value: _ItemAction.delete,
-                            child: ListTile(
-                              dense: true,
-                              leading: Icon(Icons.delete_outline_rounded),
-                              title: Text('삭제'),
-                            ),
+                            child: Text('삭제'),
                           ),
-                        ] else ...[
-                          const PopupMenuDivider(),
+                        ] else
                           const PopupMenuItem(
                             value: _ItemAction.correct,
-                            child: ListTile(
-                              dense: true,
-                              leading: Icon(Icons.rate_review_outlined),
-                              title: Text('교정 메모'),
-                            ),
+                            child: Text('교정 메모'),
                           ),
-                        ],
                       ],
                     ),
                   ],
                 ],
               ),
-            );
-          },
+              const SizedBox(height: 4),
+              HighlightedSearchText(
+                PrivacyModeScope.redact(context, item.text),
+                query: searchQuery,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 3),
+              HighlightedSearchText(
+                PrivacyModeScope.redact(context, item.primaryTranslation),
+                query: searchQuery,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const Spacer(),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _ProgressStatus(label: status.$1, color: status.$2),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -4010,10 +4961,17 @@ class _ProgressStatus extends StatelessWidget {
 }
 
 class _EmptyLibrary extends StatelessWidget {
-  const _EmptyLibrary({required this.query, required this.filter});
+  const _EmptyLibrary({
+    required this.query,
+    required this.filter,
+    required this.suggestions,
+    required this.onSuggestion,
+  });
 
   final String query;
   final _LibraryFilter filter;
+  final List<String> suggestions;
+  final ValueChanged<String> onSuggestion;
 
   @override
   Widget build(BuildContext context) {
@@ -4063,11 +5021,118 @@ class _EmptyLibrary extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
+                if (query.isNotEmpty && suggestions.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  Text(
+                    '혹시 이 표현을 찾으셨나요?',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  const SizedBox(height: 7),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 7,
+                    runSpacing: 7,
+                    children: [
+                      for (final suggestion in suggestions)
+                        ActionChip(
+                          key: Key('library-similar-search-$suggestion'),
+                          label: Text(suggestion),
+                          onPressed: () => onSuggestion(suggestion),
+                        ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _MobileItemDetailsSheet extends StatefulWidget {
+  const _MobileItemDetailsSheet({
+    required this.items,
+    required this.initialItemId,
+    required this.progressById,
+  });
+
+  final List<LearningItem> items;
+  final String initialItemId;
+  final Map<String, ProgressRecord> progressById;
+
+  @override
+  State<_MobileItemDetailsSheet> createState() =>
+      _MobileItemDetailsSheetState();
+}
+
+class _MobileItemDetailsSheetState extends State<_MobileItemDetailsSheet> {
+  late int _index;
+
+  @override
+  void initState() {
+    super.initState();
+    _index = widget.items.indexWhere((item) => item.id == widget.initialItemId);
+    if (_index < 0) _index = 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.items.isEmpty) return const SizedBox.shrink();
+    final item = widget.items[_index];
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.88,
+      child: Column(
+        children: [
+          Expanded(
+            child: KeyedSubtree(
+              key: Key('mobile-library-detail-${item.id}'),
+              child: _ItemDetails(
+                item: item,
+                progress: widget.progressById[item.id],
+              ),
+            ),
+          ),
+          Material(
+            color: Theme.of(context).colorScheme.surfaceContainerLow,
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+                child: Row(
+                  children: [
+                    OutlinedButton.icon(
+                      key: const Key('mobile-detail-previous'),
+                      onPressed: _index == 0
+                          ? null
+                          : () => setState(() => _index -= 1),
+                      icon: const Icon(Icons.chevron_left_rounded),
+                      label: const Text('이전'),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${_index + 1} / ${widget.items.length}',
+                        key: const Key('mobile-detail-position'),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                    FilledButton.tonalIcon(
+                      key: const Key('mobile-detail-next'),
+                      onPressed: _index == widget.items.length - 1
+                          ? null
+                          : () => setState(() => _index += 1),
+                      icon: const Icon(Icons.chevron_right_rounded),
+                      label: const Text('다음'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -4109,7 +5174,7 @@ class _ItemDetails extends ConsumerWidget {
                 ),
                 const SizedBox(height: 18),
                 Text(
-                  item.text,
+                  PrivacyModeScope.redact(context, item.text),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.displaySmall,
                 ),
@@ -4117,7 +5182,7 @@ class _ItemDetails extends ConsumerWidget {
                   const SizedBox(height: 7),
                   Text(
                     key: const Key('item-reading-aids'),
-                    readingLabel,
+                    PrivacyModeScope.redact(context, readingLabel),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
@@ -4127,7 +5192,10 @@ class _ItemDetails extends ConsumerWidget {
                 ],
                 const SizedBox(height: 14),
                 Text(
-                  item.translations.join(' · '),
+                  PrivacyModeScope.redact(
+                    context,
+                    item.translations.join(' · '),
+                  ),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
@@ -4311,7 +5379,14 @@ class _ContentMetadataChip extends StatelessWidget {
         children: [
           Icon(icon, size: 15),
           const SizedBox(width: 5),
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ),
         ],
       ),
     );

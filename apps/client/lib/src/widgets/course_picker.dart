@@ -9,6 +9,7 @@ import '../domain/language.dart';
 import '../domain/study_subject.dart';
 import '../services/app_feedback_service.dart';
 import '../state/app_state.dart';
+import '../state/device_preferences_state.dart';
 
 /// Selects both built-in language courses and user-defined study subjects.
 ///
@@ -33,6 +34,8 @@ class CoursePicker extends ConsumerWidget {
       AppFeedbackService(
         readPreferences: () =>
             ref.read(appControllerProvider).preferences.experience,
+        readDevicePreferences: () =>
+            ref.read(devicePreferencesControllerProvider).preferences.voice,
       ).selection(),
     );
 
@@ -225,6 +228,10 @@ Future<void> showSubjectPicker(BuildContext context) async {
                                     .read(appControllerProvider)
                                     .preferences
                                     .experience,
+                                readDevicePreferences: () => ref
+                                    .read(devicePreferencesControllerProvider)
+                                    .preferences
+                                    .voice,
                               ).selection(),
                             );
                             controller.selectSubject(subject.id);

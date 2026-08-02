@@ -75,7 +75,7 @@ void main() {
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/mobile-study.png'),
       );
-      await tester.tap(find.text('감사합니다'));
+      await tester.tap(find.byKey(const Key('study-choice-0')));
       await tester.tap(find.text('정답 확인'));
       await tester.pumpAndSettle();
       await expectLater(
@@ -407,7 +407,7 @@ void main() {
       );
       container.read(appRouterProvider).go('/study?mode=meaning');
       await tester.pumpAndSettle();
-      await tester.tap(find.text('감사합니다'));
+      await tester.tap(find.byKey(const Key('study-choice-0')));
       await tester.tap(find.text('정답 확인'));
       await tester.pumpAndSettle();
 
@@ -631,7 +631,7 @@ void main() {
         find.byType(MaterialApp),
         matchesGoldenFile('goldens/mobile-study-dark.png'),
       );
-      await tester.tap(find.text('감사합니다'));
+      await tester.tap(find.byKey(const Key('study-choice-0')));
       await tester.tap(find.text('정답 확인'));
       await tester.pumpAndSettle();
       await expectLater(

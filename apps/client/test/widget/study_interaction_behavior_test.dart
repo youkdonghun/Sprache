@@ -224,6 +224,7 @@ void main() {
       AppFeedbackCue.selection,
       AppFeedbackCue.success,
     ]);
+    expect(find.byKey(const Key('feedback-celebration-full')), findsOneWidget);
   });
 
   testWidgets('Korean and native reading aids stay independently visible', (
@@ -322,6 +323,177 @@ void main() {
       expect(nativeHint, contains(nativeLabel));
     }
     expect(nativeHint, isNot(contains(koreanOnly)));
+  });
+
+  testWidgets(
+    'focus layout hides shortcuts and applies narrow left-handed controls',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(1100, 900);
+      addTearDown(tester.view.reset);
+      const experience = AppExperiencePreferences(
+        focusStudyMode: true,
+        showShortcutHints: false,
+        showStudyTimer: false,
+        showQuestionCounter: false,
+        progressStyle: AppProgressStyle.minimal,
+        leftHandedControls: true,
+        readingWidth: AppReadingWidth.narrow,
+      );
+
+      await _pumpStudy(
+        tester,
+        preferences: const StudyPreferences(
+          experience: experience,
+          interaction: StudyInteractionPreferences(
+            choiceLayout: StudyChoiceLayout.list,
+            shuffleChoices: false,
+          ),
+        ),
+        screen: const StudyScreen(mode: StudyMode.meaning, itemLimit: 2),
+      );
+
+      expect(find.text('알맞은 뜻을 고르세요'), findsNothing);
+      expect(find.byKey(const Key('study-choice-shortcut')), findsNothing);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      expect(
+        find.byKey(const Key('study-actions-left-handed')),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSize(find.byKey(const Key('study-reading-width'))).width,
+        620,
+      );
+      expect(find.byIcon(Icons.timer_outlined), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('step progress and coach feedback follow session preferences', (
+    tester,
+  ) async {
+    const experience = AppExperiencePreferences(
+      progressStyle: AppProgressStyle.steps,
+      feedbackDetail: AppFeedbackDetail.coach,
+      encouragementTone: AppEncouragementTone.playful,
+      celebrationLevel: AppCelebrationLevel.subtle,
+    );
+    await _pumpStudy(
+      tester,
+      preferences: const StudyPreferences(
+        experience: experience,
+        interaction: StudyInteractionPreferences(
+          choiceLayout: StudyChoiceLayout.list,
+          shuffleChoices: false,
+        ),
+      ),
+      screen: const StudyScreen(mode: StudyMode.meaning, itemLimit: 2),
+    );
+
+    expect(find.byKey(const Key('study-step-progress')), findsOneWidget);
+    expect(find.byKey(const Key('study-time-estimate')), findsOneWidget);
+    expect(find.textContaining('분'), findsWidgets);
+    await tester.tap(find.byKey(const Key('study-choice-0')));
+    await tester.tap(find.byKey(const Key('submit-study-answer')));
+    await tester.pump();
+
+    expect(find.byKey(const Key('study-feedback-coach-tip')), findsOneWidget);
+    expect(
+      find.byKey(const Key('feedback-celebration-subtle')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('feedback-celebration-full')), findsNothing);
+    expect(
+      _textWithin(tester, find.byKey(const Key('study-feedback-popup'))),
+      contains('🎉'),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'motion off prevents auto advance and concise feedback stays lean',
+    (tester) async {
+      const experience = AppExperiencePreferences(
+        motionLevel: AppMotionLevel.off,
+        feedbackDetail: AppFeedbackDetail.concise,
+        celebrationLevel: AppCelebrationLevel.off,
+        encouragementTone: AppEncouragementTone.minimal,
+      );
+      await _pumpStudy(
+        tester,
+        preferences: const StudyPreferences(
+          experience: experience,
+          interaction: StudyInteractionPreferences(
+            choiceLayout: StudyChoiceLayout.list,
+            shuffleChoices: false,
+            autoAdvanceCorrect: true,
+            autoAdvanceDelayMs: 300,
+          ),
+        ),
+        screen: const StudyScreen(mode: StudyMode.meaning, itemLimit: 1),
+      );
+
+      await tester.tap(find.byKey(const Key('study-choice-0')));
+      await tester.tap(find.byKey(const Key('submit-study-answer')));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.byKey(const Key('study-feedback-popup')), findsOneWidget);
+      expect(
+        find.byKey(const Key('quick-add-from-study-feedback')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('correct-as-hard')), findsOneWidget);
+      expect(find.byKey(const Key('feedback-celebration-full')), findsNothing);
+      expect(
+        find.byKey(const Key('feedback-celebration-subtle')),
+        findsNothing,
+      );
+      expect(find.textContaining('기억에 성공해'), findsNothing);
+      await tester.tap(find.byKey(const Key('correct-as-hard')));
+      await tester.pump();
+      expect(find.byKey(const Key('restore-answer-result')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('next-question-from-feedback')));
+      await tester.pumpAndSettle();
+      expect(find.text('학습 완료'), findsOneWidget);
+      expect(
+        find.byKey(const Key('completion-celebration-full')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('completion-celebration-subtle')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('study-only scale and leading card alignment stay scoped', (
+    tester,
+  ) async {
+    const experience = AppExperiencePreferences(
+      studyTextScale: AppStudyTextScale.extraLarge,
+      cardAlignment: AppCardAlignment.leading,
+    );
+    await _pumpStudy(
+      tester,
+      preferences: const StudyPreferences(
+        experience: experience,
+        interaction: StudyInteractionPreferences(
+          choiceLayout: StudyChoiceLayout.list,
+          shuffleChoices: false,
+        ),
+      ),
+      screen: const StudyScreen(mode: StudyMode.meaning, itemLimit: 2),
+    );
+
+    final promptFinder = find.byKey(const Key('study-question-prompt'));
+    final prompt = tester.widget<Text>(promptFinder);
+    final scaler = MediaQuery.textScalerOf(tester.element(promptFinder));
+
+    expect(find.byKey(const Key('study-text-scale-scope')), findsOneWidget);
+    expect(scaler.scale(10), 13);
+    expect(prompt.textAlign, TextAlign.start);
+    expect(tester.takeException(), isNull);
   });
 }
 

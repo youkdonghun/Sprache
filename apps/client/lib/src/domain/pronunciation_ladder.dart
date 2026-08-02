@@ -41,6 +41,41 @@ class PronunciationLadder {
     ShadowingStage.context,
   ];
 
+  static List<String> segmentsFor(
+    LearningItem item, {
+    int maxTokensPerSegment = 4,
+  }) {
+    final safeMax = maxTokensPerSegment.clamp(1, 8).toInt();
+    final tokens = item.sentenceTokens.isNotEmpty
+        ? item.sentenceTokens
+              .map((token) => token.trim())
+              .where((token) => token.isNotEmpty)
+              .take(120)
+              .toList(growable: false)
+        : item.text.trim().contains(RegExp(r'\s'))
+        ? item.text
+              .trim()
+              .split(RegExp(r'\s+'))
+              .where((token) => token.isNotEmpty)
+              .take(120)
+              .toList(growable: false)
+        : item.text.runes
+              .take(120)
+              .map(String.fromCharCode)
+              .toList(growable: false);
+    if (tokens.isEmpty) return const [];
+    if (item.kind == LearningItemKind.word || tokens.length <= safeMax) {
+      return [item.text.trim()];
+    }
+    final segments = <String>[];
+    for (var start = 0; start < tokens.length; start += safeMax) {
+      final slice = tokens.skip(start).take(safeMax).toList(growable: false);
+      final noSpaces = !item.text.contains(RegExp(r'\s'));
+      segments.add(slice.join(noSpaces ? '' : ' '));
+    }
+    return List.unmodifiable(segments);
+  }
+
   static String contextPrompt(LearningItem item) {
     final example = item.example?.trim();
     final translation = item.exampleTranslation?.trim();

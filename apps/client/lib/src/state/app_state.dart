@@ -9,6 +9,7 @@ import '../data/database/app_database.dart';
 import '../data/sample_content.dart';
 import '../data/study_store.dart';
 import '../domain/active_study_session.dart';
+import '../domain/adaptive_study_session.dart';
 import '../domain/app_experience_preferences.dart';
 import '../domain/content_management.dart';
 import '../domain/content_validation.dart';
@@ -21,6 +22,8 @@ import '../domain/learning_group.dart';
 import '../domain/learning_item.dart';
 import '../domain/learning_item_codec.dart';
 import '../domain/library_search.dart';
+import '../domain/local_search_query.dart';
+import '../domain/onboarding_profile.dart';
 import '../domain/progress.dart';
 import '../domain/review_forecast.dart';
 import '../domain/scheduler.dart';
@@ -30,6 +33,7 @@ import '../domain/study_history.dart';
 import '../domain/study_interaction_preferences.dart';
 import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
+import '../domain/study_routines.dart';
 import '../domain/study_session_builder.dart';
 import '../domain/study_subject.dart';
 import '../import/content_import_parser.dart';
@@ -410,10 +414,23 @@ class AppController extends StateNotifier<AppState> {
     );
   }
 
+  Future<StudyNotificationReconcileResult> refreshStudyNotifications() =>
+      _reconcileStudyNotifications(state.preferences);
+
   Future<StudyNotificationReconcileResult> _reconcileStudyNotifications(
     StudyPreferences preferences,
   ) {
-    return _notificationService.reconcile(preferences.savedSessionPlans);
+    final profile = preferences.onboardingProfile;
+    final scheduledOnStudyDays = preferences.savedSessionPlans.map((plan) {
+      final scheduledAt = plan.scheduledAt;
+      if (scheduledAt == null || profile.isStudyDay(scheduledAt.toLocal())) {
+        return plan;
+      }
+      return plan.copyWith(
+        scheduledAt: profile.nextStudyDateTime(scheduledAt).toUtc(),
+      );
+    });
+    return _notificationService.reconcile(scheduledOnStudyDays);
   }
 
   void _persist({bool queueSync = true}) {
@@ -1571,6 +1588,15 @@ class AppController extends StateNotifier<AppState> {
     _persist();
   }
 
+  /// Saves first-run progress locally without requiring an account or Drive.
+  void saveOnboardingDraft(OnboardingProfile profile) {
+    final preferences = state.preferences.copyWith(onboardingProfile: profile);
+    state = state.copyWith(preferences: preferences);
+    _enqueueUnawaitedPersistenceWrite(
+      () => _store.savePreferences(preferences),
+    );
+  }
+
   void updatePreferences(StudyPreferences preferences) {
     final timestamped = preferences.copyWith(
       settingsUpdatedAt: DateTime.now().toUtc(),
@@ -1644,10 +1670,22 @@ class AppController extends StateNotifier<AppState> {
     final title = plan.title.trim().isEmpty
         ? '학습 계획 ${state.preferences.savedSessionPlans.length + 1}'
         : String.fromCharCodes(plan.title.trim().runes.take(60));
+    final existingInRoutine = state.preferences.savedSessionPlans.where(
+      (entry) =>
+          entry.planId != planId &&
+          plan.routineName.isNotEmpty &&
+          entry.routineName == plan.routineName,
+    );
+    final routineOrder = plan.routineName.isEmpty
+        ? 0
+        : plan.planId.isEmpty
+        ? existingInRoutine.length.clamp(0, 19)
+        : plan.routineOrder;
     final saved = plan.copyWith(
       planId: planId,
       subjectId: state.activeSubjectId,
       title: title,
+      routineOrder: routineOrder,
       updatedAt: now,
     );
     final plansById = <String, StudySessionPlan>{
@@ -1719,7 +1757,10 @@ class AppController extends StateNotifier<AppState> {
       return null;
     }
     final now = DateTime.now().toUtc();
-    final consumed = stored.copyWith(scheduledAt: null, updatedAt: now);
+    final consumed = stored.copyWith(
+      scheduledAt: nextRoutineOccurrence(stored, after: now),
+      updatedAt: now,
+    );
     updatePreferences(
       state.preferences.copyWith(
         sessionPlan: consumed,
@@ -1730,6 +1771,69 @@ class AppController extends StateNotifier<AppState> {
       ),
     );
     return consumed;
+  }
+
+  void reorderRoutineSessionPlans(
+    String routineName,
+    List<String> orderedPlanIds,
+  ) {
+    final normalized = routineName.trim();
+    if (normalized.isEmpty) return;
+    final orderById = <String, int>{
+      for (final (index, id) in orderedPlanIds.take(20).indexed) id: index,
+    };
+    final now = DateTime.now().toUtc();
+    updatePreferences(
+      state.preferences.copyWith(
+        savedSessionPlans: [
+          for (final plan in state.preferences.savedSessionPlans)
+            if (plan.routineName == normalized &&
+                orderById.containsKey(plan.planId))
+              plan.copyWith(
+                routineOrder: orderById[plan.planId],
+                updatedAt: now,
+              )
+            else
+              plan,
+        ],
+      ),
+    );
+  }
+
+  int applyRecommendedRoutineTime(
+    int minuteOfDay, {
+    String? routineName,
+    DateTime? now,
+  }) {
+    final safeMinute = minuteOfDay.clamp(0, 1439);
+    final normalized = routineName?.trim() ?? '';
+    final changedAt = (now ?? DateTime.now()).toUtc();
+    var changed = 0;
+    final updated = <StudySessionPlan>[];
+    for (final plan in state.preferences.savedSessionPlans) {
+      final matches =
+          plan.subjectId == state.activeSubjectId &&
+          plan.routineName.isNotEmpty &&
+          (normalized.isEmpty || plan.routineName == normalized);
+      if (!matches) {
+        updated.add(plan);
+        continue;
+      }
+      final candidate = plan.copyWith(
+        routineMinuteOfDay: safeMinute,
+        updatedAt: changedAt,
+      );
+      updated.add(
+        candidate.copyWith(
+          scheduledAt: nextRoutineOccurrence(candidate, after: changedAt),
+        ),
+      );
+      changed++;
+    }
+    if (changed > 0) {
+      updatePreferences(state.preferences.copyWith(savedSessionPlans: updated));
+    }
+    return changed;
   }
 
   StudySessionPlan? completeExamPlanForToday(
@@ -1768,6 +1872,7 @@ class AppController extends StateNotifier<AppState> {
     String planId, {
     Duration delay = const Duration(minutes: 10),
     DateTime? now,
+    bool allowOtherSubject = false,
   }) {
     final changedAt = (now ?? DateTime.now()).toUtc();
     final safeMinutes = delay.inMinutes.clamp(1, 24 * 60);
@@ -1781,12 +1886,25 @@ class AppController extends StateNotifier<AppState> {
         ),
         updatedAt: changedAt,
       );
-    });
+    }, allowOtherSubject: allowOtherSubject);
+  }
+
+  void updateWeeklyLearningTarget({
+    required int studyDays,
+    required int studyMinutes,
+  }) {
+    updatePreferences(
+      state.preferences.copyWith(
+        weeklyTargetDays: studyDays.clamp(1, 7),
+        weeklyTargetMinutes: studyMinutes.clamp(5, 840),
+      ),
+    );
   }
 
   StudySessionPlan? deferSessionPlanUntilTomorrow(
     String planId, {
     DateTime? now,
+    bool allowOtherSubject = false,
   }) {
     final changedAt = (now ?? DateTime.now()).toUtc();
     return _updateSavedSessionPlan(planId, (plan) {
@@ -1808,7 +1926,57 @@ class AppController extends StateNotifier<AppState> {
         ),
         updatedAt: changedAt,
       );
-    });
+    }, allowOtherSubject: allowOtherSubject);
+  }
+
+  Future<bool> applyStudyNotificationAction(
+    StudyNotificationAction action,
+  ) async {
+    StudySessionPlan? plan;
+    for (final saved in state.preferences.savedSessionPlans) {
+      if (saved.planId == action.planId) {
+        plan = saved;
+        break;
+      }
+    }
+    if (plan == null) return false;
+    StudySessionPlan? updated;
+    switch (action.kind) {
+      case StudyNotificationActionKind.open:
+      case StudyNotificationActionKind.start:
+        if (state.activeSubjectId != plan.subjectId) {
+          selectSubject(plan.subjectId);
+        }
+        updated = consumeScheduledSessionPlan(plan.planId);
+        break;
+      case StudyNotificationActionKind.snooze10:
+        updated = snoozeSessionPlan(
+          plan.planId,
+          delay: const Duration(minutes: 10),
+          now: action.receivedAt,
+          allowOtherSubject: true,
+        );
+        break;
+      case StudyNotificationActionKind.snooze30:
+        updated = snoozeSessionPlan(
+          plan.planId,
+          delay: const Duration(minutes: 30),
+          now: action.receivedAt,
+          allowOtherSubject: true,
+        );
+        break;
+      case StudyNotificationActionKind.snoozeTomorrow:
+        updated = deferSessionPlanUntilTomorrow(
+          plan.planId,
+          now: action.receivedAt,
+          allowOtherSubject: true,
+        );
+        break;
+    }
+    if (updated == null) return false;
+    await flushPendingWrites();
+    await refreshStudyNotifications();
+    return true;
   }
 
   StudySessionPlan? changeSessionPlanTime(
@@ -1839,8 +2007,9 @@ class AppController extends StateNotifier<AppState> {
 
   StudySessionPlan? _updateSavedSessionPlan(
     String planId,
-    StudySessionPlan Function(StudySessionPlan plan) update,
-  ) {
+    StudySessionPlan Function(StudySessionPlan plan) update, {
+    bool allowOtherSubject = false,
+  }) {
     StudySessionPlan? current;
     for (final plan in state.preferences.savedSessionPlans) {
       if (plan.planId == planId) {
@@ -1848,7 +2017,8 @@ class AppController extends StateNotifier<AppState> {
         break;
       }
     }
-    if (current == null || current.subjectId != state.activeSubjectId) {
+    if (current == null ||
+        (!allowOtherSubject && current.subjectId != state.activeSubjectId)) {
       return null;
     }
     final next = update(current);
@@ -1935,7 +2105,7 @@ class AppController extends StateNotifier<AppState> {
     DateTime? now,
   }) {
     if (collection.subjectId != state.activeSubjectId) return const [];
-    final query = foldLibrarySearchText(collection.query);
+    final query = LocalSearchQuery.parse(collection.query);
     final effectiveNow = (now ?? DateTime.now()).toUtc();
     final items = courseItems.where((item) {
       if (collection.kinds.isNotEmpty &&
@@ -1983,25 +2153,15 @@ class AppController extends StateNotifier<AppState> {
               progress!.nextReviewAt!.isAfter(effectiveNow))) {
         return false;
       }
-      if (query.isNotEmpty) {
-        final searchable = foldLibrarySearchText(
-          [
-            item.text,
-            ...item.translations,
-            ...item.acceptedAnswers,
-            ...item.readings.map((reading) => reading.value),
-            if (item.example != null) item.example!,
-            if (item.exampleTranslation != null) item.exampleTranslation!,
-            ...item.tags,
-            item.level,
-            item.partOfSpeech?.koreanLabel ?? '',
-            item.source.name,
-            item.source.sourceId ?? '',
-            item.source.license,
-            item.source.author ?? '',
-          ].join(' '),
-        );
-        if (!query.split(' ').every(searchable.contains)) return false;
+      if (!localSearchItemMatches(
+        query: query,
+        item: item,
+        progress: progress,
+        favorite: state.preferences.favoriteItemIds.contains(item.id),
+        excluded: state.preferences.excludedItemIds.contains(item.id),
+        now: effectiveNow,
+      )) {
+        return false;
       }
       return true;
     }).toList();
@@ -2243,6 +2403,8 @@ class AppController extends StateNotifier<AppState> {
     required List<String> itemIds,
     required DateTime startedAt,
     String? courseId,
+    StudySessionRuntimeOptions runtimeOptions =
+        const StudySessionRuntimeOptions(),
   }) {
     final session = ActiveStudySession.started(
       sessionId: sessionId,
@@ -2251,6 +2413,7 @@ class AppController extends StateNotifier<AppState> {
       unitIndex: unitIndex,
       itemIds: itemIds,
       startedAt: startedAt,
+      runtimeOptions: runtimeOptions,
     );
     _activateStudySession(session);
     return session;
@@ -2265,6 +2428,10 @@ class AppController extends StateNotifier<AppState> {
     required DateTime updatedAt,
     Set<String> wrongItemIds = const {},
     Set<String> finalCorrectItemIds = const {},
+    StudySessionRuntimeOptions? runtimeOptions,
+    StudyInputCheckpoint? inputCheckpoint,
+    bool clearInputCheckpoint = false,
+    List<StudyAttemptMetric>? attemptMetrics,
     String? expectedSessionId,
   }) {
     final current = state.activeStudySession;
@@ -2282,6 +2449,15 @@ class AppController extends StateNotifier<AppState> {
       itemIds: List.unmodifiable(itemIds),
       wrongItemIds: Set.unmodifiable(wrongItemIds),
       finalCorrectItemIds: Set.unmodifiable(finalCorrectItemIds),
+      runtimeOptions: runtimeOptions,
+      inputCheckpoint: clearInputCheckpoint
+          ? null
+          : inputCheckpoint ?? current.inputCheckpoint,
+      attemptMetrics: attemptMetrics == null
+          ? null
+          : List.unmodifiable(
+              attemptMetrics.take(StudyLimits.maxActiveQueueEntries),
+            ),
       currentIndex: currentIndex,
       correctCount: correctCount,
       wrongCount: wrongCount,
@@ -2301,6 +2477,10 @@ class AppController extends StateNotifier<AppState> {
     int? correctCount,
     int? wrongCount,
     int? earnedXp,
+    StudySessionRuntimeOptions? runtimeOptions,
+    StudyInputCheckpoint? inputCheckpoint,
+    bool clearInputCheckpoint = false,
+    List<StudyAttemptMetric>? attemptMetrics,
     String? expectedSessionId,
   }) {
     final current = state.activeStudySession;
@@ -2322,6 +2502,15 @@ class AppController extends StateNotifier<AppState> {
       correctCount: correctCount,
       wrongCount: wrongCount,
       earnedXp: earnedXp,
+      runtimeOptions: runtimeOptions,
+      inputCheckpoint: clearInputCheckpoint
+          ? null
+          : inputCheckpoint ?? current.inputCheckpoint,
+      attemptMetrics: attemptMetrics == null
+          ? null
+          : List.unmodifiable(
+              attemptMetrics.take(StudyLimits.maxActiveQueueEntries),
+            ),
       updatedAt: occurredAt.toUtc(),
     );
     final next = updated.pause(occurredAt);
@@ -2405,6 +2594,26 @@ class AppController extends StateNotifier<AppState> {
       ],
     );
     await _queueSyncIfDriveConnected();
+  }
+
+  Future<int> clearPronunciationMetrics() async {
+    final count = state.recentSessions.fold<int>(
+      0,
+      (sum, session) => sum + session.pronunciationMetrics.length,
+    );
+    if (count == 0) return 0;
+    final next = [
+      for (final session in state.recentSessions)
+        if (session.pronunciationMetrics.isEmpty)
+          session
+        else
+          session.withPronunciationMetrics(const []),
+    ];
+    await _store.replaceStudySessions(next);
+    if (!mounted) return count;
+    state = state.copyWith(recentSessions: next);
+    await _queueSyncIfDriveConnected();
+    return count;
   }
 
   void setDriveConnected(bool connected) {
@@ -4460,9 +4669,104 @@ class AppController extends StateNotifier<AppState> {
     return exportSyncSnapshot();
   }
 
-  Future<BackupRestoreResult> restoreBackup(BackupArchive archive) async {
+  BackupRestorePreview previewBackupRestore(
+    BackupArchive archive, {
+    BackupRestoreSelection selection = const BackupRestoreSelection(),
+  }) {
+    final local = exportSyncSnapshot();
+    final remote = archive.snapshot;
+    BackupRestoreDelta rows(
+      Object? localValue,
+      Object? remoteValue,
+      String idKey,
+    ) => _backupRestoreRowsDelta(localValue, remoteValue, idKey);
+    final content =
+        rows(local['customItems'], remote['customItems'], 'id') +
+        rows(
+          local['customItemTombstones'],
+          remote['customItemTombstones'],
+          'id',
+        );
+    final progress =
+        rows(local['progress'], remote['progress'], 'itemId') +
+        _backupRestoreObjectDelta(local['profile'], remote['profile']) +
+        _backupRestoreObjectDelta(local['activeStudy'], remote['activeStudy']);
+    final remoteRecentSessions = remote['recentSessions'];
+    final sessionRows = <Object?>[
+      if (remoteRecentSessions is List<Object?>) ...remoteRecentSessions,
+      ...archive.sessions.map((session) => session.toJson()),
+    ];
+    final sessions = rows(local['recentSessions'], sessionRows, 'sessionId');
+    final settings = _backupRestoreObjectDelta(
+      local['settings'],
+      remote['settings'],
+    );
+    BackupRestoreDelta selected(
+      BackupRestoreCategory category,
+      BackupRestoreDelta value,
+    ) => selection.includes(category)
+        ? value
+        : BackupRestoreDelta(
+            preserved: _backupRestoreLocalCount(switch (category) {
+              BackupRestoreCategory.content => local['customItems'],
+              BackupRestoreCategory.progress => local['progress'],
+              BackupRestoreCategory.sessions => local['recentSessions'],
+              BackupRestoreCategory.settings => const <Object?>[null],
+            }),
+          );
+    return BackupRestorePreview({
+      BackupRestoreCategory.content: selected(
+        BackupRestoreCategory.content,
+        content,
+      ),
+      BackupRestoreCategory.progress: selected(
+        BackupRestoreCategory.progress,
+        progress,
+      ),
+      BackupRestoreCategory.sessions: selected(
+        BackupRestoreCategory.sessions,
+        sessions,
+      ),
+      BackupRestoreCategory.settings: selected(
+        BackupRestoreCategory.settings,
+        settings,
+      ),
+    });
+  }
+
+  Future<BackupRestoreResult> restoreBackup(
+    BackupArchive archive, {
+    BackupRestoreSelection selection = const BackupRestoreSelection(),
+  }) async {
+    if (!selection.any) {
+      throw ArgumentError.value(selection, 'selection', '복원 범주가 없습니다.');
+    }
+    final current = exportSyncSnapshot();
+    final incoming = archive.snapshot;
+    final selectedSnapshot = <String, Object?>{
+      ...incoming,
+      'profile': selection.progress ? incoming['profile'] : current['profile'],
+      'settings': selection.settings
+          ? incoming['settings']
+          : current['settings'],
+      'progress': selection.progress
+          ? incoming['progress']
+          : current['progress'],
+      'customItems': selection.content
+          ? incoming['customItems']
+          : current['customItems'],
+      'customItemTombstones': selection.content
+          ? incoming['customItemTombstones']
+          : current['customItemTombstones'],
+      'recentSessions': selection.sessions
+          ? incoming['recentSessions']
+          : current['recentSessions'],
+      'activeStudy': selection.progress
+          ? incoming['activeStudy']
+          : current['activeStudy'],
+    };
     await mergeRemoteSnapshot(
-      archive.snapshot,
+      selectedSnapshot,
       markDriveConnected: false,
       recordSyncReport: false,
     );
@@ -4471,7 +4775,10 @@ class AppController extends StateNotifier<AppState> {
       for (final session in state.recentSessions) session.sessionId: session,
     };
     var restoredSessionCount = 0;
-    for (final incoming in archive.sessions) {
+    for (final incoming
+        in selection.sessions
+            ? archive.sessions
+            : const <StudySessionSummary>[]) {
       final current = sessionsById[incoming.sessionId];
       final incomingWins =
           current == null ||
@@ -4489,7 +4796,9 @@ class AppController extends StateNotifier<AppState> {
 
     final recentSessions = await _store.loadRecentSessions();
     final nextState = state.copyWith(
-      selectedLanguage: archive.selectedLanguage,
+      selectedLanguage: selection.progress
+          ? archive.selectedLanguage
+          : state.selectedLanguage,
       recentSessions: recentSessions,
     );
     await _store.saveProfile(
@@ -4518,6 +4827,58 @@ class AppController extends StateNotifier<AppState> {
     );
   }
 }
+
+BackupRestoreDelta _backupRestoreRowsDelta(
+  Object? localValue,
+  Object? remoteValue,
+  String idKey,
+) {
+  Map<String, Map<String, Object?>> index(Object? raw) {
+    final result = <String, Map<String, Object?>>{};
+    if (raw is! List<Object?>) return result;
+    for (final value in raw) {
+      if (value is! Map) continue;
+      final row = Map<String, Object?>.from(value);
+      final id = row[idKey];
+      if (id is String && id.trim().isNotEmpty) result[id] = row;
+    }
+    return result;
+  }
+
+  final local = index(localValue);
+  final remote = index(remoteValue);
+  var added = 0;
+  var changed = 0;
+  for (final entry in remote.entries) {
+    final current = local[entry.key];
+    if (current == null) {
+      added += 1;
+    } else if (jsonEncode(current) != jsonEncode(entry.value)) {
+      changed += 1;
+    }
+  }
+  return BackupRestoreDelta(
+    added: added,
+    changed: changed,
+    preserved: (local.length - changed).clamp(0, local.length),
+  );
+}
+
+BackupRestoreDelta _backupRestoreObjectDelta(Object? local, Object? remote) {
+  if (local == null && remote == null) return const BackupRestoreDelta();
+  if (local == null) return const BackupRestoreDelta(added: 1);
+  if (jsonEncode(local) == jsonEncode(remote)) {
+    return const BackupRestoreDelta(preserved: 1);
+  }
+  return const BackupRestoreDelta(changed: 1);
+}
+
+int _backupRestoreLocalCount(Object? value) => switch (value) {
+  final List<Object?> values => values.length,
+  final Map<Object?, Object?> values => values.length,
+  null => 0,
+  _ => 1,
+};
 
 StoredActiveStudyState? _activeStudyStateFromJson(Object? raw) {
   if (raw is! Map) return null;

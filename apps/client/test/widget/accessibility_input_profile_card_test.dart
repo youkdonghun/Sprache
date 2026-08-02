@@ -52,6 +52,7 @@ void main() {
         'accessibility-large-rating-controls',
         'accessibility-high-contrast',
         'accessibility-reduce-motion',
+        'accessibility-reduce-transparency',
         'accessibility-disable-timed-challenges',
         'accessibility-card-scale-standard',
         'accessibility-card-scale-large',
@@ -131,10 +132,66 @@ void main() {
     }
   });
 
+  testWidgets('Windows remapping exposes global actions and conflict status', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 1800);
+    var profile = const AccessibilityInputProfile();
+
+    try {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: StatefulBuilder(
+                builder: (context, setState) => AccessibilityInputProfileCard(
+                  profile: profile,
+                  isWindows: true,
+                  isAndroid: false,
+                  onChanged: (value) => setState(() => profile = value),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('accessibility-shortcut-global-keyboardHelp')),
+        findsOneWidget,
+      );
+      final dontKnow = find.byKey(const Key('accessibility-shortcut-dontKnow'));
+      await tester.ensureVisible(dontKnow);
+      await tester.tap(dontKnow);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Ctrl+H').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        profile.shortcutFor(StudyShortcutAction.showHint),
+        StudyShortcutKey.none,
+      );
+      expect(
+        profile.shortcutFor(StudyShortcutAction.dontKnow),
+        StudyShortcutKey.controlH,
+      );
+      expect(
+        find.byKey(const Key('accessibility-shortcut-conflict')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('힌트 단축키가 중복'), findsOneWidget);
+    } finally {
+      tester.view.reset();
+    }
+  });
+
   test('high contrast theme publishes shared study tokens', () {
     const profile = AccessibilityInputProfile(
       highContrast: true,
       reduceMotion: true,
+      reduceTransparency: true,
       largeRatingControls: true,
       cardScale: AccessibilityCardScale.extraLarge,
     );
@@ -152,8 +209,11 @@ void main() {
     expect(accessible.colorScheme.outline, isNot(regular.colorScheme.outline));
     expect(tokens.highContrast, isTrue);
     expect(tokens.reduceMotion, isTrue);
+    expect(tokens.reduceTransparency, isTrue);
     expect(tokens.minimumRatingControlHeight, 64);
     expect(tokens.cardScaleFactor, 1.28);
     expect(tokens.visibleSelectionControls, isTrue);
+    expect(accessible.cardTheme.elevation, 0);
+    expect(accessible.snackBarTheme.behavior, SnackBarBehavior.fixed);
   });
 }

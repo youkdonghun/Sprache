@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/app_experience_preferences.dart';
+import 'package:sprache/src/domain/device_preferences.dart';
 import 'package:sprache/src/services/app_feedback_service.dart';
 
 void main() {
@@ -87,4 +88,37 @@ void main() {
     await expectLater(service.error(), completes);
     expect(sounds, [AppFeedbackCue.error]);
   });
+
+  test(
+    'device strengths independently disable and scale feedback channels',
+    () async {
+      var device = const DeviceVoicePreferences(
+        soundStrength: DeviceFeedbackStrength.off,
+        hapticStrength: DeviceFeedbackStrength.light,
+      );
+      final haptics = <(AppFeedbackCue, DeviceFeedbackStrength)>[];
+      final sounds = <(AppFeedbackCue, DeviceFeedbackStrength)>[];
+      final service = AppFeedbackService(
+        readPreferences: () => const AppExperiencePreferences(
+          hapticsEnabled: true,
+          soundEffectsEnabled: true,
+        ),
+        readDevicePreferences: () => device,
+        emitHapticWithStrength: (cue, strength) async =>
+            haptics.add((cue, strength)),
+        emitSoundWithStrength: (cue, strength) async =>
+            sounds.add((cue, strength)),
+      );
+
+      await service.success();
+      device = device.copyWith(
+        soundStrength: DeviceFeedbackStrength.strong,
+        hapticStrength: DeviceFeedbackStrength.off,
+      );
+      await service.error();
+
+      expect(haptics, [(AppFeedbackCue.success, DeviceFeedbackStrength.light)]);
+      expect(sounds, [(AppFeedbackCue.error, DeviceFeedbackStrength.strong)]);
+    },
+  );
 }

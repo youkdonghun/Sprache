@@ -12,8 +12,10 @@ import '../domain/learning_item.dart';
 import '../domain/progress.dart';
 import '../domain/study_history.dart';
 import '../domain/study_preferences.dart';
+import '../services/media_lifecycle_coordinator.dart';
 import '../services/tts_service.dart';
 import '../state/app_state.dart';
+import '../state/device_preferences_state.dart';
 import '../state/local_storage_state.dart';
 import '../theme/study_accessibility_theme.dart';
 
@@ -38,6 +40,7 @@ class FlashcardScreen extends ConsumerStatefulWidget {
 }
 
 class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
+  late final MediaLifecycleRegistry _mediaLifecycleRegistry;
   late final TtsService _tts;
   final _revealFocusNode = FocusNode(debugLabel: 'flashcard-reveal');
   final _rememberedFocusNode = FocusNode(
@@ -71,6 +74,11 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
   void initState() {
     super.initState();
     _tts = widget.ttsService ?? TtsService.device();
+    _mediaLifecycleRegistry = ref.read(mediaLifecycleRegistryProvider);
+    _mediaLifecycleRegistry.register(
+      this,
+      MediaLifecycleRegistration(stopTextToSpeech: _stopTts),
+    );
     _startedAt = DateTime.now();
     final controller = ref.read(appControllerProvider.notifier);
     final appState = ref.read(appControllerProvider);
@@ -143,6 +151,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
 
   @override
   void dispose() {
+    _mediaLifecycleRegistry.unregister(this);
     unawaited(_stopTts());
     _revealFocusNode.dispose();
     _rememberedFocusNode.dispose();
@@ -159,6 +168,10 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
 
   Future<void> _speak() async {
     final preferences = ref.read(appControllerProvider).preferences;
+    final voice = ref
+        .read(devicePreferencesControllerProvider)
+        .preferences
+        .voice;
     try {
       await _tts.speak(
         language: _item.learningLanguage,
@@ -166,6 +179,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
         rate: preferences.ttsRate,
         preferOfflineVoice: preferences.interaction.preferOfflineVoice,
         repeatCount: preferences.interaction.audioRepeatCount,
+        preferredVoiceId: voice.voiceIdByLanguage[_item.learningLanguage.code],
+        pitch: voice.pitch,
       );
     } catch (_) {
       // Audio is optional; learning remains usable without a platform voice.

@@ -6,8 +6,10 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/course_path.dart';
 import '../domain/learning_item.dart';
+import '../services/media_lifecycle_coordinator.dart';
 import '../services/tts_service.dart';
 import '../state/app_state.dart';
+import '../state/device_preferences_state.dart';
 
 class MissionCatalogScreen extends ConsumerWidget {
   const MissionCatalogScreen({super.key});
@@ -149,6 +151,7 @@ class MissionPracticeScreen extends ConsumerStatefulWidget {
 }
 
 class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
+  late final MediaLifecycleRegistry _mediaLifecycleRegistry;
   late final TtsService _tts;
   var _phraseIndex = 0;
   var _meaningVisible = false;
@@ -159,10 +162,16 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
   void initState() {
     super.initState();
     _tts = widget.ttsService ?? TtsService.device();
+    _mediaLifecycleRegistry = ref.read(mediaLifecycleRegistryProvider);
+    _mediaLifecycleRegistry.register(
+      this,
+      MediaLifecycleRegistration(stopTextToSpeech: _stopTts),
+    );
   }
 
   @override
   void dispose() {
+    _mediaLifecycleRegistry.unregister(this);
     unawaited(_stopTts());
     super.dispose();
   }
@@ -177,6 +186,10 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
 
   Future<void> _speak(LearningItem item) async {
     final preferences = ref.read(appControllerProvider).preferences;
+    final voice = ref
+        .read(devicePreferencesControllerProvider)
+        .preferences
+        .voice;
     try {
       await _tts.speak(
         language: item.learningLanguage,
@@ -184,6 +197,8 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
         rate: preferences.ttsRate,
         preferOfflineVoice: preferences.interaction.preferOfflineVoice,
         repeatCount: preferences.interaction.audioRepeatCount,
+        preferredVoiceId: voice.voiceIdByLanguage[item.learningLanguage.code],
+        pitch: voice.pitch,
       );
     } catch (_) {
       // A missing voice must not block mission practice.

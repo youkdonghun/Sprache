@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
@@ -544,11 +545,29 @@ class FileSystemLocalStorageBackend implements LocalStorageBackend {
       final manifestFile = File(path.join(root.path, manifestName));
       if (!await manifestFile.exists()) continue;
       try {
-        final manifest = _decodeManifest(await manifestFile.readAsBytes());
+        final manifest = _decodeManifest(
+          await _readFileBounded(
+            manifestFile,
+            maxBytes: _maxLocalManifestBytes,
+            errorCode: 'local_manifest_too_large',
+          ),
+        );
         final entry = _manifestEntry(manifest, 'backups/latest.json');
+        if (entry.byteLength <= 0 ||
+            entry.byteLength > BackupArchiveCodec.maxArchiveBytes) {
+          throw const LocalStorageException(
+            'local_archive_too_large',
+            'The local backup exceeds the safe restore size.',
+          );
+        }
         final archiveFile = _resolveRelativeFile(root, entry.relativePath);
         if (!await archiveFile.exists()) continue;
-        final bytes = await archiveFile.readAsBytes();
+        if (await archiveFile.length() != entry.byteLength) continue;
+        final bytes = await _readFileBounded(
+          archiveFile,
+          maxBytes: BackupArchiveCodec.maxArchiveBytes,
+          errorCode: 'local_archive_too_large',
+        );
         if (bytes.length != entry.byteLength ||
             sha256.convert(bytes).toString() != entry.sha256Hex) {
           continue;
@@ -902,6 +921,27 @@ Map<String, Object?> _decodeManifest(List<int> bytes) {
     );
   }
   return manifest;
+}
+
+const int _maxLocalManifestBytes = 1024 * 1024;
+
+Future<Uint8List> _readFileBounded(
+  File file, {
+  required int maxBytes,
+  required String errorCode,
+}) async {
+  final declaredLength = await file.length();
+  if (declaredLength < 0 || declaredLength > maxBytes) {
+    throw LocalStorageException(errorCode, 'The local file is too large.');
+  }
+  final builder = BytesBuilder(copy: false);
+  await for (final chunk in file.openRead()) {
+    if (chunk.length > maxBytes - builder.length) {
+      throw LocalStorageException(errorCode, 'The local file is too large.');
+    }
+    builder.add(chunk);
+  }
+  return builder.takeBytes();
 }
 
 ({String relativePath, String sha256Hex, int byteLength}) _manifestEntry(

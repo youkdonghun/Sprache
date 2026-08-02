@@ -24,21 +24,29 @@ class SyncPolicy {
   const SyncPolicy({
     this.mode = SyncMode.automatic,
     this.pauseInLowPowerMode = true,
+    this.offlineLock = false,
   });
 
   final SyncMode mode;
   final bool pauseInLowPowerMode;
+  final bool offlineLock;
 
-  SyncPolicy copyWith({SyncMode? mode, bool? pauseInLowPowerMode}) {
+  SyncPolicy copyWith({
+    SyncMode? mode,
+    bool? pauseInLowPowerMode,
+    bool? offlineLock,
+  }) {
     return SyncPolicy(
       mode: mode ?? this.mode,
       pauseInLowPowerMode: pauseInLowPowerMode ?? this.pauseInLowPowerMode,
+      offlineLock: offlineLock ?? this.offlineLock,
     );
   }
 
   Map<String, Object?> toJson() => {
     'mode': mode.name,
     'pauseInLowPowerMode': pauseInLowPowerMode,
+    'offlineLock': offlineLock,
   };
 
   factory SyncPolicy.fromJson(Map<String, Object?> json) {
@@ -48,6 +56,7 @@ class SyncPolicy {
         orElse: () => SyncMode.automatic,
       ),
       pauseInLowPowerMode: json['pauseInLowPowerMode'] != false,
+      offlineLock: json['offlineLock'] == true,
     );
   }
 }
@@ -244,21 +253,61 @@ class SyncRecoveryPoint {
   }
 }
 
+class SyncCompletionReceipt {
+  const SyncCompletionReceipt({
+    required this.operationId,
+    required this.completedAt,
+    required this.payloadSha256,
+  });
+
+  final String operationId;
+  final DateTime completedAt;
+  final String payloadSha256;
+
+  Map<String, Object?> toJson() => {
+    'operationId': operationId,
+    'completedAt': completedAt.toUtc().toIso8601String(),
+    'payloadSha256': payloadSha256,
+  };
+
+  factory SyncCompletionReceipt.fromJson(Map<String, Object?> json) {
+    final operationId = json['operationId'];
+    final completedAt = DateTime.tryParse(json['completedAt'] as String? ?? '');
+    final fingerprint = json['payloadSha256'];
+    if (operationId is! String ||
+        operationId.trim().isEmpty ||
+        operationId.runes.length > 200 ||
+        completedAt == null ||
+        fingerprint is! String ||
+        !RegExp(r'^[a-f0-9]{64}$').hasMatch(fingerprint)) {
+      throw const FormatException('동기화 완료 영수증이 올바르지 않습니다.');
+    }
+    return SyncCompletionReceipt(
+      operationId: operationId,
+      completedAt: completedAt.toUtc(),
+      payloadSha256: fingerprint,
+    );
+  }
+}
+
 class SyncDeviceSettings {
   const SyncDeviceSettings({
     this.policy = const SyncPolicy(),
     this.history = const [],
     this.recoveryPoint,
+    this.completionReceipts = const [],
   });
 
   final SyncPolicy policy;
   final List<SyncHistoryEntry> history;
   final SyncRecoveryPoint? recoveryPoint;
+  final List<SyncCompletionReceipt> completionReceipts;
 
   SyncDeviceSettings copyWith({
     SyncPolicy? policy,
     List<SyncHistoryEntry>? history,
     Object? recoveryPoint = _keepRecoveryPoint,
+    List<SyncCompletionReceipt>? completionReceipts,
   }) {
     return SyncDeviceSettings(
       policy: policy ?? this.policy,
@@ -266,6 +315,7 @@ class SyncDeviceSettings {
       recoveryPoint: identical(recoveryPoint, _keepRecoveryPoint)
           ? this.recoveryPoint
           : recoveryPoint as SyncRecoveryPoint?,
+      completionReceipts: completionReceipts ?? this.completionReceipts,
     );
   }
 
@@ -273,6 +323,9 @@ class SyncDeviceSettings {
     'policy': policy.toJson(),
     'history': [for (final entry in history.take(50)) entry.toJson()],
     if (recoveryPoint != null) 'recoveryPoint': recoveryPoint!.toJson(),
+    'completionReceipts': [
+      for (final receipt in completionReceipts.take(50)) receipt.toJson(),
+    ],
   };
 
   factory SyncDeviceSettings.fromJson(Map<String, Object?> json) {
@@ -294,6 +347,7 @@ class SyncDeviceSettings {
           : const SyncPolicy(),
       history: _parseSyncHistory(json['history']),
       recoveryPoint: recoveryPoint,
+      completionReceipts: _parseCompletionReceipts(json['completionReceipts']),
     );
   }
 }
@@ -312,4 +366,20 @@ List<SyncHistoryEntry> _parseSyncHistory(Object? raw) {
     }
   }
   return List.unmodifiable(entries);
+}
+
+List<SyncCompletionReceipt> _parseCompletionReceipts(Object? raw) {
+  final receipts = <SyncCompletionReceipt>[];
+  if (raw is! List<Object?>) return receipts;
+  for (final value in raw.take(50)) {
+    if (value is! Map) continue;
+    try {
+      receipts.add(
+        SyncCompletionReceipt.fromJson(Map<String, Object?>.from(value)),
+      );
+    } on FormatException {
+      // One malformed local receipt must not hide the remaining receipts.
+    }
+  }
+  return List.unmodifiable(receipts);
 }

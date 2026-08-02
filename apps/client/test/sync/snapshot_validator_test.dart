@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/active_study_session.dart';
+import 'package:sprache/src/domain/adaptive_study_session.dart';
 import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/import_distribution.dart';
 import 'package:sprache/src/domain/study_history.dart';
@@ -14,6 +15,135 @@ void main() {
     expect(() => validator.validate({'schemaVersion': 1}), returnsNormally);
   });
 
+  test('pronunciation metrics reject sensitive fields and outside times', () {
+    final startedAt = DateTime.utc(2026, 8, 3, 10);
+    final endedAt = DateTime.utc(2026, 8, 3, 10, 5);
+    final session = StudySessionSummary(
+      sessionId: 'privacy-pronunciation',
+      courseId: 'ko-en',
+      startedAt: startedAt,
+      endedAt: endedAt,
+      correctCount: 1,
+      wrongCount: 0,
+      earnedXp: 10,
+      pronunciationMetrics: [
+        PronunciationAttemptMetric(
+          score: 82,
+          recordedAt: startedAt.add(const Duration(minutes: 2)),
+          method: PronunciationEvaluationMethod.speechRecognition,
+        ),
+      ],
+    );
+    final valid = session.toJson();
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'recentSessions': [valid],
+      }),
+      returnsNormally,
+    );
+
+    final sensitive = Map<String, Object?>.from(valid);
+    sensitive['pronunciationMetrics'] = [
+      {
+        ...(valid['pronunciationMetrics']! as List).single as Map,
+        'transcript': 'private speech',
+      },
+    ];
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'recentSessions': [sensitive],
+      }),
+      throwsA(isA<RemoteSnapshotValidationException>()),
+    );
+
+    final outside = Map<String, Object?>.from(valid);
+    outside['pronunciationMetrics'] = [
+      {
+        ...(valid['pronunciationMetrics']! as List).single as Map,
+        'recordedAt': endedAt.add(const Duration(minutes: 1)).toIso8601String(),
+      },
+    ];
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'recentSessions': [outside],
+      }),
+      throwsA(isA<RemoteSnapshotValidationException>()),
+    );
+  });
+
+  test('adaptive response metrics reject answer content and outside times', () {
+    final startedAt = DateTime.utc(2026, 8, 3, 10);
+    final endedAt = DateTime.utc(2026, 8, 3, 10, 5);
+    final session = StudySessionSummary(
+      sessionId: 'privacy-adaptive',
+      courseId: 'ko-en',
+      startedAt: startedAt,
+      endedAt: endedAt,
+      correctCount: 1,
+      wrongCount: 0,
+      earnedXp: 10,
+      itemIds: const ['word-1'],
+      finalCorrectItemIds: const {'word-1'},
+      attemptMetrics: [
+        StudyAttemptMetric(
+          itemId: 'word-1',
+          skill: StudySkill.meaning,
+          errorType: StudyErrorType.none,
+          correct: true,
+          responseTimeMs: 2400,
+          recordedAt: startedAt.add(const Duration(minutes: 2)),
+        ),
+      ],
+    );
+    final valid = session.toJson();
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'recentSessions': [valid],
+      }),
+      returnsNormally,
+    );
+
+    final sensitive = Map<String, Object?>.from(valid);
+    sensitive['attemptMetrics'] = [
+      {
+        ...(valid['attemptMetrics']! as List).single as Map,
+        'answerText': 'private answer',
+      },
+    ];
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'recentSessions': [sensitive],
+      }),
+      throwsA(
+        isA<RemoteSnapshotValidationException>().having(
+          (error) => error.issues.map((issue) => issue.path),
+          'path',
+          contains(r'$.recentSessions[0].attemptMetrics[0]'),
+        ),
+      ),
+    );
+
+    final outside = Map<String, Object?>.from(valid);
+    outside['attemptMetrics'] = [
+      {
+        ...(valid['attemptMetrics']! as List).single as Map,
+        'recordedAt': endedAt.add(const Duration(minutes: 1)).toIso8601String(),
+      },
+    ];
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'recentSessions': [outside],
+      }),
+      throwsA(isA<RemoteSnapshotValidationException>()),
+    );
+  });
+
   test('accepts and round-trips complete advanced preferences', () {
     final settingsUpdatedAt = DateTime.utc(2026, 7, 31, 12);
     final original = StudyPreferences(
@@ -25,6 +155,7 @@ void main() {
         accentPalette: AppAccentPalette.violet,
         density: AppDensity.compact,
         textScale: AppTextScale.large,
+        motionLevel: AppMotionLevel.off,
         reduceMotion: true,
         hapticsEnabled: true,
         soundEffectsEnabled: true,
@@ -73,6 +204,488 @@ void main() {
     expect(restored.interaction.showKoreanReading, isFalse);
     expect(restored.interaction.showNativeReading, isFalse);
     expect(restored.experience, isA<AppExperiencePreferences>());
+  });
+
+  test('accepts pre-1.31 preference blocks without new fields', () {
+    final legacyExperience = <String, Object?>{
+      'colorMode': AppColorMode.system.name,
+      'accentPalette': AppAccentPalette.sprache.name,
+      'density': AppDensity.platform.name,
+      'textScale': AppTextScale.system.name,
+      'reduceMotion': false,
+      'hapticsEnabled': false,
+      'soundEffectsEnabled': false,
+    };
+    final legacyInteraction = <String, Object?>{
+      'autoPlayQuestionAudio': false,
+      'autoPlayAnswerAudio': false,
+      'preferOfflineVoice': true,
+      'audioRepeatCount': 1,
+      'showKoreanReading': true,
+      'showNativeReading': true,
+      'answerDirection': StudyAnswerDirection.mixed.name,
+      'choiceLayout': StudyChoiceLayout.automatic.name,
+      'shuffleChoices': true,
+      'autoAdvanceCorrect': false,
+      'autoAdvanceDelayMs': 900,
+    };
+
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'settings': {
+          'experience': legacyExperience,
+          'interaction': legacyInteraction,
+        },
+      }),
+      returnsNormally,
+    );
+  });
+
+  test('rejects every malformed 1.31 experience enum and boolean', () {
+    final baseline = AppExperiencePreferences(
+      updatedAt: DateTime.utc(2026, 8, 3),
+    ).toJson();
+
+    void expectRejected(String field, Object? value) {
+      expect(
+        () => validator.validate({
+          'schemaVersion': 1,
+          'settings': {
+            'experience': {...baseline, field: value},
+          },
+        }),
+        throwsA(
+          isA<RemoteSnapshotValidationException>().having(
+            (error) => error.issues.map((issue) => issue.path),
+            'validation paths',
+            contains('\$.settings.experience.$field'),
+          ),
+        ),
+        reason: field,
+      );
+    }
+
+    for (final field in const [
+      'surfaceTone',
+      'cornerStyle',
+      'cardStyle',
+      'contentWidth',
+      'fontEmphasis',
+      'fontFamily',
+      'themeScheduleMode',
+      'studyTextScale',
+      'cardAlignment',
+      'navigationIconStyle',
+      'decorationIntensity',
+      'lightAccentPalette',
+      'darkAccentPalette',
+      'motionLevel',
+      'celebrationLevel',
+      'homeLayout',
+      'navigationLabelMode',
+      'subjectSwitcherStyle',
+      'quickAddKind',
+      'duplicateDefault',
+      'feedbackDetail',
+      'progressStyle',
+      'encouragementTone',
+      'readingLineHeight',
+      'readingWidth',
+    ]) {
+      expectRejected(field, 'unsupported');
+    }
+    for (final field in const [
+      'highContrast',
+      'showFocusRing',
+      'showHomeHeader',
+      'showStreak',
+      'showXp',
+      'showSyncStatus',
+      'showTodayPlan',
+      'showPinnedCollections',
+      'showRecentAdditions',
+      'showDataFlow',
+      'showSchedules',
+      'showQuickAdd',
+      'showGlobalSearch',
+      'quickAddFavoriteDefault',
+      'quickAddOpenDetails',
+      'quickAddKeepAddingDefault',
+      'quickAddAutoNormalize',
+      'quickAddRememberTags',
+      'showShortcutHints',
+      'focusStudyMode',
+      'leftHandedControls',
+      'showStudyTimer',
+      'showQuestionCounter',
+      'perSubjectAccentEnabled',
+      'separateBrightnessAccents',
+      'scheduledDarkUsesOled',
+      'customAccentEnabled',
+    ]) {
+      expectRejected(field, 1);
+    }
+  });
+
+  test('rejects corrupt 1.31 layout, quick-add, and palette settings', () {
+    final baseline = AppExperiencePreferences(
+      updatedAt: DateTime.utc(2026, 8, 3),
+    ).toJson();
+
+    void expectRejected(String expectedPath, String field, Object? value) {
+      expect(
+        () => validator.validate({
+          'schemaVersion': 1,
+          'settings': {
+            'experience': {...baseline, field: value},
+          },
+        }),
+        throwsA(
+          isA<RemoteSnapshotValidationException>().having(
+            (error) => error.issues.map((issue) => issue.path),
+            'validation paths',
+            contains(expectedPath),
+          ),
+        ),
+        reason: '$field: $value',
+      );
+    }
+
+    for (final value in const <Object?>[-1, 6, 1.5, '3']) {
+      expectRejected(
+        r'$.settings.experience.quickAddPriorityDefault',
+        'quickAddPriorityDefault',
+        value,
+      );
+    }
+    for (final value in const <Object?>[199, 2001, 450.5, '450']) {
+      expectRejected(
+        r'$.settings.experience.quickAddDraftDelayMs',
+        'quickAddDraftDelayMs',
+        value,
+      );
+    }
+    for (final field in const ['themeDarkStartHour', 'themeLightStartHour']) {
+      for (final value in const <Object?>[-1, 24, 1.5, '7']) {
+        expectRejected(r'$.settings.experience.' + field, field, value);
+      }
+    }
+    for (final value in const <Object?>[-1, 0x1000000, 1.5, '#112233']) {
+      expectRejected(
+        r'$.settings.experience.customAccentRgb',
+        'customAccentRgb',
+        value,
+      );
+    }
+    expectRejected(
+      r'$.settings.experience.homeSectionOrder',
+      'homeSectionOrder',
+      'not-a-list',
+    );
+    expectRejected(
+      r'$.settings.experience.homeSectionOrder[0]',
+      'homeSectionOrder',
+      ['unknown'],
+    );
+    expectRejected(
+      r'$.settings.experience.homeSectionOrder[1]',
+      'homeSectionOrder',
+      ['schedules', 'schedules'],
+    );
+    expectRejected(
+      r'$.settings.experience.homeSectionOrder',
+      'homeSectionOrder',
+      [
+        'pinnedCollections',
+        'recentAdditions',
+        'dataFlow',
+        'schedules',
+        'schedules',
+      ],
+    );
+    expectRejected(
+      r'$.settings.experience.accentPaletteBySubject',
+      'accentPaletteBySubject',
+      'not-a-map',
+    );
+    expectRejected(
+      r'$.settings.experience.accentPaletteBySubject',
+      'accentPaletteBySubject',
+      {1: AppAccentPalette.sprache.name},
+    );
+    expectRejected(
+      r'$.settings.experience.accentPaletteBySubject',
+      'accentPaletteBySubject',
+      {' language:en ': AppAccentPalette.sprache.name},
+    );
+    expectRejected(
+      r'$.settings.experience.accentPaletteBySubject',
+      'accentPaletteBySubject',
+      {List.filled(161, 'x').join(): AppAccentPalette.sprache.name},
+    );
+    expectRejected(
+      r'$.settings.experience.accentPaletteBySubject.language:en',
+      'accentPaletteBySubject',
+      {'language:en': 'neon'},
+    );
+    expectRejected(
+      r'$.settings.experience.accentPaletteBySubject',
+      'accentPaletteBySubject',
+      {
+        for (var index = 0; index < 101; index++)
+          'custom:$index': AppAccentPalette.sprache.name,
+      },
+    );
+  });
+
+  test('validates bounded theme profiles and active profile references', () {
+    final basePreferences = const AppExperiencePreferences();
+    Map<String, Object?> profile(String id) => AppThemeProfile.capture(
+      id: id,
+      name: '프로필 $id',
+      preferences: basePreferences,
+    ).toJson();
+    final baseline = basePreferences
+        .copyWith(
+          themeProfiles: [
+            AppThemeProfile.capture(
+              id: 'safe_1',
+              name: '안전한 테마',
+              preferences: basePreferences,
+            ),
+          ],
+          activeThemeProfileId: 'safe_1',
+        )
+        .toJson();
+
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'settings': {'experience': baseline},
+      }),
+      returnsNormally,
+    );
+
+    void expectRejected(Object? profiles, Object? active, String path) {
+      expect(
+        () => validator.validate({
+          'schemaVersion': 1,
+          'settings': {
+            'experience': {
+              ...baseline,
+              'themeProfiles': profiles,
+              'activeThemeProfileId': ?active,
+            },
+          },
+        }),
+        throwsA(
+          isA<RemoteSnapshotValidationException>().having(
+            (error) => error.issues.map((issue) => issue.path),
+            'validation paths',
+            contains(path),
+          ),
+        ),
+      );
+    }
+
+    expectRejected('not-a-list', null, r'$.settings.experience.themeProfiles');
+    expectRejected(
+      [for (var index = 0; index < 6; index++) profile('theme_$index')],
+      null,
+      r'$.settings.experience.themeProfiles',
+    );
+    expectRejected(
+      [profile('same'), profile('same')],
+      null,
+      r'$.settings.experience.themeProfiles[1].id',
+    );
+    expectRejected(
+      [
+        {...profile('broken'), 'customAccentRgb': '#FFFFFF'},
+      ],
+      null,
+      r'$.settings.experience.themeProfiles[0]',
+    );
+    expectRejected(
+      [profile('safe_1')],
+      'missing',
+      r'$.settings.experience.activeThemeProfileId',
+    );
+  });
+
+  test('rejects corrupt practice activity personalization lists', () {
+    final baseline = StudyInteractionPreferences(
+      updatedAt: DateTime.utc(2026, 8, 3),
+    ).toJson();
+    final catalog = Map<String, Object?>.from(
+      baseline['practiceCatalog']! as Map,
+    );
+
+    void expectRejected(String field, Object? value, String expectedPath) {
+      expect(
+        () => validator.validate({
+          'schemaVersion': 1,
+          'settings': {
+            'interaction': {
+              ...baseline,
+              'practiceCatalog': {...catalog, field: value},
+            },
+          },
+        }),
+        throwsA(
+          isA<RemoteSnapshotValidationException>().having(
+            (error) => error.issues.map((issue) => issue.path),
+            'validation paths',
+            contains(expectedPath),
+          ),
+        ),
+        reason: field,
+      );
+    }
+
+    for (final field in const [
+      'recentActivityIds',
+      'favoriteActivityOrder',
+      'quickLaunchActivityIds',
+    ]) {
+      expectRejected(
+        field,
+        'not-a-list',
+        '\$.settings.interaction.practiceCatalog.$field',
+      );
+      expectRejected(field, [
+        ' valid-id',
+      ], '\$.settings.interaction.practiceCatalog.$field[0]');
+      expectRejected(field, [
+        List.filled(161, 'x').join(),
+      ], '\$.settings.interaction.practiceCatalog.$field[0]');
+      expectRejected(field, [
+        'activity\ncontrol',
+      ], '\$.settings.interaction.practiceCatalog.$field[0]');
+      expectRejected(field, [
+        '',
+        1,
+      ], '\$.settings.interaction.practiceCatalog.$field[0]');
+      expectRejected(field, [
+        'same-id',
+        'same-id',
+      ], '\$.settings.interaction.practiceCatalog.$field[1]');
+    }
+    expectRejected(
+      'recentActivityIds',
+      [for (var index = 0; index < 9; index++) 'activity-$index'],
+      r'$.settings.interaction.practiceCatalog.recentActivityIds',
+    );
+    for (final field in const [
+      'favoriteActivityOrder',
+      'quickLaunchActivityIds',
+    ]) {
+      expectRejected(field, [
+        for (var index = 0; index < 51; index++) 'activity-$index',
+      ], '\$.settings.interaction.practiceCatalog.$field');
+    }
+
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'settings': {
+          'interaction': {
+            ...baseline,
+            'practiceCatalog': {
+              ...catalog,
+              'recentActivityIds': ['/study?mode=meaning', 'meaning-choice'],
+              'favoriteActivityOrder': ['course-path'],
+              'quickLaunchActivityIds': ['match-sprint'],
+            },
+          },
+        },
+      }),
+      returnsNormally,
+    );
+  });
+
+  test('rejects corrupt game autonomy maps, records, and playlists', () {
+    final interaction = StudyInteractionPreferences(
+      updatedAt: DateTime.utc(2026, 8, 3),
+    ).toJson();
+    final catalog = Map<String, Object?>.from(
+      interaction['practiceCatalog']! as Map,
+    );
+
+    void expectRejected(
+      Map<String, Object?> corruptCatalog,
+      String expectedPath,
+    ) {
+      expect(
+        () => validator.validate({
+          'schemaVersion': 1,
+          'settings': {
+            'interaction': {
+              ...interaction,
+              'practiceCatalog': {...catalog, ...corruptCatalog},
+            },
+          },
+        }),
+        throwsA(
+          isA<RemoteSnapshotValidationException>().having(
+            (error) => error.issues.map((issue) => issue.path),
+            'validation paths',
+            contains(expectedPath),
+          ),
+        ),
+      );
+    }
+
+    expectRejected({
+      'durationFilter': 'instant',
+    }, r'$.settings.interaction.practiceCatalog.durationFilter');
+    expectRejected(
+      {
+        'launchCountByActivityId': {'mixed-quiz': 1000001},
+      },
+      r'$.settings.interaction.practiceCatalog.launchCountByActivityId.mixed-quiz',
+    );
+    expectRejected(
+      {
+        'recommendationWeightByActivityId': {'mixed-quiz': 0},
+      },
+      r'$.settings.interaction.practiceCatalog.recommendationWeightByActivityId.mixed-quiz',
+    );
+    expectRejected(
+      {
+        'recommendationSnoozedUntilByActivityId': {'mixed-quiz': 'tomorrow'},
+      },
+      r'$.settings.interaction.practiceCatalog.recommendationSnoozedUntilByActivityId',
+    );
+    expectRejected(
+      {
+        'bestRecordsByActivityId': {
+          'match-sprint': {
+            'bestScore': 101,
+            'updatedAt': '2026-08-03T00:00:00Z',
+          },
+        },
+      },
+      r'$.settings.interaction.practiceCatalog.bestRecordsByActivityId.match-sprint.bestScore',
+    );
+    expectRejected({
+      'playlists': [
+        {
+          'id': 'too-short',
+          'name': '한 게임',
+          'activityIds': ['mixed-quiz'],
+        },
+      ],
+    }, r'$.settings.interaction.practiceCatalog.playlists[0].activityIds');
+    expectRejected(
+      {
+        'launchByActivityId': {
+          'mixed-quiz': {'challengeScoringEnabled': 'yes'},
+        },
+      },
+      r'$.settings.interaction.practiceCatalog.launchByActivityId.mixed-quiz.challengeScoringEnabled',
+    );
   });
 
   test('rejects malformed advanced remote settings with exact paths', () {
@@ -298,6 +911,8 @@ void main() {
         },
         'settings': {
           'dailyGoalsBySubject': {'language:en': 100, 'language:ja': 200},
+          'weeklyTargetDays': 5,
+          'weeklyTargetMinutes': 90,
           'dailyGoalChangedAtBySubject': {
             'language:en': '2026-07-29T00:00:00.000Z',
           },
@@ -321,6 +936,8 @@ void main() {
         },
         'settings': {
           'dailyGoalsBySubject': {'bad subject': 10},
+          'weeklyTargetDays': 2.5,
+          'weeklyTargetMinutes': 1000,
           'dailyGoalChangedAtBySubject': {'language:en': 'not-a-date'},
           'activeSubjectChangedAt': 123,
           'favoriteItemChangedAtById': {'item-1': 'not-a-date'},
@@ -336,6 +953,8 @@ void main() {
             r'$.profile.dailyXpByCourseAndReplica',
             r'$.profile.xpByReplica',
             r'$.settings.dailyGoalsBySubject',
+            r'$.settings.weeklyTargetDays',
+            r'$.settings.weeklyTargetMinutes',
             r'$.settings.dailyGoalChangedAtBySubject',
             r'$.settings.activeSubjectChangedAt',
             r'$.settings.favoriteItemChangedAtById',

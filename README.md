@@ -1,5 +1,27 @@
 # Sprache
 
+## 1.31.0 개인화 스튜디오와 다시 하기 쉬운 학습
+
+- `Sprache 기본`·`집중`·`종이`·`OLED 밤` 원터치 프리셋과 10개 강조색,
+  표면·모서리·카드·글자·행간·본문 폭·애니메이션·축하 효과를 실시간으로
+  미리 보고 바꿀 수 있다.
+- 홈을 집중·균형·인사이트형으로 전환하고 헤더·연속 학습·XP·오늘 계획과
+  고정·최근 자료·데이터 흐름·예약 섹션의 표시 여부 및 순서를 직접 정한다.
+- 빠른 자료 등록은 단어/문장, 상세 필드, 즐겨찾기, 우선순위, 중복 처리,
+  정규화, 계속 추가, 최근 태그, 초안 저장 간격을 사용자 기본값으로 기억한다.
+- 학습 화면은 읽기 폭·진도 표시·문제 번호·남은 시간·단축키·왼손 조작·
+  피드백 밀도·격려 말투·축하 효과를 조정하며 집중 모드로 부가 정보를 줄인다.
+- 게임은 안정적인 ID로 즐겨찾기를 보존하고 최근 게임, 즐겨찾기 순서,
+  저장 설정 바로 시작, 날짜·주제별 오늘의 도전과 추천 근거를 제공한다.
+- Android APK와 Windows EXE를 로컬에서 검증하고, GitHub macOS 러너에서
+  iOS Simulator 앱과 unsigned/ad-hoc macOS 앱을 별도 `MOCK` 산출물로 만든다.
+- [200개 개선 목표](docs/personalization-200-upgrade-plan-1.31.0.md)와
+  [1.31.0 릴리스 노트](docs/release-notes-1.31.0.md),
+  [200개 목표 검증 보고서](docs/personalization-200-verification-1.31.0.md)에 전체
+  변경과 근거를 기록한다. 네 플랫폼 산출물 검증 규칙은
+  [품질·릴리스 게이트](docs/release-quality-gates-1.31.0.md), 실제 실행 순서는
+  [릴리스 준비 감사](docs/release-readiness-1.31.0.md)에 고정한다.
+
 ## 1.30.0 빠른 단어 등록과 자율형 게임
 
 - 어느 화면에서든 빠른 추가를 열고, 클립보드·여러 뜻·읽기·그룹·태그를
@@ -465,16 +487,19 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 
 ## 바로 실행하기
 
-로컬 `artifacts` 폴더에 실제 Google·Railway 연결 빌드와 기능 확인용 Mock 빌드가 있다.
+`npm run build:real`을 실행하면 현재 `pubspec.yaml` 버전에 맞춘 실제
+Google·Railway 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.31.0의 표준
+파일명은 다음과 같다.
 
-- 실제 연결 Windows 설치본: `Sprache-Windows-Setup-1.23.0-google-x64.exe`
-- 실제 연결 Windows 포터블: `Sprache-Windows-1.23.0-google-x64.zip`
-- 실제 연결 Android: `Sprache-Android-1.23.0-google-debug-signed.apk`
-- 실제 연결 무결성: `SHA256SUMS-1.23.0-google.txt`
+- Windows 설치본: `Sprache-Windows-Setup-1.31.0-google-x64.exe`
+- Windows 포터블: `Sprache-Windows-1.31.0-google-x64.zip`
+- Android: `Sprache-Android-1.31.0-google-debug-signed.apk`
+- 무결성: `SHA256SUMS-1.31.0-google.txt`
 
-- Windows: `Sprache-Windows-1.15.0-mock-x64.zip`을 풀고 폴더 안의 `sprache.exe`를 실행한다. DLL과 `data` 폴더를 EXE와 함께 유지해야 한다.
-- Android: `Sprache-Android-1.15.0-mock-debug-signed.apk`를 테스트 기기에 직접 설치한다. 현재 APK는 Play Store 배포용 서명이 아니다.
-- 무결성: `artifacts/SHA256SUMS.txt`의 SHA-256과 비교한다.
+Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`
+폴더를 함께 유지한다. Android APK는 테스트 기기 또는 에뮬레이터에 직접
+설치한다. 파일명이 `debug-signed`이면 Play Store 배포용 서명이라고 표시하지
+않는다. Apple `MOCK` ZIP은 GitHub Actions에서 별도로 생성한다.
 
 Mock 빌드는 Google 자격증명 없이 전체 학습 흐름을 시험하기 위한 것이다. 실제 Google 로그인·Drive 동기화를 사용하려면 `ENABLE_MOCK_MODE=false`와 플랫폼별 OAuth 설정이 필요하다.
 
@@ -498,6 +523,10 @@ npm run test:client
 
 ## 문서
 
+- [1.31.0 릴리스 노트와 200개 변경](docs/release-notes-1.31.0.md)
+- [1.31.0 개인화 200개 목표 검증 보고서](docs/personalization-200-verification-1.31.0.md)
+- [1.31.0 품질·릴리스 게이트](docs/release-quality-gates-1.31.0.md)
+- [1.31.0 릴리스 준비 감사](docs/release-readiness-1.31.0.md)
 - [100단계 구현 계획](docs/implementation-plan.md)
 - [제품 방향과 학습 원칙](docs/product-direction.md)
 - [아키텍처](docs/architecture.md)

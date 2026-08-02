@@ -21,14 +21,19 @@
     "build:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-windows-installer.ps1",
     "test:installer": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\test-windows-installer.ps1",
     "test:windows:runtime": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\verify-windows-runtime.ps1",
+    "capture:runtime:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\test-windows-installer.ps1",
+    "capture:runtime:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\capture-android-runtime-evidence.ps1",
     "test:windows:ui-e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\test-windows-ui-e2e.ps1",
+    "test:release-bundle": "node --test ./tool/test/release-bundle.test.mjs",
+    "create:release-bundle": "node ./tool/release-bundle.mjs create",
     "verify:release": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\verify-release.ps1",
+    "verify:release-bundle": "node ./tool/release-bundle.mjs verify",
     "verify:release:promote": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\verify-release.ps1 -CleanOldArtifacts",
     "build:real": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1",
     "build:real:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target windows",
     "build:real:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target android",
     "build:release-gated": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -RequireBrokerReady -RequirePrivacyPolicyUrl -RequireAndroidReleaseSigning -RequireWindowsCodeSigning",
-    "test": "npm run test:api && npm run test:client"
+    "test": "npm run test:api && npm run test:release-bundle && npm run test:client"
   },
   "engines": {
     "node": ">=22"

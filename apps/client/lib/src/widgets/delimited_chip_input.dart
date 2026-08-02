@@ -9,6 +9,8 @@ class DelimitedChipInput extends StatelessWidget {
     required this.hintText,
     this.required = false,
     this.onSubmitted,
+    this.focusNode,
+    this.textInputAction = TextInputAction.done,
   });
 
   final TextEditingController controller;
@@ -17,6 +19,8 @@ class DelimitedChipInput extends StatelessWidget {
   final String hintText;
   final bool required;
   final ValueChanged<String>? onSubmitted;
+  final FocusNode? focusNode;
+  final TextInputAction textInputAction;
 
   static List<String> parse(String value) => value
       .split(RegExp(r'[,;\n]'))
@@ -34,7 +38,8 @@ class DelimitedChipInput extends StatelessWidget {
         TextFormField(
           key: fieldKey,
           controller: controller,
-          textInputAction: TextInputAction.done,
+          focusNode: focusNode,
+          textInputAction: textInputAction,
           onFieldSubmitted: onSubmitted,
           decoration: InputDecoration(
             labelText: labelText,

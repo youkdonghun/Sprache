@@ -36,6 +36,81 @@ class BackupArchive {
   final int customItemCount;
 }
 
+enum BackupRestoreCategory { content, progress, sessions, settings }
+
+extension BackupRestoreCategoryLabel on BackupRestoreCategory {
+  String get label => switch (this) {
+    BackupRestoreCategory.content => '개인 콘텐츠',
+    BackupRestoreCategory.progress => '진도·XP',
+    BackupRestoreCategory.sessions => '학습 세션',
+    BackupRestoreCategory.settings => '학습·화면 설정',
+  };
+}
+
+class BackupRestoreSelection {
+  const BackupRestoreSelection({
+    this.content = true,
+    this.progress = true,
+    this.sessions = true,
+    this.settings = true,
+  });
+
+  final bool content;
+  final bool progress;
+  final bool sessions;
+  final bool settings;
+
+  bool get any => content || progress || sessions || settings;
+
+  bool includes(BackupRestoreCategory category) => switch (category) {
+    BackupRestoreCategory.content => content,
+    BackupRestoreCategory.progress => progress,
+    BackupRestoreCategory.sessions => sessions,
+    BackupRestoreCategory.settings => settings,
+  };
+
+  BackupRestoreSelection copyWith({
+    bool? content,
+    bool? progress,
+    bool? sessions,
+    bool? settings,
+  }) => BackupRestoreSelection(
+    content: content ?? this.content,
+    progress: progress ?? this.progress,
+    sessions: sessions ?? this.sessions,
+    settings: settings ?? this.settings,
+  );
+}
+
+class BackupRestoreDelta {
+  const BackupRestoreDelta({
+    this.added = 0,
+    this.changed = 0,
+    this.preserved = 0,
+  });
+
+  final int added;
+  final int changed;
+  final int preserved;
+
+  BackupRestoreDelta operator +(BackupRestoreDelta other) => BackupRestoreDelta(
+    added: added + other.added,
+    changed: changed + other.changed,
+    preserved: preserved + other.preserved,
+  );
+}
+
+class BackupRestorePreview {
+  const BackupRestorePreview(this.byCategory);
+
+  final Map<BackupRestoreCategory, BackupRestoreDelta> byCategory;
+
+  BackupRestoreDelta get total => byCategory.values.fold(
+    const BackupRestoreDelta(),
+    (sum, value) => sum + value,
+  );
+}
+
 class BackupArchiveCodec {
   const BackupArchiveCodec({
     this.snapshotValidator = const SyncSnapshotValidator(),

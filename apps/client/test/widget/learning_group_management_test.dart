@@ -223,7 +223,13 @@ void main() {
         find.byKey(const Key('library-selection-action-bar')),
         findsOneWidget,
       );
-      expect(find.text('선택 1개'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const Key('library-selection-action-bar')),
+          matching: find.text('선택 1개'),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.byKey(const Key('library-selection-group-add')),
         findsOneWidget,

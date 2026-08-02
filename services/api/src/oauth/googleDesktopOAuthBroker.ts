@@ -27,7 +27,14 @@ export interface GoogleDesktopOAuthBroker {
   ): Promise<GoogleDesktopTokenResponse>;
 }
 
+const googleDesktopOAuthBrokerErrorBrand = Symbol.for(
+  "@sprache/api/GoogleDesktopOAuthBrokerError",
+);
+const googleDesktopOAuthErrorCodePattern = /^[a-z][a-z0-9_]{0,127}$/;
+
 export class GoogleDesktopOAuthBrokerError extends Error {
+  readonly [googleDesktopOAuthBrokerErrorBrand] = true;
+
   constructor(
     readonly statusCode: number,
     readonly code: string,
@@ -36,6 +43,26 @@ export class GoogleDesktopOAuthBrokerError extends Error {
     super(description ? `${code}: ${description}` : code);
     this.name = "GoogleDesktopOAuthBrokerError";
   }
+}
+
+export function isGoogleDesktopOAuthBrokerError(
+  value: unknown,
+): value is GoogleDesktopOAuthBrokerError {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Record<PropertyKey, unknown>;
+  return (
+    candidate[googleDesktopOAuthBrokerErrorBrand] === true &&
+    candidate.name === "GoogleDesktopOAuthBrokerError" &&
+    typeof candidate.statusCode === "number" &&
+    Number.isInteger(candidate.statusCode) &&
+    candidate.statusCode >= 400 &&
+    candidate.statusCode <= 599 &&
+    typeof candidate.code === "string" &&
+    googleDesktopOAuthErrorCodePattern.test(candidate.code) &&
+    (candidate.description === null ||
+      (typeof candidate.description === "string" &&
+        candidate.description.length <= 320))
+  );
 }
 
 const googleTokenSchema = z.object({

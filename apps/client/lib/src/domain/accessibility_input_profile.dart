@@ -16,6 +16,20 @@ enum StudyShortcutAction {
   rateGood,
   rateEasy,
   nextItem,
+  showHint,
+  dontKnow,
+  skip,
+  pause,
+}
+
+/// App-wide actions available outside text fields and modal routes.
+enum GlobalShortcutAction {
+  openSearch,
+  quickAdd,
+  keyboardHelp,
+  focusContent,
+  toggleCompactWindow,
+  minimizeWindow,
 }
 
 /// A deliberately small, conflict-safe set of keys for study shortcuts.
@@ -35,6 +49,16 @@ enum StudyShortcutKey {
   keyR,
   arrowLeft,
   arrowRight,
+  escape,
+  f6,
+  controlH,
+  controlG,
+  controlL,
+  controlK,
+  controlN,
+  controlSlash,
+  controlShiftF,
+  controlShiftM,
 }
 
 const _defaultStudyShortcuts = <StudyShortcutAction, StudyShortcutKey>{
@@ -45,7 +69,29 @@ const _defaultStudyShortcuts = <StudyShortcutAction, StudyShortcutKey>{
   StudyShortcutAction.rateGood: StudyShortcutKey.digit3,
   StudyShortcutAction.rateEasy: StudyShortcutKey.digit4,
   StudyShortcutAction.nextItem: StudyShortcutKey.enter,
+  StudyShortcutAction.showHint: StudyShortcutKey.controlH,
+  StudyShortcutAction.dontKnow: StudyShortcutKey.controlG,
+  StudyShortcutAction.skip: StudyShortcutKey.controlL,
+  StudyShortcutAction.pause: StudyShortcutKey.escape,
 };
+
+const _defaultGlobalShortcuts = <GlobalShortcutAction, StudyShortcutKey>{
+  GlobalShortcutAction.openSearch: StudyShortcutKey.controlK,
+  GlobalShortcutAction.quickAdd: StudyShortcutKey.controlN,
+  GlobalShortcutAction.keyboardHelp: StudyShortcutKey.controlSlash,
+  GlobalShortcutAction.focusContent: StudyShortcutKey.f6,
+  GlobalShortcutAction.toggleCompactWindow: StudyShortcutKey.controlShiftF,
+  GlobalShortcutAction.minimizeWindow: StudyShortcutKey.controlShiftM,
+};
+
+class ShortcutRemapResult<T extends Enum> {
+  const ShortcutRemapResult({required this.profile, this.displacedAction});
+
+  final AccessibilityInputProfile profile;
+  final T? displacedAction;
+
+  bool get hadConflict => displacedAction != null;
+}
 
 /// Device-local accessibility and input preferences.
 ///
@@ -58,18 +104,22 @@ class AccessibilityInputProfile {
     this.cardScale = AccessibilityCardScale.standard,
     this.highContrast = false,
     this.reduceMotion = false,
+    this.reduceTransparency = false,
     this.disableTimedChallenges = false,
     this.androidSelectionGesture = AndroidSelectionGesture.tapAndButtons,
     this.windowsShortcuts = _defaultStudyShortcuts,
+    this.globalShortcuts = _defaultGlobalShortcuts,
   });
 
   final bool largeRatingControls;
   final AccessibilityCardScale cardScale;
   final bool highContrast;
   final bool reduceMotion;
+  final bool reduceTransparency;
   final bool disableTimedChallenges;
   final AndroidSelectionGesture androidSelectionGesture;
   final Map<StudyShortcutAction, StudyShortcutKey> windowsShortcuts;
+  final Map<GlobalShortcutAction, StudyShortcutKey> globalShortcuts;
 
   double get cardScaleFactor => switch (cardScale) {
     AccessibilityCardScale.standard => 1,
@@ -90,26 +140,35 @@ class AccessibilityInputProfile {
   StudyShortcutKey shortcutFor(StudyShortcutAction action) =>
       windowsShortcuts[action] ?? _defaultStudyShortcuts[action]!;
 
+  StudyShortcutKey globalShortcutFor(GlobalShortcutAction action) =>
+      globalShortcuts[action] ?? _defaultGlobalShortcuts[action]!;
+
   AccessibilityInputProfile copyWith({
     bool? largeRatingControls,
     AccessibilityCardScale? cardScale,
     bool? highContrast,
     bool? reduceMotion,
+    bool? reduceTransparency,
     bool? disableTimedChallenges,
     AndroidSelectionGesture? androidSelectionGesture,
     Map<StudyShortcutAction, StudyShortcutKey>? windowsShortcuts,
+    Map<GlobalShortcutAction, StudyShortcutKey>? globalShortcuts,
   }) {
     return AccessibilityInputProfile(
       largeRatingControls: largeRatingControls ?? this.largeRatingControls,
       cardScale: cardScale ?? this.cardScale,
       highContrast: highContrast ?? this.highContrast,
       reduceMotion: reduceMotion ?? this.reduceMotion,
+      reduceTransparency: reduceTransparency ?? this.reduceTransparency,
       disableTimedChallenges:
           disableTimedChallenges ?? this.disableTimedChallenges,
       androidSelectionGesture:
           androidSelectionGesture ?? this.androidSelectionGesture,
       windowsShortcuts: Map.unmodifiable(
         windowsShortcuts ?? this.windowsShortcuts,
+      ),
+      globalShortcuts: Map.unmodifiable(
+        globalShortcuts ?? this.globalShortcuts,
       ),
     );
   }
@@ -118,19 +177,52 @@ class AccessibilityInputProfile {
   AccessibilityInputProfile remapShortcut(
     StudyShortcutAction action,
     StudyShortcutKey key,
+  ) => remapStudyShortcut(action, key).profile;
+
+  ShortcutRemapResult<StudyShortcutAction> remapStudyShortcut(
+    StudyShortcutAction action,
+    StudyShortcutKey key,
   ) {
     final next = Map<StudyShortcutAction, StudyShortcutKey>.from(
       windowsShortcuts,
     );
+    StudyShortcutAction? displaced;
     if (key != StudyShortcutKey.none) {
       for (final entry in next.entries.toList()) {
         if (entry.key != action && entry.value == key) {
           next[entry.key] = StudyShortcutKey.none;
+          displaced ??= entry.key;
         }
       }
     }
     next[action] = key;
-    return copyWith(windowsShortcuts: next);
+    return ShortcutRemapResult(
+      profile: copyWith(windowsShortcuts: next),
+      displacedAction: displaced,
+    );
+  }
+
+  ShortcutRemapResult<GlobalShortcutAction> remapGlobalShortcut(
+    GlobalShortcutAction action,
+    StudyShortcutKey key,
+  ) {
+    final next = Map<GlobalShortcutAction, StudyShortcutKey>.from(
+      globalShortcuts,
+    );
+    GlobalShortcutAction? displaced;
+    if (key != StudyShortcutKey.none) {
+      for (final entry in next.entries.toList()) {
+        if (entry.key != action && entry.value == key) {
+          next[entry.key] = StudyShortcutKey.none;
+          displaced ??= entry.key;
+        }
+      }
+    }
+    next[action] = key;
+    return ShortcutRemapResult(
+      profile: copyWith(globalShortcuts: next),
+      displacedAction: displaced,
+    );
   }
 
   Map<String, Object?> toJson() => {
@@ -138,11 +230,16 @@ class AccessibilityInputProfile {
     'cardScale': cardScale.name,
     'highContrast': highContrast,
     'reduceMotion': reduceMotion,
+    'reduceTransparency': reduceTransparency,
     'disableTimedChallenges': disableTimedChallenges,
     'androidSelectionGesture': androidSelectionGesture.name,
     'windowsShortcuts': {
       for (final action in StudyShortcutAction.values)
         action.name: shortcutFor(action).name,
+    },
+    'globalShortcuts': {
+      for (final action in GlobalShortcutAction.values)
+        action.name: globalShortcutFor(action).name,
     },
   };
 
@@ -161,6 +258,19 @@ class AccessibilityInputProfile {
         );
       }
     }
+    final rawGlobalShortcuts = json['globalShortcuts'];
+    final globalShortcuts = Map<GlobalShortcutAction, StudyShortcutKey>.from(
+      _defaultGlobalShortcuts,
+    );
+    if (rawGlobalShortcuts is Map) {
+      for (final action in GlobalShortcutAction.values) {
+        globalShortcuts[action] = _enumByName(
+          StudyShortcutKey.values,
+          rawGlobalShortcuts[action.name],
+          globalShortcuts[action]!,
+        );
+      }
+    }
     return AccessibilityInputProfile(
       largeRatingControls: _boolOr(json['largeRatingControls'], false),
       cardScale: _enumByName(
@@ -170,6 +280,7 @@ class AccessibilityInputProfile {
       ),
       highContrast: _boolOr(json['highContrast'], false),
       reduceMotion: _boolOr(json['reduceMotion'], false),
+      reduceTransparency: _boolOr(json['reduceTransparency'], false),
       disableTimedChallenges: _boolOr(json['disableTimedChallenges'], false),
       androidSelectionGesture: _enumByName(
         AndroidSelectionGesture.values,
@@ -177,6 +288,7 @@ class AccessibilityInputProfile {
         AndroidSelectionGesture.tapAndButtons,
       ),
       windowsShortcuts: Map.unmodifiable(_deduplicate(shortcuts)),
+      globalShortcuts: Map.unmodifiable(_deduplicateGlobal(globalShortcuts)),
     );
   }
 }
@@ -187,6 +299,22 @@ Map<StudyShortcutAction, StudyShortcutKey> _deduplicate(
   final used = <StudyShortcutKey>{};
   final result = <StudyShortcutAction, StudyShortcutKey>{};
   for (final action in StudyShortcutAction.values) {
+    final key = source[action] ?? StudyShortcutKey.none;
+    if (key == StudyShortcutKey.none || used.add(key)) {
+      result[action] = key;
+    } else {
+      result[action] = StudyShortcutKey.none;
+    }
+  }
+  return result;
+}
+
+Map<GlobalShortcutAction, StudyShortcutKey> _deduplicateGlobal(
+  Map<GlobalShortcutAction, StudyShortcutKey> source,
+) {
+  final used = <StudyShortcutKey>{};
+  final result = <GlobalShortcutAction, StudyShortcutKey>{};
+  for (final action in GlobalShortcutAction.values) {
     final key = source[action] ?? StudyShortcutKey.none;
     if (key == StudyShortcutKey.none || used.add(key)) {
       result[action] = key;

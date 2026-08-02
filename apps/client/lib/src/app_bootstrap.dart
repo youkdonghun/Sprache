@@ -13,9 +13,14 @@ import 'state/app_state.dart';
 import 'theme/app_theme.dart';
 
 class SpracheBootstrap extends StatefulWidget {
-  const SpracheBootstrap({super.key, required this.bootstrapper});
+  const SpracheBootstrap({
+    super.key,
+    required this.bootstrapper,
+    this.launchArguments = const [],
+  });
 
   final DatabaseBootstrapper bootstrapper;
+  final List<String> launchArguments;
 
   @override
   State<SpracheBootstrap> createState() => _SpracheBootstrapState();
@@ -78,7 +83,7 @@ class _SpracheBootstrapState extends State<SpracheBootstrap> {
       null => _BootstrapLoadingApp(),
       DatabaseReady(:final database) => ProviderScope(
         overrides: [appDatabaseProvider.overrideWithValue(database)],
-        child: const SpracheApp(),
+        child: SpracheApp(launchArguments: widget.launchArguments),
       ),
       DatabaseRecoveryRequired(:final diagnostic) => _RecoveryApp(
         diagnostic: diagnostic,

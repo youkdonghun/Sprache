@@ -145,6 +145,10 @@ class StudySessionPlan {
     this.backlogRecovery = const BacklogRecoverySettings(),
     this.title = '',
     this.scheduledAt,
+    this.routineName = '',
+    this.routineWeekdays = const {},
+    this.routineMinuteOfDay,
+    this.routineOrder = 0,
     this.selectedItemIds = const {},
     this.updatedAt,
   });
@@ -178,6 +182,10 @@ class StudySessionPlan {
   final BacklogRecoverySettings backlogRecovery;
   final String title;
   final DateTime? scheduledAt;
+  final String routineName;
+  final Set<int> routineWeekdays;
+  final int? routineMinuteOfDay;
+  final int routineOrder;
   final Set<String> selectedItemIds;
   final DateTime? updatedAt;
 
@@ -226,6 +234,10 @@ class StudySessionPlan {
     BacklogRecoverySettings? backlogRecovery,
     String? title,
     Object? scheduledAt = _sessionPlanValueNotProvided,
+    String? routineName,
+    Set<int>? routineWeekdays,
+    Object? routineMinuteOfDay = _sessionPlanValueNotProvided,
+    int? routineOrder,
     Set<String>? selectedItemIds,
     Object? updatedAt = _sessionPlanValueNotProvided,
   }) {
@@ -274,6 +286,13 @@ class StudySessionPlan {
       scheduledAt: identical(scheduledAt, _sessionPlanValueNotProvided)
           ? this.scheduledAt
           : scheduledAt as DateTime?,
+      routineName: routineName ?? this.routineName,
+      routineWeekdays: routineWeekdays ?? this.routineWeekdays,
+      routineMinuteOfDay:
+          identical(routineMinuteOfDay, _sessionPlanValueNotProvided)
+          ? this.routineMinuteOfDay
+          : routineMinuteOfDay as int?,
+      routineOrder: routineOrder ?? this.routineOrder,
       selectedItemIds: selectedItemIds ?? this.selectedItemIds,
       updatedAt: identical(updatedAt, _sessionPlanValueNotProvided)
           ? this.updatedAt
@@ -313,6 +332,12 @@ class StudySessionPlan {
     'backlogRecovery': backlogRecovery.toJson(),
     'title': title,
     'scheduledAt': scheduledAt?.toUtc().toIso8601String(),
+    if (routineName.isNotEmpty) 'routineName': routineName,
+    if (routineWeekdays.isNotEmpty)
+      'routineWeekdays': routineWeekdays.toList()..sort(),
+    if (routineMinuteOfDay != null)
+      'routineMinuteOfDay': routineMinuteOfDay!.clamp(0, 1439),
+    if (routineName.isNotEmpty) 'routineOrder': routineOrder.clamp(0, 19),
     'selectedItemIds': selectedItemIds.toList()..sort(),
     'updatedAt': updatedAt?.toUtc().toIso8601String(),
   };
@@ -380,7 +405,7 @@ class StudySessionPlan {
         orElse: () => StudySessionLengthMode.itemCount,
       ),
       timeBudgetMinutes: ((json['timeBudgetMinutes'] as num?)?.toInt() ?? 5)
-          .clamp(3, 15),
+          .clamp(2, 15),
       recordProgress: json['recordProgress'] != false,
       answerDirectionOverride: StudyAnswerDirection.values
           .where((value) => value.name == json['answerDirectionOverride'])
@@ -420,6 +445,22 @@ class StudySessionPlan {
         final String value => DateTime.tryParse(value)?.toUtc(),
         _ => null,
       },
+      routineName: String.fromCharCodes(
+        (json['routineName'] as String? ?? '').trim().runes.take(40),
+      ),
+      routineWeekdays: ((json['routineWeekdays'] as List<Object?>?) ?? const [])
+          .whereType<num>()
+          .map((value) => value.toInt())
+          .where(
+            (value) => value >= DateTime.monday && value <= DateTime.sunday,
+          )
+          .take(7)
+          .toSet(),
+      routineMinuteOfDay: switch (json['routineMinuteOfDay']) {
+        final num value => value.toInt().clamp(0, 1439),
+        _ => null,
+      },
+      routineOrder: ((json['routineOrder'] as num?)?.toInt() ?? 0).clamp(0, 19),
       selectedItemIds: ((json['selectedItemIds'] as List<Object?>?) ?? const [])
           .whereType<String>()
           .map((value) => value.trim())
@@ -440,6 +481,8 @@ class StudyPreferences {
     this.onboardingProfile = const OnboardingProfile(),
     this.dailyGoal = 100,
     this.dailyGoalsBySubject = const {},
+    this.weeklyTargetDays = 5,
+    this.weeklyTargetMinutes = 90,
     this.sessionItemLimit = 10,
     this.newItemLimit = 10,
     this.reviewLimit = 30,
@@ -482,6 +525,8 @@ class StudyPreferences {
   final OnboardingProfile onboardingProfile;
   final int dailyGoal;
   final Map<String, int> dailyGoalsBySubject;
+  final int weeklyTargetDays;
+  final int weeklyTargetMinutes;
   final int sessionItemLimit;
   final int newItemLimit;
   final int reviewLimit;
@@ -524,6 +569,8 @@ class StudyPreferences {
     OnboardingProfile? onboardingProfile,
     int? dailyGoal,
     Map<String, int>? dailyGoalsBySubject,
+    int? weeklyTargetDays,
+    int? weeklyTargetMinutes,
     int? sessionItemLimit,
     int? newItemLimit,
     int? reviewLimit,
@@ -574,6 +621,8 @@ class StudyPreferences {
       onboardingProfile: onboardingProfile ?? this.onboardingProfile,
       dailyGoal: dailyGoal ?? this.dailyGoal,
       dailyGoalsBySubject: dailyGoalsBySubject ?? this.dailyGoalsBySubject,
+      weeklyTargetDays: weeklyTargetDays ?? this.weeklyTargetDays,
+      weeklyTargetMinutes: weeklyTargetMinutes ?? this.weeklyTargetMinutes,
       sessionItemLimit: sessionItemLimit ?? this.sessionItemLimit,
       newItemLimit: newItemLimit ?? this.newItemLimit,
       reviewLimit: reviewLimit ?? this.reviewLimit,
@@ -638,6 +687,8 @@ class StudyPreferences {
             ..sort((left, right) => left.key.compareTo(right.key))))
         entry.key: entry.value,
     },
+    'weeklyTargetDays': weeklyTargetDays,
+    'weeklyTargetMinutes': weeklyTargetMinutes,
     'sessionItemLimit': sessionItemLimit,
     'newItemLimit': newItemLimit,
     'reviewLimit': reviewLimit,
@@ -773,6 +824,10 @@ class StudyPreferences {
       dailyGoalsBySubject: _parseDailyGoalsBySubject(
         json['dailyGoalsBySubject'],
       ),
+      weeklyTargetDays: ((json['weeklyTargetDays'] as num?)?.toInt() ?? 5)
+          .clamp(1, 7),
+      weeklyTargetMinutes:
+          ((json['weeklyTargetMinutes'] as num?)?.toInt() ?? 90).clamp(5, 840),
       sessionItemLimit: ((json['sessionItemLimit'] as num?)?.toInt() ?? 10)
           .clamp(StudyLimits.minSessionItems, StudyLimits.maxSessionItems),
       newItemLimit: ((json['newItemLimit'] as num?)?.toInt() ?? 10).clamp(

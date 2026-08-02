@@ -6,7 +6,7 @@ void main() {
   test('device sync policy, history, and recovery point round-trip', () {
     final now = DateTime.utc(2026, 7, 31, 10);
     final settings = SyncDeviceSettings(
-      policy: const SyncPolicy(mode: SyncMode.wifiOnly),
+      policy: const SyncPolicy(mode: SyncMode.wifiOnly, offlineLock: true),
       history: [
         SyncHistoryEntry(
           id: 'sync-1',
@@ -35,11 +35,19 @@ void main() {
         driveSnapshot: const {'schemaVersion': 1, 'progress': []},
         mergedSnapshot: const {'schemaVersion': 2, 'progress': []},
       ),
+      completionReceipts: [
+        SyncCompletionReceipt(
+          operationId: 'snapshot-stable-1',
+          completedAt: now,
+          payloadSha256: 'a' * 64,
+        ),
+      ],
     );
 
     final restored = SyncDeviceSettings.fromJson(settings.toJson());
 
     expect(restored.policy.mode, SyncMode.wifiOnly);
+    expect(restored.policy.offlineLock, isTrue);
     expect(restored.history.single.changeCount, 1);
     expect(
       restored.history.single.comparisons.single.selection,
@@ -47,6 +55,7 @@ void main() {
     );
     expect(restored.recoveryPoint?.localSnapshot['schemaVersion'], 2);
     expect(restored.recoveryPoint?.driveSnapshot?['schemaVersion'], 1);
+    expect(restored.completionReceipts.single.operationId, 'snapshot-stable-1');
   });
 
   test('comparison and selected version resolver work per record', () {

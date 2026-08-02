@@ -242,6 +242,30 @@ class SyncSnapshotValidator {
         }
       }
     }
+    final weeklyTargetDays = settings['weeklyTargetDays'];
+    final weeklyTargetDayCount = _integer(weeklyTargetDays);
+    if (weeklyTargetDays != null &&
+        (weeklyTargetDayCount == null ||
+            weeklyTargetDayCount < 1 ||
+            weeklyTargetDayCount > 7)) {
+      _add(
+        issues,
+        r'$.settings.weeklyTargetDays',
+        '주간 학습일 목표는 1부터 7 사이여야 합니다.',
+      );
+    }
+    final weeklyTargetMinutes = settings['weeklyTargetMinutes'];
+    final weeklyTargetMinuteCount = _integer(weeklyTargetMinutes);
+    if (weeklyTargetMinutes != null &&
+        (weeklyTargetMinuteCount == null ||
+            weeklyTargetMinuteCount < 5 ||
+            weeklyTargetMinuteCount > 840)) {
+      _add(
+        issues,
+        r'$.settings.weeklyTargetMinutes',
+        '주간 학습 분량 목표는 5분부터 840분 사이여야 합니다.',
+      );
+    }
     final dailyGoalChangedAtBySubject = settings['dailyGoalChangedAtBySubject'];
     if (dailyGoalChangedAtBySubject != null) {
       if (dailyGoalChangedAtBySubject is! Map ||
@@ -667,6 +691,42 @@ class SyncSnapshotValidator {
       path,
       issues,
     );
+    for (final entry in <(String, Iterable<Enum>)>[
+      ('surfaceTone', AppSurfaceTone.values),
+      ('cornerStyle', AppCornerStyle.values),
+      ('cardStyle', AppCardStyle.values),
+      ('contentWidth', AppContentWidth.values),
+      ('fontEmphasis', AppFontEmphasis.values),
+      ('fontFamily', AppFontFamily.values),
+      ('themeScheduleMode', AppThemeScheduleMode.values),
+      ('studyTextScale', AppStudyTextScale.values),
+      ('cardAlignment', AppCardAlignment.values),
+      ('navigationIconStyle', AppNavigationIconStyle.values),
+      ('decorationIntensity', AppDecorationIntensity.values),
+      ('lightAccentPalette', AppAccentPalette.values),
+      ('darkAccentPalette', AppAccentPalette.values),
+      ('motionLevel', AppMotionLevel.values),
+      ('celebrationLevel', AppCelebrationLevel.values),
+      ('homeLayout', AppHomeLayout.values),
+      ('navigationLabelMode', AppNavigationLabelMode.values),
+      ('subjectSwitcherStyle', AppSubjectSwitcherStyle.values),
+      ('quickAddKind', AppQuickAddKind.values),
+      ('duplicateDefault', AppDuplicateDefault.values),
+      ('feedbackDetail', AppFeedbackDetail.values),
+      ('progressStyle', AppProgressStyle.values),
+      ('encouragementTone', AppEncouragementTone.values),
+      ('readingLineHeight', AppReadingLineHeight.values),
+      ('readingWidth', AppReadingWidth.values),
+    ]) {
+      _validateEnumField(
+        preferences,
+        entry.$1,
+        entry.$2,
+        path,
+        issues,
+        required: false,
+      );
+    }
     for (final field in const [
       'reduceMotion',
       'hapticsEnabled',
@@ -674,6 +734,80 @@ class SyncSnapshotValidator {
     ]) {
       _validateBooleanField(preferences, field, path, issues);
     }
+    for (final field in const [
+      'highContrast',
+      'showFocusRing',
+      'showHomeHeader',
+      'showStreak',
+      'showXp',
+      'showSyncStatus',
+      'showTodayPlan',
+      'showPinnedCollections',
+      'showRecentAdditions',
+      'showDataFlow',
+      'showSchedules',
+      'showQuickAdd',
+      'showGlobalSearch',
+      'quickAddFavoriteDefault',
+      'quickAddOpenDetails',
+      'quickAddKeepAddingDefault',
+      'quickAddAutoNormalize',
+      'quickAddRememberTags',
+      'showShortcutHints',
+      'focusStudyMode',
+      'leftHandedControls',
+      'showStudyTimer',
+      'showQuestionCounter',
+      'perSubjectAccentEnabled',
+      'separateBrightnessAccents',
+      'scheduledDarkUsesOled',
+      'customAccentEnabled',
+    ]) {
+      _validateBooleanField(preferences, field, path, issues, required: false);
+    }
+    _validateOptionalIntegerRange(
+      preferences,
+      'quickAddPriorityDefault',
+      path,
+      issues,
+      minimum: 0,
+      maximum: 5,
+    );
+    _validateOptionalIntegerRange(
+      preferences,
+      'quickAddDraftDelayMs',
+      path,
+      issues,
+      minimum: 200,
+      maximum: 2000,
+    );
+    _validateOptionalIntegerRange(
+      preferences,
+      'themeDarkStartHour',
+      path,
+      issues,
+      minimum: 0,
+      maximum: 23,
+    );
+    _validateOptionalIntegerRange(
+      preferences,
+      'themeLightStartHour',
+      path,
+      issues,
+      minimum: 0,
+      maximum: 23,
+    );
+    _validateOptionalIntegerRange(
+      preferences,
+      'customAccentRgb',
+      path,
+      issues,
+      minimum: 0,
+      maximum: 0xFFFFFF,
+    );
+    _validateHomeSectionOrder(preferences, path, issues);
+    _validateAccentPaletteBySubject(preferences, path, issues);
+    _validateThemeProfiles(preferences, path, issues);
     if (preferences.containsKey('updatedAt')) {
       _date(
         preferences['updatedAt'],
@@ -728,6 +862,13 @@ class SyncSnapshotValidator {
         '자동 넘김 대기 시간은 300부터 3000 사이의 정수여야 합니다.',
       );
     }
+    if (preferences.containsKey('practiceCatalog')) {
+      _validatePracticeCatalog(
+        preferences['practiceCatalog'],
+        '$path.practiceCatalog',
+        issues,
+      );
+    }
     if (preferences.containsKey('updatedAt')) {
       _date(
         preferences['updatedAt'],
@@ -742,8 +883,10 @@ class SyncSnapshotValidator {
     Map<String, Object?> values,
     String field,
     String path,
-    List<SnapshotValidationIssue> issues,
-  ) {
+    List<SnapshotValidationIssue> issues, {
+    bool required = true,
+  }) {
+    if (!values.containsKey(field) && !required) return;
     if (values[field] is! bool) {
       _add(issues, '$path.$field', 'true 또는 false여야 합니다.');
     }
@@ -754,14 +897,464 @@ class SyncSnapshotValidator {
     String field,
     Iterable<T> supported,
     String path,
-    List<SnapshotValidationIssue> issues,
-  ) {
+    List<SnapshotValidationIssue> issues, {
+    bool required = true,
+  }) {
+    if (!values.containsKey(field) && !required) return;
     final value = values[field];
     if (value is! String ||
         !supported.any((candidate) => candidate.name == value)) {
       _add(issues, '$path.$field', '지원하는 설정 값이어야 합니다.');
     }
   }
+
+  void _validateOptionalIntegerRange(
+    Map<String, Object?> values,
+    String field,
+    String path,
+    List<SnapshotValidationIssue> issues, {
+    required int minimum,
+    required int maximum,
+  }) {
+    if (!values.containsKey(field)) return;
+    final value = _integer(values[field]);
+    if (value == null || value < minimum || value > maximum) {
+      _add(issues, '$path.$field', '$minimum부터 $maximum 사이의 정수여야 합니다.');
+    }
+  }
+
+  void _validateHomeSectionOrder(
+    Map<String, Object?> preferences,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'homeSectionOrder';
+    if (!preferences.containsKey(field)) return;
+    final raw = preferences[field];
+    final fieldPath = '$path.$field';
+    if (raw is! List<Object?>) {
+      _add(issues, fieldPath, '배열이어야 합니다.');
+      return;
+    }
+    if (raw.length > AppHomeSection.values.length) {
+      _add(
+        issues,
+        fieldPath,
+        '홈 섹션은 최대 ${AppHomeSection.values.length}개까지 허용합니다.',
+      );
+      return;
+    }
+    final seen = <String>{};
+    for (final (index, value) in raw.indexed) {
+      if (value is! String ||
+          !AppHomeSection.values.any((section) => section.name == value)) {
+        _add(issues, '$fieldPath[$index]', '지원하는 홈 섹션이어야 합니다.');
+        continue;
+      }
+      if (!seen.add(value)) {
+        _add(issues, '$fieldPath[$index]', '홈 섹션을 중복해서 지정할 수 없습니다.');
+      }
+    }
+  }
+
+  void _validateAccentPaletteBySubject(
+    Map<String, Object?> preferences,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'accentPaletteBySubject';
+    if (!preferences.containsKey(field)) return;
+    final raw = preferences[field];
+    final fieldPath = '$path.$field';
+    if (raw is! Map) {
+      _add(issues, fieldPath, '과목 ID와 팔레트로 구성된 객체여야 합니다.');
+      return;
+    }
+    if (raw.length > 100) {
+      _add(issues, fieldPath, '과목별 팔레트는 최대 100개까지 허용합니다.');
+      return;
+    }
+    for (final entry in raw.entries) {
+      final subjectId = entry.key;
+      if (subjectId is! String || !_isSafePreferenceId(subjectId)) {
+        _add(issues, fieldPath, '과목 ID는 공백 없는 160자 이하 문자열이어야 합니다.');
+        continue;
+      }
+      final palette = entry.value;
+      if (palette is! String ||
+          !AppAccentPalette.values.any((value) => value.name == palette)) {
+        _add(issues, '$fieldPath.$subjectId', '지원하는 강조 팔레트여야 합니다.');
+      }
+    }
+  }
+
+  void _validateThemeProfiles(
+    Map<String, Object?> preferences,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'themeProfiles';
+    final fieldPath = '$path.$field';
+    final raw = preferences[field];
+    final validIds = <String>{};
+    if (raw != null) {
+      if (raw is! List<Object?>) {
+        _add(issues, fieldPath, '테마 프로필 배열이어야 합니다.');
+      } else if (raw.length > 5) {
+        _add(issues, fieldPath, '테마 프로필은 최대 5개까지 허용합니다.');
+      } else {
+        for (final (index, value) in raw.indexed) {
+          final profile = AppThemeProfile.tryFromJson(value);
+          if (profile == null) {
+            _add(
+              issues,
+              '$fieldPath[$index]',
+              '지원하는 값으로 구성된 안전한 테마 프로필이어야 합니다.',
+            );
+            continue;
+          }
+          if (!validIds.add(profile.id)) {
+            _add(issues, '$fieldPath[$index].id', '테마 프로필 ID는 중복될 수 없습니다.');
+          }
+        }
+      }
+    }
+    if (!preferences.containsKey('activeThemeProfileId')) return;
+    final activeId = preferences['activeThemeProfileId'];
+    if (activeId is! String || !validIds.contains(activeId)) {
+      _add(
+        issues,
+        '$path.activeThemeProfileId',
+        '현재 테마 프로필은 저장된 안전한 프로필 ID여야 합니다.',
+      );
+    }
+  }
+
+  void _validatePracticeCatalog(
+    Object? raw,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    final catalog = _map(raw, path, issues);
+    if (catalog == null) return;
+    _validatePracticeActivityIdList(
+      catalog,
+      'recentActivityIds',
+      path,
+      issues,
+      maximumEntries: 8,
+    );
+    _validatePracticeActivityIdList(
+      catalog,
+      'favoriteActivityOrder',
+      path,
+      issues,
+      maximumEntries: 50,
+    );
+    _validatePracticeActivityIdList(
+      catalog,
+      'quickLaunchActivityIds',
+      path,
+      issues,
+      maximumEntries: 50,
+    );
+    _validateEnumField(
+      catalog,
+      'durationFilter',
+      PracticeDurationFilter.values,
+      path,
+      issues,
+      required: false,
+    );
+    _validateEnumField(
+      catalog,
+      'skillFilter',
+      PracticeSkillFilter.values,
+      path,
+      issues,
+      required: false,
+    );
+    _validateEnumField(
+      catalog,
+      'sortOrder',
+      PracticeCatalogSort.values,
+      path,
+      issues,
+      required: false,
+    );
+    _validateEnumField(
+      catalog,
+      'surpriseDurationFilter',
+      PracticeDurationFilter.values,
+      path,
+      issues,
+      required: false,
+    );
+    _validateEnumField(
+      catalog,
+      'surpriseSkillFilter',
+      PracticeSkillFilter.values,
+      path,
+      issues,
+      required: false,
+    );
+    _validateBooleanField(
+      catalog,
+      'surpriseFavoritesOnly',
+      path,
+      issues,
+      required: false,
+    );
+    _validateBooleanField(
+      catalog,
+      'surpriseAvoidRecent',
+      path,
+      issues,
+      required: false,
+    );
+    _validatePracticeIntegerMap(
+      catalog,
+      'launchCountByActivityId',
+      path,
+      issues,
+      minimum: 1,
+      maximum: 1000000,
+    );
+    _validatePracticeIntegerMap(
+      catalog,
+      'recommendationWeightByActivityId',
+      path,
+      issues,
+      minimum: -3,
+      maximum: 3,
+      rejectZero: true,
+    );
+    _validatePracticeDateMap(
+      catalog,
+      'recommendationSnoozedUntilByActivityId',
+      path,
+      issues,
+    );
+    _validatePracticeBestRecords(catalog, path, issues);
+    _validatePracticePlaylists(catalog, path, issues);
+    _validatePracticeLaunches(catalog, path, issues);
+  }
+
+  void _validatePracticeActivityIdList(
+    Map<String, Object?> catalog,
+    String field,
+    String path,
+    List<SnapshotValidationIssue> issues, {
+    required int maximumEntries,
+  }) {
+    if (!catalog.containsKey(field)) return;
+    final raw = catalog[field];
+    final fieldPath = '$path.$field';
+    if (raw is! List<Object?>) {
+      _add(issues, fieldPath, '활동 ID 배열이어야 합니다.');
+      return;
+    }
+    if (raw.length > maximumEntries) {
+      _add(issues, fieldPath, '활동 ID는 최대 $maximumEntries개까지 허용합니다.');
+      return;
+    }
+    final seen = <String>{};
+    for (final (index, value) in raw.indexed) {
+      if (value is! String || !_isSafePreferenceId(value)) {
+        _add(issues, '$fieldPath[$index]', '활동 ID는 공백 없는 160자 이하 문자열이어야 합니다.');
+        continue;
+      }
+      if (!seen.add(value)) {
+        _add(issues, '$fieldPath[$index]', '활동 ID를 중복해서 지정할 수 없습니다.');
+      }
+    }
+  }
+
+  void _validatePracticeIntegerMap(
+    Map<String, Object?> catalog,
+    String field,
+    String path,
+    List<SnapshotValidationIssue> issues, {
+    required int minimum,
+    required int maximum,
+    bool rejectZero = false,
+  }) {
+    if (!catalog.containsKey(field)) return;
+    final values = catalog[field];
+    final fieldPath = '$path.$field';
+    if (values is! Map) {
+      _add(issues, fieldPath, '활동 ID와 정수로 구성된 객체여야 합니다.');
+      return;
+    }
+    if (values.length > 50) {
+      _add(issues, fieldPath, '활동별 값은 최대 50개까지 허용합니다.');
+      return;
+    }
+    for (final entry in values.entries) {
+      final id = entry.key;
+      final value = _integer(entry.value);
+      if (id is! String || !_isSafePreferenceId(id)) {
+        _add(issues, fieldPath, '안전한 활동 ID만 사용할 수 있습니다.');
+      } else if (value == null ||
+          value < minimum ||
+          value > maximum ||
+          (rejectZero && value == 0)) {
+        _add(issues, '$fieldPath.$id', '$minimum부터 $maximum 사이의 정수여야 합니다.');
+      }
+    }
+  }
+
+  void _validatePracticeDateMap(
+    Map<String, Object?> catalog,
+    String field,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    if (!catalog.containsKey(field)) return;
+    final values = catalog[field];
+    final fieldPath = '$path.$field';
+    if (values is! Map) {
+      _add(issues, fieldPath, '활동 ID와 날짜로 구성된 객체여야 합니다.');
+      return;
+    }
+    if (values.length > 50) {
+      _add(issues, fieldPath, '추천 숨김은 최대 50개까지 허용합니다.');
+      return;
+    }
+    for (final entry in values.entries) {
+      if (entry.key is! String ||
+          !_isSafePreferenceId(entry.key! as String) ||
+          entry.value is! String ||
+          DateTime.tryParse(entry.value! as String) == null) {
+        _add(issues, fieldPath, '안전한 활동 ID와 ISO 날짜만 사용할 수 있습니다.');
+      }
+    }
+  }
+
+  void _validatePracticeBestRecords(
+    Map<String, Object?> catalog,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'bestRecordsByActivityId';
+    if (!catalog.containsKey(field)) return;
+    final values = catalog[field];
+    final fieldPath = '$path.$field';
+    if (values is! Map) {
+      _add(issues, fieldPath, '활동별 최고 기록 객체여야 합니다.');
+      return;
+    }
+    if (values.length > 50) {
+      _add(issues, fieldPath, '최고 기록은 최대 50개까지 허용합니다.');
+      return;
+    }
+    for (final entry in values.entries) {
+      final id = entry.key;
+      final record = entry.value;
+      if (id is! String || !_isSafePreferenceId(id) || record is! Map) {
+        _add(issues, fieldPath, '안전한 활동 ID와 기록 객체여야 합니다.');
+        continue;
+      }
+      final score = _integer(record['bestScore']);
+      final elapsed = record['bestElapsedMs'];
+      if (score == null || score < 0 || score > 100) {
+        _add(issues, '$fieldPath.$id.bestScore', '최고 점수는 0부터 100 사이여야 합니다.');
+      }
+      final elapsedValue = _integer(elapsed);
+      if (elapsedValue != null &&
+          (elapsedValue < 1 || elapsedValue > 86400000)) {
+        _add(issues, '$fieldPath.$id.bestElapsedMs', '완료 시간 범위를 벗어났습니다.');
+      } else if (elapsed != null && elapsedValue == null) {
+        _add(issues, '$fieldPath.$id.bestElapsedMs', '완료 시간은 정수여야 합니다.');
+      }
+      if (record['updatedAt'] is! String ||
+          DateTime.tryParse(record['updatedAt']! as String) == null) {
+        _add(issues, '$fieldPath.$id.updatedAt', 'ISO 날짜여야 합니다.');
+      }
+    }
+  }
+
+  void _validatePracticePlaylists(
+    Map<String, Object?> catalog,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'playlists';
+    if (!catalog.containsKey(field)) return;
+    final values = catalog[field];
+    final fieldPath = '$path.$field';
+    if (values is! List<Object?>) {
+      _add(issues, fieldPath, '플레이리스트 배열이어야 합니다.');
+      return;
+    }
+    if (values.length > 10) {
+      _add(issues, fieldPath, '플레이리스트는 최대 10개까지 허용합니다.');
+      return;
+    }
+    final usedIds = <String>{};
+    for (final (index, rawPlaylist) in values.indexed) {
+      if (rawPlaylist is! Map) {
+        _add(issues, '$fieldPath[$index]', '플레이리스트 객체여야 합니다.');
+        continue;
+      }
+      final id = rawPlaylist['id'];
+      final name = rawPlaylist['name'];
+      final activityIds = rawPlaylist['activityIds'];
+      if (id is! String || !_isSafePreferenceId(id) || !usedIds.add(id)) {
+        _add(issues, '$fieldPath[$index].id', '고유한 안전한 ID여야 합니다.');
+      }
+      if (name is! String || name.trim().isEmpty || name.runes.length > 40) {
+        _add(issues, '$fieldPath[$index].name', '이름은 1~40자여야 합니다.');
+      }
+      if (activityIds is! List<Object?> ||
+          activityIds.length < 2 ||
+          activityIds.length > 5) {
+        _add(issues, '$fieldPath[$index].activityIds', '게임을 2~5개 지정해야 합니다.');
+        continue;
+      }
+      final usedActivities = <String>{};
+      for (final (activityIndex, activityId) in activityIds.indexed) {
+        if (activityId is! String ||
+            !_isSafePreferenceId(activityId) ||
+            !isPlaylistCompatiblePracticeActivity(activityId) ||
+            !usedActivities.add(activityId)) {
+          _add(
+            issues,
+            '$fieldPath[$index].activityIds[$activityIndex]',
+            '중복 없는 학습 게임 ID여야 합니다.',
+          );
+        }
+      }
+    }
+  }
+
+  void _validatePracticeLaunches(
+    Map<String, Object?> catalog,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'launchByActivityId';
+    final values = catalog[field];
+    if (values is! Map) return;
+    for (final entry in values.entries) {
+      final launch = entry.value;
+      if (launch is Map && launch.containsKey('challengeScoringEnabled')) {
+        if (launch['challengeScoringEnabled'] is! bool) {
+          _add(
+            issues,
+            '$path.$field.${entry.key}.challengeScoringEnabled',
+            'true 또는 false여야 합니다.',
+          );
+        }
+      }
+    }
+  }
+
+  bool _isSafePreferenceId(String value) =>
+      value.isNotEmpty &&
+      value == value.trim() &&
+      value.runes.length <= 160 &&
+      !value.runes.any((rune) => rune < 0x20 || rune == 0x7f);
 
   void _validateSessionPlan(
     Object? raw,
@@ -902,8 +1495,8 @@ class SyncSnapshotValidator {
     final timeBudgetMinutes = plan['timeBudgetMinutes'];
     if (timeBudgetMinutes != null) {
       final parsed = _integer(timeBudgetMinutes);
-      if (parsed == null || parsed < 3 || parsed > 15) {
-        _add(issues, '$path.timeBudgetMinutes', '3부터 15 사이의 정수여야 합니다.');
+      if (parsed == null || parsed < 2 || parsed > 15) {
+        _add(issues, '$path.timeBudgetMinutes', '2부터 15 사이의 정수여야 합니다.');
       }
     }
     final answerDirection = plan['answerDirectionOverride'];
@@ -981,6 +1574,35 @@ class SyncSnapshotValidator {
     final planId = plan['planId'];
     if (planId != null && (planId is! String || planId.runes.length > 80)) {
       _add(issues, '$path.planId', '80자 이하 문자열이어야 합니다.');
+    }
+    final routineName = plan['routineName'];
+    if (routineName != null &&
+        (routineName is! String || routineName.runes.length > 40)) {
+      _add(issues, '$path.routineName', '40자 이하 문자열이어야 합니다.');
+    }
+    final routineWeekdays = plan['routineWeekdays'];
+    if (routineWeekdays != null &&
+        (routineWeekdays is! List<Object?> ||
+            routineWeekdays.length > 7 ||
+            routineWeekdays.any((value) {
+              final weekday = _integer(value);
+              return weekday == null || weekday < 1 || weekday > 7;
+            }))) {
+      _add(issues, '$path.routineWeekdays', '1부터 7까지의 요일을 최대 7개 저장할 수 있습니다.');
+    }
+    final routineMinuteOfDay = plan['routineMinuteOfDay'];
+    if (routineMinuteOfDay != null) {
+      final minute = _integer(routineMinuteOfDay);
+      if (minute == null || minute < 0 || minute > 1439) {
+        _add(issues, '$path.routineMinuteOfDay', '0부터 1439 사이의 정수여야 합니다.');
+      }
+    }
+    final routineOrder = plan['routineOrder'];
+    if (routineOrder != null) {
+      final order = _integer(routineOrder);
+      if (order == null || order < 0 || order > 19) {
+        _add(issues, '$path.routineOrder', '0부터 19 사이의 정수여야 합니다.');
+      }
     }
     _validateDate(plan['scheduledAt'], '$path.scheduledAt', issues);
     _validateDate(plan['updatedAt'], '$path.updatedAt', issues);
@@ -1126,8 +1748,99 @@ class SyncSnapshotValidator {
         if (session.endedAt.isBefore(session.startedAt)) {
           _add(issues, '$path.endedAt', '종료 시각은 시작 시각보다 빠를 수 없습니다.');
         }
+        _validatePronunciationMetrics(
+          sessionMap['pronunciationMetrics'],
+          path,
+          session,
+          issues,
+        );
+        _validateAttemptMetrics(
+          sessionMap['attemptMetrics'],
+          sessionPath: path,
+          startedAt: session.startedAt,
+          endedAt: session.endedAt,
+          issues: issues,
+        );
       } catch (error) {
         _add(issues, path, error.toString());
+      }
+    }
+  }
+
+  void _validatePronunciationMetrics(
+    Object? raw,
+    String sessionPath,
+    StudySessionSummary session,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    if (raw == null) return;
+    if (raw is! List<Object?>) {
+      _add(issues, '$sessionPath.pronunciationMetrics', '발음 평가는 배열이어야 합니다.');
+      return;
+    }
+    const allowedKeys = {'score', 'recordedAt', 'method'};
+    for (final (index, value) in raw.indexed) {
+      final path = '$sessionPath.pronunciationMetrics[$index]';
+      final metric = _map(value, path, issues);
+      if (metric == null) continue;
+      final unknown = metric.keys.where((key) => !allowedKeys.contains(key));
+      if (unknown.isNotEmpty) {
+        _add(issues, path, '발음 기록에는 점수·시각·평가 방식만 저장할 수 있습니다.');
+      }
+      final recordedAt = DateTime.tryParse(
+        metric['recordedAt'] as String? ?? '',
+      );
+      if (recordedAt != null &&
+          (recordedAt.isBefore(session.startedAt) ||
+              recordedAt.isAfter(session.endedAt))) {
+        _add(issues, '$path.recordedAt', '발음 시각은 세션 시간 안이어야 합니다.');
+      }
+    }
+  }
+
+  void _validateAttemptMetrics(
+    Object? raw, {
+    required String sessionPath,
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required List<SnapshotValidationIssue> issues,
+  }) {
+    if (raw == null) return;
+    if (raw is! List<Object?>) {
+      _add(issues, '$sessionPath.attemptMetrics', '응답 지표는 배열이어야 합니다.');
+      return;
+    }
+    if (raw.length > StudyLimits.maxActiveQueueEntries) {
+      _add(
+        issues,
+        '$sessionPath.attemptMetrics',
+        '응답 지표는 최대 ${StudyLimits.maxActiveQueueEntries}개까지 저장할 수 있습니다.',
+      );
+      return;
+    }
+    const allowedKeys = {
+      'itemId',
+      'skill',
+      'errorType',
+      'correct',
+      'responseTimeMs',
+      'recordedAt',
+      'usedHint',
+    };
+    for (final (index, value) in raw.indexed) {
+      final path = '$sessionPath.attemptMetrics[$index]';
+      final metric = _map(value, path, issues);
+      if (metric == null) continue;
+      final unknown = metric.keys.where((key) => !allowedKeys.contains(key));
+      if (unknown.isNotEmpty) {
+        _add(issues, path, '응답 지표에는 답안·문제 문구를 저장할 수 없습니다.');
+      }
+      final recordedAt = DateTime.tryParse(
+        metric['recordedAt'] as String? ?? '',
+      );
+      if (recordedAt != null &&
+          (recordedAt.isBefore(startedAt) || recordedAt.isAfter(endedAt))) {
+        _add(issues, '$path.recordedAt', '응답 시각은 세션 시간 안이어야 합니다.');
       }
     }
   }
@@ -1224,6 +1937,13 @@ class SyncSnapshotValidator {
           '세션 수명주기 기록은 최대 50개까지 저장할 수 있습니다.',
         );
       }
+      _validateAttemptMetrics(
+        sessionMap['attemptMetrics'],
+        sessionPath: r'$.activeStudy.session',
+        startedAt: session.startedAt,
+        endedAt: session.updatedAt,
+        issues: issues,
+      );
       if (session.updatedAt.isBefore(session.startedAt)) {
         _add(issues, r'$.activeStudy.session.updatedAt', '시작 시각보다 빠를 수 없습니다.');
       }

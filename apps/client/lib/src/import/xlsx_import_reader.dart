@@ -47,25 +47,93 @@ class XlsxImportReader {
         file.name.replaceAll(r'\', '/'): file,
     };
     final sharedStrings = _sharedStrings(files['xl/sharedStrings.xml']);
-    final worksheetFiles =
+    final workbookSheets = _workbookSheets(files);
+    final worksheetFiles = <({String path, String name, ArchiveFile file})>[
+      for (final sheet in workbookSheets)
+        if (files[sheet.path] case final file?)
+          (path: sheet.path, name: sheet.name, file: file),
+    ];
+    final knownPaths = workbookSheets.map((sheet) => sheet.path).toSet();
+    final unlisted =
         files.entries
             .where(
               (entry) =>
                   entry.key.startsWith('xl/worksheets/') &&
-                  entry.key.endsWith('.xml'),
+                  entry.key.endsWith('.xml') &&
+                  !knownPaths.contains(entry.key),
             )
             .toList()
           ..sort((left, right) => left.key.compareTo(right.key));
+    worksheetFiles.addAll([
+      for (final entry in unlisted)
+        (path: entry.key, name: entry.key.split('/').last, file: entry.value),
+    ]);
     if (worksheetFiles.isEmpty) {
       throw const FormatException('엑셀에 워크시트가 없습니다.');
     }
     return [
       for (final entry in worksheetFiles)
         XlsxImportSheet(
-          name: entry.key.split('/').last,
-          rows: _rows(entry.value, sharedStrings),
+          name: entry.name,
+          rows: _rows(entry.file, sharedStrings),
         ),
     ];
+  }
+
+  List<({String path, String name})> _workbookSheets(
+    Map<String, ArchiveFile> files,
+  ) {
+    final workbook = files['xl/workbook.xml'];
+    final relationships = files['xl/_rels/workbook.xml.rels'];
+    if (workbook == null || relationships == null) return const [];
+    final targets = <String, String>{};
+    for (final relation
+        in _document(relationships).descendants.whereType<XmlElement>().where(
+          (element) => element.name.local == 'Relationship',
+        )) {
+      final id = relation.getAttribute('Id');
+      final target = relation.getAttribute('Target');
+      if (id == null || target == null) continue;
+      final normalized = _worksheetTarget(target);
+      if (normalized != null) targets[id] = normalized;
+    }
+    final result = <({String path, String name})>[];
+    for (final sheet
+        in _document(workbook).descendants.whereType<XmlElement>().where(
+          (element) => element.name.local == 'sheet',
+        )) {
+      final id = sheet.attributes
+          .where((attribute) => attribute.name.local == 'id')
+          .map((attribute) => attribute.value)
+          .firstOrNull;
+      final path = id == null ? null : targets[id];
+      final name = sheet.getAttribute('name')?.trim();
+      if (path == null || name == null || name.isEmpty) continue;
+      result.add((path: path, name: name));
+    }
+    return result;
+  }
+
+  String? _worksheetTarget(String rawTarget) {
+    var target = rawTarget.replaceAll(r'\', '/');
+    target = target.startsWith('/')
+        ? target.substring(1)
+        : 'xl/${target.replaceFirst(RegExp(r'^\./'), '')}';
+    final parts = <String>[];
+    for (final part in target.split('/')) {
+      if (part.isEmpty || part == '.') continue;
+      if (part == '..') {
+        if (parts.isEmpty) return null;
+        parts.removeLast();
+      } else {
+        parts.add(part);
+      }
+    }
+    final normalized = parts.join('/');
+    return normalized.startsWith('xl/worksheets/') &&
+            normalized.endsWith('.xml')
+        ? normalized
+        : null;
   }
 
   List<String> _sharedStrings(ArchiveFile? file) {

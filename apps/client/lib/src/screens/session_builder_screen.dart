@@ -13,6 +13,7 @@ import '../domain/session_enhancements.dart';
 import '../domain/study_interaction_preferences.dart';
 import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
+import '../domain/study_routines.dart';
 import '../domain/study_session_builder.dart';
 import '../services/app_clock.dart';
 import '../services/study_notification_service.dart';
@@ -211,6 +212,155 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
       ),
     );
     return true;
+  }
+
+  Future<void> _configureRoutine() async {
+    final nameController = TextEditingController(
+      text: _plan.routineName.isEmpty ? '나의 학습 루틴' : _plan.routineName,
+    );
+    var weekdays = _plan.routineWeekdays.isEmpty
+        ? <int>{DateTime.monday, DateTime.wednesday, DateTime.friday}
+        : {..._plan.routineWeekdays};
+    final scheduled = _plan.scheduledAt?.toLocal();
+    var minuteOfDay =
+        _plan.routineMinuteOfDay ??
+        (scheduled == null ? 19 * 60 : scheduled.hour * 60 + scheduled.minute);
+    final result = await showDialog<StudySessionPlan>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('주간 학습 루틴'),
+          content: SizedBox(
+            width: 440,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextField(
+                  key: const Key('routine-name-field'),
+                  controller: nameController,
+                  maxLength: 40,
+                  decoration: const InputDecoration(
+                    labelText: '루틴 이름',
+                    hintText: '예: 출근 전 회화',
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    for (final day in const [
+                      (DateTime.monday, '월'),
+                      (DateTime.tuesday, '화'),
+                      (DateTime.wednesday, '수'),
+                      (DateTime.thursday, '목'),
+                      (DateTime.friday, '금'),
+                      (DateTime.saturday, '토'),
+                      (DateTime.sunday, '일'),
+                    ])
+                      FilterChip(
+                        key: Key('routine-weekday-${day.$1}'),
+                        label: Text(day.$2),
+                        selected: weekdays.contains(day.$1),
+                        onSelected: (selected) => setDialogState(() {
+                          if (selected) {
+                            weekdays.add(day.$1);
+                          } else if (weekdays.length > 1) {
+                            weekdays.remove(day.$1);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  key: const Key('routine-time-picker'),
+                  onPressed: () async {
+                    final selected = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(
+                        hour: minuteOfDay ~/ 60,
+                        minute: minuteOfDay % 60,
+                      ),
+                    );
+                    if (selected != null) {
+                      setDialogState(
+                        () =>
+                            minuteOfDay = selected.hour * 60 + selected.minute,
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.schedule_rounded),
+                  label: Text(
+                    '${(minuteOfDay ~/ 60).toString().padLeft(2, '0')}:'
+                    '${(minuteOfDay % 60).toString().padLeft(2, '0')}',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            if (_plan.routineName.isNotEmpty)
+              TextButton(
+                onPressed: () => Navigator.pop(
+                  dialogContext,
+                  _plan.copyWith(
+                    routineName: '',
+                    routineWeekdays: {},
+                    routineMinuteOfDay: null,
+                    routineOrder: 0,
+                  ),
+                ),
+                child: const Text('루틴 해제'),
+              ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              key: const Key('apply-routine'),
+              onPressed: () {
+                final name = nameController.text.trim();
+                if (name.isEmpty || weekdays.isEmpty) return;
+                final candidate = _plan.copyWith(
+                  routineName: name,
+                  routineWeekdays: weekdays,
+                  routineMinuteOfDay: minuteOfDay,
+                );
+                Navigator.pop(
+                  dialogContext,
+                  candidate.copyWith(
+                    scheduledAt: nextRoutineOccurrence(
+                      candidate,
+                      after: DateTime.now(),
+                    ),
+                  ),
+                );
+              },
+              child: const Text('적용'),
+            ),
+          ],
+        ),
+      ),
+    );
+    nameController.dispose();
+    if (result != null && mounted) _setPlan(result);
+  }
+
+  void _moveRoutinePlan(StudySessionPlan plan, int delta) {
+    final routine = groupStudyRoutines(
+      ref.read(appControllerProvider.notifier).activeSubjectSavedSessionPlans,
+    ).where((group) => group.name == plan.routineName).firstOrNull;
+    if (routine == null) return;
+    final ids = routine.plans.map((entry) => entry.planId).toList();
+    final index = ids.indexOf(plan.planId);
+    final target = (index + delta).clamp(0, ids.length - 1);
+    if (index < 0 || target == index) return;
+    final moved = ids.removeAt(index);
+    ids.insert(target, moved);
+    ref
+        .read(appControllerProvider.notifier)
+        .reorderRoutineSessionPlans(plan.routineName, ids);
   }
 
   Future<void> _pickExamTargetDate() async {
@@ -459,6 +609,14 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                     const SizedBox(height: 18),
                     _BacklogRecoveryEditor(
                       settings: _plan.backlogRecovery,
+                      missedItems: preview.matchingCount,
+                      remainingStudyDays: _plan.routineWeekdays.isEmpty
+                          ? appState
+                                .preferences
+                                .onboardingProfile
+                                .normalizedStudyWeekdays
+                                .length
+                          : _plan.routineWeekdays.length,
                       onChanged: (settings) =>
                           _setPlan(_plan.copyWith(backlogRecovery: settings)),
                     ),
@@ -611,6 +769,20 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                           ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+                    OutlinedButton.icon(
+                      key: const Key('configure-study-routine'),
+                      onPressed: _configureRoutine,
+                      icon: const Icon(Icons.repeat_rounded),
+                      label: Text(
+                        _plan.routineName.isEmpty
+                            ? '요일·시간 루틴으로 묶기'
+                            : '${_plan.routineName} · '
+                                  '${_plan.routineWeekdays.length}일 · '
+                                  '${((_plan.routineMinuteOfDay ?? 0) ~/ 60).toString().padLeft(2, '0')}:'
+                                  '${((_plan.routineMinuteOfDay ?? 0) % 60).toString().padLeft(2, '0')}',
+                      ),
+                    ),
                     const Divider(height: 28),
                     SwitchListTile.adaptive(
                       key: const Key('session-record-progress'),
@@ -654,6 +826,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
             activePlanId: _plan.planId,
             onLoad: _loadSavedPlan,
             onDelete: _deleteSavedPlan,
+            onMoveEarlier: (plan) => _moveRoutinePlan(plan, -1),
+            onMoveLater: (plan) => _moveRoutinePlan(plan, 1),
           );
           if (desktop) {
             return SingleChildScrollView(
@@ -1478,18 +1652,29 @@ class _SavedPlansCard extends StatelessWidget {
     required this.activePlanId,
     required this.onLoad,
     required this.onDelete,
+    required this.onMoveEarlier,
+    required this.onMoveLater,
   });
 
   final List<StudySessionPlan> plans;
   final String activePlanId;
   final ValueChanged<StudySessionPlan> onLoad;
   final Future<void> Function(StudySessionPlan) onDelete;
+  final ValueChanged<StudySessionPlan> onMoveEarlier;
+  final ValueChanged<StudySessionPlan> onMoveLater;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final ordered = [...plans]
       ..sort((left, right) {
+        if (left.routineName.isNotEmpty &&
+            left.routineName == right.routineName) {
+          final routineOrder = left.routineOrder.compareTo(right.routineOrder);
+          if (routineOrder != 0) return routineOrder;
+        }
+        final routineName = left.routineName.compareTo(right.routineName);
+        if (routineName != 0) return routineName;
         final leftSchedule = left.scheduledAt;
         final rightSchedule = right.scheduledAt;
         if (leftSchedule != null && rightSchedule != null) {
@@ -1575,6 +1760,44 @@ class _SavedPlansCard extends StatelessWidget {
                                   : _formatSchedule(plan.scheduledAt!),
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
+                            if (plan.routineName.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      '${plan.routineName} · 순서 ${plan.routineOrder + 1}',
+                                      key: Key('routine-label-${plan.planId}'),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium
+                                          ?.copyWith(color: colors.primary),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    key: Key('routine-earlier-${plan.planId}'),
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: '루틴에서 앞 순서',
+                                    onPressed: () => onMoveEarlier(plan),
+                                    icon: const Icon(
+                                      Icons.arrow_back_rounded,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    key: Key('routine-later-${plan.planId}'),
+                                    visualDensity: VisualDensity.compact,
+                                    tooltip: '루틴에서 뒤 순서',
+                                    onPressed: () => onMoveLater(plan),
+                                    icon: const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                             const SizedBox(height: 10),
                             Row(
                               children: [
@@ -1741,7 +1964,7 @@ class _SessionLengthEditor extends StatelessWidget {
             spacing: 7,
             runSpacing: 7,
             children: [
-              for (final minutes in const [3, 5, 10, 15])
+              for (final minutes in const [2, 3, 5, 10, 15])
                 ChoiceChip(
                   key: Key('session-time-$minutes'),
                   label: Text('$minutes분'),
@@ -1767,13 +1990,22 @@ class _BacklogRecoveryEditor extends StatelessWidget {
   const _BacklogRecoveryEditor({
     required this.settings,
     required this.onChanged,
+    this.missedItems = 0,
+    this.remainingStudyDays = 5,
   });
 
   final BacklogRecoverySettings settings;
   final ValueChanged<BacklogRecoverySettings> onChanged;
+  final int missedItems;
+  final int remainingStudyDays;
 
   @override
   Widget build(BuildContext context) {
+    final redistribution = redistributeMissedStudy(
+      missedItems: missedItems,
+      remainingStudyDays: remainingStudyDays,
+      dailyCap: settings.dailyLimit,
+    );
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       borderRadius: BorderRadius.circular(12),
@@ -1820,6 +2052,16 @@ class _BacklogRecoveryEditor extends StatelessWidget {
                     ),
                 ],
               ),
+              if (missedItems > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '남은 ${redistribution.dailyItems.length}일 재분배 · '
+                  '${redistribution.dailyItems.join(' · ')}문제'
+                  '${redistribution.remainingBacklog > 0 ? ' · 상한 밖 ${redistribution.remainingBacklog}개 보류' : ''}',
+                  key: const Key('backlog-redistribution-preview'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ],
         ),

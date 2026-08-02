@@ -234,6 +234,37 @@ void main() {
     },
   );
 
+  test(
+    'oversized backup declarations are rejected before restore reads',
+    () async {
+      final backend = FileSystemLocalStorageBackend();
+      final location = _location(sandbox);
+      final storageRoot = Directory(path.join(sandbox.path, 'Sprache'));
+      final backups = Directory(path.join(storageRoot.path, 'backups'));
+      await backups.create(recursive: true);
+      final archiveFile = File(
+        path.join(backups.path, 'archive-malicious.json'),
+      );
+      await archiveFile.writeAsString('{}', flush: true);
+      await File(path.join(storageRoot.path, 'manifest.json')).writeAsString(
+        jsonEncode({
+          'schemaVersion': 1,
+          'layout': SyncDatasetCodec.layout,
+          'files': {
+            'backups/latest.json': {
+              'relativePath': 'backups/archive-malicious.json',
+              'sha256': sha256.convert(utf8.encode('{}')).toString(),
+              'byteLength': 10 * 1024 * 1024 + 1,
+            },
+          },
+        }),
+        flush: true,
+      );
+
+      expect(await backend.readLatestArchive(location), isNull);
+    },
+  );
+
   test('bundle paths cannot traverse outside the Sprache root', () async {
     final backend = FileSystemLocalStorageBackend();
     final bytes = Uint8List.fromList(utf8.encode('{}'));

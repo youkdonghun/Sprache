@@ -4,6 +4,7 @@ import android.accounts.Account
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.documentfile.provider.DocumentFile
@@ -18,7 +19,9 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
+import java.io.InputStream
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -29,6 +32,7 @@ class MainActivity : FlutterFragmentActivity() {
     private var pendingLocalDirectoryResult: MethodChannel.Result? = null
     private val localStorageExecutor = Executors.newSingleThreadExecutor()
     private val localStorageOperationInProgress = AtomicBoolean(false)
+    private var inboundIntentChannel: MethodChannel? = null
 
     private val authorizationLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { activityResult ->
@@ -77,6 +81,19 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        inboundIntentChannel =
+            MethodChannel(
+                flutterEngine.dartExecutor.binaryMessenger,
+                INBOUND_INTENT_CHANNEL,
+            ).also { channel ->
+                channel.setMethodCallHandler { call, result ->
+                    when (call.method) {
+                        "getInitialInboundIntent" -> result.success(inboundIntentValue(intent))
+                        "readInboundFile" -> readInboundFile(call, result)
+                        else -> result.notImplemented()
+                    }
+                }
+            }
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             GOOGLE_CHANNEL,
@@ -150,7 +167,93 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val value = inboundIntentValue(intent) ?: return
+        inboundIntentChannel?.invokeMethod("onInboundIntent", value)
+    }
+
+    private fun inboundIntentValue(intent: Intent?): String? {
+        if (intent == null || intent.action != Intent.ACTION_VIEW) return null
+        return intent.data?.toString()?.takeIf(String::isNotBlank)
+    }
+
+    private fun readInboundFile(
+        call: MethodCall,
+        result: MethodChannel.Result,
+    ) {
+        val raw = call.argument<String>("uri")
+        if (raw.isNullOrBlank()) {
+            result.error("missing_uri", "An inbound file URI is required", null)
+            return
+        }
+        val uri = runCatching { Uri.parse(raw) }.getOrNull()
+        if (uri == null || (uri.scheme != "content" && uri.scheme != "file")) {
+            result.error("unsafe_uri", "Only content and file URIs are accepted", null)
+            return
+        }
+        try {
+            val declaredSize = declaredInboundSize(uri)
+            if (declaredSize != null &&
+                (declaredSize <= 0L || declaredSize > MAX_INBOUND_FILE_BYTES.toLong())
+            ) {
+                result.error("unsafe_size", "The inbound file size is not accepted", null)
+                return
+            }
+            val bytes =
+                contentResolver.openInputStream(uri)?.use { input ->
+                    readBounded(input, MAX_INBOUND_FILE_BYTES)
+                }
+                    ?: throw FileNotFoundException("The inbound file is not readable")
+            if (bytes.isEmpty() || bytes.size > MAX_INBOUND_FILE_BYTES) {
+                result.error("unsafe_size", "The inbound file size is not accepted", null)
+                return
+            }
+            var displayName: String? = null
+            if (uri.scheme == "content") {
+                contentResolver.query(
+                    uri,
+                    arrayOf(OpenableColumns.DISPLAY_NAME),
+                    null,
+                    null,
+                    null,
+                )?.use { cursor ->
+                    if (cursor.moveToFirst()) {
+                        val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                        if (index >= 0) displayName = cursor.getString(index)
+                    }
+                }
+            }
+            result.success(
+                mapOf(
+                    "name" to (displayName ?: uri.lastPathSegment ?: "import.dat"),
+                    "bytes" to bytes,
+                ),
+            )
+        } catch (_: SizeLimitExceededException) {
+            result.error("unsafe_size", "The inbound file size is not accepted", null)
+        } catch (exception: Exception) {
+            result.error(
+                "read_failed",
+                exception.localizedMessage ?: "The inbound file could not be read",
+                null,
+            )
+        }
+    }
+
+    private fun declaredInboundSize(uri: Uri): Long? {
+        return try {
+            contentResolver.openAssetFileDescriptor(uri, "r")?.use { descriptor ->
+                descriptor.length.takeIf { it >= 0L }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     override fun onDestroy() {
+        inboundIntentChannel = null
         localStorageExecutor.shutdown()
         super.onDestroy()
     }
@@ -582,7 +685,10 @@ class MainActivity : FlutterFragmentActivity() {
         }
         val manifestJson =
             try {
-                JSONObject(readDocument(manifest).toString(Charsets.UTF_8))
+                JSONObject(
+                    readDocument(manifest, MAX_LOCAL_MANIFEST_BYTES)
+                        .toString(Charsets.UTF_8),
+                )
             } catch (exception: Exception) {
                 throw LocalStorageException(
                     "invalid_manifest",
@@ -611,10 +717,10 @@ class MainActivity : FlutterFragmentActivity() {
                 latest.has("byteLength") -> latest.optLong("byteLength", -1)
                 else -> -1
             }
-        if (expectedBytes < 0) {
+        if (expectedBytes <= 0 || expectedBytes > MAX_LOCAL_ARCHIVE_BYTES.toLong()) {
             throw LocalStorageException(
-                "invalid_manifest",
-                "The latest archive entry has no valid byte count",
+                "archive_too_large",
+                "The latest local Sprache archive exceeds the safe restore size",
             )
         }
 
@@ -631,7 +737,14 @@ class MainActivity : FlutterFragmentActivity() {
                 "The latest local Sprache archive is not a file",
             )
         }
-        val archiveBytes = readDocument(archive)
+        val declaredArchiveBytes = archive.length()
+        if (declaredArchiveBytes > 0 && declaredArchiveBytes != expectedBytes) {
+            throw LocalStorageException(
+                "integrity_failed",
+                "The latest local Sprache archive failed its integrity check",
+            )
+        }
+        val archiveBytes = readDocument(archive, MAX_LOCAL_ARCHIVE_BYTES)
         if (archiveBytes.size.toLong() != expectedBytes ||
             sha256(archiveBytes) != expectedSha256
         ) {
@@ -841,7 +954,11 @@ class MainActivity : FlutterFragmentActivity() {
             ?.takeIf(DocumentFile::isFile)
             ?: return emptySet()
         return try {
-            val manifestJson = JSONObject(readDocument(manifest).toString(Charsets.UTF_8))
+            val manifestJson =
+                JSONObject(
+                    readDocument(manifest, MAX_LOCAL_MANIFEST_BYTES)
+                        .toString(Charsets.UTF_8),
+                )
             val files =
                 manifestJson.optJSONObject("files")
                     ?: throw LocalStorageException(
@@ -942,7 +1059,10 @@ class MainActivity : FlutterFragmentActivity() {
         }
     }
 
-    private fun readDocument(document: DocumentFile): ByteArray {
+    private fun readDocument(
+        document: DocumentFile,
+        maxBytes: Int? = null,
+    ): ByteArray {
         val input =
             contentResolver.openInputStream(document.uri)
                 ?: throw LocalStorageException(
@@ -950,7 +1070,15 @@ class MainActivity : FlutterFragmentActivity() {
                     "Could not open ${readableName(document)} for reading",
                 )
         return try {
-            input.use { it.readBytes() }
+            input.use {
+                if (maxBytes == null) it.readBytes() else readBounded(it, maxBytes)
+            }
+        } catch (exception: SizeLimitExceededException) {
+            throw LocalStorageException(
+                "file_too_large",
+                "${readableName(document)} exceeds the safe read size",
+                exception,
+            )
         } catch (exception: Exception) {
             throw LocalStorageException(
                 "file_read_failed",
@@ -958,6 +1086,24 @@ class MainActivity : FlutterFragmentActivity() {
                 exception,
             )
         }
+    }
+
+    private fun readBounded(
+        input: InputStream,
+        maxBytes: Int,
+    ): ByteArray {
+        val output = ByteArrayOutputStream(minOf(DEFAULT_BUFFER_SIZE, maxBytes))
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+        var total = 0
+        while (true) {
+            val read = input.read(buffer)
+            if (read < 0) break
+            if (read == 0) continue
+            if (read > maxBytes - total) throw SizeLimitExceededException()
+            output.write(buffer, 0, read)
+            total += read
+        }
+        return output.toByteArray()
     }
 
     private fun digestDocument(document: DocumentFile): DocumentDigest {
@@ -1196,6 +1342,7 @@ class MainActivity : FlutterFragmentActivity() {
     companion object {
         private const val GOOGLE_CHANNEL = "com.youkdonghun.sprache/google"
         private const val LOCAL_STORAGE_CHANNEL = "com.youkdonghun.sprache/local_storage"
+        private const val INBOUND_INTENT_CHANNEL = "com.youkdonghun.sprache/inbound_intent"
         private const val GOOGLE_ACCOUNT_TYPE = "com.google"
         private const val PICKED_FILE_IDS = "picked_file_ids"
         private const val STORAGE_DIRECTORY_NAME = "Sprache"
@@ -1206,6 +1353,9 @@ class MainActivity : FlutterFragmentActivity() {
         private const val LATEST_ARCHIVE_KEY = "backups/latest.json"
         private const val DEFAULT_IMPORT_FILE_NAME = "import.bin"
         private const val MAX_IMPORT_FILE_NAME_LENGTH = 120
+        private const val MAX_INBOUND_FILE_BYTES = 32 * 1024 * 1024
+        private const val MAX_LOCAL_ARCHIVE_BYTES = 10 * 1024 * 1024
+        private const val MAX_LOCAL_MANIFEST_BYTES = 1024 * 1024
         private const val IMPORT_FILE_UNSAFE_CHARACTERS = "<>:\"/\\|?*"
         private val SHA256_PATTERN = Regex("^[0-9a-f]{64}$")
         private val WINDOWS_ABSOLUTE_PATH_PATTERN = Regex("^[A-Za-z]:")
@@ -1238,4 +1388,6 @@ class MainActivity : FlutterFragmentActivity() {
         message: String,
         cause: Throwable? = null,
     ) : Exception(message, cause)
+
+    private class SizeLimitExceededException : Exception()
 }

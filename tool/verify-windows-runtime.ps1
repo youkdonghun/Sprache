@@ -1,6 +1,11 @@
 param(
   [string]$ExePath = ".\apps\client\build\windows\x64\runner\Release\sprache.exe",
   [string]$OutputDirectory = ".\artifacts\verification\windows-native-runtime",
+  [string]$RuntimeEvidencePath = "",
+  [string]$Version = "",
+  [int]$BuildNumber = 0,
+  [ValidateSet("REAL", "MOCK")]
+  [string]$Mode = "REAL",
   [switch]$CapturePixels,
   [switch]$KeepRunning
 )
@@ -8,11 +13,72 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+function Resolve-AbsolutePath {
+  param([Parameter(Mandatory = $true)][string]$PathValue)
+
+  if ([System.IO.Path]::IsPathRooted($PathValue)) {
+    return [System.IO.Path]::GetFullPath($PathValue)
+  }
+  return [System.IO.Path]::GetFullPath(
+    (Join-Path -Path (Get-Location).Path -ChildPath $PathValue)
+  )
+}
+
 $resolvedExe = (Resolve-Path -LiteralPath $ExePath).Path
-$resolvedOutput = [System.IO.Path]::GetFullPath(
-  (Join-Path (Get-Location) $OutputDirectory)
-)
+$resolvedOutput = Resolve-AbsolutePath -PathValue $OutputDirectory
 New-Item -ItemType Directory -Force -Path $resolvedOutput | Out-Null
+
+$runtimeProbeEvidenceFileName = "sprache-runtime-evidence-v1.json"
+$runtimeProbeFrameFileName = "sprache-runtime-frame-v1.png"
+$resolvedEvidencePath = $null
+$runtimeProbeEvidencePath = $null
+$runtimeProbeFramePath = $null
+if (-not [string]::IsNullOrWhiteSpace($RuntimeEvidencePath)) {
+  if (-not $CapturePixels) {
+    throw "RuntimeEvidencePath requires -CapturePixels to prove a rendered frame."
+  }
+  $resolvedEvidencePath = Resolve-AbsolutePath -PathValue $RuntimeEvidencePath
+  $runtimeProbeDirectory = Join-Path $resolvedOutput "in-app-probe"
+  $env:SPRACHE_ENABLE_RELEASE_PROBE = "1"
+  $env:SPRACHE_RELEASE_PROBE_DIRECTORY = $runtimeProbeDirectory
+  $runtimeProbeEvidencePath = Join-Path `
+    $runtimeProbeDirectory `
+    $runtimeProbeEvidenceFileName
+  $runtimeProbeFramePath = Join-Path `
+    $runtimeProbeDirectory `
+    $runtimeProbeFrameFileName
+  foreach ($staleProbeFile in @(
+    $runtimeProbeEvidencePath,
+    $runtimeProbeFramePath
+  )) {
+    if (Test-Path -LiteralPath $staleProbeFile -PathType Leaf) {
+      Remove-Item -LiteralPath $staleProbeFile -Force
+    }
+  }
+  $repoRoot = [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+  $pubspecPath = Join-Path $repoRoot "apps\client\pubspec.yaml"
+  $versionMatch = Select-String `
+    -LiteralPath $pubspecPath `
+    -Pattern '^version:\s*(?<name>\d+\.\d+\.\d+)\+(?<code>\d+)\s*$' |
+    Select-Object -First 1
+  if ($null -eq $versionMatch) {
+    throw "Could not read release version from $pubspecPath"
+  }
+  $pubspecVersion = $versionMatch.Matches[0].Groups["name"].Value
+  $pubspecBuildNumber = [int]$versionMatch.Matches[0].Groups["code"].Value
+  if ([string]::IsNullOrWhiteSpace($Version)) {
+    $Version = $pubspecVersion
+  }
+  if ($BuildNumber -eq 0) {
+    $BuildNumber = $pubspecBuildNumber
+  }
+  if ($Version -ne $pubspecVersion -or $BuildNumber -ne $pubspecBuildNumber) {
+    throw (
+      "Runtime evidence version $Version+$BuildNumber does not match " +
+      "pubspec $pubspecVersion+$pubspecBuildNumber."
+    )
+  }
+}
 
 Add-Type -AssemblyName System.Drawing
 
@@ -102,8 +168,13 @@ $targets = @(
   [pscustomobject]@{ Name = "standard-1040x760"; Width = 1040; Height = 760 }
 )
 
-$process = Start-Process -FilePath $resolvedExe -PassThru
+$startupStopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+$process = Start-Process `
+  -FilePath $resolvedExe `
+  -WorkingDirectory (Split-Path -Parent $resolvedExe) `
+  -PassThru
 $results = [System.Collections.Generic.List[object]]::new()
+$firstFrameMillis = $null
 
 try {
   $deadline = [DateTime]::UtcNow.AddSeconds(30)
@@ -150,6 +221,83 @@ try {
     )
   }
   Start-Sleep -Seconds 4
+
+  $inAppEvidence = $null
+  $runtimeFrameOutput = $null
+  if ($null -ne $resolvedEvidencePath) {
+    $probeDeadline = [DateTime]::UtcNow.AddSeconds(60)
+    do {
+      if ((Test-Path -LiteralPath $runtimeProbeEvidencePath -PathType Leaf) -and
+          (Test-Path -LiteralPath $runtimeProbeFramePath -PathType Leaf)) {
+        break
+      }
+      if ($process.HasExited) {
+        throw "Sprache exited before publishing its in-app frame probe."
+      }
+      Start-Sleep -Milliseconds 250
+      $process.Refresh()
+    } while ([DateTime]::UtcNow -lt $probeDeadline)
+
+    if (-not (Test-Path -LiteralPath $runtimeProbeEvidencePath -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $runtimeProbeFramePath -PathType Leaf)) {
+      throw "Sprache did not publish its in-app frame probe within 60 seconds."
+    }
+
+    $inAppEvidence = Get-Content `
+      -LiteralPath $runtimeProbeEvidencePath `
+      -Raw |
+      ConvertFrom-Json
+    if ($inAppEvidence.format -ne "sprache-runtime-evidence-v1" -or
+        $inAppEvidence.platform -ne "windows" -or
+        $inAppEvidence.mode -ne $Mode -or
+        $inAppEvidence.version -ne $Version -or
+        [int]$inAppEvidence.buildNumber -ne $BuildNumber -or
+        $inAppEvidence.launched -ne $true -or
+        $inAppEvidence.firstFrameRendered -ne $true -or
+        $inAppEvidence.probe -ne "native-runtime") {
+      throw "The in-app release probe metadata is invalid."
+    }
+    if ([string]$inAppEvidence.firstFrameMillis -notmatch '^\d+$') {
+      throw "The in-app firstFrameMillis value is invalid."
+    }
+    $firstFrameMillis = [int]$inAppEvidence.firstFrameMillis
+    if ($firstFrameMillis -lt 0 -or $firstFrameMillis -gt 60000) {
+      throw "The in-app first frame was not rendered within 60 seconds."
+    }
+    if ($inAppEvidence.frameFile -ne $runtimeProbeFrameFileName -or
+        [string]$inAppEvidence.frameSha256 -notmatch '^[0-9a-f]{64}$') {
+      throw "The in-app frame file metadata is invalid."
+    }
+    $actualFrameSha256 = (
+      Get-FileHash -LiteralPath $runtimeProbeFramePath -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    if ($actualFrameSha256 -ne $inAppEvidence.frameSha256) {
+      throw "The in-app frame SHA-256 does not match its evidence."
+    }
+    [byte[]]$pngSignature = Get-Content `
+      -LiteralPath $runtimeProbeFramePath `
+      -Encoding Byte `
+      -TotalCount 8
+    if ([BitConverter]::ToString($pngSignature) -ne '89-50-4E-47-0D-0A-1A-0A') {
+      throw "The in-app frame is not a PNG image."
+    }
+
+    $evidenceDirectory = Split-Path -Parent $resolvedEvidencePath
+    New-Item -ItemType Directory -Force -Path $evidenceDirectory | Out-Null
+    $runtimeFrameOutput = Join-Path `
+      $evidenceDirectory `
+      $runtimeProbeFrameFileName
+    Copy-Item `
+      -LiteralPath $runtimeProbeFramePath `
+      -Destination $runtimeFrameOutput `
+      -Force
+    $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
+    [System.IO.File]::WriteAllText(
+      $resolvedEvidencePath,
+      (($inAppEvidence | ConvertTo-Json -Depth 4 -Compress) + "`n"),
+      $utf8WithoutBom
+    )
+  }
 
   foreach ($target in $targets) {
     $moved = [SpracheWindowCapture.NativeMethods]::MoveWindow(
@@ -210,42 +358,31 @@ try {
     }
 
     $imagePath = $null
+    $captureMethod = $null
     $visibleSampleRatio = $null
-    if ($CapturePixels) {
+    if ($CapturePixels -and $null -ne $inAppEvidence) {
+      $imagePath = $runtimeFrameOutput
+      $captureMethod = "flutter-repaint-boundary"
+    } elseif ($CapturePixels) {
       $imagePath = Join-Path $resolvedOutput "$($target.Name).png"
       $bitmap = [System.Drawing.Bitmap]::new($capturedWidth, $capturedHeight)
       $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
       try {
-        $deviceContext = $graphics.GetHdc()
+        $captureMethod = "CopyFromScreen"
         try {
-          $screenDeviceContext =
-            [SpracheWindowCapture.NativeMethods]::GetDC([IntPtr]::Zero)
-          if ($screenDeviceContext -eq [IntPtr]::Zero) {
-            throw "GetDC failed for $($target.Name)."
-          }
-          try {
-            $captured = [SpracheWindowCapture.NativeMethods]::BitBlt(
-              $deviceContext,
-              0,
-              0,
-              $capturedWidth,
-              $capturedHeight,
-              $screenDeviceContext,
-              $windowRect.Left,
-              $windowRect.Top,
-              0x40CC0020
-            )
-          } finally {
-            [SpracheWindowCapture.NativeMethods]::ReleaseDC(
-              [IntPtr]::Zero,
-              $screenDeviceContext
-            ) | Out-Null
-          }
-        } finally {
-          $graphics.ReleaseHdc($deviceContext)
-        }
-        if (-not $captured) {
-          throw "BitBlt failed for $($target.Name)."
+          $graphics.CopyFromScreen(
+            $windowRect.Left,
+            $windowRect.Top,
+            0,
+            0,
+            [System.Drawing.Size]::new($capturedWidth, $capturedHeight),
+            [System.Drawing.CopyPixelOperation]::SourceCopy
+          )
+        } catch {
+          throw (
+            "Visible screen capture failed for $($target.Name): " +
+            $_.Exception.Message
+          )
         }
 
         $sampleCount = 0
@@ -267,6 +404,10 @@ try {
           )
         }
 
+        if ($null -eq $firstFrameMillis) {
+          $firstFrameMillis = $startupStopwatch.ElapsedMilliseconds
+        }
+
         $bitmap.Save($imagePath, [System.Drawing.Imaging.ImageFormat]::Png)
       } finally {
         $graphics.Dispose()
@@ -285,6 +426,7 @@ try {
         clientHeight = $clientRect.Bottom - $clientRect.Top
         responding = $process.Responding
         title = $process.MainWindowTitle
+        captureMethod = $captureMethod
         visibleSampleRatio = if ($null -eq $visibleSampleRatio) {
           $null
         } else {
@@ -299,6 +441,19 @@ try {
   $results | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $resultPath -Encoding utf8
   $results | Format-Table -AutoSize
   Write-Output "Result: $resultPath"
+
+  if (-not [string]::IsNullOrWhiteSpace($RuntimeEvidencePath)) {
+    if ($null -eq $firstFrameMillis -or $firstFrameMillis -gt 60000) {
+      throw "The in-app first frame was not captured within 60 seconds."
+    }
+    if ($null -eq $inAppEvidence -or
+        -not (Test-Path -LiteralPath $resolvedEvidencePath -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $runtimeFrameOutput -PathType Leaf)) {
+      throw "The verified in-app runtime evidence pair is incomplete."
+    }
+    Write-Output "Runtime evidence: $resolvedEvidencePath"
+    Write-Output "Runtime frame: $runtimeFrameOutput"
+  }
 } finally {
   if (-not $KeepRunning -and -not $process.HasExited) {
     $process.CloseMainWindow() | Out-Null

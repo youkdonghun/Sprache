@@ -67,6 +67,36 @@ void main() {
     },
   );
 
+  test('smart collections reuse inline local search operators', () async {
+    final controller = AppController(MemoryStudyStore());
+    await Future<void>.delayed(Duration.zero);
+    final matching = item(
+      'operator-match',
+      'passport',
+    ).copyWith(tags: const ['여행', 'group:출장']);
+    final notFavorite = item(
+      'operator-not-favorite',
+      'boarding pass',
+    ).copyWith(tags: const ['여행', 'group:출장']);
+    await controller.upsertCustomItem(matching);
+    await controller.upsertCustomItem(notFavorite);
+    controller.toggleFavorite(matching.id);
+
+    final collection = SmartCollectionDefinition(
+      id: 'smart-operators',
+      subjectId: controller.activeSubject.id,
+      name: '저장한 출장 단어',
+      query: 'tag:여행 type:word state:favorite group:출장',
+      updatedAt: DateTime.utc(2026, 8, 3),
+    );
+
+    expect(
+      controller.itemsForSmartCollection(collection).map((value) => value.id),
+      [matching.id],
+    );
+    controller.dispose();
+  });
+
   test(
     'mapping presets persist and an unchanged import can be undone',
     () async {

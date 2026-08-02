@@ -91,6 +91,7 @@ void main() {
       'appearance-color-mode-system',
       'appearance-color-mode-light',
       'appearance-color-mode-dark',
+      'appearance-color-mode-oled',
       for (final palette in AppAccentPalette.values)
         'appearance-palette-${palette.name}',
       'appearance-density-platform',
@@ -100,6 +101,7 @@ void main() {
       'appearance-text-scale-small',
       'appearance-text-scale-medium',
       'appearance-text-scale-large',
+      'appearance-text-scale-extra-large',
       'appearance-reduce-motion',
       'appearance-haptics',
       'appearance-sound',
@@ -125,7 +127,8 @@ void main() {
     expect(experiencePreferences.accentPalette, AppAccentPalette.coral);
     expect(experiencePreferences.density, AppDensity.compact);
     expect(experiencePreferences.textScale, AppTextScale.large);
-    expect(experiencePreferences.reduceMotion, isTrue);
+    expect(experiencePreferences.motionLevel, AppMotionLevel.reduced);
+    expect(experiencePreferences.reduceMotion, isFalse);
     expect(experiencePreferences.hapticsEnabled, isTrue);
     expect(experiencePreferences.soundEffectsEnabled, isTrue);
     semantics.dispose();

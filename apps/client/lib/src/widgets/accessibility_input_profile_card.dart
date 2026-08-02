@@ -1,9 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../domain/accessibility_input_profile.dart';
 import '../theme/study_accessibility_theme.dart';
 
-class AccessibilityInputProfileCard extends StatelessWidget {
+class AccessibilityInputProfileCard extends StatefulWidget {
   const AccessibilityInputProfileCard({
     required this.profile,
     required this.isWindows,
@@ -16,6 +17,39 @@ class AccessibilityInputProfileCard extends StatelessWidget {
   final bool isWindows;
   final bool isAndroid;
   final ValueChanged<AccessibilityInputProfile> onChanged;
+
+  @override
+  State<AccessibilityInputProfileCard> createState() =>
+      _AccessibilityInputProfileCardState();
+}
+
+class _AccessibilityInputProfileCardState
+    extends State<AccessibilityInputProfileCard> {
+  String? _shortcutNotice;
+
+  AccessibilityInputProfile get profile => widget.profile;
+
+  void _remapStudy(StudyShortcutAction action, StudyShortcutKey key) {
+    final result = profile.remapStudyShortcut(action, key);
+    final displaced = result.displacedAction;
+    setState(() {
+      _shortcutNotice = displaced != null
+          ? '${_shortcutActionLabel(displaced)} 단축키가 중복되어 “사용 안 함”으로 바뀌었습니다.'
+          : null;
+    });
+    widget.onChanged(result.profile);
+  }
+
+  void _remapGlobal(GlobalShortcutAction action, StudyShortcutKey key) {
+    final result = profile.remapGlobalShortcut(action, key);
+    final displaced = result.displacedAction;
+    setState(() {
+      _shortcutNotice = displaced != null
+          ? '${_globalShortcutActionLabel(displaced)} 단축키가 중복되어 “사용 안 함”으로 바뀌었습니다.'
+          : null;
+    });
+    widget.onChanged(result.profile);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +90,9 @@ class AccessibilityInputProfileCard extends StatelessWidget {
               title: '큰 평가 버튼',
               subtitle: 'Again·Hard·Good·Easy 평가 버튼 높이를 64px로 넓힙니다.',
               value: profile.largeRatingControls,
-              onChanged: (value) =>
-                  onChanged(profile.copyWith(largeRatingControls: value)),
+              onChanged: (value) => widget.onChanged(
+                profile.copyWith(largeRatingControls: value),
+              ),
             ),
             _ProfileSwitch(
               controlKey: const Key('accessibility-high-contrast'),
@@ -65,7 +100,7 @@ class AccessibilityInputProfileCard extends StatelessWidget {
               subtitle: '카드 경계, 입력 포커스와 주요 버튼의 구분을 더 선명하게 표시합니다.',
               value: profile.highContrast,
               onChanged: (value) =>
-                  onChanged(profile.copyWith(highContrast: value)),
+                  widget.onChanged(profile.copyWith(highContrast: value)),
             ),
             _ProfileSwitch(
               controlKey: const Key('accessibility-reduce-motion'),
@@ -73,15 +108,24 @@ class AccessibilityInputProfileCard extends StatelessWidget {
               subtitle: '화면 전환과 학습 피드백 애니메이션을 최소화합니다.',
               value: profile.reduceMotion,
               onChanged: (value) =>
-                  onChanged(profile.copyWith(reduceMotion: value)),
+                  widget.onChanged(profile.copyWith(reduceMotion: value)),
+            ),
+            _ProfileSwitch(
+              controlKey: const Key('accessibility-reduce-transparency'),
+              title: '투명도 줄이기',
+              subtitle: '반투명 배경·그림자·겹침 효과를 없애고 불투명한 경계로 구분합니다.',
+              value: profile.reduceTransparency,
+              onChanged: (value) =>
+                  widget.onChanged(profile.copyWith(reduceTransparency: value)),
             ),
             _ProfileSwitch(
               controlKey: const Key('accessibility-disable-timed-challenges'),
               title: '시간 제한 없이 학습',
               subtitle: '매치 스프린트처럼 시간이 흐르는 학습을 시간 제한 없는 방식으로 고정합니다.',
               value: profile.disableTimedChallenges,
-              onChanged: (value) =>
-                  onChanged(profile.copyWith(disableTimedChallenges: value)),
+              onChanged: (value) => widget.onChanged(
+                profile.copyWith(disableTimedChallenges: value),
+              ),
             ),
             const SizedBox(height: 10),
             _ProfileOptionGroup<AccessibilityCardScale>(
@@ -93,9 +137,9 @@ class AccessibilityInputProfileCard extends StatelessWidget {
                   (scale, _cardScaleLabel(scale)),
               ],
               onChanged: (value) =>
-                  onChanged(profile.copyWith(cardScale: value)),
+                  widget.onChanged(profile.copyWith(cardScale: value)),
             ),
-            if (isAndroid) ...[
+            if (widget.isAndroid) ...[
               const SizedBox(height: 14),
               const Divider(),
               const SizedBox(height: 10),
@@ -108,16 +152,32 @@ class AccessibilityInputProfileCard extends StatelessWidget {
                   for (final gesture in AndroidSelectionGesture.values)
                     (gesture, _gestureLabel(gesture)),
                 ],
-                onChanged: (value) =>
-                    onChanged(profile.copyWith(androidSelectionGesture: value)),
+                onChanged: (value) => widget.onChanged(
+                  profile.copyWith(androidSelectionGesture: value),
+                ),
               ),
             ],
-            if (isWindows) ...[
+            if (widget.isWindows) ...[
               const SizedBox(height: 14),
               const Divider(),
               const SizedBox(height: 10),
+              Text('앱 전역 단축키', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 3),
               Text(
-                'Windows 학습 단축키',
+                '검색·빠른 추가·도움말·본문 이동과 창 동작을 이 기기에서 재지정합니다.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              for (final action in GlobalShortcutAction.values)
+                _ShortcutSelector(
+                  keyName: 'global-${action.name}',
+                  label: _globalShortcutActionLabel(action),
+                  value: profile.globalShortcutFor(action),
+                  onChanged: (key) => _remapGlobal(action, key),
+                ),
+              const SizedBox(height: 8),
+              Text(
+                '데스크톱 학습 단축키',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 3),
@@ -128,11 +188,34 @@ class AccessibilityInputProfileCard extends StatelessWidget {
               const SizedBox(height: 8),
               for (final action in StudyShortcutAction.values)
                 _ShortcutSelector(
-                  action: action,
+                  keyName: action.name,
+                  label: _shortcutActionLabel(action),
                   value: profile.shortcutFor(action),
-                  onChanged: (key) =>
-                      onChanged(profile.remapShortcut(action, key)),
+                  onChanged: (key) => _remapStudy(action, key),
                 ),
+              if (_shortcutNotice case final notice?) ...[
+                const SizedBox(height: 4),
+                Semantics(
+                  liveRegion: true,
+                  label: '단축키 충돌. $notice',
+                  child: Container(
+                    key: const Key('accessibility-shortcut-conflict'),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: colors.errorContainer,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: colors.error),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: colors.error),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(notice)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ],
         ),
@@ -235,18 +318,19 @@ class _ProfileOptionGroup<T> extends StatelessWidget {
 
 class _ShortcutSelector extends StatelessWidget {
   const _ShortcutSelector({
-    required this.action,
+    required this.keyName,
+    required this.label,
     required this.value,
     required this.onChanged,
   });
 
-  final StudyShortcutAction action;
+  final String keyName;
+  final String label;
   final StudyShortcutKey value;
   final ValueChanged<StudyShortcutKey> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final label = _shortcutActionLabel(action);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: LayoutBuilder(
@@ -257,7 +341,7 @@ class _ShortcutSelector extends StatelessWidget {
           final selector = Semantics(
             label: '$label 단축키',
             child: SizedBox(
-              key: Key('accessibility-shortcut-${action.name}'),
+              key: Key('accessibility-shortcut-$keyName'),
               width: stacked ? double.infinity : 190,
               height: 48,
               child: DropdownButtonFormField<StudyShortcutKey>(
@@ -271,7 +355,10 @@ class _ShortcutSelector extends StatelessWidget {
                 ),
                 items: [
                   for (final key in StudyShortcutKey.values)
-                    DropdownMenuItem(value: key, child: Text(key.displayLabel)),
+                    DropdownMenuItem(
+                      value: key,
+                      child: Text(key.displayLabelFor(defaultTargetPlatform)),
+                    ),
                 ],
                 onChanged: (next) {
                   if (next != null) onChanged(next);
@@ -323,4 +410,18 @@ String _shortcutActionLabel(StudyShortcutAction value) => switch (value) {
   StudyShortcutAction.rateGood => '좋음',
   StudyShortcutAction.rateEasy => '쉬움',
   StudyShortcutAction.nextItem => '다음 문제',
+  StudyShortcutAction.showHint => '힌트',
+  StudyShortcutAction.dontKnow => '모르겠어요',
+  StudyShortcutAction.skip => '건너뛰기',
+  StudyShortcutAction.pause => '일시정지',
 };
+
+String _globalShortcutActionLabel(GlobalShortcutAction value) =>
+    switch (value) {
+      GlobalShortcutAction.openSearch => '전체 검색',
+      GlobalShortcutAction.quickAdd => '빠른 추가',
+      GlobalShortcutAction.keyboardHelp => '키보드 도움말',
+      GlobalShortcutAction.focusContent => '본문으로 이동',
+      GlobalShortcutAction.toggleCompactWindow => '컴팩트 창 전환',
+      GlobalShortcutAction.minimizeWindow => '창 최소화',
+    };

@@ -9,10 +9,12 @@ class StorageMaintenanceDialog extends StatefulWidget {
     super.key,
     required this.localCatalog,
     this.remoteService,
+    this.onRestoreLocal,
   });
 
   final RecoveryBackupCatalogService localCatalog;
   final RemoteStorageRetentionService? remoteService;
+  final Future<void> Function(LocalRecoveryBackup backup)? onRestoreLocal;
 
   @override
   State<StorageMaintenanceDialog> createState() =>
@@ -210,6 +212,7 @@ class _StorageMaintenanceDialogState extends State<StorageMaintenanceDialog> {
                       onDelete: _selectedLocal.isEmpty || _busy
                           ? null
                           : _deleteLocal,
+                      onRestore: widget.onRestoreLocal,
                     ),
                     const SizedBox(height: 12),
                     _DriveRetentionSection(
@@ -244,6 +247,7 @@ class _LocalRetentionSection extends StatelessWidget {
     required this.enabled,
     required this.onChanged,
     required this.onDelete,
+    required this.onRestore,
   });
 
   final LocalRecoveryInventory? inventory;
@@ -251,6 +255,7 @@ class _LocalRetentionSection extends StatelessWidget {
   final bool enabled;
   final void Function(String id, bool value) onChanged;
   final VoidCallback? onDelete;
+  final Future<void> Function(LocalRecoveryBackup backup)? onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -274,11 +279,25 @@ class _LocalRetentionSection extends StatelessWidget {
             onChanged: enabled && item.eligibleForCleanup
                 ? (value) => onChanged(item.id, value ?? false)
                 : null,
-            title: Text(item.id),
+            title: Text(
+              item.reason == null ? item.id : _reasonLabel(item.reason!),
+            ),
             subtitle: Text(
-              '${_formatBytes(item.byteLength)} · ${item.fileCount}개 파일'
+              '${_formatDateTime(item.modifiedAt)} · ${_formatBytes(item.byteLength)} · ${item.fileCount}개 파일'
+              '${item.itemCount == null ? '' : ' · 항목 ${item.itemCount}개'}'
+              '${item.sha256Hex == null ? '' : ' · ${item.verified ? 'SHA-256 확인' : '검증 실패'}'}'
               '${item.eligibleForCleanup ? '' : ' · 30일 보존 중'}',
             ),
+            secondary: item.sha256Hex == null
+                ? null
+                : IconButton(
+                    key: Key('restore-checkpoint-${item.id}'),
+                    tooltip: item.verified ? '이 안전 지점 복원' : '손상되어 복원할 수 없음',
+                    onPressed: enabled && item.verified && onRestore != null
+                        ? () => onRestore!(item)
+                        : null,
+                    icon: const Icon(Icons.restore_rounded),
+                  ),
           ),
       ],
     );
@@ -381,3 +400,17 @@ String _formatBytes(int bytes) {
   if (kib < 1024) return '${kib.toStringAsFixed(1)} KB';
   return '${(kib / 1024).toStringAsFixed(1)} MB';
 }
+
+String _formatDateTime(DateTime value) {
+  final local = value.toLocal();
+  String two(int number) => number.toString().padLeft(2, '0');
+  return '${local.year}.${two(local.month)}.${two(local.day)} '
+      '${two(local.hour)}:${two(local.minute)}';
+}
+
+String _reasonLabel(String value) => switch (value) {
+  'bulkImport' => '대량 가져오기 전 안전 지점',
+  'bulkDelete' => '일괄 삭제 전 안전 지점',
+  'restore' => '백업 복원 전 안전 지점',
+  _ => '수동 안전 지점',
+};

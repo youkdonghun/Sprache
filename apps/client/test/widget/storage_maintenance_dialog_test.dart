@@ -8,13 +8,19 @@ void main() {
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = const Size(390, 1400);
     addTearDown(tester.view.reset);
     final catalog = _FakeRecoveryCatalog();
+    String? restoredId;
 
     await tester.pumpWidget(
       MaterialApp(
-        home: Scaffold(body: StorageMaintenanceDialog(localCatalog: catalog)),
+        home: Scaffold(
+          body: StorageMaintenanceDialog(
+            localCatalog: catalog,
+            onRestoreLocal: (backup) async => restoredId = backup.id,
+          ),
+        ),
       ),
     );
     await tester.pump();
@@ -30,8 +36,15 @@ void main() {
     );
     expect(checkboxes, hasLength(2));
     expect(checkboxes.where((tile) => tile.onChanged == null), hasLength(1));
+    expect(find.text('대량 가져오기 전 안전 지점'), findsOneWidget);
+    expect(find.textContaining('2026.07.01'), findsOneWidget);
+    expect(find.textContaining('항목 7개'), findsOneWidget);
 
-    await tester.tap(find.text('old-backup'));
+    await tester.tap(find.byKey(const Key('restore-checkpoint-old-backup')));
+    await tester.pump();
+    expect(restoredId, 'old-backup');
+
+    await tester.tap(find.text('대량 가져오기 전 안전 지점'));
     await tester.pump();
     await tester.tap(find.text('선택 영구 삭제'));
     await tester.pump();
@@ -66,6 +79,10 @@ class _FakeRecoveryCatalog extends RecoveryBackupCatalogService {
           modifiedAt: DateTime.utc(2026, 7, 1),
           fileCount: 1,
           eligibleForCleanup: true,
+          reason: 'bulkImport',
+          sha256Hex: List.filled(64, 'a').join(),
+          itemCount: 7,
+          verified: true,
         ),
       LocalRecoveryBackup(
         id: 'recent-backup',

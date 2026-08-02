@@ -6,6 +6,7 @@ import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/session_enhancements.dart';
+import 'package:sprache/src/domain/study_history.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/domain/study_subject.dart';
 import 'package:sprache/src/screens/flashcard_screen.dart';
@@ -78,6 +79,12 @@ void main() {
         await tester.pump();
         expect(voice.playCalls, 1);
 
+        tester
+            .widget<ActionChip>(find.byKey(const Key('pronunciation-ab-0.75')))
+            .onPressed!();
+        await tester.pump();
+        expect(voice.playCalls, 2);
+
         await tester.tap(find.byKey(const Key('pronunciation-mic')));
         await tester.pumpAndSettle();
         final clearsBeforeNext = voice.clearCalls;
@@ -96,6 +103,59 @@ void main() {
       }
     },
   );
+
+  testWidgets('privacy-safe pronunciation history can be cleared in place', (
+    tester,
+  ) async {
+    final store = MemoryStudyStore(
+      profile: _profile,
+      preferences: _preferences,
+    );
+    await store.saveCustomItems(_items);
+    await store.saveStudySession(
+      StudySessionSummary(
+        sessionId: 'pronunciation-history',
+        courseId: 'subject:general:practice-flags',
+        startedAt: DateTime.utc(2026, 8, 2, 9),
+        endedAt: DateTime.utc(2026, 8, 2, 9, 2),
+        correctCount: 1,
+        wrongCount: 0,
+        earnedXp: 10,
+        mode: StudyMode.pronunciation,
+        pronunciationMetrics: [
+          PronunciationAttemptMetric(
+            score: 87,
+            recordedAt: DateTime.utc(2026, 8, 2, 9, 1),
+            method: PronunciationEvaluationMethod.speechRecognition,
+          ),
+        ],
+      ),
+    );
+
+    await _pumpHydrated(
+      tester,
+      store,
+      PronunciationScreen(
+        ttsService: TtsService(platform: _NoopTtsPlatform()),
+        voiceRecordingService: _FakeVoiceRecordingService(),
+      ),
+    );
+    expect(
+      find.byKey(const Key('pronunciation-score-history')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('원문, 인식 문장, 음성 파일은 기록하지 않습니다'), findsOneWidget);
+
+    final clear = find.byKey(const Key('clear-pronunciation-history'));
+    await tester.ensureVisible(clear);
+    await tester.pumpAndSettle();
+    await tester.tap(clear);
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('pronunciation-score-history')), findsNothing);
+    expect(store.savedSessions.single.pronunciationMetrics, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'custom flashcards save recovery flags and no-progress practice stays local',

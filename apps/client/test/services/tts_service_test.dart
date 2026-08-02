@@ -109,6 +109,31 @@ void main() {
     expect(platform.spoken, ['Guten Morgen', 'Guten Morgen']);
     expect(platform.stopCount, 1);
   });
+
+  test(
+    'lists installed voices and applies explicit voice with bounded pitch',
+    () async {
+      final platform = _PitchTtsPlatform([
+        {'name': 'English A', 'locale': 'en-US', 'network_required': false},
+        {'name': 'English B', 'locale': 'en-GB', 'network_required': true},
+        {'name': 'Japanese', 'locale': 'ja-JP', 'network_required': false},
+      ]);
+      final service = TtsService(platform: platform);
+      final voices = await service.voicesFor(LanguageTag.english);
+      final selected = voices.singleWhere((voice) => voice.name == 'English B');
+
+      expect(voices.map((voice) => voice.name), ['English A', 'English B']);
+      await service.speak(
+        language: LanguageTag.english,
+        text: 'Preview',
+        preferredVoiceId: selected.id,
+        pitch: 9,
+      );
+
+      expect(platform.voices.single['name'], 'English B');
+      expect(platform.pitches, [2.0]);
+    },
+  );
 }
 
 class _FakeTtsPlatform implements TtsPlatformAdapter {
@@ -147,5 +172,17 @@ class _FakeTtsPlatform implements TtsPlatformAdapter {
   @override
   Future<void> stop() async {
     stopCount++;
+  }
+}
+
+class _PitchTtsPlatform extends _FakeTtsPlatform
+    implements TtsPitchPlatformAdapter {
+  _PitchTtsPlatform(super.rawVoices);
+
+  final List<double> pitches = [];
+
+  @override
+  Future<void> setPitch(double pitch) async {
+    pitches.add(pitch);
   }
 }

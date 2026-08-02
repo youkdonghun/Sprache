@@ -4,11 +4,13 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
+  desktop_drop
   flutter_secure_storage_windows
   flutter_timezone
   flutter_tts
   record_windows
   screen_retriever_windows
+  share_plus
   speech_to_text_windows
   url_launcher_windows
   window_manager

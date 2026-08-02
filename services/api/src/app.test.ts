@@ -244,11 +244,14 @@ describe("Sprache API", () => {
     const failingBroker: GoogleDesktopOAuthBroker = {
       configured: true,
       async requestToken() {
-        throw new GoogleDesktopOAuthBrokerError(
+        const brokerError = new GoogleDesktopOAuthBrokerError(
           400,
           "invalid_grant",
           "Authorization code expired.",
         );
+        Object.setPrototypeOf(brokerError, Error.prototype);
+        expect(brokerError).not.toBeInstanceOf(GoogleDesktopOAuthBrokerError);
+        throw brokerError;
       },
     };
     const app = await createTestApp(failingBroker);

@@ -4,10 +4,21 @@ import 'package:sprache/src/domain/study_interaction_preferences.dart';
 
 void main() {
   group('PracticeCatalogPreferences', () {
-    test('round trip keeps catalog ordering and every launch rule', () {
+    test('round trip migrates stable ids and keeps every launch rule', () {
       const catalog = PracticeCatalogPreferences(
         favoriteActivityIds: {'/study?mode=production', '/study?mode=meaning'},
         hiddenActivityIds: {'/path'},
+        recentActivityIds: [
+          '/study?mode=meaning',
+          '/study?mode=production',
+          '/study?mode=meaning',
+        ],
+        favoriteActivityOrder: [
+          '/study?mode=production',
+          '/path',
+          '/study?mode=meaning',
+        ],
+        quickLaunchActivityIds: {'/study?mode=production'},
         launchByActivityId: {
           '/study?mode=production': PracticeLaunchPreferences(
             length: PracticeSessionLength.tenMinutes,
@@ -23,6 +34,7 @@ void main() {
             autoAdvance: true,
             soundEnabled: true,
             largeControls: true,
+            challengeScoringEnabled: true,
           ),
           '/study?mode=meaning': PracticeLaunchPreferences(
             length: PracticeSessionLength.fiveItems,
@@ -37,18 +49,39 @@ void main() {
 
       final json = catalog.toJson();
       expect(json['favoriteActivityIds'], [
-        '/study?mode=meaning',
-        '/study?mode=production',
+        'meaning-choice',
+        'production-writing',
       ]);
       expect((json['launchByActivityId'] as Map<String, Object?>).keys, [
-        '/study?mode=meaning',
-        '/study?mode=production',
+        'meaning-choice',
+        'production-writing',
       ]);
+      expect(json['recentActivityIds'], [
+        'meaning-choice',
+        'production-writing',
+      ]);
+      expect(json['favoriteActivityOrder'], [
+        'production-writing',
+        'meaning-choice',
+      ]);
+      expect(json['quickLaunchActivityIds'], ['production-writing']);
 
       final restored = PracticeCatalogPreferences.fromJson(json);
-      final launch = restored.launchFor('/study?mode=production');
-      expect(restored.favoriteActivityIds, catalog.favoriteActivityIds);
-      expect(restored.hiddenActivityIds, catalog.hiddenActivityIds);
+      final launch = restored.launchFor('production-writing');
+      expect(restored.favoriteActivityIds, {
+        'production-writing',
+        'meaning-choice',
+      });
+      expect(restored.hiddenActivityIds, {'course-path'});
+      expect(restored.recentActivityIds, [
+        'meaning-choice',
+        'production-writing',
+      ]);
+      expect(restored.quickLaunchActivityIds, {'production-writing'});
+      expect(
+        restored.launchFor('/study?mode=production').itemCount,
+        launch.itemCount,
+      );
       expect(launch.length, PracticeSessionLength.tenMinutes);
       expect(launch.itemCount, 24);
       expect(launch.difficulty, PracticeDifficultyPreset.challenge);
@@ -62,6 +95,7 @@ void main() {
       expect(launch.autoAdvance, isTrue);
       expect(launch.soundEnabled, isTrue);
       expect(launch.largeControls, isTrue);
+      expect(launch.challengeScoringEnabled, isTrue);
       expect(restored.launchFor('/unknown'), isA<PracticeLaunchPreferences>());
       expect(
         () => restored.launchByActivityId['/new'] =
@@ -95,15 +129,12 @@ void main() {
         },
       });
 
-      expect(restored.hiddenActivityIds, {'/path', '/study?mode=meaning'});
-      expect(restored.favoriteActivityIds, isNot(contains('/path')));
-      expect(
-        restored.favoriteActivityIds,
-        isNot(contains('/study?mode=meaning')),
-      );
+      expect(restored.hiddenActivityIds, {'course-path', 'meaning-choice'});
+      expect(restored.favoriteActivityIds, isNot(contains('course-path')));
+      expect(restored.favoriteActivityIds, isNot(contains('meaning-choice')));
       expect(restored.favoriteActivityIds.length, lessThanOrEqualTo(50));
-      expect(restored.launchByActivityId.keys, {'/study?mode=production'});
-      final launch = restored.launchFor('/study?mode=production');
+      expect(restored.launchByActivityId.keys, {'production-writing'});
+      final launch = restored.launchFor('production-writing');
       expect(launch.itemCount, 100);
       expect(launch.choiceCount, 4);
       expect(launch.recordProgress, isTrue);
@@ -119,5 +150,188 @@ void main() {
         returnsNormally,
       );
     });
+
+    test('dynamic unit note routes migrate to one stable preference id', () {
+      final restored = PracticeCatalogPreferences.fromJson({
+        'favoriteActivityIds': const ['/notes/2'],
+        'recentActivityIds': const ['/notes/4', '/notes/1'],
+      });
+
+      expect(restored.favoriteActivityIds, {'unit-notes'});
+      expect(restored.recentActivityIds, ['unit-notes']);
+      expect(restored.toJson()['favoriteActivityIds'], ['unit-notes']);
+    });
+
+    test(
+      'recents, favorite order, and quick launch remain bounded and coherent',
+      () {
+        var catalog = const PracticeCatalogPreferences(
+          favoriteActivityIds: {'mixed-quiz', 'meaning-choice'},
+          favoriteActivityOrder: [
+            'missing',
+            'meaning-choice',
+            'meaning-choice',
+          ],
+          quickLaunchActivityIds: {'mixed-quiz', 'hidden'},
+          hiddenActivityIds: {'hidden'},
+        ).copyWith();
+
+        for (var index = 0; index < 12; index++) {
+          catalog = catalog.recordActivity('game-$index');
+        }
+
+        expect(catalog.recentActivityIds, hasLength(8));
+        expect(catalog.recentActivityIds.first, 'game-11');
+        expect(catalog.recentActivityIds.last, 'game-4');
+        expect(catalog.favoriteActivityOrder, ['meaning-choice']);
+        expect(catalog.quickLaunchActivityIds, {'mixed-quiz'});
+
+        final withoutMeaning = catalog.copyWith(
+          favoriteActivityIds: {'mixed-quiz'},
+        );
+        expect(withoutMeaning.favoriteActivityOrder, isEmpty);
+        expect(
+          () => withoutMeaning.recentActivityIds.add('mutate'),
+          throwsUnsupportedError,
+        );
+      },
+    );
+
+    test('malformed new catalog collections fall back without throwing', () {
+      expect(
+        () => PracticeCatalogPreferences.fromJson({
+          'recentActivityIds': 'not-a-list',
+          'favoriteActivityOrder': 7,
+          'quickLaunchActivityIds': {'not': 'a-list'},
+        }),
+        returnsNormally,
+      );
+    });
+
+    test(
+      'autonomy settings keep filters, counts, snoozes, weights, records, and playlists bounded',
+      () {
+        final now = DateTime.utc(2026, 8, 3, 9);
+        var catalog = PracticeCatalogPreferences.fromJson({
+          'durationFilter': 'tenMinutes',
+          'skillFilter': 'listening',
+          'sortOrder': 'launchCount',
+          'launchCountByActivityId': {
+            '/study?mode=meaning': 7,
+            'bad-negative': -1,
+            'bad-string': '4',
+          },
+          'recommendationSnoozedUntilByActivityId': {
+            '/study?mode=meaning': now
+                .add(const Duration(days: 1))
+                .toIso8601String(),
+            'bad-date': 'tomorrow',
+          },
+          'recommendationWeightByActivityId': {
+            '/study?mode=meaning': 2,
+            'too-large': 4,
+            'zero': 0,
+          },
+          'surpriseDurationFilter': 'threeMinutes',
+          'surpriseSkillFilter': 'recognition',
+          'surpriseFavoritesOnly': true,
+          'surpriseAvoidRecent': false,
+          'bestRecordsByActivityId': {
+            '/study?mode=mixed&match=true': {
+              'bestScore': 82,
+              'bestElapsedMs': 45000,
+              'updatedAt': now.toIso8601String(),
+            },
+            'broken': {'bestScore': 101, 'updatedAt': 'bad'},
+          },
+          'playlists': [
+            {
+              'id': 'morning',
+              'name': '아침 루틴',
+              'activityIds': [
+                '/study?mode=meaning',
+                '/study?mode=production',
+                '/cards?kind=words',
+              ],
+            },
+            {
+              'id': 'too-short',
+              'name': '하나',
+              'activityIds': ['/study?mode=meaning'],
+            },
+          ],
+        });
+
+        expect(catalog.durationFilter, PracticeDurationFilter.tenMinutes);
+        expect(catalog.skillFilter, PracticeSkillFilter.listening);
+        expect(catalog.sortOrder, PracticeCatalogSort.launchCount);
+        expect(catalog.launchCountByActivityId, {'meaning-choice': 7});
+        expect(catalog.recommendationWeightByActivityId, {'meaning-choice': 2});
+        expect(
+          catalog.surpriseDurationFilter,
+          PracticeDurationFilter.threeMinutes,
+        );
+        expect(catalog.surpriseSkillFilter, PracticeSkillFilter.recognition);
+        expect(catalog.surpriseFavoritesOnly, isTrue);
+        expect(catalog.surpriseAvoidRecent, isFalse);
+        expect(catalog.bestRecordsByActivityId['match-sprint']?.bestScore, 82);
+        expect(catalog.playlists, hasLength(1));
+        expect(catalog.playlists.single.activityIds, [
+          'meaning-choice',
+          'production-writing',
+        ]);
+
+        catalog = catalog.recordActivity('/study?mode=meaning');
+        expect(catalog.launchCountByActivityId['meaning-choice'], 8);
+        catalog = catalog.adjustRecommendationWeight('meaning-choice', 9);
+        expect(catalog.recommendationWeightByActivityId['meaning-choice'], 3);
+        catalog = catalog.snoozeRecommendation(
+          'meaning-choice',
+          now.add(const Duration(days: 7)),
+        );
+        expect(
+          catalog.recommendationSnoozedUntilByActivityId['meaning-choice'],
+          now.add(const Duration(days: 7)),
+        );
+        catalog = catalog.recordBest(
+          'match-sprint',
+          score: 91,
+          elapsedMs: 42000,
+          at: now.add(const Duration(minutes: 2)),
+        );
+        expect(catalog.bestRecordsByActivityId['match-sprint']?.bestScore, 91);
+        expect(
+          catalog.bestRecordsByActivityId['match-sprint']?.bestElapsedMs,
+          42000,
+        );
+
+        final restored = PracticeCatalogPreferences.fromJson(catalog.toJson());
+        expect(restored.toJson(), catalog.toJson());
+        expect(
+          () => restored.playlists.single.activityIds.add('weak-review'),
+          throwsUnsupportedError,
+        );
+      },
+    );
+
+    test(
+      'playlist route allowlist rejects navigation and non-study activities',
+      () {
+        expect(isPlaylistCompatiblePracticeActivity('meaning-choice'), isTrue);
+        expect(
+          isPlaylistCompatiblePracticeActivity('/study?mode=production'),
+          isTrue,
+        );
+        expect(
+          isPlaylistCompatiblePracticeActivity('/cards?kind=words'),
+          isFalse,
+        );
+        expect(isPlaylistCompatiblePracticeActivity('/settings'), isFalse);
+        expect(
+          practiceRouteForActivityId('match-sprint'),
+          contains('match=true'),
+        );
+      },
+    );
   });
 }

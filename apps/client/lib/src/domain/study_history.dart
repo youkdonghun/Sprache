@@ -1,4 +1,5 @@
 import 'active_study_session.dart';
+import 'adaptive_study_session.dart';
 import 'study_limits.dart';
 import 'study_preferences.dart';
 
@@ -18,6 +19,46 @@ class StudyEventEntry {
   final String exerciseType;
   final String result;
   final DateTime studiedAt;
+}
+
+enum PronunciationEvaluationMethod { speechRecognition, selfAssessment }
+
+class PronunciationAttemptMetric {
+  const PronunciationAttemptMetric({
+    required this.score,
+    required this.recordedAt,
+    required this.method,
+  });
+
+  factory PronunciationAttemptMetric.fromJson(Map<String, Object?> json) {
+    final score = _summaryInteger(json['score']);
+    final recordedAt = DateTime.tryParse(json['recordedAt'] as String? ?? '');
+    final method = PronunciationEvaluationMethod.values
+        .where((value) => value.name == json['method'])
+        .firstOrNull;
+    if (score == null ||
+        score < 0 ||
+        score > 100 ||
+        recordedAt == null ||
+        method == null) {
+      throw const FormatException('Invalid pronunciation attempt metric');
+    }
+    return PronunciationAttemptMetric(
+      score: score,
+      recordedAt: recordedAt.toUtc(),
+      method: method,
+    );
+  }
+
+  final int score;
+  final DateTime recordedAt;
+  final PronunciationEvaluationMethod method;
+
+  Map<String, Object?> toJson() => {
+    'score': score,
+    'recordedAt': recordedAt.toUtc().toIso8601String(),
+    'method': method.name,
+  };
 }
 
 class StudySessionSummary {
@@ -43,6 +84,8 @@ class StudySessionSummary {
     this.historyFilter = StudyHistoryFilter.all,
     this.recordProgress = true,
     this.backlogRecovery = false,
+    this.pronunciationMetrics = const [],
+    this.attemptMetrics = const [],
   });
 
   final String sessionId;
@@ -66,6 +109,8 @@ class StudySessionSummary {
   final StudyHistoryFilter historyFilter;
   final bool recordProgress;
   final bool backlogRecovery;
+  final List<PronunciationAttemptMetric> pronunciationMetrics;
+  final List<StudyAttemptMetric> attemptMetrics;
 
   int get attempts => correctCount + wrongCount;
   double get accuracy => attempts == 0 ? 0 : correctCount / attempts;
@@ -74,6 +119,36 @@ class StudySessionSummary {
       Set.unmodifiable(wrongItemIds.difference(finalCorrectItemIds));
   Set<String> get notCorrectItemIds =>
       Set.unmodifiable(itemIds.toSet().difference(finalCorrectItemIds));
+
+  StudySessionSummary withPronunciationMetrics(
+    List<PronunciationAttemptMetric> metrics,
+  ) => StudySessionSummary(
+    sessionId: sessionId,
+    courseId: courseId,
+    startedAt: startedAt,
+    endedAt: endedAt,
+    correctCount: correctCount,
+    wrongCount: wrongCount,
+    earnedXp: earnedXp,
+    origin: origin,
+    rootSessionId: rootSessionId,
+    parentSessionId: parentSessionId,
+    generation: generation,
+    pauseCount: pauseCount,
+    resumeCount: resumeCount,
+    journey: journey,
+    itemIds: itemIds,
+    wrongItemIds: wrongItemIds,
+    finalCorrectItemIds: finalCorrectItemIds,
+    mode: mode,
+    historyFilter: historyFilter,
+    recordProgress: recordProgress,
+    backlogRecovery: backlogRecovery,
+    pronunciationMetrics: List.unmodifiable(
+      metrics.take(StudyLimits.maxSessionItems),
+    ),
+    attemptMetrics: attemptMetrics,
+  );
 
   Map<String, Object?> toJson() => {
     'sessionId': sessionId,
@@ -97,6 +172,12 @@ class StudySessionSummary {
     'historyFilter': historyFilter.name,
     'recordProgress': recordProgress,
     'backlogRecovery': backlogRecovery,
+    if (pronunciationMetrics.isNotEmpty)
+      'pronunciationMetrics': [
+        for (final metric in pronunciationMetrics) metric.toJson(),
+      ],
+    if (attemptMetrics.isNotEmpty)
+      'attemptMetrics': [for (final metric in attemptMetrics) metric.toJson()],
   };
 
   factory StudySessionSummary.fromJson(Map<String, Object?> json) {
@@ -122,6 +203,8 @@ class StudySessionSummary {
     final rawItemIds = json['itemIds'];
     final rawWrongItemIds = json['wrongItemIds'];
     final rawFinalCorrectItemIds = json['finalCorrectItemIds'];
+    final rawPronunciationMetrics = json['pronunciationMetrics'];
+    final rawAttemptMetrics = json['attemptMetrics'];
     if (sessionId is! String ||
         sessionId.trim().isEmpty ||
         courseId is! String ||
@@ -147,6 +230,9 @@ class StudySessionSummary {
         (rawWrongItemIds != null && rawWrongItemIds is! List<Object?>) ||
         (rawFinalCorrectItemIds != null &&
             rawFinalCorrectItemIds is! List<Object?>) ||
+        (rawPronunciationMetrics != null &&
+            rawPronunciationMetrics is! List<Object?>) ||
+        (rawAttemptMetrics != null && rawAttemptMetrics is! List<Object?>) ||
         (json['recordProgress'] != null && json['recordProgress'] is! bool) ||
         (json['backlogRecovery'] != null && json['backlogRecovery'] is! bool)) {
       throw const FormatException('Invalid study session summary');
@@ -162,6 +248,28 @@ class StudySessionSummary {
               else
                 throw const FormatException('Invalid session journey'),
           ];
+    final pronunciationMetrics = rawPronunciationMetrics == null
+        ? const <PronunciationAttemptMetric>[]
+        : [
+            for (final value in rawPronunciationMetrics as List<Object?>)
+              if (value is Map)
+                PronunciationAttemptMetric.fromJson(
+                  Map<String, Object?>.from(value),
+                )
+              else
+                throw const FormatException(
+                  'Invalid pronunciation attempt metric',
+                ),
+          ];
+    final attemptMetrics = rawAttemptMetrics == null
+        ? const <StudyAttemptMetric>[]
+        : [
+            for (final value in rawAttemptMetrics as List<Object?>)
+              if (value is Map)
+                StudyAttemptMetric.fromJson(Map<String, Object?>.from(value))
+              else
+                throw const FormatException('Invalid study attempt metric'),
+          ];
     final itemIds = _summaryIds(rawItemIds);
     final itemIdSet = itemIds.toSet();
     final wrongItemIds = _summaryIds(rawWrongItemIds).toSet();
@@ -169,11 +277,17 @@ class StudySessionSummary {
         ? itemIdSet.difference(wrongItemIds)
         : _summaryIds(rawFinalCorrectItemIds).toSet();
     if (itemIds.length > StudyLimits.maxSessionItems ||
+        pronunciationMetrics.length > StudyLimits.maxSessionItems ||
+        attemptMetrics.length > StudyLimits.maxActiveQueueEntries ||
         wrongItemIds.length > StudyLimits.maxSessionItems ||
         finalCorrectItemIds.length > StudyLimits.maxSessionItems ||
         wrongItemIds.difference(itemIdSet).isNotEmpty ||
         finalCorrectItemIds.difference(itemIdSet).isNotEmpty) {
       throw const FormatException('Invalid study session item IDs');
+    }
+    if (itemIdSet.isNotEmpty &&
+        attemptMetrics.any((metric) => !itemIdSet.contains(metric.itemId))) {
+      throw const FormatException('Unknown study attempt metric item');
     }
     return StudySessionSummary(
       sessionId: sessionId,
@@ -203,6 +317,8 @@ class StudySessionSummary {
       ),
       recordProgress: json['recordProgress'] != false,
       backlogRecovery: json['backlogRecovery'] == true,
+      pronunciationMetrics: List.unmodifiable(pronunciationMetrics),
+      attemptMetrics: List.unmodifiable(attemptMetrics),
     );
   }
 }

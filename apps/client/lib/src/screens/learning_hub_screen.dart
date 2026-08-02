@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -389,7 +391,48 @@ class _PracticeCatalog extends ConsumerStatefulWidget {
 
 class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
   final _searchController = TextEditingController();
+  final _playlistSelection = <String>[];
   var _query = '';
+  String? _handledPlaylistToken;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final uri = GoRouterState.of(context).uri;
+    final rawIds = uri.queryParameters['playlist'];
+    final index = int.tryParse(uri.queryParameters['playlistIndex'] ?? '');
+    if (rawIds == null || index == null) return;
+    final token = '$rawIds|$index';
+    if (_handledPlaylistToken == token) return;
+    _handledPlaylistToken = token;
+    final ids = rawIds
+        .split(',')
+        .where(isPlaylistCompatiblePracticeActivity)
+        .take(5)
+        .toList(growable: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || index < 0 || index >= ids.length) {
+        if (mounted) context.go('/learn');
+        return;
+      }
+      final activity = _allActivities.cast<_Activity?>().firstWhere(
+        (candidate) => candidate?.id == ids[index],
+        orElse: () => null,
+      );
+      if (activity == null || !_availabilityFor(activity).enabled) {
+        context.go('/learn');
+        return;
+      }
+      unawaited(
+        _openActivity(
+          activity,
+          useSavedRules: true,
+          playlistIds: ids,
+          playlistIndex: index,
+        ),
+      );
+    });
+  }
 
   @override
   void dispose() {
@@ -416,6 +459,30 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     _updateCatalog(catalog.copyWith(favoriteActivityIds: favorites));
   }
 
+  void _moveFavorite(_Activity activity, int offset) {
+    final catalog = _catalog;
+    final ordered = _orderedFavorites(catalog);
+    final current = ordered.indexWhere((value) => value.id == activity.id);
+    if (current < 0) return;
+    final target = (current + offset).clamp(0, ordered.length - 1);
+    if (target == current) return;
+    final moved = [...ordered];
+    final value = moved.removeAt(current);
+    moved.insert(target, value);
+    _updateCatalog(
+      catalog.copyWith(
+        favoriteActivityOrder: moved.map((value) => value.id).toList(),
+      ),
+    );
+  }
+
+  void _toggleQuickLaunch(_Activity activity) {
+    final catalog = _catalog;
+    final quickLaunchIds = {...catalog.quickLaunchActivityIds};
+    if (!quickLaunchIds.remove(activity.id)) quickLaunchIds.add(activity.id);
+    _updateCatalog(catalog.copyWith(quickLaunchActivityIds: quickLaunchIds));
+  }
+
   void _hideActivity(_Activity activity) {
     final catalog = _catalog;
     _updateCatalog(
@@ -436,6 +503,68 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     );
   }
 
+  void _togglePlaylistSelection(_Activity activity) {
+    if (!isPlaylistCompatiblePracticeActivity(activity.id)) return;
+    setState(() {
+      if (_playlistSelection.remove(activity.id)) return;
+      if (_playlistSelection.length == 5) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('플레이리스트에는 게임을 최대 5개까지 담을 수 있어요.')),
+        );
+        return;
+      }
+      _playlistSelection.add(activity.id);
+    });
+  }
+
+  void _savePlaylist() {
+    if (_playlistSelection.length < 2 || _playlistSelection.length > 5) return;
+    final catalog = _catalog;
+    final nextNumber = catalog.playlists.length + 1;
+    final now = ref.read(appClockProvider)().toUtc();
+    final playlist = PracticePlaylist(
+      id: 'playlist-${now.microsecondsSinceEpoch}',
+      name: '내 게임 묶음 $nextNumber',
+      activityIds: List.unmodifiable(_playlistSelection),
+    );
+    _updateCatalog(catalog.savePlaylist(playlist));
+    setState(_playlistSelection.clear);
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('${playlist.name}을 저장했어요.')));
+  }
+
+  void _removePlaylist(PracticePlaylist playlist) {
+    _updateCatalog(_catalog.removePlaylist(playlist.id));
+  }
+
+  Future<void> _startPlaylist(PracticePlaylist playlist) async {
+    if (playlist.activityIds.length < 2) return;
+    final byId = {for (final activity in _allActivities) activity.id: activity};
+    final first = byId[playlist.activityIds.first];
+    if (first == null || !_availabilityFor(first).enabled) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('첫 게임에 필요한 학습 자료가 부족합니다.')));
+      return;
+    }
+    await _openActivity(
+      first,
+      useSavedRules: true,
+      playlistIds: playlist.activityIds,
+      playlistIndex: 0,
+    );
+  }
+
+  void _snoozeRecommendation(_Activity activity, Duration duration) {
+    final until = ref.read(appClockProvider)().toUtc().add(duration);
+    _updateCatalog(_catalog.snoozeRecommendation(activity.id, until));
+  }
+
+  void _adjustRecommendationWeight(_Activity activity, int delta) {
+    _updateCatalog(_catalog.adjustRecommendationWeight(activity.id, delta));
+  }
+
   bool _matchesQuery(_Activity activity) {
     final query = _query.trim().toLowerCase();
     if (query.isEmpty) return true;
@@ -444,12 +573,201 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         .contains(query);
   }
 
+  PracticeDurationFilter _durationFor(_Activity activity) {
+    final saved = _catalog.launchByActivityId[activity.id]?.length;
+    if (saved != null) {
+      return switch (saved) {
+        PracticeSessionLength.threeMinutes =>
+          PracticeDurationFilter.threeMinutes,
+        PracticeSessionLength.fiveMinutes => PracticeDurationFilter.fiveMinutes,
+        PracticeSessionLength.tenMinutes => PracticeDurationFilter.tenMinutes,
+        PracticeSessionLength.allItems => PracticeDurationFilter.unlimited,
+        PracticeSessionLength.fiveItems => PracticeDurationFilter.threeMinutes,
+        PracticeSessionLength.tenItems => PracticeDurationFilter.fiveMinutes,
+        PracticeSessionLength.twentyItems => PracticeDurationFilter.tenMinutes,
+      };
+    }
+    if (activity.id == 'match-sprint' ||
+        activity.id == 'meaning-choice' ||
+        activity.id == 'word-cards') {
+      return PracticeDurationFilter.threeMinutes;
+    }
+    if (activity.id == 'pronunciation' || activity.id == 'situation-missions') {
+      return PracticeDurationFilter.tenMinutes;
+    }
+    if (!activity.route.startsWith('/study')) {
+      return PracticeDurationFilter.unlimited;
+    }
+    return PracticeDurationFilter.fiveMinutes;
+  }
+
+  Set<PracticeSkillFilter> _skillsFor(_Activity activity) {
+    final id = activity.id;
+    return {
+      if ({
+        'mixed-quiz',
+        'meaning-choice',
+        'match-sprint',
+        'word-cards',
+        'due-review',
+        'recent-wrong',
+        'weak-review',
+        'favorites-review',
+        'words-review',
+      }.contains(id))
+        PracticeSkillFilter.recognition,
+      if ({
+        'mixed-quiz',
+        'production-writing',
+        'sentence-cloze',
+        'sentence-order',
+        'due-review',
+        'recent-wrong',
+        'weak-review',
+      }.contains(id))
+        PracticeSkillFilter.recall,
+      if ({
+        'listening-dictation',
+        'pronunciation',
+        'situation-missions',
+      }.contains(id))
+        PracticeSkillFilter.listening,
+      if ({'pronunciation', 'situation-missions'}.contains(id))
+        PracticeSkillFilter.speaking,
+      if ({
+        'sentence-cloze',
+        'sentence-order',
+        'sentence-cards',
+        'situation-missions',
+      }.contains(id))
+        PracticeSkillFilter.sentence,
+      if ({
+        'word-cards',
+        'sentence-cards',
+        'unit-notes',
+        'due-review',
+        'favorites-review',
+        'weak-review',
+      }.contains(id))
+        PracticeSkillFilter.memory,
+    };
+  }
+
+  bool _matchesDiscoveryFilters(
+    _Activity activity,
+    PracticeCatalogPreferences catalog,
+  ) {
+    final durationMatches =
+        catalog.durationFilter == PracticeDurationFilter.any ||
+        _durationFor(activity) == catalog.durationFilter;
+    final skillMatches =
+        catalog.skillFilter == PracticeSkillFilter.all ||
+        _skillsFor(activity).contains(catalog.skillFilter);
+    return durationMatches && skillMatches;
+  }
+
+  List<_Activity> _sortActivities(
+    List<_Activity> activities,
+    PracticeCatalogPreferences catalog,
+  ) {
+    final recentRank = {
+      for (final (index, id) in catalog.recentActivityIds.indexed) id: index,
+    };
+    final recommendationRank = {
+      for (final (index, recommendation) in _practiceRecommendations(
+        _recommendationBasis(),
+        catalog,
+      ).indexed)
+        recommendation.activity.id: index,
+    };
+    int compare(_Activity left, _Activity right) {
+      final result = switch (catalog.sortOrder) {
+        PracticeCatalogSort.recommended =>
+          (recommendationRank[left.id] ?? 999).compareTo(
+            recommendationRank[right.id] ?? 999,
+          ),
+        PracticeCatalogSort.recent => (recentRank[left.id] ?? 999).compareTo(
+          recentRank[right.id] ?? 999,
+        ),
+        PracticeCatalogSort.launchCount =>
+          (catalog.launchCountByActivityId[right.id] ?? 0).compareTo(
+            catalog.launchCountByActivityId[left.id] ?? 0,
+          ),
+        PracticeCatalogSort.name => left.title.compareTo(right.title),
+      };
+      return result != 0 ? result : left.title.compareTo(right.title);
+    }
+
+    return [...activities]..sort(compare);
+  }
+
   List<_Activity> get _allActivities => [
     for (final category in _PracticeCategory.values)
       ..._activitiesFor(category),
   ];
 
-  List<_PracticeRecommendation> _practiceRecommendations() {
+  List<_Activity> _orderedFavorites(PracticeCatalogPreferences catalog) {
+    final favorites = _allActivities
+        .where((activity) => catalog.favoriteActivityIds.contains(activity.id))
+        .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
+        .toList(growable: false);
+    if (catalog.favoriteActivityOrder.isEmpty) return favorites;
+    final rank = <String, int>{
+      for (final (index, id) in catalog.favoriteActivityOrder.indexed)
+        id: index,
+    };
+    final naturalRank = <String, int>{
+      for (final (index, activity) in favorites.indexed) activity.id: index,
+    };
+    return [...favorites]..sort((left, right) {
+      final leftRank = rank[left.id];
+      final rightRank = rank[right.id];
+      if (leftRank != null && rightRank != null) {
+        return leftRank.compareTo(rightRank);
+      }
+      if (leftRank != null) return -1;
+      if (rightRank != null) return 1;
+      return naturalRank[left.id]!.compareTo(naturalRank[right.id]!);
+    });
+  }
+
+  List<_Activity> _recentActivities(
+    PracticeCatalogPreferences catalog,
+    Iterable<_PracticeRecommendation> recommendations,
+  ) {
+    final byId = {
+      for (final recommendation in recommendations)
+        recommendation.activity.id: recommendation.activity,
+      for (final activity in _allActivities) activity.id: activity,
+    };
+    return [
+      for (final id in catalog.recentActivityIds)
+        if (byId[id] case final activity?)
+          if (!catalog.hiddenActivityIds.contains(id) &&
+              _availabilityFor(activity).enabled)
+            activity,
+    ];
+  }
+
+  _Activity? _dailyChallenge(PracticeCatalogPreferences catalog) {
+    final candidates =
+        _allActivities
+            .where(
+              (activity) => !catalog.hiddenActivityIds.contains(activity.id),
+            )
+            .where((activity) => _availabilityFor(activity).enabled)
+            .toList(growable: false)
+          ..sort((left, right) => left.id.compareTo(right.id));
+    if (candidates.isEmpty) return null;
+    final now = ref.read(appClockProvider)().toLocal();
+    final subjectId = ref.read(appControllerProvider).activeSubjectId;
+    final seed =
+        '${now.year}-${now.month}-${now.day}|$subjectId|'
+        '${candidates.map((activity) => activity.id).join('|')}';
+    return candidates[_stablePracticeHash(seed) % candidates.length];
+  }
+
+  _PracticeRecommendationBasis _recommendationBasis() {
     final state = ref.read(appControllerProvider);
     final controller = ref.read(appControllerProvider.notifier);
     final now = ref.read(appClockProvider)().toUtc();
@@ -461,6 +779,29 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     final wrongCount = controller.recentWrongItems
         .where((item) => itemIds.contains(item.id))
         .length;
+    StudySessionSummary? recentSession;
+    for (final session in state.recentSessions) {
+      if (session.courseId == state.activeCourseId) {
+        recentSession = session;
+        break;
+      }
+    }
+    return _PracticeRecommendationBasis(
+      dueCount: dueCount,
+      wrongCount: wrongCount,
+      recentAccuracy: recentSession == null || recentSession.attempts == 0
+          ? null
+          : (recentSession.accuracy * 100).round(),
+    );
+  }
+
+  List<_PracticeRecommendation> _practiceRecommendations(
+    _PracticeRecommendationBasis basis,
+    PracticeCatalogPreferences catalog,
+  ) {
+    final state = ref.read(appControllerProvider);
+    final dueCount = basis.dueCount;
+    final wrongCount = basis.wrongCount;
     final wordCount = widget.items
         .where((item) => item.kind == LearningItemKind.word)
         .length;
@@ -477,6 +818,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     final values = <_PracticeRecommendation>[
       _PracticeRecommendation(
         activity: const _Activity(
+          id: 'due-review',
           icon: Icons.event_repeat_rounded,
           title: '오늘 복습',
           description: '복습 기한이 온 표현부터 정리',
@@ -485,10 +827,12 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         ),
         count: dueCount,
         reason: dueCount > 0 ? '복습 기한이 된 표현 $dueCount개' : '예정된 복습은 모두 끝냈어요',
+        basisLabel: '복습 $dueCount',
         priority: dueCount > 0 ? 500 + dueCount : 20,
       ),
       _PracticeRecommendation(
         activity: const _Activity(
+          id: 'recent-wrong',
           icon: Icons.history_toggle_off_rounded,
           title: '최근 오답',
           description: '최근 놓친 표현만 다시 확인',
@@ -499,10 +843,12 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         reason: wrongCount > 0
             ? '최근 세션에서 놓친 표현 $wrongCount개'
             : '해결하지 못한 최근 오답이 없어요',
+        basisLabel: '오답 $wrongCount',
         priority: wrongCount > 0 ? 400 + wrongCount : 10,
       ),
       _PracticeRecommendation(
         activity: const _Activity(
+          id: 'words-review',
           icon: Icons.abc_rounded,
           title: '단어',
           description: '새 단어와 복습 단어를 짧게 학습',
@@ -513,10 +859,14 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         reason: unstudiedWords > 0
             ? '아직 보지 않은 단어 $unstudiedWords개'
             : '등록된 단어 $wordCount개를 다시 다져요',
+        basisLabel: unstudiedWords > 0
+            ? '미학습 $unstudiedWords'
+            : '단어 $wordCount',
         priority: unstudiedWords > 0 ? 300 + unstudiedWords : 60,
       ),
       _PracticeRecommendation(
         activity: const _Activity(
+          id: 'listening-dictation',
           icon: Icons.headphones_rounded,
           title: '듣기',
           description: '소리를 듣고 표현을 확인',
@@ -525,10 +875,12 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         ),
         count: listeningCount,
         reason: '소리로 연습할 수 있는 표현 $listeningCount개',
+        basisLabel: '듣기 $listeningCount',
         priority: listeningCount > 0 ? 120 + listeningCount : 0,
       ),
       _PracticeRecommendation(
         activity: const _Activity(
+          id: 'pronunciation',
           icon: Icons.record_voice_over_rounded,
           title: '말하기',
           description: '듣고 따라 하며 발음 확인',
@@ -537,11 +889,26 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         ),
         count: listeningCount,
         reason: '따라 말할 수 있는 표현 $listeningCount개',
+        basisLabel: '말하기 $listeningCount',
         priority: listeningCount > 0 ? 110 + listeningCount : 0,
       ),
     ];
+    final now = ref.read(appClockProvider)().toUtc();
+    values.removeWhere((recommendation) {
+      final hiddenUntil = catalog
+          .recommendationSnoozedUntilByActivityId[recommendation.activity.id];
+      return hiddenUntil != null && hiddenUntil.isAfter(now);
+    });
     values.sort((left, right) {
-      final priority = right.priority.compareTo(left.priority);
+      final leftPriority =
+          left.priority +
+          (catalog.recommendationWeightByActivityId[left.activity.id] ?? 0) *
+              100;
+      final rightPriority =
+          right.priority +
+          (catalog.recommendationWeightByActivityId[right.activity.id] ?? 0) *
+              100;
+      final priority = rightPriority.compareTo(leftPriority);
       if (priority != 0) return priority;
       return left.activity.title.compareTo(right.activity.title);
     });
@@ -668,8 +1035,15 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         .any((activity) => !_availabilityFor(activity).enabled);
   }
 
-  Future<void> _openActivity(_Activity activity) async {
+  Future<void> _openActivity(
+    _Activity activity, {
+    bool forceConfigure = false,
+    bool useSavedRules = false,
+    List<String> playlistIds = const [],
+    int playlistIndex = 0,
+  }) async {
     if (!activity.route.startsWith('/study')) {
+      _updateCatalog(_catalog.recordActivity(activity.id));
       await context.push(activity.route);
       return;
     }
@@ -681,20 +1055,43 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     );
     final controller = ref.read(appControllerProvider.notifier);
     final now = ref.read(appClockProvider)();
+    final currentCatalog = _catalog;
+    final routeHistoryFilter = switch (uri.queryParameters['historyFilter']) {
+      'excludeCorrect' => StudyHistoryFilter.excludeCorrect,
+      'wrongOnly' => StudyHistoryFilter.wrongOnly,
+      _ => StudyHistoryFilter.all,
+    };
+    final savedLaunch = currentCatalog.launchFor(activity.id);
+    final initialLaunch =
+        !currentCatalog.launchByActivityId.containsKey(activity.id) &&
+            uri.queryParameters['historyFilter'] == 'wrongOnly'
+        ? savedLaunch.copyWith(historyScope: PracticeHistoryScope.wrongOnly)
+        : savedLaunch;
+    final initialHistoryFilter = switch (initialLaunch.historyScope) {
+      PracticeHistoryScope.all => StudyHistoryFilter.all,
+      PracticeHistoryScope.excludeCorrect => StudyHistoryFilter.excludeCorrect,
+      PracticeHistoryScope.wrongOnly => StudyHistoryFilter.wrongOnly,
+    };
+    final intrinsicItems = controller.queue(
+      now,
+      mode: mode,
+      itemLimit: StudyLimits.maxSessionItems,
+      historyFilter: routeHistoryFilter,
+    );
     final catalogPlan = controller.activeSessionPlan.copyWith(
       planId: '',
       subjectId: controller.activeSubject.id,
       title: activity.title,
       mode: mode,
-      deck: StudyDeckScope.course,
+      deck: StudyDeckScope.selected,
       unitIndex: null,
       difficulty: StudyDifficulty.all,
       queuePriority: StudyQueuePriority.dueFirst,
-      historyFilter: StudyHistoryFilter.all,
+      historyFilter: initialHistoryFilter,
       groupIds: {},
       tags: {},
       levels: {},
-      selectedItemIds: {},
+      selectedItemIds: intrinsicItems.map((item) => item.id).toSet(),
       includeWords: true,
       includeSentences: true,
       sentenceRatio: ref.read(appControllerProvider).preferences.sentenceRatio,
@@ -721,26 +1118,35 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       return nextReviewAt != null && !nextReviewAt.isAfter(now);
     }).length;
     if (!mounted) return;
-    final launch = await showModalBottomSheet<_PracticeLaunchResult>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => _PracticeLaunchSheet(
-        activity: activity,
-        mode: mode,
-        availableCount: preview.length,
-        newCount: newCount,
-        dueCount: dueCount,
-        initialPreferences: _catalog.launchFor(activity.id),
-      ),
-    );
+    final quickLaunch =
+        !forceConfigure &&
+        preview.isNotEmpty &&
+        (useSavedRules ||
+            currentCatalog.quickLaunchActivityIds.contains(activity.id));
+    final launch = quickLaunch
+        ? _resolvePracticeLaunch(initialLaunch, preview.length)
+        : await showModalBottomSheet<_PracticeLaunchResult>(
+            context: context,
+            isScrollControlled: true,
+            showDragHandle: true,
+            builder: (context) => _PracticeLaunchSheet(
+              activity: activity,
+              mode: mode,
+              availableCount: preview.length,
+              newCount: newCount,
+              dueCount: dueCount,
+              initialPreferences: initialLaunch,
+            ),
+          );
     if (launch == null || !mounted) return;
     final catalog = _catalog;
     _updateCatalog(
-      catalog.copyWith(
-        launchByActivityId: {...catalog.launchByActivityId}
-          ..[activity.id] = launch.preferences,
-      ),
+      catalog
+          .copyWith(
+            launchByActivityId: {...catalog.launchByActivityId}
+              ..[activity.id] = launch.preferences,
+          )
+          .recordActivity(activity.id),
     );
     controller.updateSessionPlan(
       catalogPlan.copyWith(
@@ -761,11 +1167,17 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       ),
     );
     final separator = activity.route.contains('?') ? '&' : '?';
+    final playlistQuery = playlistIds.length >= 2
+        ? '&playlist=${Uri.encodeQueryComponent(playlistIds.join(','))}'
+              '&playlistIndex=$playlistIndex'
+        : '';
     await context.push(
       '${activity.route}${separator}limit=${launch.itemLimit}'
       '&queuePriority=${launch.queuePriority.name}'
       '&historyFilter=${launch.historyFilter.name}'
-      '&custom=true',
+      '&custom=true'
+      '&practiceActivityId=${Uri.encodeQueryComponent(activity.id)}'
+      '$playlistQuery',
     );
   }
 
@@ -773,6 +1185,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     return switch (category) {
       _PracticeCategory.quiz => const [
         _Activity(
+          id: 'mixed-quiz',
           icon: Icons.shuffle_rounded,
           title: '혼합 퀴즈',
           description: '여러 문제를 짧게 섞어 풀기',
@@ -780,6 +1193,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '혼합',
         ),
         _Activity(
+          id: 'meaning-choice',
           icon: Icons.touch_app_rounded,
           title: '뜻 고르기',
           description: '표현에 맞는 뜻 선택',
@@ -787,6 +1201,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '선택',
         ),
         _Activity(
+          id: 'production-writing',
           icon: Icons.keyboard_rounded,
           title: '직접 쓰기',
           description: '뜻을 보고 표현 입력',
@@ -794,6 +1209,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '쓰기',
         ),
         _Activity(
+          id: 'sentence-cloze',
           icon: Icons.space_bar_rounded,
           title: '문장 빈칸',
           description: '문맥에 맞는 표현 넣기',
@@ -801,6 +1217,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '문장',
         ),
         _Activity(
+          id: 'sentence-order',
           icon: Icons.reorder_rounded,
           title: '문장 배열',
           description: '토큰을 순서대로 조립',
@@ -808,6 +1225,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '문장',
         ),
         _Activity(
+          id: 'listening-dictation',
           icon: Icons.headphones_rounded,
           title: '듣고 쓰기',
           description: '소리를 듣고 받아쓰기',
@@ -815,6 +1233,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '듣기',
         ),
         _Activity(
+          id: 'match-sprint',
           icon: Icons.grid_view_rounded,
           title: '매치 스프린트',
           description: '표현과 뜻을 빠르게 연결',
@@ -824,6 +1243,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       ],
       _PracticeCategory.memorize => [
         const _Activity(
+          id: 'word-cards',
           icon: Icons.style_rounded,
           title: '단어 카드',
           description: '표현과 뜻을 차분히 익히기',
@@ -831,6 +1251,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '암기',
         ),
         const _Activity(
+          id: 'sentence-cards',
           icon: Icons.menu_book_rounded,
           title: '문장 카드',
           description: '문장 의미와 구조 익히기',
@@ -838,6 +1259,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '암기',
         ),
         _Activity(
+          id: 'unit-notes',
           icon: Icons.auto_stories_rounded,
           title: '단원 노트',
           description: '문형과 사용 팁 확인',
@@ -845,6 +1267,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '노트',
         ),
         _Activity(
+          id: 'favorites-review',
           icon: Icons.star_rounded,
           title: '저장한 표현',
           description: widget.favoriteCount == 0
@@ -856,6 +1279,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       ],
       _PracticeCategory.apply => const [
         _Activity(
+          id: 'pronunciation',
           icon: Icons.mic_rounded,
           title: '발음 따라하기',
           description: '말하고 일치도 확인',
@@ -863,6 +1287,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '발음',
         ),
         _Activity(
+          id: 'situation-missions',
           icon: Icons.forum_rounded,
           title: '실전 상황 미션',
           description: '듣기·뜻·말하기 연결',
@@ -870,6 +1295,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '실전',
         ),
         _Activity(
+          id: 'weak-review',
           icon: Icons.bolt_rounded,
           title: '취약 복습',
           description: '정확도 낮은 표현 집중',
@@ -877,6 +1303,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '복습',
         ),
         _Activity(
+          id: 'course-path',
           icon: Icons.route_rounded,
           title: '코스 여정',
           description: '단원별 학습 순서 보기',
@@ -908,20 +1335,57 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
   List<_Activity> _visibleActivities(
     _PracticeCategory category,
     PracticeCatalogPreferences catalog,
-  ) => _activitiesFor(category)
-      .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
-      .where(_matchesQuery)
-      .toList(growable: false);
+  ) => _sortActivities(
+    _activitiesFor(category)
+        .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
+        .where(_matchesQuery)
+        .where((activity) => _matchesDiscoveryFilters(activity, catalog))
+        .toList(growable: false),
+    catalog,
+  );
 
   Future<void> _openSurpriseGame() async {
     final catalog = _catalog;
     final available = _allActivities
         .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
         .where((activity) => _availabilityFor(activity).enabled)
+        .where(
+          (activity) =>
+              catalog.surpriseDurationFilter == PracticeDurationFilter.any ||
+              _durationFor(activity) == catalog.surpriseDurationFilter,
+        )
+        .where(
+          (activity) =>
+              catalog.surpriseSkillFilter == PracticeSkillFilter.all ||
+              _skillsFor(activity).contains(catalog.surpriseSkillFilter),
+        )
+        .where(
+          (activity) =>
+              !catalog.surpriseFavoritesOnly ||
+              catalog.favoriteActivityIds.contains(activity.id),
+        )
+        .where(
+          (activity) =>
+              !catalog.surpriseAvoidRecent ||
+              !catalog.recentActivityIds.take(3).contains(activity.id),
+        )
         .toList(growable: false);
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('지금 시작할 수 있는 게임이 없습니다. 자료를 먼저 추가해 주세요.')),
+        SnackBar(
+          content: const Text('깜짝 게임 조건에 맞는 활동이 없습니다.'),
+          action: SnackBarAction(
+            label: '조건 초기화',
+            onPressed: () => _updateCatalog(
+              catalog.copyWith(
+                surpriseDurationFilter: PracticeDurationFilter.any,
+                surpriseSkillFilter: PracticeSkillFilter.all,
+                surpriseFavoritesOnly: false,
+                surpriseAvoidRecent: false,
+              ),
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -929,9 +1393,23 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     await _openActivity(available[now.abs() % available.length]);
   }
 
+  Future<void> _showSurpriseSettings() async {
+    final updated = await showModalBottomSheet<PracticeCatalogPreferences>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => _SurpriseSettingsSheet(initial: _catalog),
+    );
+    if (updated != null) _updateCatalog(updated);
+  }
+
   Widget _activityCard(_Activity activity, double width) {
     final availability = _availabilityFor(activity);
     final catalog = _catalog;
+    final orderedFavorites = _orderedFavorites(catalog);
+    final favoriteIndex = orderedFavorites.indexWhere(
+      (value) => value.id == activity.id,
+    );
     Widget card = SizedBox(
       width: width,
       child: _ActivityCard(
@@ -939,7 +1417,21 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         disabledReason: availability.disabledReason,
         onPressed: availability.enabled ? () => _openActivity(activity) : null,
         favorite: catalog.favoriteActivityIds.contains(activity.id),
+        quickLaunch: catalog.quickLaunchActivityIds.contains(activity.id),
+        inPlaylist: _playlistSelection.contains(activity.id),
+        supportsPlaylist: isPlaylistCompatiblePracticeActivity(activity.id),
+        launchCount: catalog.launchCountByActivityId[activity.id] ?? 0,
+        bestRecord: catalog.bestRecordsByActivityId[activity.id],
+        supportsQuickLaunch: activity.route.startsWith('/study'),
+        canMoveFavoriteEarlier: favoriteIndex > 0,
+        canMoveFavoriteLater:
+            favoriteIndex >= 0 && favoriteIndex < orderedFavorites.length - 1,
         onToggleFavorite: () => _toggleFavorite(activity),
+        onMoveFavoriteEarlier: () => _moveFavorite(activity, -1),
+        onMoveFavoriteLater: () => _moveFavorite(activity, 1),
+        onToggleQuickLaunch: () => _toggleQuickLaunch(activity),
+        onTogglePlaylist: () => _togglePlaylistSelection(activity),
+        onConfigure: () => _openActivity(activity, forceConfigure: true),
         onHide: () => _hideActivity(activity),
       ),
     );
@@ -964,11 +1456,16 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         (state) => state.preferences.interaction.practiceCatalog,
       ),
     );
-    final favorites = _allActivities
-        .where((activity) => catalog.favoriteActivityIds.contains(activity.id))
-        .where((activity) => !catalog.hiddenActivityIds.contains(activity.id))
-        .where(_matchesQuery)
-        .toList(growable: false);
+    final favorites = _orderedFavorites(
+      catalog,
+    ).where(_matchesQuery).toList(growable: false);
+    final recommendationBasis = _recommendationBasis();
+    final recommendations = _practiceRecommendations(
+      recommendationBasis,
+      catalog,
+    );
+    final recentActivities = _recentActivities(catalog, recommendations);
+    final dailyChallenge = _dailyChallenge(catalog);
     final hidden = _allActivities
         .where((activity) => catalog.hiddenActivityIds.contains(activity.id))
         .toList(growable: false);
@@ -976,6 +1473,46 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     final planSummary = planTitle.isEmpty
         ? '맞춤 ${widget.itemCount}문제'
         : '$planTitle · ${widget.itemCount}문제';
+
+    Widget? categorySection(_PracticeCategory category) {
+      final activities = _visibleActivities(category, catalog);
+      if (activities.isEmpty) return null;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _PracticeSectionHeader(
+            key: Key('practice-category-${_categoryTitle(category)}'),
+            icon: _categoryIcon(category),
+            title: _categoryTitle(category),
+            description: _categoryDescription(category),
+          ),
+          const SizedBox(height: 8),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 900
+                  ? 4
+                  : defaultTargetPlatform == TargetPlatform.windows &&
+                        constraints.maxWidth >= 620
+                  ? 3
+                  : constraints.maxWidth >= 350
+                  ? 2
+                  : 1;
+              final width =
+                  (constraints.maxWidth - (columns - 1) * 10) / columns;
+              return Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final activity in activities)
+                    _activityCard(activity, width),
+                ],
+              );
+            },
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1008,11 +1545,39 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           ],
         ),
         const SizedBox(height: 14),
+        if (_hasMissingMaterialCapability && widget.items.isEmpty) ...[
+          _MissingMaterialNotice(
+            isEmpty: true,
+            onAdd: () => context.go('/library/new'),
+          ),
+          const SizedBox(height: 14),
+        ],
+        if (categorySection(_PracticeCategory.quiz)
+            case final quizSection?) ...[
+          quizSection,
+          const SizedBox(height: 14),
+        ],
         _PersonalizedPracticeHub(
-          recommendations: _practiceRecommendations(),
+          recommendations: recommendations,
+          basis: recommendationBasis,
+          recommendationWeights: catalog.recommendationWeightByActivityId,
           availabilityFor: _availabilityFor,
           onPressed: _openActivity,
+          onSeeMore: (activity) => _adjustRecommendationWeight(activity, 1),
+          onSeeLess: (activity) => _adjustRecommendationWeight(activity, -1),
+          onHideToday: (activity) =>
+              _snoozeRecommendation(activity, const Duration(days: 1)),
+          onHideSevenDays: (activity) =>
+              _snoozeRecommendation(activity, const Duration(days: 7)),
         ),
+        if (dailyChallenge case final activity?) ...[
+          const SizedBox(height: 10),
+          _DailyChallengeCard(
+            activity: activity,
+            quickLaunch: catalog.quickLaunchActivityIds.contains(activity.id),
+            onPressed: () => _openActivity(activity),
+          ),
+        ],
         const SizedBox(height: 14),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -1037,11 +1602,22 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
                       ),
               ),
             );
-            final surprise = FilledButton.tonalIcon(
-              key: const Key('practice-surprise-game'),
-              onPressed: _openSurpriseGame,
-              icon: const Icon(Icons.casino_outlined),
-              label: const Text('깜짝 게임'),
+            final surprise = Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FilledButton.tonalIcon(
+                  key: const Key('practice-surprise-game'),
+                  onPressed: _openSurpriseGame,
+                  icon: const Icon(Icons.casino_outlined),
+                  label: const Text('깜짝 게임'),
+                ),
+                IconButton(
+                  key: const Key('practice-surprise-settings'),
+                  tooltip: '깜짝 게임 조건',
+                  onPressed: _showSurpriseSettings,
+                  icon: const Icon(Icons.tune_rounded),
+                ),
+              ],
             );
             if (constraints.maxWidth < 560) {
               return Column(
@@ -1058,6 +1634,47 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
             );
           },
         ),
+        const SizedBox(height: 8),
+        _PracticeDiscoveryControls(
+          catalog: catalog,
+          onDurationChanged: (value) =>
+              _updateCatalog(catalog.copyWith(durationFilter: value)),
+          onSkillChanged: (value) =>
+              _updateCatalog(catalog.copyWith(skillFilter: value)),
+          onSortChanged: (value) =>
+              _updateCatalog(catalog.copyWith(sortOrder: value)),
+          onClearRecommendationSnoozes:
+              catalog.recommendationSnoozedUntilByActivityId.isEmpty
+              ? null
+              : () => _updateCatalog(catalog.clearRecommendationSnoozes()),
+        ),
+        if (_playlistSelection.isNotEmpty || catalog.playlists.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _PracticePlaylistPanel(
+            selectedIds: _playlistSelection,
+            titleForId: (id) => _allActivities
+                .cast<_Activity?>()
+                .firstWhere(
+                  (activity) => activity?.id == id,
+                  orElse: () => null,
+                )
+                ?.title,
+            playlists: catalog.playlists,
+            onSave: _savePlaylist,
+            onStart: _startPlaylist,
+            onRemove: _removePlaylist,
+            onClearSelection: () => setState(_playlistSelection.clear),
+          ),
+        ],
+        if (recentActivities.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          _RecentPracticeRow(
+            activities: recentActivities,
+            launchCounts: catalog.launchCountByActivityId,
+            onPressed: (activity) =>
+                _openActivity(activity, useSavedRules: true),
+          ),
+        ],
         if (favorites.isNotEmpty) ...[
           const SizedBox(height: 18),
           const _PracticeSectionHeader(
@@ -1085,50 +1702,19 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           ),
         ],
         const SizedBox(height: 18),
-        if (_hasMissingMaterialCapability) ...[
+        if (_hasMissingMaterialCapability && widget.items.isNotEmpty) ...[
           _MissingMaterialNotice(
-            isEmpty: widget.items.isEmpty,
+            isEmpty: false,
             onAdd: () => context.go('/library/new'),
           ),
           const SizedBox(height: 18),
         ],
-        for (final category in _PracticeCategory.values) ...[
-          if (_visibleActivities(category, catalog).isNotEmpty) ...[
-            if (category != _PracticeCategory.quiz) const SizedBox(height: 20),
-            _PracticeSectionHeader(
-              key: Key('practice-category-${_categoryTitle(category)}'),
-              icon: _categoryIcon(category),
-              title: _categoryTitle(category),
-              description: _categoryDescription(category),
-            ),
-            const SizedBox(height: 8),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 900
-                    ? 4
-                    : defaultTargetPlatform == TargetPlatform.windows &&
-                          constraints.maxWidth >= 620
-                    ? 3
-                    : constraints.maxWidth >= 350
-                    ? 2
-                    : 1;
-                final width =
-                    (constraints.maxWidth - (columns - 1) * 10) / columns;
-                return Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    for (final activity in _visibleActivities(
-                      category,
-                      catalog,
-                    ))
-                      _activityCard(activity, width),
-                  ],
-                );
-              },
-            ),
-          ],
-        ],
+        for (final category in _PracticeCategory.values)
+          if (category != _PracticeCategory.quiz)
+            if (categorySection(category) case final section?) ...[
+              const SizedBox(height: 20),
+              section,
+            ],
         if (_query.trim().isNotEmpty &&
             _PracticeCategory.values.every(
               (category) => _visibleActivities(category, catalog).isEmpty,
@@ -1172,25 +1758,51 @@ class _PracticeRecommendation {
     required this.activity,
     required this.count,
     required this.reason,
+    required this.basisLabel,
     required this.priority,
   });
 
   final _Activity activity;
   final int count;
   final String reason;
+  final String basisLabel;
   final int priority;
+}
+
+class _PracticeRecommendationBasis {
+  const _PracticeRecommendationBasis({
+    required this.dueCount,
+    required this.wrongCount,
+    required this.recentAccuracy,
+  });
+
+  final int dueCount;
+  final int wrongCount;
+  final int? recentAccuracy;
 }
 
 class _PersonalizedPracticeHub extends StatelessWidget {
   const _PersonalizedPracticeHub({
     required this.recommendations,
+    required this.basis,
+    required this.recommendationWeights,
     required this.availabilityFor,
     required this.onPressed,
+    required this.onSeeMore,
+    required this.onSeeLess,
+    required this.onHideToday,
+    required this.onHideSevenDays,
   });
 
   final List<_PracticeRecommendation> recommendations;
+  final _PracticeRecommendationBasis basis;
+  final Map<String, int> recommendationWeights;
   final _ActivityAvailability Function(_Activity) availabilityFor;
   final Future<void> Function(_Activity) onPressed;
+  final ValueChanged<_Activity> onSeeMore;
+  final ValueChanged<_Activity> onSeeLess;
+  final ValueChanged<_Activity> onHideToday;
+  final ValueChanged<_Activity> onHideSevenDays;
 
   @override
   Widget build(BuildContext context) {
@@ -1237,6 +1849,21 @@ class _PersonalizedPracticeHub extends StatelessWidget {
               '복습 기한·최근 오답·새 자료를 기준으로 순서를 정했어요.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            const SizedBox(height: 8),
+            Wrap(
+              key: const Key('practice-recommendation-basis'),
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                _MiniBadge(label: '복습 ${basis.dueCount}'),
+                _MiniBadge(label: '오답 ${basis.wrongCount}'),
+                _MiniBadge(
+                  label: basis.recentAccuracy == null
+                      ? '최근 정확도 -'
+                      : '최근 정확도 ${basis.recentAccuracy}%',
+                ),
+              ],
+            ),
             const SizedBox(height: 10),
             SizedBox(
               height: 118,
@@ -1249,6 +1876,9 @@ class _PersonalizedPracticeHub extends StatelessWidget {
                   final recommendation = recommendations[index];
                   final availability = availabilityFor(recommendation.activity);
                   return SizedBox(
+                    key: Key(
+                      'practice-recommendation-${recommendation.activity.id}',
+                    ),
                     width: 194,
                     child: Material(
                       color: colors.surface,
@@ -1277,11 +1907,54 @@ class _PersonalizedPracticeHub extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  Text(
-                                    '${recommendation.count}',
-                                    style: TextStyle(
-                                      color: colors.primary,
-                                      fontWeight: FontWeight.w900,
+                                  _MiniBadge(label: recommendation.basisLabel),
+                                  SizedBox(
+                                    width: 30,
+                                    child: PopupMenuButton<String>(
+                                      key: Key(
+                                        'practice-recommendation-menu-'
+                                        '${recommendation.activity.id}',
+                                      ),
+                                      tooltip: '추천 조정',
+                                      padding: EdgeInsets.zero,
+                                      onSelected: (value) {
+                                        if (value == 'more') {
+                                          onSeeMore(recommendation.activity);
+                                        }
+                                        if (value == 'less') {
+                                          onSeeLess(recommendation.activity);
+                                        }
+                                        if (value == 'today') {
+                                          onHideToday(recommendation.activity);
+                                        }
+                                        if (value == 'week') {
+                                          onHideSevenDays(
+                                            recommendation.activity,
+                                          );
+                                        }
+                                      },
+                                      itemBuilder: (context) => const [
+                                        PopupMenuItem(
+                                          value: 'more',
+                                          child: Text('이런 게임 더 보기'),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'less',
+                                          child: Text('이런 게임 덜 보기'),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'today',
+                                          child: Text('오늘 추천에서 숨기기'),
+                                        ),
+                                        PopupMenuItem(
+                                          value: 'week',
+                                          child: Text('7일 동안 숨기기'),
+                                        ),
+                                      ],
+                                      icon: const Icon(
+                                        Icons.more_vert_rounded,
+                                        size: 18,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -1299,7 +1972,15 @@ class _PersonalizedPracticeHub extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                index == 0 && availability.enabled
+                                (recommendationWeights[recommendation
+                                                .activity
+                                                .id] ??
+                                            0) !=
+                                        0
+                                    ? '추천 선호도 '
+                                          '${recommendationWeights[recommendation.activity.id]! > 0 ? '+' : ''}'
+                                          '${recommendationWeights[recommendation.activity.id]}'
+                                    : index == 0 && availability.enabled
                                     ? '지금 먼저 하기'
                                     : availability.enabled
                                     ? '바로 시작'
@@ -1324,6 +2005,486 @@ class _PersonalizedPracticeHub extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _DailyChallengeCard extends StatelessWidget {
+  const _DailyChallengeCard({
+    required this.activity,
+    required this.quickLaunch,
+    required this.onPressed,
+  });
+
+  final _Activity activity;
+  final bool quickLaunch;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      key: const Key('practice-daily-challenge'),
+      color: colors.tertiaryContainer.withValues(alpha: 0.42),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(13, 10, 10, 10),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.tertiary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.local_fire_department_rounded,
+                  color: colors.onTertiary,
+                ),
+              ),
+              const SizedBox(width: 11),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '오늘의 도전 · ${activity.title}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      quickLaunch
+                          ? '오늘 날짜와 주제로 선택 · 저장한 설정으로 바로 시작'
+                          : '오늘 날짜와 주제로 선택 · 내일은 다른 게임',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.play_arrow_rounded, color: colors.tertiary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PracticeDiscoveryControls extends StatelessWidget {
+  const _PracticeDiscoveryControls({
+    required this.catalog,
+    required this.onDurationChanged,
+    required this.onSkillChanged,
+    required this.onSortChanged,
+    required this.onClearRecommendationSnoozes,
+  });
+
+  final PracticeCatalogPreferences catalog;
+  final ValueChanged<PracticeDurationFilter> onDurationChanged;
+  final ValueChanged<PracticeSkillFilter> onSkillChanged;
+  final ValueChanged<PracticeCatalogSort> onSortChanged;
+  final VoidCallback? onClearRecommendationSnoozes;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ExpansionTile(
+        key: const Key('practice-discovery-controls'),
+        title: const Text('게임 필터·정렬'),
+        subtitle: Text(
+          '${_durationLabel(catalog.durationFilter)} · '
+          '${_skillLabel(catalog.skillFilter)} · '
+          '${_sortLabel(catalog.sortOrder)}',
+        ),
+        childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+        children: [
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('예상 시간', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final value in PracticeDurationFilter.values)
+                  ChoiceChip(
+                    key: Key('practice-duration-filter-${value.name}'),
+                    label: Text(_durationLabel(value)),
+                    selected: catalog.durationFilter == value,
+                    onSelected: (_) => onDurationChanged(value),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('기술', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final value in PracticeSkillFilter.values)
+                  ChoiceChip(
+                    key: Key('practice-skill-filter-${value.name}'),
+                    label: Text(_skillLabel(value)),
+                    selected: catalog.skillFilter == value,
+                    onSelected: (_) => onSkillChanged(value),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('정렬', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(height: 6),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final value in PracticeCatalogSort.values)
+                  ChoiceChip(
+                    key: Key('practice-sort-${value.name}'),
+                    label: Text(_sortLabel(value)),
+                    selected: catalog.sortOrder == value,
+                    onSelected: (_) => onSortChanged(value),
+                  ),
+              ],
+            ),
+          ),
+          if (onClearRecommendationSnoozes != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('clear-practice-recommendation-snoozes'),
+                onPressed: onClearRecommendationSnoozes,
+                icon: const Icon(Icons.visibility_rounded),
+                label: Text(
+                  '숨긴 추천 ${catalog.recommendationSnoozedUntilByActivityId.length}개 복원',
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SurpriseSettingsSheet extends StatefulWidget {
+  const _SurpriseSettingsSheet({required this.initial});
+
+  final PracticeCatalogPreferences initial;
+
+  @override
+  State<_SurpriseSettingsSheet> createState() => _SurpriseSettingsSheetState();
+}
+
+class _SurpriseSettingsSheetState extends State<_SurpriseSettingsSheet> {
+  late PracticeDurationFilter _duration;
+  late PracticeSkillFilter _skill;
+  late bool _favoritesOnly;
+  late bool _avoidRecent;
+
+  @override
+  void initState() {
+    super.initState();
+    _duration = widget.initial.surpriseDurationFilter;
+    _skill = widget.initial.surpriseSkillFilter;
+    _favoritesOnly = widget.initial.surpriseFavoritesOnly;
+    _avoidRecent = widget.initial.surpriseAvoidRecent;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          18,
+          0,
+          18,
+          18 + MediaQuery.viewInsetsOf(context).bottom,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('깜짝 게임 조건', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 4),
+            const Text('조건에 맞는 실행 가능한 게임 중 하나를 무작위로 고릅니다.'),
+            const SizedBox(height: 14),
+            const Text('예상 시간', style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final value in PracticeDurationFilter.values)
+                  ChoiceChip(
+                    key: Key('surprise-duration-${value.name}'),
+                    selected: _duration == value,
+                    label: Text(_durationLabel(value)),
+                    onSelected: (_) => setState(() => _duration = value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text('기술', style: TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final value in PracticeSkillFilter.values)
+                  ChoiceChip(
+                    key: Key('surprise-skill-${value.name}'),
+                    selected: _skill == value,
+                    label: Text(_skillLabel(value)),
+                    onSelected: (_) => setState(() => _skill = value),
+                  ),
+              ],
+            ),
+            SwitchListTile.adaptive(
+              key: const Key('surprise-favorites-only'),
+              contentPadding: EdgeInsets.zero,
+              value: _favoritesOnly,
+              title: const Text('즐겨찾는 게임만'),
+              onChanged: (value) => setState(() => _favoritesOnly = value),
+            ),
+            SwitchListTile.adaptive(
+              key: const Key('surprise-avoid-recent'),
+              contentPadding: EdgeInsets.zero,
+              value: _avoidRecent,
+              title: const Text('최근 3개 게임 피하기'),
+              onChanged: (value) => setState(() => _avoidRecent = value),
+            ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              key: const Key('save-surprise-settings'),
+              onPressed: () => Navigator.pop(
+                context,
+                widget.initial.copyWith(
+                  surpriseDurationFilter: _duration,
+                  surpriseSkillFilter: _skill,
+                  surpriseFavoritesOnly: _favoritesOnly,
+                  surpriseAvoidRecent: _avoidRecent,
+                ),
+              ),
+              icon: const Icon(Icons.check_rounded),
+              label: const Text('조건 저장'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PracticePlaylistPanel extends StatelessWidget {
+  const _PracticePlaylistPanel({
+    required this.selectedIds,
+    required this.titleForId,
+    required this.playlists,
+    required this.onSave,
+    required this.onStart,
+    required this.onRemove,
+    required this.onClearSelection,
+  });
+
+  final List<String> selectedIds;
+  final String? Function(String) titleForId;
+  final List<PracticePlaylist> playlists;
+  final VoidCallback onSave;
+  final Future<void> Function(PracticePlaylist) onStart;
+  final ValueChanged<PracticePlaylist> onRemove;
+  final VoidCallback onClearSelection;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: const Key('practice-playlist-panel'),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.playlist_play_rounded),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '게임 플레이리스트',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                if (selectedIds.isNotEmpty)
+                  TextButton(
+                    onPressed: onClearSelection,
+                    child: const Text('선택 해제'),
+                  ),
+              ],
+            ),
+            if (selectedIds.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final (index, id) in selectedIds.indexed)
+                    Chip(label: Text('${index + 1}. ${titleForId(id) ?? id}')),
+                ],
+              ),
+              const SizedBox(height: 8),
+              FilledButton.tonalIcon(
+                key: const Key('save-practice-playlist'),
+                onPressed: selectedIds.length >= 2 && selectedIds.length <= 5
+                    ? onSave
+                    : null,
+                icon: const Icon(Icons.save_outlined),
+                label: Text(
+                  selectedIds.length < 2
+                      ? '게임을 ${2 - selectedIds.length}개 더 담아 주세요'
+                      : '${selectedIds.length}개 게임 묶음 저장',
+                ),
+              ),
+            ],
+            if (playlists.isNotEmpty) ...[
+              const Divider(height: 22),
+              for (final playlist in playlists)
+                ListTile(
+                  key: Key('practice-playlist-${playlist.id}'),
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.queue_play_next_rounded),
+                  title: Text(playlist.name),
+                  subtitle: Text(
+                    playlist.activityIds
+                        .map((id) => titleForId(id) ?? id)
+                        .join(' → '),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        key: Key('start-practice-playlist-${playlist.id}'),
+                        tooltip: '순차 실행',
+                        onPressed: () => onStart(playlist),
+                        icon: const Icon(Icons.play_arrow_rounded),
+                      ),
+                      IconButton(
+                        tooltip: '삭제',
+                        onPressed: () => onRemove(playlist),
+                        icon: const Icon(Icons.delete_outline_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _durationLabel(PracticeDurationFilter value) => switch (value) {
+  PracticeDurationFilter.any => '전체 시간',
+  PracticeDurationFilter.threeMinutes => '약 3분',
+  PracticeDurationFilter.fiveMinutes => '약 5분',
+  PracticeDurationFilter.tenMinutes => '약 10분',
+  PracticeDurationFilter.unlimited => '무제한',
+};
+
+String _skillLabel(PracticeSkillFilter value) => switch (value) {
+  PracticeSkillFilter.all => '전체 기술',
+  PracticeSkillFilter.recognition => '뜻 알아보기',
+  PracticeSkillFilter.recall => '직접 떠올리기',
+  PracticeSkillFilter.listening => '듣기',
+  PracticeSkillFilter.speaking => '말하기',
+  PracticeSkillFilter.sentence => '문장',
+  PracticeSkillFilter.memory => '암기·복습',
+};
+
+String _sortLabel(PracticeCatalogSort value) => switch (value) {
+  PracticeCatalogSort.recommended => '추천순',
+  PracticeCatalogSort.recent => '최근 실행순',
+  PracticeCatalogSort.launchCount => '자주 실행순',
+  PracticeCatalogSort.name => '이름순',
+};
+
+class _RecentPracticeRow extends StatelessWidget {
+  const _RecentPracticeRow({
+    required this.activities,
+    required this.launchCounts,
+    required this.onPressed,
+  });
+
+  final List<_Activity> activities;
+  final Map<String, int> launchCounts;
+  final Future<void> Function(_Activity) onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      key: const Key('recent-practice-games'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          '최근 게임 · 마지막 규칙으로 재실행',
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 7),
+        SizedBox(
+          height: 44,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: activities.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 7),
+            itemBuilder: (context, index) {
+              final activity = activities[index];
+              return ActionChip(
+                key: Key('recent-practice-${activity.id}'),
+                avatar: Icon(activity.icon, size: 18),
+                label: Text(
+                  '${activity.title} · ${launchCounts[activity.id] ?? 0}회',
+                ),
+                onPressed: () => onPressed(activity),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1382,7 +2543,20 @@ class _ActivityCard extends StatelessWidget {
     required this.disabledReason,
     required this.onPressed,
     required this.favorite,
+    required this.quickLaunch,
+    required this.inPlaylist,
+    required this.supportsPlaylist,
+    required this.launchCount,
+    required this.bestRecord,
+    required this.supportsQuickLaunch,
+    required this.canMoveFavoriteEarlier,
+    required this.canMoveFavoriteLater,
     required this.onToggleFavorite,
+    required this.onMoveFavoriteEarlier,
+    required this.onMoveFavoriteLater,
+    required this.onToggleQuickLaunch,
+    required this.onTogglePlaylist,
+    required this.onConfigure,
     required this.onHide,
   });
 
@@ -1390,7 +2564,20 @@ class _ActivityCard extends StatelessWidget {
   final String? disabledReason;
   final VoidCallback? onPressed;
   final bool favorite;
+  final bool quickLaunch;
+  final bool inPlaylist;
+  final bool supportsPlaylist;
+  final int launchCount;
+  final PracticeBestRecord? bestRecord;
+  final bool supportsQuickLaunch;
+  final bool canMoveFavoriteEarlier;
+  final bool canMoveFavoriteLater;
   final VoidCallback onToggleFavorite;
+  final VoidCallback onMoveFavoriteEarlier;
+  final VoidCallback onMoveFavoriteLater;
+  final VoidCallback onToggleQuickLaunch;
+  final VoidCallback onTogglePlaylist;
+  final VoidCallback onConfigure;
   final VoidCallback onHide;
 
   @override
@@ -1450,6 +2637,11 @@ class _ActivityCard extends StatelessWidget {
           tooltip: '${activity.title} 관리',
           onSelected: (value) {
             if (value == 'favorite') onToggleFavorite();
+            if (value == 'move-earlier') onMoveFavoriteEarlier();
+            if (value == 'move-later') onMoveFavoriteLater();
+            if (value == 'quick-launch') onToggleQuickLaunch();
+            if (value == 'playlist') onTogglePlaylist();
+            if (value == 'configure') onConfigure();
             if (value == 'hide') onHide();
           },
           itemBuilder: (context) => [
@@ -1463,6 +2655,64 @@ class _ActivityCard extends StatelessWidget {
                 title: Text(favorite ? '즐겨찾기 해제' : '즐겨찾기에 고정'),
               ),
             ),
+            if (favorite && canMoveFavoriteEarlier)
+              PopupMenuItem(
+                key: Key('practice-move-earlier-${activity.id}'),
+                value: 'move-earlier',
+                child: const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.arrow_back_rounded),
+                  title: Text('즐겨찾기에서 앞으로'),
+                ),
+              ),
+            if (favorite && canMoveFavoriteLater)
+              PopupMenuItem(
+                key: Key('practice-move-later-${activity.id}'),
+                value: 'move-later',
+                child: const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.arrow_forward_rounded),
+                  title: Text('즐겨찾기에서 뒤로'),
+                ),
+              ),
+            if (supportsQuickLaunch && enabled)
+              PopupMenuItem(
+                key: Key('practice-quick-launch-${activity.id}'),
+                value: 'quick-launch',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    quickLaunch
+                        ? Icons.rocket_launch_rounded
+                        : Icons.rocket_launch_outlined,
+                  ),
+                  title: Text(quickLaunch ? '바로 시작 사용 안 함' : '저장 설정으로 바로 시작'),
+                ),
+              ),
+            if (supportsQuickLaunch && enabled && quickLaunch)
+              PopupMenuItem(
+                key: Key('practice-configure-${activity.id}'),
+                value: 'configure',
+                child: const ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.tune_rounded),
+                  title: Text('저장 설정 변경'),
+                ),
+              ),
+            if (supportsPlaylist && enabled)
+              PopupMenuItem(
+                key: Key('practice-playlist-${activity.id}'),
+                value: 'playlist',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    inPlaylist
+                        ? Icons.playlist_remove_rounded
+                        : Icons.playlist_add_rounded,
+                  ),
+                  title: Text(inPlaylist ? '플레이리스트에서 빼기' : '플레이리스트에 담기'),
+                ),
+              ),
             const PopupMenuItem(
               value: 'hide',
               child: ListTile(
@@ -1473,8 +2723,14 @@ class _ActivityCard extends StatelessWidget {
             ),
           ],
           icon: Icon(
-            favorite ? Icons.star_rounded : Icons.more_horiz_rounded,
-            color: favorite ? colors.primary : colors.onSurfaceVariant,
+            quickLaunch
+                ? Icons.rocket_launch_rounded
+                : favorite
+                ? Icons.star_rounded
+                : Icons.more_horiz_rounded,
+            color: favorite || quickLaunch
+                ? colors.primary
+                : colors.onSurfaceVariant,
           ),
         );
         return Semantics(
@@ -1508,7 +2764,13 @@ class _ActivityCard extends StatelessWidget {
                                   icon,
                                   const Spacer(),
                                   _MiniBadge(
-                                    label: enabled ? activity.badge : '사용 불가',
+                                    label: enabled
+                                        ? bestRecord != null
+                                              ? '최고 ${bestRecord!.bestScore}점'
+                                              : launchCount > 0
+                                              ? '${activity.badge} · $launchCount회'
+                                              : activity.badge
+                                        : '사용 불가',
                                     muted: !enabled,
                                   ),
                                   menu,
@@ -1524,7 +2786,13 @@ class _ActivityCard extends StatelessWidget {
                               const SizedBox(width: 11),
                               Expanded(child: copy),
                               _MiniBadge(
-                                label: enabled ? activity.badge : '사용 불가',
+                                label: enabled
+                                    ? bestRecord != null
+                                          ? _bestRecordLabel(bestRecord!)
+                                          : launchCount > 0
+                                          ? '$launchCount회'
+                                          : activity.badge
+                                    : '사용 불가',
                                 muted: !enabled,
                               ),
                               menu,
@@ -1539,6 +2807,16 @@ class _ActivityCard extends StatelessWidget {
       },
     );
   }
+}
+
+String _bestRecordLabel(PracticeBestRecord record) {
+  final elapsed = record.bestElapsedMs;
+  if (elapsed == null) return '최고 ${record.bestScore}점';
+  final seconds = (elapsed / 1000).ceil();
+  final time = seconds < 60
+      ? '$seconds초'
+      : '${seconds ~/ 60}분 ${seconds % 60}초';
+  return '최고 ${record.bestScore}점 · $time';
 }
 
 class _PracticeLaunchResult {
@@ -1557,6 +2835,63 @@ class _PracticeLaunchResult {
   final StudySessionLengthMode lengthMode;
   final int timeBudgetMinutes;
   final PracticeLaunchPreferences preferences;
+}
+
+_PracticeLaunchResult _resolvePracticeLaunch(
+  PracticeLaunchPreferences preferences,
+  int availableCount,
+) {
+  final safeAvailable = availableCount.clamp(
+    StudyLimits.minSessionItems,
+    StudyLimits.maxSessionItems,
+  );
+  final requested = switch (preferences.length) {
+    PracticeSessionLength.fiveItems ||
+    PracticeSessionLength.tenItems ||
+    PracticeSessionLength.twentyItems => preferences.itemCount,
+    PracticeSessionLength.allItems => safeAvailable,
+    PracticeSessionLength.threeMinutes => 7,
+    PracticeSessionLength.fiveMinutes => 12,
+    PracticeSessionLength.tenMinutes => 24,
+  };
+  final itemLimit = requested.clamp(StudyLimits.minSessionItems, safeAvailable);
+  final usesTimeBudget = switch (preferences.length) {
+    PracticeSessionLength.threeMinutes ||
+    PracticeSessionLength.fiveMinutes ||
+    PracticeSessionLength.tenMinutes => true,
+    _ => false,
+  };
+  final timeBudgetMinutes = switch (preferences.length) {
+    PracticeSessionLength.threeMinutes => 3,
+    PracticeSessionLength.fiveMinutes => 5,
+    PracticeSessionLength.tenMinutes => 10,
+    _ => 5,
+  };
+  return _PracticeLaunchResult(
+    itemLimit: itemLimit,
+    queuePriority: switch (preferences.queueOrder) {
+      PracticeQueueOrder.dueFirst => StudyQueuePriority.dueFirst,
+      PracticeQueueOrder.newFirst => StudyQueuePriority.newFirst,
+    },
+    historyFilter: switch (preferences.historyScope) {
+      PracticeHistoryScope.all => StudyHistoryFilter.all,
+      PracticeHistoryScope.excludeCorrect => StudyHistoryFilter.excludeCorrect,
+      PracticeHistoryScope.wrongOnly => StudyHistoryFilter.wrongOnly,
+    },
+    lengthMode: usesTimeBudget
+        ? StudySessionLengthMode.timeBudget
+        : StudySessionLengthMode.itemCount,
+    timeBudgetMinutes: timeBudgetMinutes,
+    preferences: preferences.copyWith(itemCount: itemLimit),
+  );
+}
+
+int _stablePracticeHash(String value) {
+  var hash = 0x811C9DC5;
+  for (final codeUnit in value.codeUnits) {
+    hash = ((hash ^ codeUnit) * 0x01000193) & 0x7FFFFFFF;
+  }
+  return hash;
 }
 
 class _PracticeLaunchSheet extends StatefulWidget {
@@ -2042,6 +3377,20 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                       ),
                     ),
                   ),
+                  SwitchListTile.adaptive(
+                    key: const Key('practice-challenge-scoring'),
+                    contentPadding: EdgeInsets.zero,
+                    value: _preferences.challengeScoringEnabled,
+                    title: const Text('선택적 도전 점수'),
+                    subtitle: const Text(
+                      '정확도와 완료 시간을 개인 최고 기록에만 저장하며 일반 진도 진행을 막지 않습니다.',
+                    ),
+                    onChanged: (value) => setState(
+                      () => _preferences = _preferences.copyWith(
+                        challengeScoringEnabled: value,
+                      ),
+                    ),
+                  ),
                   ExpansionTile(
                     key: const Key('practice-quick-rules'),
                     tilePadding: EdgeInsets.zero,
@@ -2445,6 +3794,7 @@ class _ActivityAvailability {
 
 class _Activity {
   const _Activity({
+    required this.id,
     required this.icon,
     required this.title,
     required this.description,
@@ -2452,11 +3802,10 @@ class _Activity {
     required this.badge,
   });
 
+  final String id;
   final IconData icon;
   final String title;
   final String description;
   final String route;
   final String badge;
-
-  String get id => route;
 }

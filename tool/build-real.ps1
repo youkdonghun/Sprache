@@ -409,12 +409,13 @@ $repoRoot = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 $clientRoot = Join-Path $repoRoot 'apps\client'
 $artifactsRoot = Join-Path $repoRoot 'artifacts'
 $pubspecPath = Join-Path $clientRoot 'pubspec.yaml'
-$versionMatch = Select-String -LiteralPath $pubspecPath -Pattern '^version:\s*(?<name>\d+\.\d+\.\d+)\+\d+\s*$' |
+$versionMatch = Select-String -LiteralPath $pubspecPath -Pattern '^version:\s*(?<name>\d+\.\d+\.\d+)\+(?<build>\d+)\s*$' |
     Select-Object -First 1
 if ($null -eq $versionMatch) {
     throw "Could not read release version from $pubspecPath"
 }
 $releaseVersion = $versionMatch.Matches[0].Groups['name'].Value
+$releaseBuildNumber = [int]$versionMatch.Matches[0].Groups['build'].Value
 $isWindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
 $androidRequested = $Target -in @('all', 'android')
 $windowsRequested = $Target -in @('all', 'windows')
@@ -858,7 +859,10 @@ if ($runDirectAndroid -or $runDirectWindows) {
             & $FlutterPath build windows --release `
                 --dart-define=APP_ENV=production `
                 --dart-define=ENABLE_MOCK_MODE=false `
+                --dart-define=RELEASE_PROBE_MODE=REAL `
                 --dart-define="APP_VERSION=$releaseVersion" `
+                --dart-define="RELEASE_BUILD_NUMBER=$releaseBuildNumber" `
+                --dart-define=RELEASE_PROBE_KIND=native-runtime `
                 --dart-define="API_BASE_URL=$ApiBaseUrl" `
                 --dart-define="PRIVACY_POLICY_URL=$PrivacyPolicyUrl" `
                 --dart-define="GOOGLE_DESKTOP_CLIENT_ID=$DesktopClientId"

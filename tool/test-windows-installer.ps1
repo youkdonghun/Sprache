@@ -1,6 +1,10 @@
 param(
     [string]$Version = '',
     [string]$InstallerPath = '',
+    [string]$RuntimeEvidencePath = '',
+    [string]$RuntimeCaptureDirectory = '.\artifacts\verification\windows-installer-runtime',
+    [ValidateSet('REAL', 'MOCK')]
+    [string]$RuntimeMode = 'REAL',
     [ValidateRange(1, 60)]
     [int]$StartupWaitSeconds = 12,
     [switch]$ForceFailureAfterInstall
@@ -10,6 +14,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $spracheUninstallRegistryKey = '{07105448-EEAE-4779-8358-BE6573C587FC}_is1'
+$spracheClassesRoot = 'HKCU:\Software\Classes'
+$spracheFileProgramId = 'Sprache.Import'
+$spracheImportExtensions = @('.csv', '.tsv', '.xlsx', '.json', '.jsonl')
 
 function Get-SpracheInstallations {
     $registryRoots = @(
@@ -63,6 +70,85 @@ function Get-SpracheInstallations {
     }
 }
 
+function Get-SpracheAssociationResidues {
+    $residues = @()
+    foreach ($ownedPath in @(
+        (Join-Path $script:spracheClassesRoot $script:spracheFileProgramId),
+        (Join-Path $script:spracheClassesRoot 'Applications\sprache.exe'),
+        (Join-Path $script:spracheClassesRoot 'sprache')
+    )) {
+        if (Test-Path -LiteralPath $ownedPath) {
+            $residues += $ownedPath
+        }
+    }
+    foreach ($extension in $script:spracheImportExtensions) {
+        $openWithPath = Join-Path $script:spracheClassesRoot "$extension\OpenWithProgids"
+        if (-not (Test-Path -LiteralPath $openWithPath)) {
+            continue
+        }
+        $openWithKey = Get-Item -LiteralPath $openWithPath -ErrorAction SilentlyContinue
+        if ($null -ne $openWithKey -and
+            @($openWithKey.GetValueNames()) -contains $script:spracheFileProgramId) {
+            $residues += "$openWithPath::$($script:spracheFileProgramId)"
+        }
+    }
+    return $residues
+}
+
+function Assert-SpracheAssociationsInstalled {
+    param([Parameter(Mandatory = $true)][string]$ExpectedExecutable)
+
+    $expectedExecutablePath = [IO.Path]::GetFullPath($ExpectedExecutable)
+    $fileCommandPath = Join-Path $script:spracheClassesRoot "$($script:spracheFileProgramId)\shell\open\command"
+    $protocolPath = Join-Path $script:spracheClassesRoot 'sprache'
+    $protocolCommandPath = Join-Path $protocolPath 'shell\open\command'
+    foreach ($requiredKey in @($fileCommandPath, $protocolPath, $protocolCommandPath)) {
+        if (-not (Test-Path -LiteralPath $requiredKey)) {
+            throw "Installed file association key is missing: $requiredKey"
+        }
+    }
+
+    $fileCommand = [string](Get-Item -LiteralPath $fileCommandPath).GetValue('')
+    $protocolCommand = [string](Get-Item -LiteralPath $protocolCommandPath).GetValue('')
+    if ($fileCommand -notlike "*$expectedExecutablePath*" -or $fileCommand -notlike '*%1*') {
+        throw "Installed file association command is invalid: $fileCommand"
+    }
+    if ($protocolCommand -notlike "*$expectedExecutablePath*" -or $protocolCommand -notlike '*%1*') {
+        throw "Installed protocol command is invalid: $protocolCommand"
+    }
+    $urlProtocol = (Get-ItemProperty -LiteralPath $protocolPath -ErrorAction Stop).PSObject.Properties['URL Protocol']
+    if ($null -eq $urlProtocol) {
+        throw 'Installed sprache:// protocol is missing the URL Protocol marker.'
+    }
+
+    $supportedTypesPath = Join-Path $script:spracheClassesRoot 'Applications\sprache.exe\SupportedTypes'
+    if (-not (Test-Path -LiteralPath $supportedTypesPath)) {
+        throw "Installed SupportedTypes key is missing: $supportedTypesPath"
+    }
+    $supportedTypes = Get-Item -LiteralPath $supportedTypesPath -ErrorAction Stop
+    $supportedTypeNames = @($supportedTypes.GetValueNames())
+    foreach ($extension in $script:spracheImportExtensions) {
+        $openWithPath = Join-Path $script:spracheClassesRoot "$extension\OpenWithProgids"
+        $openWith = Get-Item -LiteralPath $openWithPath -ErrorAction Stop
+        if (@($openWith.GetValueNames()) -notcontains $script:spracheFileProgramId) {
+            throw "$extension is missing the Sprache OpenWithProgids registration."
+        }
+        if ($openWith.GetValueKind($script:spracheFileProgramId) -ne
+            [Microsoft.Win32.RegistryValueKind]::String -or
+            [string]$openWith.GetValue($script:spracheFileProgramId) -ne '') {
+            throw "$extension has an invalid Sprache OpenWithProgids registration."
+        }
+        if ($supportedTypeNames -notcontains $extension) {
+            throw "$extension is missing from Sprache SupportedTypes."
+        }
+        if ($supportedTypes.GetValueKind($extension) -ne
+            [Microsoft.Win32.RegistryValueKind]::String -or
+            [string]$supportedTypes.GetValue($extension) -ne '') {
+            throw "$extension has an invalid Sprache SupportedTypes registration."
+        }
+    }
+}
+
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $pubspecPath = Join-Path $repoRoot 'apps\client\pubspec.yaml'
 if ([string]::IsNullOrWhiteSpace($Version)) {
@@ -104,6 +190,10 @@ if (@($existingInstallations).Count -gt 0) {
             "$($_.DisplayName) $($_.DisplayVersion) at $($_.InstallLocation)"
         }
     throw "A registered Sprache installation already exists. Refusing to replace its uninstall registration during the smoke test: $($installationSummary -join '; ')"
+}
+$existingAssociationResidues = @(Get-SpracheAssociationResidues)
+if ($existingAssociationResidues.Count -gt 0) {
+    throw "Sprache file associations already exist. Refusing a destructive smoke test: $($existingAssociationResidues -join '; ')"
 }
 $defaultInstallDirectory = Join-Path $env:LOCALAPPDATA 'Programs\Sprache'
 $orphanedInstallationFiles = @(
@@ -170,6 +260,18 @@ try {
         MainWindowHandle = $appProcess.MainWindowHandle
         MainWindowTitle = $appProcess.MainWindowTitle
         WorkingSetMB = [math]::Round($appProcess.WorkingSet64 / 1MB, 1)
+    }
+    Assert-SpracheAssociationsInstalled -ExpectedExecutable $installedExe
+    if (-not [string]::IsNullOrWhiteSpace($RuntimeEvidencePath)) {
+        Stop-Process -Id $appProcess.Id -ErrorAction Stop
+        $appProcess.WaitForExit(5000) | Out-Null
+        & (Join-Path $PSScriptRoot 'verify-windows-runtime.ps1') `
+            -ExePath $installedExe `
+            -OutputDirectory $RuntimeCaptureDirectory `
+            -RuntimeEvidencePath $RuntimeEvidencePath `
+            -Version $Version `
+            -Mode $RuntimeMode `
+            -CapturePixels
     }
 }
 catch {
@@ -238,6 +340,16 @@ if ($registryEntryCount -ne 0) {
         $cleanupError = "$cleanupError; $registryMessage"
     }
 }
+$associationResidues = @(Get-SpracheAssociationResidues)
+if ($associationResidues.Count -ne 0) {
+    $associationMessage = "Installer smoke left file association entries: $($associationResidues -join '; ')"
+    if ([string]::IsNullOrWhiteSpace($cleanupError)) {
+        $cleanupError = $associationMessage
+    }
+    else {
+        $cleanupError = "$cleanupError; $associationMessage"
+    }
+}
 
 if (-not [string]::IsNullOrWhiteSpace($operationError)) {
     if (-not [string]::IsNullOrWhiteSpace($cleanupError)) {
@@ -254,5 +366,6 @@ $runtimeResult
     UninstallExitCode = $uninstallExitCode
     InstallDirectoryRemoved = $true
     UninstallRegistryEntries = $registryEntryCount
+    FileAssociationEntries = @($associationResidues).Count
     InstallLog = $logPath
 }

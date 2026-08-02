@@ -1,0 +1,121 @@
+{
+  "format": "sprache-fixed-fuzz-corpus-v1",
+  "seed": 131055,
+  "snapshot": [
+    {
+      "id": "minimal-v1",
+      "accepted": true,
+      "value": {"schemaVersion": 1}
+    },
+    {
+      "id": "unicode-profile-v2",
+      "accepted": true,
+      "value": {
+        "schemaVersion": 2,
+        "profile": {"totalXp": 12, "streakDays": 1, "dailyXp": 2},
+        "updatedAt": "2026-08-03T00:00:00.000Z"
+      }
+    },
+    {
+      "id": "zero-schema",
+      "accepted": false,
+      "value": {"schemaVersion": 0}
+    },
+    {
+      "id": "non-integer-schema",
+      "accepted": false,
+      "value": {"schemaVersion": 1.5}
+    },
+    {
+      "id": "invalid-updated-at",
+      "accepted": false,
+      "value": {"schemaVersion": 2, "updatedAt": "yesterday"}
+    },
+    {
+      "id": "oversized-xp",
+      "accepted": false,
+      "value": {"schemaVersion": 2, "profile": {"totalXp": 1000000001}}
+    }
+  ],
+  "imports": [
+    {
+      "id": "csv-quoted-comma",
+      "format": "csv",
+      "accepted": true,
+      "minimumEntries": 1,
+      "payload": "type,term,meaning\nword,hello,\"안녕, 반가워\""
+    },
+    {
+      "id": "tsv-unicode-normalization",
+      "format": "tsv",
+      "accepted": true,
+      "minimumEntries": 1,
+      "payload": "type\tterm\tmeaning\nword\tcafé\t카페"
+    },
+    {
+      "id": "json-valid",
+      "format": "json",
+      "accepted": true,
+      "minimumEntries": 1,
+      "payload": "[{\"type\":\"word\",\"term\":\"book\",\"meaning\":\"책\"}]"
+    },
+    {
+      "id": "jsonl-valid-and-blank-line",
+      "format": "jsonl",
+      "accepted": true,
+      "minimumEntries": 2,
+      "payload": "{\"type\":\"word\",\"term\":\"one\",\"meaning\":\"하나\"}\n\n{\"type\":\"word\",\"term\":\"two\",\"meaning\":\"둘\"}"
+    },
+    {
+      "id": "json-truncated",
+      "format": "json",
+      "accepted": false,
+      "minimumEntries": 0,
+      "payload": "[{\"type\":\"word\",\"term\":\"broken\""
+    },
+    {
+      "id": "csv-missing-required-columns",
+      "format": "csv",
+      "accepted": false,
+      "minimumEntries": 0,
+      "payload": "foo,bar\none,two"
+    }
+  ],
+  "search": [
+    {"id": "accent-fold", "query": "cafe", "expectedIds": ["item-cafe"]},
+    {"id": "nfkc-full-width", "query": "ｂｏｏｋ", "expectedIds": ["item-book"]},
+    {"id": "korean-translation", "query": "책", "expectedIds": ["item-book"]},
+    {"id": "operator-favorite", "query": "type:word state:favorite", "expectedIds": ["item-cafe"]},
+    {"id": "no-result-control", "query": "does-not-exist", "expectedIds": []},
+    {"id": "control-characters", "query": "\u0000\u0001\n", "expectedIds": []}
+  ],
+  "notificationActions": [
+    {"id": "default-open", "actionId": "", "payload": "session-plan/plan-1", "expectedKind": "open"},
+    {"id": "start", "actionId": "start", "payload": "session-plan/plan:2", "expectedKind": "start"},
+    {"id": "snooze-ten", "actionId": "snooze-10", "payload": "session-plan/plan_3", "expectedKind": "snooze10"},
+    {"id": "unknown-action", "actionId": "delete", "payload": "session-plan/plan-1", "expectedKind": null},
+    {"id": "invalid-percent", "actionId": "start", "payload": "session-plan/%ZZ", "expectedKind": null},
+    {"id": "foreign-payload", "actionId": "start", "payload": "settings/notifications", "expectedKind": null}
+  ],
+  "deviceSettings": [
+    {
+      "id": "empty-defaults",
+      "value": {},
+      "expected": {"enabled": true, "quietStartMinutes": 1320, "quietEndMinutes": 420, "pitch": 1.0, "privacyMode": false}
+    },
+    {
+      "id": "bounded-invalid-values",
+      "value": {
+        "notifications": {"enabled": false, "quietStartMinutes": -1, "quietEndMinutes": 1440, "lockScreenContent": "unknown"},
+        "privacy": {"privacyMode": true, "curtainDelay": "immediate"},
+        "voice": {"pitch": 99, "soundStrength": "strong", "hapticStrength": "light"}
+      },
+      "expected": {"enabled": false, "quietStartMinutes": 0, "quietEndMinutes": 1439, "pitch": 2.0, "privacyMode": true}
+    },
+    {
+      "id": "wrong-shapes-fall-back",
+      "value": {"notifications": "no", "privacy": 7, "voice": []},
+      "expected": {"enabled": true, "quietStartMinutes": 1320, "quietEndMinutes": 420, "pitch": 1.0, "privacyMode": false}
+    }
+  ]
+}

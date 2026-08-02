@@ -170,6 +170,16 @@ final class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
+      // WAL keeps the last committed database readable while a new commit is
+      // being assembled. FULL synchronization makes SQLite surface an fsync
+      // failure instead of acknowledging a commit that only reached an OS
+      // cache. The two fullfsync flags strengthen the same guarantee on Apple
+      // file systems and are harmless no-ops where unsupported.
+      await customStatement('PRAGMA journal_mode = WAL');
+      await customStatement('PRAGMA synchronous = FULL');
+      await customStatement('PRAGMA fullfsync = ON');
+      await customStatement('PRAGMA checkpoint_fullfsync = ON');
+      await customStatement('PRAGMA busy_timeout = 5000');
     },
   );
 

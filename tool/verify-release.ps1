@@ -9,6 +9,7 @@ param(
     [switch]$RequireAndroidReleaseSigning,
     [switch]$RequireWindowsCodeSigning,
     [switch]$RunInstallerSmoke,
+    [string]$ReleaseBundleManifest = '',
     [switch]$CleanOldArtifacts
 )
 
@@ -273,6 +274,25 @@ if ($RunInstallerSmoke) {
 }
 
 if ($CleanOldArtifacts) {
+    if ([string]::IsNullOrWhiteSpace($ReleaseBundleManifest)) {
+        throw 'Old artifact cleanup requires -ReleaseBundleManifest after the four-platform bundle has been verified.'
+    }
+    $resolvedBundleManifest = (Resolve-Path -LiteralPath $ReleaseBundleManifest).Path
+    $bundleRoot = Split-Path -Parent $resolvedBundleManifest
+    $nodeCommand = Get-Command node.exe -ErrorAction SilentlyContinue
+    if ($null -eq $nodeCommand) {
+        $nodeCommand = Get-Command node -ErrorAction SilentlyContinue
+    }
+    if ($null -eq $nodeCommand) {
+        throw 'Node.js is required to verify the four-platform bundle before cleanup.'
+    }
+    $nodeExecutable = $nodeCommand.Source
+    & $nodeExecutable (Join-Path $PSScriptRoot 'release-bundle.mjs') verify `
+        --manifest $resolvedBundleManifest `
+        --root $bundleRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw "Four-platform bundle verification failed with exit code $LASTEXITCODE"
+    }
     & (Join-Path $PSScriptRoot 'clean-release-artifacts.ps1') `
         -KeepVersion $Version `
         -Confirm:$false

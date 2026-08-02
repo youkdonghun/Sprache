@@ -32,6 +32,8 @@ void main() {
           activeSubjectId: 'language:en',
           dailyGoal: 100,
           dailyGoalsBySubject: {'language:en': 50, 'language:ja': 200},
+          weeklyTargetDays: 3,
+          weeklyTargetMinutes: 60,
         ),
       );
 
@@ -46,13 +48,17 @@ void main() {
 
         expect(find.textContaining('오늘 10/50 XP · 계정 레벨'), findsOneWidget);
         expect(find.textContaining('누적 400 XP'), findsOneWidget);
+        expect(
+          find.byKey(const Key('home-weekly-target-summary')),
+          findsOneWidget,
+        );
+        expect(find.text('0/3일 · 0/60분'), findsOneWidget);
 
         final container = ProviderScope.containerOf(
           tester.element(find.byType(SpracheApp)),
         );
-        container
-            .read(appControllerProvider.notifier)
-            .selectLanguage(LanguageTag.japanese);
+        final controller = container.read(appControllerProvider.notifier);
+        controller.selectLanguage(LanguageTag.japanese);
         await tester.pumpAndSettle();
         expect(find.textContaining('오늘 15/200 XP · 계정 레벨'), findsOneWidget);
         expect(find.textContaining('누적 400 XP'), findsOneWidget);
@@ -62,13 +68,24 @@ void main() {
         expect(find.text('일본어 하루 목표'), findsOneWidget);
         expect(find.text('이 주제 오늘 15 XP · 계정 누적 400 XP'), findsOneWidget);
 
-        await tester.tap(find.byIcon(Icons.home_rounded).last);
+        await tester.tap(find.byKey(const Key('nav-home')));
         await tester.pumpAndSettle();
-        await tester.tap(find.byIcon(Icons.insights_rounded).last);
+        await tester.tap(find.byKey(const Key('nav-stats')));
         await tester.pumpAndSettle();
         expect(find.text('ACCOUNT LEVEL 1'), findsOneWidget);
         expect(find.text('계정 전체에서 지금까지 400 XP를 쌓았어요'), findsOneWidget);
         expect(find.text('일본어 오늘 XP'), findsOneWidget);
+        await tester.ensureVisible(find.byKey(const Key('weekly-target-5')));
+        await tester.tap(find.byKey(const Key('weekly-target-5')));
+        await tester.pump();
+        await tester.ensureVisible(
+          find.byKey(const Key('weekly-minute-target-90')),
+        );
+        await tester.tap(find.byKey(const Key('weekly-minute-target-90')));
+        await tester.pump(const Duration(milliseconds: 80));
+        await controller.flushPendingWrites();
+        expect(store.savedPreferences.weeklyTargetDays, 5);
+        expect(store.savedPreferences.weeklyTargetMinutes, 90);
         expect(tester.takeException(), isNull);
       } finally {
         debugDefaultTargetPlatformOverride = null;

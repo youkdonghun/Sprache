@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
@@ -10,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../data/study_store.dart';
 import '../domain/content_management.dart';
+import '../domain/content_validation.dart';
 import '../domain/import_distribution.dart';
 import '../domain/language.dart';
 import '../domain/learning_group.dart';
@@ -19,12 +21,24 @@ import '../import/content_import_parser.dart';
 import '../import/bulk_paste_parser.dart';
 import '../import/import_column_mapping.dart';
 import '../import/import_limits.dart';
+import '../import/import_report_exporter.dart';
 import '../import/import_reconciler.dart';
+import '../import/import_review_draft.dart';
 import '../import/template_file_name.dart';
+import '../import/text_import_decoder.dart';
+import '../import/xlsx_import_reader.dart';
+import '../services/clipboard_read_session.dart';
+import '../services/recovery_checkpoint_service.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
 import '../state/local_storage_state.dart';
+import '../state/navigation_guard_state.dart';
+import '../state/pending_import_state.dart';
 import '../theme/app_theme.dart';
+
+final recoveryCheckpointServiceProvider = Provider<RecoveryCheckpointService>(
+  (ref) => RecoveryCheckpointService(),
+);
 
 enum _ReviewFilter { all, selected, changed, problems }
 
@@ -42,19 +56,90 @@ typedef _ImportParseRequest = ({
   Map<String, String> groupByDistributionKey,
   Map<String, String> languageCodeByDistributionKey,
   Map<String, String> columnMapping,
+  String? textEncodingName,
+  String? delimiterName,
+  String? sheetName,
 });
 
-typedef _TabularHeaderRequest = ({List<int> bytes, String extension});
+typedef _TabularInspectionRequest = ({
+  List<int> bytes,
+  String extension,
+  String? textEncodingName,
+  String? delimiterName,
+  String? sheetName,
+});
 
-List<String> _inspectTabularHeaders(_TabularHeaderRequest request) {
+typedef _ExcelSheetInspection = ({
+  String name,
+  List<String> headers,
+  List<List<String>> samples,
+});
+
+typedef _TabularInspection = ({
+  List<String> headers,
+  List<List<String>> samples,
+  List<_ExcelSheetInspection> sheets,
+  String? encodingName,
+  String? delimiterName,
+  bool hadBom,
+});
+
+_TabularInspection _inspectTabular(_TabularInspectionRequest request) {
   const mapper = ImportColumnMapper();
-  return switch (request.extension) {
-    'xlsx' => mapper.inspectExcel(request.bytes),
-    'csv' => mapper.inspectCsv(
-      utf8.decode(request.bytes, allowMalformed: false),
-    ),
-    _ => const [],
-  };
+  if (request.extension == 'xlsx') {
+    final sheets = const XlsxImportReader().read(request.bytes);
+    final inspected = <_ExcelSheetInspection>[];
+    for (final sheet in sheets) {
+      final headerIndex = mapper.findExcelHeaderIndex(sheet.rows);
+      if (headerIndex < 0) continue;
+      inspected.add((
+        name: sheet.name,
+        headers: sheet.rows[headerIndex].values
+            .map((value) => value.trim().replaceFirst('\uFEFF', ''))
+            .where((value) => value.isNotEmpty)
+            .toList(growable: false),
+        samples: sheet.rows
+            .skip(headerIndex + 1)
+            .where((row) => row.values.any((value) => value.trim().isNotEmpty))
+            .take(3)
+            .map((row) => row.values.take(6).toList(growable: false))
+            .toList(growable: false),
+      ));
+    }
+    final selected = inspected.where(
+      (sheet) => request.sheetName == null || sheet.name == request.sheetName,
+    );
+    final active = selected.isEmpty ? null : selected.first;
+    return (
+      headers: active?.headers ?? const [],
+      samples: active?.samples ?? const [],
+      sheets: inspected,
+      encodingName: null,
+      delimiterName: null,
+      hadBom: false,
+    );
+  }
+  final encoding = TextImportEncoding.values.firstWhere(
+    (value) => value.name == request.textEncodingName,
+    orElse: () => TextImportEncoding.auto,
+  );
+  final delimiter = TextImportDelimiter.values.firstWhere(
+    (value) => value.name == request.delimiterName,
+    orElse: () => TextImportDelimiter.auto,
+  );
+  final inspection = const TextImportDecoder().inspect(
+    request.bytes,
+    encoding: encoding,
+    delimiter: delimiter,
+  );
+  return (
+    headers: inspection.headers,
+    samples: inspection.samples,
+    sheets: const [],
+    encodingName: inspection.encoding.name,
+    delimiterName: inspection.delimiter.name,
+    hadBom: inspection.hadBom,
+  );
 }
 
 _ParsedImportFile _parseImportBytes(_ImportParseRequest request) {
@@ -67,6 +152,7 @@ _ParsedImportFile _parseImportBytes(_ImportParseRequest request) {
     'xlsx' => parser.parseExcel(
       request.bytes,
       defaultLanguage: defaultLanguage,
+      sheetName: request.sheetName,
       defaultSubjectId: request.defaultSubjectId,
       distributionKey: request.distributionKey,
       distributionGroup: request.distributionGroup,
@@ -77,9 +163,27 @@ _ParsedImportFile _parseImportBytes(_ImportParseRequest request) {
       languageCodeByDistributionKey: request.languageCodeByDistributionKey,
       columnMapping: request.columnMapping,
     ),
-    'csv' => parser.parseCsv(
-      utf8.decode(request.bytes, allowMalformed: false),
+    'csv' || 'tsv' => parser.parseCsv(
+      const TextImportDecoder()
+          .inspect(
+            request.bytes,
+            encoding: TextImportEncoding.values.firstWhere(
+              (value) => value.name == request.textEncodingName,
+              orElse: () => TextImportEncoding.auto,
+            ),
+            delimiter: TextImportDelimiter.values.firstWhere(
+              (value) => value.name == request.delimiterName,
+              orElse: () => TextImportDelimiter.auto,
+            ),
+          )
+          .text,
       defaultLanguage: defaultLanguage,
+      delimiter: TextImportDelimiter.values
+          .firstWhere(
+            (value) => value.name == request.delimiterName,
+            orElse: () => TextImportDelimiter.auto,
+          )
+          .value,
       defaultSubjectId: request.defaultSubjectId,
       distributionKey: request.distributionKey,
       distributionGroup: request.distributionGroup,
@@ -177,10 +281,18 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   String? _fileSha256;
   String? _routeSubjectId;
   Map<String, String> _columnMapping = const {};
+  String? _sourceExtension;
+  String? _textEncodingName;
+  String? _delimiterName;
+  String? _sheetName;
+  String? _sourceSummary;
   _ReviewFilter _filter = _ReviewFilter.all;
   int _visibleLimit = 50;
   bool _busy = false;
   String? _busyMessage;
+  bool _committed = false;
+  Future<void> _draftWriteTail = Future.value();
+  late final NavigationGuardController _navigationGuard;
 
   @override
   void initState() {
@@ -189,27 +301,98 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     _fileName = widget.initialFileName;
     _fileSha256 = widget.initialSha256;
     _previousImport = widget.initialPreviousImport;
+    _navigationGuard = ref.read(navigationGuardProvider)
+      ..register(this, _confirmLeave);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_consumeDroppedFile());
+    });
+  }
+
+  Future<void> _consumeDroppedFile() async {
+    final pending = ref.read(pendingImportFileProvider);
+    if (pending == null || !mounted) return;
+    ref.read(pendingImportFileProvider.notifier).state = null;
+    final dot = pending.name.lastIndexOf('.');
+    await _loadFileBytes(
+      fileName: pending.name,
+      extension: dot < 0 ? null : pending.name.substring(dot + 1).toLowerCase(),
+      bytes: pending.bytes,
+    );
   }
 
   @override
   void dispose() {
+    _navigationGuard.unregister(this);
     _distributionKeyController.dispose();
     _distributionGroupController.dispose();
     super.dispose();
+  }
+
+  Future<bool> _confirmLeave() async {
+    if (_committed || (_preview == null && !_busy)) return true;
+    if (_busy) {
+      _showMessage('안전 저장이 끝날 때까지 잠시 기다려 주세요.');
+      return false;
+    }
+    return await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            key: const Key('import-draft-exit-dialog'),
+            title: const Text('가져오기 미리보기를 닫을까요?'),
+            content: const Text(
+              '파일 원문 없이 해시·열 배치·선택·목적지만 이 기기의 검토 초안에 보관합니다. '
+              '기존 학습 자료는 바뀌지 않습니다.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('계속 검토'),
+              ),
+              FilledButton.tonal(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('미리보기 닫기'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _requestSystemBack() async {
+    if (await _confirmLeave() && mounted) context.go('/library');
   }
 
   void _invalidatePreviewForRoutingChange() {
     if (_preview == null) return;
     setState(() {
       _preview = null;
+      _committed = false;
       _previousImport = null;
       _fileName = null;
       _fileSha256 = null;
       _columnMapping = const {};
+      _sourceExtension = null;
+      _textEncodingName = null;
+      _delimiterName = null;
+      _sheetName = null;
+      _sourceSummary = null;
       _decisions.clear();
       _filter = _ReviewFilter.all;
       _visibleLimit = 50;
     });
+    final previousDraftWrite = _draftWriteTail;
+    _draftWriteTail = () async {
+      try {
+        await previousDraftWrite;
+      } on Object {
+        // A later clear still wins over a failed draft write.
+      }
+      try {
+        await ref.read(studyStoreProvider).clearImportReviewDraft();
+      } on Object {
+        // Draft cleanup must not change the already safe learning dataset.
+      }
+    }();
     _showMessage('분배 위치가 바뀌었습니다. 파일을 다시 선택해 새 기준으로 검증해 주세요.');
   }
 
@@ -242,7 +425,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     if (_busy) return;
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['xlsx', 'csv', 'json', 'jsonl'],
+      allowedExtensions: const ['xlsx', 'csv', 'tsv', 'json', 'jsonl'],
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
@@ -252,7 +435,19 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       _showMessage('파일을 읽을 수 없습니다.');
       return;
     }
+    await _loadFileBytes(
+      fileName: file.name,
+      extension: file.extension?.toLowerCase(),
+      bytes: bytes,
+    );
+  }
 
+  Future<void> _loadFileBytes({
+    required String fileName,
+    required String? extension,
+    required List<int> bytes,
+  }) async {
+    if (_busy) return;
     setState(() {
       _busy = true;
       _busyMessage = '파일을 백그라운드에서 검증하고 있습니다…';
@@ -260,17 +455,31 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     try {
       final appController = ref.read(appControllerProvider.notifier);
       final activeSubject = appController.activeSubject;
+      final sourceHash = sha256.convert(bytes).toString();
+      final storedDraft = await ref
+          .read(studyStoreProvider)
+          .loadImportReviewDraft();
+      if (!mounted) return;
+      final matchingDraft = storedDraft?.fileSha256 == sourceHash
+          ? storedDraft
+          : null;
       final rawDistributionKey = _distributionKeyController.text.trim();
       var distributionKey = rawDistributionKey.isEmpty
-          ? null
+          ? matchingDraft?.distributionKey
           : normalizeImportDistributionKey(rawDistributionKey);
       final hasUiDistributionKey = distributionKey != null;
-      final routeSubjectId = _routeSubjectId ?? activeSubject.id;
+      final routeSubjectId =
+          _routeSubjectId ??
+          matchingDraft?.destinationSubjectId ??
+          activeSubject.id;
       var routeSubject = appController.allSubjects.firstWhere(
         (subject) => subject.id == routeSubjectId,
         orElse: () => activeSubject,
       );
       var distributionGroup = _distributionGroupController.text.trim();
+      if (distributionGroup.isEmpty) {
+        distributionGroup = matchingDraft?.distributionGroup ?? '';
+      }
       final subjectsById = {
         for (final subject in appController.allSubjects) subject.id: subject,
       };
@@ -301,18 +510,74 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               subject.contentLanguage.code;
         }
       }
-      final extension = file.extension?.toLowerCase();
       var columnMapping = const <String, String>{};
-      if (extension == 'xlsx' || extension == 'csv') {
-        final headers = await compute(_inspectTabularHeaders, (
+      String? textEncodingName;
+      String? delimiterName;
+      String? sheetName;
+      String? sourceSummary;
+      if (extension == 'xlsx' || extension == 'csv' || extension == 'tsv') {
+        var inspection = await compute(_inspectTabular, (
           bytes: bytes,
           extension: extension!,
+          textEncodingName: null,
+          delimiterName: extension == 'tsv'
+              ? TextImportDelimiter.tab.name
+              : null,
+          sheetName: null,
         ));
+        if (!mounted) return;
+        if (extension == 'xlsx') {
+          if (inspection.sheets.isEmpty) {
+            throw const FormatException('문제와 정답이 있는 Excel 시트를 찾지 못했습니다.');
+          }
+          sheetName = await showDialog<String>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) =>
+                _ExcelSheetSelectionDialog(sheets: inspection.sheets),
+          );
+          if (sheetName == null) return;
+          inspection = await compute(_inspectTabular, (
+            bytes: bytes,
+            extension: extension,
+            textEncodingName: null,
+            delimiterName: null,
+            sheetName: sheetName,
+          ));
+          sourceSummary = 'Excel · $sheetName 시트';
+        } else {
+          final selection = await showDialog<_TextImportSelection>(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) =>
+                _TextImportOptionsDialog(inspection: inspection),
+          );
+          if (selection == null) return;
+          textEncodingName = selection.encoding.name;
+          delimiterName = selection.delimiter.name;
+          inspection = await compute(_inspectTabular, (
+            bytes: bytes,
+            extension: extension,
+            textEncodingName: textEncodingName,
+            delimiterName: delimiterName,
+            sheetName: null,
+          ));
+          sourceSummary =
+              '${selection.encoding.label} · ${selection.delimiter.label}'
+              '${inspection.hadBom ? ' · BOM 확인' : ''}';
+        }
+        final headers = inspection.headers;
         if (headers.length < 2) {
           throw const FormatException('문제와 정답이 있는 헤더 행을 찾지 못했습니다.');
         }
         if (!mounted) return;
-        final suggested = const ImportColumnMapper().suggest(headers);
+        final savedMapping = matchingDraft?.columnMapping ?? const {};
+        final savedMappingFits =
+            savedMapping.isNotEmpty &&
+            savedMapping.values.every(headers.contains);
+        final suggested = savedMappingFits
+            ? savedMapping
+            : const ImportColumnMapper().suggest(headers);
         final selected = await showDialog<_ImportColumnMappingSelection>(
           context: context,
           barrierDismissible: false,
@@ -351,6 +616,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         groupByDistributionKey: groupByDistributionKey,
         languageCodeByDistributionKey: languageCodeByDistributionKey,
         columnMapping: columnMapping,
+        textEncodingName: textEncodingName,
+        delimiterName: delimiterName,
+        sheetName: sheetName,
       );
       final parsed = await compute(_parseImportBytes, parseRequest);
       final embeddedKeys = parsed.preview.items
@@ -435,14 +703,35 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           _distributionGroupController.text = distributionGroup;
         }
         _preview = parsed.preview;
-        _fileName = file.name;
+        _committed = false;
+        _fileName = fileName;
         _fileSha256 = parsed.sha256;
         _previousImport = previousImport;
         _columnMapping = columnMapping;
-        _decisions.clear();
+        _sourceExtension = extension;
+        _textEncodingName = textEncodingName;
+        _delimiterName = delimiterName;
+        _sheetName = sheetName;
+        _sourceSummary = matchingDraft == null
+            ? sourceSummary
+            : '${sourceSummary ?? '검증 완료'} · 이전 검토 선택 복원';
+        _decisions
+          ..clear()
+          ..addAll({
+            for (final entry
+                in matchingDraft == null
+                    ? const <MapEntry<String, ImportDraftDecision>>[]
+                    : matchingDraft.decisions.entries)
+              entry.key: switch (entry.value) {
+                ImportDraftDecision.add => ImportReviewAction.add,
+                ImportDraftDecision.replace => ImportReviewAction.replace,
+                ImportDraftDecision.skip => ImportReviewAction.skip,
+              },
+          });
         _filter = _ReviewFilter.all;
         _visibleLimit = 50;
       });
+      _saveReviewDraft();
     } on FormatException catch (error) {
       _showMessage(error.message.toString());
     } catch (_) {
@@ -520,6 +809,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           'term': 'term',
           'meaning': 'meaning',
         },
+        textEncodingName: TextImportEncoding.utf8.name,
+        delimiterName: TextImportDelimiter.comma.name,
+        sheetName: null,
       );
       final parsed = await compute(_parseImportBytes, parseRequest);
       final now = DateTime.now();
@@ -542,10 +834,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           duplicates: parsed.preview.duplicates,
           notices: parsed.preview.notices,
         );
+        _committed = false;
         _fileName = fileName;
         _fileSha256 = parsed.sha256;
         _previousImport = previous;
         _columnMapping = const {'term': 'term', 'meaning': 'meaning'};
+        _sourceSummary = 'UTF-8 · 쉼표 (붙여넣기)';
         _decisions.clear();
         _filter = _ReviewFilter.all;
         _visibleLimit = 50;
@@ -588,6 +882,80 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     }
   }
 
+  Future<void> _exportImportReport(ImportReview review) async {
+    try {
+      final csvText = const ImportReportExporter().buildCsv(review);
+      final now = DateTime.now();
+      final stamp =
+          '${now.year}${now.month.toString().padLeft(2, '0')}'
+          '${now.day.toString().padLeft(2, '0')}-'
+          '${now.hour.toString().padLeft(2, '0')}'
+          '${now.minute.toString().padLeft(2, '0')}';
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: '개인정보 안전 가져오기 보고서 저장',
+        fileName: 'sprache-import-report-$stamp.csv',
+        type: FileType.custom,
+        allowedExtensions: const ['csv'],
+        bytes: Uint8List.fromList(utf8.encode(csvText)),
+      );
+      if (path != null) {
+        _showMessage('원문을 제외한 가져오기 보고서를 저장했습니다.');
+      }
+    } catch (_) {
+      _showMessage('가져오기 보고서를 저장하지 못했습니다.');
+    }
+  }
+
+  Future<void> _editBlockedEntry(ImportReviewEntry entry) async {
+    final edited = await showDialog<_BlockedEntryEdit>(
+      context: context,
+      builder: (context) => _BlockedEntryEditDialog(entry: entry),
+    );
+    if (edited == null || !mounted) return;
+    try {
+      final oldMeaning = entry.incoming.primaryTranslation;
+      final translations = <String>{
+        edited.meaning,
+        ...entry.incoming.translations.where((value) => value != oldMeaning),
+      }.toList(growable: false);
+      final answers = <String>{
+        edited.meaning,
+        ...entry.incoming.acceptedAnswers.where((value) => value != oldMeaning),
+      }.toList(growable: false);
+      final candidate = const LearningContentValidator().ensureValid(
+        entry.incoming.copyWith(
+          id: edited.id,
+          text: edited.text,
+          translations: translations,
+          acceptedAnswers: answers,
+          updatedAt: DateTime.now().toUtc(),
+        ),
+      );
+      final preview = _preview;
+      if (preview == null) return;
+      setState(() {
+        _preview = ImportPreview(
+          entries: [
+            for (final parsed in preview.entries)
+              if (parsed.row == entry.row &&
+                  parsed.item.id == entry.incoming.id)
+                ParsedImportEntry(row: parsed.row, item: candidate)
+              else
+                parsed,
+          ],
+          issues: preview.issues,
+          duplicates: preview.duplicates,
+          notices: preview.notices,
+        );
+        _committed = false;
+        _decisions.remove(entry.reviewKey);
+      });
+      _showMessage('${entry.row}행을 다시 검증했습니다.');
+    } on FormatException catch (error) {
+      _showMessage(error.message.toString());
+    }
+  }
+
   Future<void> _loadBundledWebPack({
     required String fileName,
     required String busyMessage,
@@ -617,6 +985,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         groupByDistributionKey: const <String, String>{},
         languageCodeByDistributionKey: const <String, String>{},
         columnMapping: const <String, String>{},
+        textEncodingName: null,
+        delimiterName: null,
+        sheetName: null,
       );
       final parsed = await compute(_parseImportBytes, parseRequest);
       final previousImport = await ref
@@ -625,9 +996,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (!mounted) return;
       setState(() {
         _preview = parsed.preview;
+        _committed = false;
         _fileName = fileName;
         _fileSha256 = parsed.sha256;
         _previousImport = previousImport;
+        _sourceSummary = null;
         _decisions.clear();
         _filter = _ReviewFilter.all;
         _visibleLimit = 50;
@@ -694,6 +1067,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         groupByDistributionKey: const <String, String>{},
         languageCodeByDistributionKey: const <String, String>{},
         columnMapping: const <String, String>{},
+        textEncodingName: null,
+        delimiterName: null,
+        sheetName: null,
       );
       final parsed = await compute(_parseImportBytes, parseRequest);
       final previousImport = await controller.previousImportBySha256(
@@ -702,9 +1078,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (!mounted) return;
       setState(() {
         _preview = parsed.preview;
+        _committed = false;
         _fileName = fileName;
         _fileSha256 = parsed.sha256;
         _previousImport = previousImport;
+        _sourceSummary = null;
         _decisions.clear();
         _filter = _ReviewFilter.all;
         _visibleLimit = 50;
@@ -729,8 +1107,51 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         .action;
   }
 
+  void _saveReviewDraft() {
+    final hash = _fileSha256;
+    if (hash == null || _preview == null || _committed) return;
+    final draft = ImportReviewDraft(
+      fileSha256: hash,
+      updatedAt: DateTime.now().toUtc(),
+      extension: _sourceExtension,
+      columnMapping: Map.unmodifiable(_columnMapping),
+      decisions: {
+        for (final entry in _decisions.entries)
+          entry.key: switch (entry.value) {
+            ImportReviewAction.add => ImportDraftDecision.add,
+            ImportReviewAction.replace => ImportDraftDecision.replace,
+            ImportReviewAction.skip => ImportDraftDecision.skip,
+          },
+      },
+      encodingName: _textEncodingName,
+      delimiterName: _delimiterName,
+      sheetName: _sheetName,
+      destinationSubjectId: _routeSubjectId,
+      distributionKey: _distributionKeyController.text.trim().isEmpty
+          ? null
+          : _distributionKeyController.text.trim(),
+      distributionGroup: _distributionGroupController.text.trim().isEmpty
+          ? null
+          : _distributionGroupController.text.trim(),
+    );
+    final previousDraftWrite = _draftWriteTail;
+    _draftWriteTail = () async {
+      try {
+        await previousDraftWrite;
+      } on Object {
+        // The latest valid review state should still get a chance to persist.
+      }
+      try {
+        await ref.read(studyStoreProvider).saveImportReviewDraft(draft);
+      } on Object {
+        // The preview remains usable in memory when local draft storage fails.
+      }
+    }();
+  }
+
   void _setAction(ImportReviewEntry entry, ImportReviewAction action) {
     setState(() => _decisions[entry.reviewKey] = entry.resolve(action).action);
+    _saveReviewDraft();
   }
 
   void _setBulkAction(
@@ -745,6 +1166,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _decisions[entry.reviewKey] = entry.resolve(action).action;
       }
     });
+    _saveReviewDraft();
   }
 
   List<_ImportDestination> _destinationsFor(
@@ -821,10 +1243,20 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
     setState(() {
       _busy = true;
-      _busyMessage = '1/3 · 전체 항목을 앱 DB에 원자적으로 저장하고 있습니다…';
+      _busyMessage = '1/4 · 가져오기 전 안전 지점을 검증하고 있습니다…';
     });
     ImportCommitResult? committedResult;
     try {
+      await ref
+          .read(recoveryCheckpointServiceProvider)
+          .create(
+            ref.read(appControllerProvider.notifier).exportArchive(),
+            reason: RecoveryCheckpointReason.bulkImport,
+          );
+      if (!mounted) return;
+      setState(() {
+        _busyMessage = '2/4 · 전체 항목을 앱 DB에 원자적으로 저장하고 있습니다…';
+      });
       final result = await ref
           .read(appControllerProvider.notifier)
           .importResolvedItems(
@@ -834,12 +1266,23 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
             rejectedRows: preview.issues.length + preview.duplicates.length,
           );
       committedResult = result;
+      _committed = true;
+      try {
+        await _draftWriteTail;
+      } on Object {
+        // Commit succeeded; clear any older draft even if a write failed.
+      }
+      try {
+        await ref.read(studyStoreProvider).clearImportReviewDraft();
+      } on Object {
+        // Imported content is already committed; stale metadata is harmless.
+      }
       if (!mounted) return;
       var storageText = ' · 앱 데이터에 병합됨';
       if (result.added + result.replaced > 0) {
         if (ref.read(appControllerProvider).driveConnected) {
           setState(() {
-            _busyMessage = '2/3 · Drive의 기존 데이터와 키별로 병합하고 있습니다…';
+            _busyMessage = '3/4 · Drive의 기존 데이터와 키별로 병합하고 있습니다…';
           });
           await ref.read(connectionControllerProvider.notifier).syncOrRestore();
           if (!mounted) return;
@@ -849,7 +1292,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
               : ' · 로컬 병합 완료 · Drive 재시도 대기';
         } else {
           setState(() {
-            _busyMessage = '2/3 · 지정한 로컬 저장본을 업데이트하고 있습니다…';
+            _busyMessage = '3/4 · 지정한 로컬 저장본을 업데이트하고 있습니다…';
           });
           await ref.read(localStorageControllerProvider.notifier).saveNow();
           if (!mounted) return;
@@ -860,7 +1303,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         }
       }
       setState(() {
-        _busyMessage = '3/3 · 저장 결과와 이동할 자료실을 확인하고 있습니다…';
+        _busyMessage = '4/4 · 저장 결과와 이동할 자료실을 확인하고 있습니다…';
       });
       final staleText = result.stale == 0 ? '' : ' · 재검토 필요 ${result.stale}개';
       _showMessage(
@@ -888,7 +1331,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (!mounted) return;
       _showMessage(
         committedResult == null
-            ? '앱 DB에 저장하지 못했습니다. 기존 학습 데이터는 변경되지 않았습니다. 잠시 후 다시 시도해 주세요.'
+            ? '안전 지점을 만들거나 앱 DB에 저장하지 못했습니다. 기존 학습 데이터는 변경되지 않았습니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.'
             : '앱 DB 저장은 완료했지만 외부 저장본을 갱신하지 못했습니다. 가져온 자료는 이 기기에 유지되며 설정에서 동기화·로컬 저장을 다시 시도할 수 있습니다.',
       );
     } finally {
@@ -1074,6 +1517,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<PendingImportFile?>(pendingImportFileProvider, (previous, next) {
+      if (next == null || identical(previous, next)) return;
+      unawaited(
+        Future<void>.microtask(() async {
+          if (mounted) await _consumeDroppedFile();
+        }),
+      );
+    });
     final preview = _preview;
     final appState = ref.watch(appControllerProvider);
     final controller = ref.read(appControllerProvider.notifier);
@@ -1109,210 +1560,589 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         : _filteredEntries(review);
     final visible = filtered.take(_visibleLimit).toList(growable: false);
 
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
-        children: [
-          Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _PageHeader(
-                    subjectName: activeSubject.name,
-                    subjectSymbol: activeSubject.symbol,
-                    generalTopic: !activeSubject.isLanguage,
-                  ),
-                  const SizedBox(height: 20),
-                  _ImportRoutingCard(
-                    keyController: _distributionKeyController,
-                    groupController: _distributionGroupController,
-                    subjects: availableSubjects,
-                    selectedSubjectId: routeSubjectId,
-                    groupSuggestions: routeGroups,
-                    driveConnected: appState.driveConnected,
-                    enabled: !_busy,
-                    onKeyChanged: _loadDistributionRule,
-                    onSubjectChanged: (subjectId) {
-                      _invalidatePreviewForRoutingChange();
-                      setState(() => _routeSubjectId = subjectId);
-                    },
-                    onGroupChanged: (_) => _invalidatePreviewForRoutingChange(),
-                  ),
-                  const SizedBox(height: 12),
-                  _UploadCard(
-                    fileName: _fileName,
-                    busyMessage: _busyMessage,
-                    onPickFile: _busy ? null : _pickFile,
-                    onPaste: _busy ? null : _openBulkPaste,
-                    onSaveEasyTemplate: _busy
-                        ? null
-                        : () => _saveTemplate(
-                            assetFileName: 'Sprache-easy-import-template.xlsx',
-                            suggestedFileName: buildUploadTemplateFileName(
-                              DateTime.now(),
-                            ),
-                            templateLabel: '간편 엑셀 템플릿',
-                          ),
-                    onSaveFullTemplate: _busy
-                        ? null
-                        : () => _saveTemplate(
-                            assetFileName: 'Sprache-word-import-template.xlsx',
-                            suggestedFileName:
-                                'Sprache-full-import-template.xlsx',
-                            templateLabel: '전체 엑셀 템플릿',
-                          ),
-                  ),
-                  if (receipts.isNotEmpty || mappingPresets.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    _ImportHistoryCard(
-                      receipts: receipts,
-                      mappingPresets: mappingPresets,
+    return PopScope(
+      canPop: _committed || (_preview == null && !_busy),
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) unawaited(_requestSystemBack());
+      },
+      child: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 32),
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1120),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _PageHeader(
+                      subjectName: activeSubject.name,
+                      subjectSymbol: activeSubject.symbol,
+                      generalTopic: !activeSubject.isLanguage,
+                    ),
+                    const SizedBox(height: 20),
+                    _ImportRoutingCard(
+                      keyController: _distributionKeyController,
+                      groupController: _distributionGroupController,
                       subjects: availableSubjects,
-                      onUndo: _busy ? null : _undoImport,
-                      onDeletePreset: _busy ? null : _deleteMappingPreset,
+                      selectedSubjectId: routeSubjectId,
+                      groupSuggestions: routeGroups,
+                      driveConnected: appState.driveConnected,
+                      enabled: !_busy,
+                      onKeyChanged: _loadDistributionRule,
+                      onSubjectChanged: (subjectId) {
+                        _invalidatePreviewForRoutingChange();
+                        setState(() => _routeSubjectId = subjectId);
+                      },
+                      onGroupChanged: (_) =>
+                          _invalidatePreviewForRoutingChange(),
                     ),
-                  ],
-                  const SizedBox(height: 12),
-                  _WebSentencePackCard(
-                    busy: _busy,
-                    onBasics: _busy
-                        ? null
-                        : () => _loadBundledWebPack(
-                            fileName:
-                                'tatoeba-korean-sentence-pack-2026-07-28.json',
-                            busyMessage: '기초 예문 팩을 준비하고 있습니다…',
-                          ),
-                    onPractical: _busy
-                        ? null
-                        : () => _loadBundledWebPack(
-                            fileName:
-                                'tatoeba-practical-sentence-pack-2026-07-29.json',
-                            busyMessage: '출퇴근·학습 예문 팩을 준비하고 있습니다…',
-                          ),
-                  ),
-                  const SizedBox(height: 12),
-                  _TopicStarterPacksCard(
-                    busy: _busy,
-                    onBaseball: _busy
-                        ? null
-                        : () => _loadBundledTopicPack(
-                            subjectId: 'general:baseball',
-                            subjectName: '야구 용어',
-                            symbol: '⚾',
-                            description: '야구 기록, 규칙, 포지션을 익히는 주제',
-                            fileName: 'baseball-starter-pack-2026-07-28.json',
-                          ),
-                    onIdol: _busy
-                        ? null
-                        : () => _loadBundledTopicPack(
-                            subjectId: 'general:idol-fandom',
-                            subjectName: '아이돌·팬덤 용어',
-                            symbol: '🎤',
-                            description: 'K-pop 팬덤과 일정 표현을 익히는 주제',
-                            fileName:
-                                'idol-fandom-starter-pack-2026-07-28.json',
-                          ),
-                  ),
-                  const SizedBox(height: 12),
-                  const _FormatGuide(),
-                  if (review != null) ...[
-                    const SizedBox(height: 18),
-                    _ReviewSummary(
-                      fileName: _fileName ?? '미리보기 파일',
-                      review: review,
+                    const SizedBox(height: 12),
+                    _UploadCard(
+                      fileName: _fileName,
+                      busyMessage: _busyMessage,
+                      onPickFile: _busy ? null : _pickFile,
+                      onPaste: _busy ? null : _openBulkPaste,
+                      onSaveEasyTemplate: _busy
+                          ? null
+                          : () => _saveTemplate(
+                              assetFileName:
+                                  'Sprache-easy-import-template.xlsx',
+                              suggestedFileName: buildUploadTemplateFileName(
+                                DateTime.now(),
+                              ),
+                              templateLabel: '간편 엑셀 템플릿',
+                            ),
+                      onSaveFullTemplate: _busy
+                          ? null
+                          : () => _saveTemplate(
+                              assetFileName:
+                                  'Sprache-word-import-template.xlsx',
+                              suggestedFileName:
+                                  'Sprache-full-import-template.xlsx',
+                              templateLabel: '전체 엑셀 템플릿',
+                            ),
                     ),
-                    if (_columnMapping.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      _ColumnMappingSummary(mapping: _columnMapping),
-                    ],
-                    if (notices.isNotEmpty) ...[
-                      const SizedBox(height: 10),
-                      _ImportNotices(notices: notices),
-                    ],
-                    if (_previousImport case final previous?) ...[
+                    if (receipts.isNotEmpty || mappingPresets.isNotEmpty) ...[
                       const SizedBox(height: 12),
-                      _RepeatedImportNotice(record: previous),
+                      _ImportHistoryCard(
+                        receipts: receipts,
+                        mappingPresets: mappingPresets,
+                        subjects: availableSubjects,
+                        onUndo: _busy ? null : _undoImport,
+                        onDeletePreset: _busy ? null : _deleteMappingPreset,
+                      ),
                     ],
                     const SizedBox(height: 12),
-                    _BulkActions(
-                      review: review,
-                      onNewAction: (action) => _setBulkAction(
-                        review,
-                        ImportReviewStatus.newItem,
-                        action,
-                      ),
-                      onChangedAction: (action) => _setBulkAction(
-                        review,
-                        ImportReviewStatus.changed,
-                        action,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    _FilterBar(
-                      filter: _filter,
-                      totalCount: review.entries.length,
-                      selectedCount: selectedCount,
-                      changedCount: review.changedCount,
-                      problemCount:
-                          review.blockedCount +
-                          review.issues.length +
-                          review.duplicates.length,
-                      onChanged: (filter) => setState(() {
-                        _filter = filter;
-                        _visibleLimit = 50;
-                      }),
-                    ),
-                    const SizedBox(height: 10),
-                    if (visible.isEmpty)
-                      const _EmptyFilterResult()
-                    else
-                      for (final entry in visible) ...[
-                        _ImportEntryCard(
-                          entry: entry,
-                          action: _actionFor(entry),
-                          onActionChanged: (action) =>
-                              _setAction(entry, action),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                    if (visible.length < filtered.length)
-                      OutlinedButton.icon(
-                        onPressed: () => setState(() => _visibleLimit += 50),
-                        icon: const Icon(Icons.expand_more_rounded),
-                        label: Text(
-                          '항목 더 보기 (${filtered.length - visible.length}개 남음)',
-                        ),
-                      ),
-                    if (review.duplicates.isNotEmpty ||
-                        review.issues.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      _RejectedRows(review: review),
-                    ],
-                    const SizedBox(height: 14),
-                    _ImportDestinationSummaryCard(
-                      destinations: destinations,
-                      driveConnected: appState.driveConnected,
-                    ),
-                    const SizedBox(height: 10),
-                    _ImportCommitBar(
-                      selectedCount: selectedCount,
-                      skippedCount: review.entries.length - selectedCount,
-                      issueCount:
-                          review.issues.length + review.duplicates.length,
+                    _WebSentencePackCard(
                       busy: _busy,
-                      onImport: selectedCount == 0
+                      onBasics: _busy
                           ? null
-                          : () => _import(review, destinations),
+                          : () => _loadBundledWebPack(
+                              fileName:
+                                  'tatoeba-korean-sentence-pack-2026-07-28.json',
+                              busyMessage: '기초 예문 팩을 준비하고 있습니다…',
+                            ),
+                      onPractical: _busy
+                          ? null
+                          : () => _loadBundledWebPack(
+                              fileName:
+                                  'tatoeba-practical-sentence-pack-2026-07-29.json',
+                              busyMessage: '출퇴근·학습 예문 팩을 준비하고 있습니다…',
+                            ),
                     ),
+                    const SizedBox(height: 12),
+                    _TopicStarterPacksCard(
+                      busy: _busy,
+                      onBaseball: _busy
+                          ? null
+                          : () => _loadBundledTopicPack(
+                              subjectId: 'general:baseball',
+                              subjectName: '야구 용어',
+                              symbol: '⚾',
+                              description: '야구 기록, 규칙, 포지션을 익히는 주제',
+                              fileName: 'baseball-starter-pack-2026-07-28.json',
+                            ),
+                      onIdol: _busy
+                          ? null
+                          : () => _loadBundledTopicPack(
+                              subjectId: 'general:idol-fandom',
+                              subjectName: '아이돌·팬덤 용어',
+                              symbol: '🎤',
+                              description: 'K-pop 팬덤과 일정 표현을 익히는 주제',
+                              fileName:
+                                  'idol-fandom-starter-pack-2026-07-28.json',
+                            ),
+                    ),
+                    const SizedBox(height: 12),
+                    const _FormatGuide(),
+                    if (review != null) ...[
+                      const SizedBox(height: 18),
+                      _ReviewSummary(
+                        fileName: _fileName ?? '미리보기 파일',
+                        review: review,
+                      ),
+                      if (_sourceSummary case final summary?) ...[
+                        const SizedBox(height: 8),
+                        Card(
+                          child: ListTile(
+                            key: const Key('import-source-summary'),
+                            leading: const Icon(Icons.source_rounded),
+                            title: const Text('확인한 파일 원본'),
+                            subtitle: Text(summary),
+                            trailing: const Icon(Icons.verified_rounded),
+                          ),
+                        ),
+                      ],
+                      if (_columnMapping.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        _ColumnMappingSummary(mapping: _columnMapping),
+                      ],
+                      if (notices.isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        _ImportNotices(notices: notices),
+                      ],
+                      if (_previousImport case final previous?) ...[
+                        const SizedBox(height: 12),
+                        _RepeatedImportNotice(record: previous),
+                      ],
+                      const SizedBox(height: 12),
+                      _BulkActions(
+                        review: review,
+                        onNewAction: (action) => _setBulkAction(
+                          review,
+                          ImportReviewStatus.newItem,
+                          action,
+                        ),
+                        onChangedAction: (action) => _setBulkAction(
+                          review,
+                          ImportReviewStatus.changed,
+                          action,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      _FilterBar(
+                        filter: _filter,
+                        totalCount: review.entries.length,
+                        selectedCount: selectedCount,
+                        changedCount: review.changedCount,
+                        problemCount:
+                            review.blockedCount +
+                            review.issues.length +
+                            review.duplicates.length,
+                        onChanged: (filter) => setState(() {
+                          _filter = filter;
+                          _visibleLimit = 50;
+                        }),
+                      ),
+                      const SizedBox(height: 10),
+                      if (visible.isEmpty)
+                        const _EmptyFilterResult()
+                      else
+                        for (final entry in visible) ...[
+                          _ImportEntryCard(
+                            entry: entry,
+                            action: _actionFor(entry),
+                            onActionChanged: (action) =>
+                                _setAction(entry, action),
+                            onEdit: entry.status == ImportReviewStatus.blocked
+                                ? () => _editBlockedEntry(entry)
+                                : null,
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                      if (visible.length < filtered.length)
+                        OutlinedButton.icon(
+                          onPressed: () => setState(() => _visibleLimit += 50),
+                          icon: const Icon(Icons.expand_more_rounded),
+                          label: Text(
+                            '항목 더 보기 (${filtered.length - visible.length}개 남음)',
+                          ),
+                        ),
+                      if (review.duplicates.isNotEmpty ||
+                          review.issues.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        _RejectedRows(review: review),
+                      ],
+                      if (review.blockedCount > 0 ||
+                          review.issues.isNotEmpty ||
+                          review.duplicates.isNotEmpty) ...[
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          key: const Key('export-import-report'),
+                          onPressed: _busy
+                              ? null
+                              : () => _exportImportReport(review),
+                          icon: const Icon(Icons.privacy_tip_outlined),
+                          label: const Text('원문 없는 오류 보고서 저장'),
+                        ),
+                      ],
+                      const SizedBox(height: 14),
+                      _ImportDestinationSummaryCard(
+                        destinations: destinations,
+                        driveConnected: appState.driveConnected,
+                      ),
+                      const SizedBox(height: 10),
+                      _ImportCommitBar(
+                        selectedCount: selectedCount,
+                        skippedCount: review.entries.length - selectedCount,
+                        issueCount:
+                            review.issues.length + review.duplicates.length,
+                        busy: _busy,
+                        onImport: selectedCount == 0
+                            ? null
+                            : () => _import(review, destinations),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+}
+
+class _TextImportSelection {
+  const _TextImportSelection({required this.encoding, required this.delimiter});
+
+  final TextImportEncoding encoding;
+  final TextImportDelimiter delimiter;
+}
+
+class _TextImportOptionsDialog extends StatefulWidget {
+  const _TextImportOptionsDialog({required this.inspection});
+
+  final _TabularInspection inspection;
+
+  @override
+  State<_TextImportOptionsDialog> createState() =>
+      _TextImportOptionsDialogState();
+}
+
+class _TextImportOptionsDialogState extends State<_TextImportOptionsDialog> {
+  late TextImportEncoding _encoding;
+  late TextImportDelimiter _delimiter;
+
+  @override
+  void initState() {
+    super.initState();
+    _encoding = TextImportEncoding.values.firstWhere(
+      (value) => value.name == widget.inspection.encodingName,
+      orElse: () => TextImportEncoding.utf8,
+    );
+    _delimiter = TextImportDelimiter.values.firstWhere(
+      (value) => value.name == widget.inspection.delimiterName,
+      orElse: () => TextImportDelimiter.comma,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('텍스트 형식 확인'),
+      content: SizedBox(
+        width: 620,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('자동 감지 결과를 확인하거나 직접 바꾼 뒤 다음으로 진행하세요.'),
+              const SizedBox(height: 14),
+              DropdownButtonFormField<TextImportEncoding>(
+                key: const Key('import-encoding-picker'),
+                initialValue: _encoding,
+                decoration: const InputDecoration(labelText: '문자 인코딩'),
+                items: [
+                  for (final value in TextImportEncoding.values)
+                    if (value != TextImportEncoding.auto)
+                      DropdownMenuItem(value: value, child: Text(value.label)),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => _encoding = value);
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<TextImportDelimiter>(
+                key: const Key('import-delimiter-picker'),
+                initialValue: _delimiter,
+                decoration: const InputDecoration(labelText: '열 구분자'),
+                items: [
+                  for (final value in TextImportDelimiter.values)
+                    if (value != TextImportDelimiter.auto)
+                      DropdownMenuItem(value: value, child: Text(value.label)),
+                ],
+                onChanged: (value) {
+                  if (value != null) setState(() => _delimiter = value);
+                },
+              ),
+              const SizedBox(height: 14),
+              Text(
+                '첫 행 미리보기 · ${widget.inspection.headers.length}열',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 7),
+              _CompactTabularPreview(
+                headers: widget.inspection.headers,
+                rows: widget.inspection.samples,
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                '선택을 바꾸면 확인 시 원본 바이트를 새 기준으로 다시 읽습니다.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('confirm-text-import-options'),
+          onPressed: () => Navigator.pop(
+            context,
+            _TextImportSelection(encoding: _encoding, delimiter: _delimiter),
+          ),
+          child: const Text('이 형식으로 다시 확인'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExcelSheetSelectionDialog extends StatefulWidget {
+  const _ExcelSheetSelectionDialog({required this.sheets});
+
+  final List<_ExcelSheetInspection> sheets;
+
+  @override
+  State<_ExcelSheetSelectionDialog> createState() =>
+      _ExcelSheetSelectionDialogState();
+}
+
+class _ExcelSheetSelectionDialogState
+    extends State<_ExcelSheetSelectionDialog> {
+  late String _selected = widget.sheets.first.name;
+
+  @override
+  Widget build(BuildContext context) {
+    final active = widget.sheets.firstWhere((sheet) => sheet.name == _selected);
+    return AlertDialog(
+      title: const Text('가져올 Excel 시트 선택'),
+      content: SizedBox(
+        width: 680,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final sheet in widget.sheets)
+                ListTile(
+                  key: Key('import-sheet-${sheet.name}'),
+                  selected: _selected == sheet.name,
+                  leading: Icon(
+                    _selected == sheet.name
+                        ? Icons.radio_button_checked_rounded
+                        : Icons.radio_button_off_rounded,
+                  ),
+                  title: Text(sheet.name),
+                  subtitle: Text(
+                    '${sheet.headers.length}열 · 표본 ${sheet.samples.length}행',
+                  ),
+                  onTap: () => setState(() => _selected = sheet.name),
+                ),
+              const Divider(),
+              Text(
+                '“${active.name}” 표본',
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 7),
+              _CompactTabularPreview(
+                headers: active.headers,
+                rows: active.samples,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('confirm-excel-sheet'),
+          onPressed: () => Navigator.pop(context, _selected),
+          child: const Text('이 시트 사용'),
+        ),
+      ],
+    );
+  }
+}
+
+class _CompactTabularPreview extends StatelessWidget {
+  const _CompactTabularPreview({required this.headers, required this.rows});
+
+  final List<String> headers;
+  final List<List<String>> rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final visibleHeaders = headers.take(6).toList(growable: false);
+    if (visibleHeaders.isEmpty) return const Text('표시할 행이 없습니다.');
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 210),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Scrollbar(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowHeight: 42,
+            dataRowMinHeight: 38,
+            dataRowMaxHeight: 54,
+            columns: [
+              for (final header in visibleHeaders)
+                DataColumn(
+                  label: Text(header, overflow: TextOverflow.ellipsis),
+                ),
+            ],
+            rows: [
+              for (final row in rows)
+                DataRow(
+                  cells: [
+                    for (var index = 0; index < visibleHeaders.length; index++)
+                      DataCell(
+                        SizedBox(
+                          width: 130,
+                          child: Text(
+                            index < row.length ? row[index] : '',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BlockedEntryEdit {
+  const _BlockedEntryEdit({
+    required this.id,
+    required this.text,
+    required this.meaning,
+  });
+
+  final String id;
+  final String text;
+  final String meaning;
+}
+
+class _BlockedEntryEditDialog extends StatefulWidget {
+  const _BlockedEntryEditDialog({required this.entry});
+
+  final ImportReviewEntry entry;
+
+  @override
+  State<_BlockedEntryEditDialog> createState() =>
+      _BlockedEntryEditDialogState();
+}
+
+class _BlockedEntryEditDialogState extends State<_BlockedEntryEditDialog> {
+  late final TextEditingController _id = TextEditingController(
+    text: widget.entry.incoming.id,
+  );
+  late final TextEditingController _text = TextEditingController(
+    text: widget.entry.incoming.text,
+  );
+  late final TextEditingController _meaning = TextEditingController(
+    text: widget.entry.incoming.primaryTranslation,
+  );
+  String? _error;
+
+  @override
+  void dispose() {
+    _id.dispose();
+    _text.dispose();
+    _meaning.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sentence = widget.entry.incoming.kind == LearningItemKind.sentence;
+    return AlertDialog(
+      title: Text('${widget.entry.row}행 문제 필드 수정'),
+      content: SizedBox(
+        width: 520,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              key: const Key('blocked-import-id'),
+              controller: _id,
+              decoration: const InputDecoration(labelText: '고유 ID'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              key: const Key('blocked-import-text'),
+              controller: _text,
+              enabled: !sentence,
+              decoration: InputDecoration(
+                labelText: '문제·표현',
+                helperText: sentence ? '문장 토큰 보호를 위해 원문 파일에서 수정하세요.' : null,
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              key: const Key('blocked-import-meaning'),
+              controller: _meaning,
+              decoration: const InputDecoration(labelText: '대표 정답·뜻'),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: const TextStyle(color: AppTheme.danger)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('confirm-blocked-import-edit'),
+          onPressed: () {
+            final id = _id.text.trim();
+            final text = _text.text.trim();
+            final meaning = _meaning.text.trim();
+            if (id.isEmpty || text.isEmpty || meaning.isEmpty) {
+              setState(() => _error = 'ID·문제·뜻을 모두 입력해 주세요.');
+              return;
+            }
+            Navigator.pop(
+              context,
+              _BlockedEntryEdit(id: id, text: text, meaning: meaning),
+            );
+          },
+          child: const Text('수정하고 재검증'),
+        ),
+      ],
     );
   }
 }
@@ -1519,31 +2349,36 @@ class _BulkPasteDialog extends StatefulWidget {
 
 class _BulkPasteDialogState extends State<_BulkPasteDialog> {
   final _controller = TextEditingController();
+  final _clipboardSession = ClipboardReadSession();
   String? _clipboardMessage;
 
   Future<void> _pasteFromSystemClipboard() async {
-    try {
-      final data = await Clipboard.getData(Clipboard.kTextPlain);
-      if (!mounted) return;
-      final text = data?.text;
-      if (text == null || text.trim().isEmpty) {
+    final result = await _clipboardSession.readOnce(
+      () async => (await Clipboard.getData(Clipboard.kTextPlain))?.text,
+    );
+    if (!mounted) return;
+    switch (result.status) {
+      case ClipboardReadStatus.accepted:
+        final text = result.text!;
+        _controller.value = TextEditingValue(
+          text: text,
+          selection: TextSelection.collapsed(offset: text.length),
+        );
+        setState(() {
+          _clipboardMessage = '클립보드를 한 번만 읽어 미리보기에 넣었습니다.';
+        });
+      case ClipboardReadStatus.empty:
         setState(() {
           _clipboardMessage = '클립보드에 붙여넣을 텍스트가 없습니다.';
         });
-        return;
-      }
-      _controller.value = TextEditingValue(
-        text: text,
-        selection: TextSelection.collapsed(offset: text.length),
-      );
-      setState(() {
-        _clipboardMessage = '클립보드의 텍스트를 붙여넣었습니다.';
-      });
-    } catch (_) {
-      if (!mounted) return;
-      setState(() {
-        _clipboardMessage = '클립보드를 읽지 못했습니다. 직접 붙여넣어 주세요.';
-      });
+      case ClipboardReadStatus.alreadyRead:
+        setState(() {
+          _clipboardMessage = '이 창에서는 클립보드를 이미 한 번 읽었습니다.';
+        });
+      case ClipboardReadStatus.failed:
+        setState(() {
+          _clipboardMessage = '클립보드를 읽지 못했습니다. 직접 붙여넣어 주세요.';
+        });
     }
   }
 
@@ -1556,6 +2391,10 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
 
   @override
   void dispose() {
+    if (_clipboardSession.hasUnconfirmedContent) {
+      _controller.clear();
+      _clipboardSession.discard();
+    }
     _controller.dispose();
     super.dispose();
   }
@@ -1594,7 +2433,9 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
                   children: [
                     OutlinedButton.icon(
                       key: const Key('bulk-paste-system-clipboard'),
-                      onPressed: _pasteFromSystemClipboard,
+                      onPressed: _clipboardSession.hasRead
+                          ? null
+                          : _pasteFromSystemClipboard,
                       icon: const Icon(Icons.content_paste_go_rounded),
                       label: const Text('클립보드에서 붙여넣기'),
                     ),
@@ -1769,7 +2610,10 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
         FilledButton(
           key: const Key('confirm-bulk-paste-import'),
           onPressed: preview?.canImport == true && error == null
-              ? () => Navigator.pop(context, _controller.text)
+              ? () {
+                  _clipboardSession.confirm();
+                  Navigator.pop(context, _controller.text);
+                }
               : null,
           child: const Text('검토 화면 만들기'),
         ),
@@ -2822,11 +3666,13 @@ class _ImportEntryCard extends StatelessWidget {
     required this.entry,
     required this.action,
     required this.onActionChanged,
+    this.onEdit,
   });
 
   final ImportReviewEntry entry;
   final ImportReviewAction action;
   final ValueChanged<ImportReviewAction> onActionChanged;
+  final VoidCallback? onEdit;
 
   Color get _statusColor => switch (entry.status) {
     ImportReviewStatus.newItem => AppTheme.success,
@@ -2908,6 +3754,18 @@ class _ImportEntryCard extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onEdit != null) ...[
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    key: Key('edit-blocked-import-${entry.row}'),
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_note_rounded),
+                    label: const Text('문제 필드 고치고 다시 검증'),
+                  ),
+                ),
+              ],
             ],
             if (entry.differences.isNotEmpty) ...[
               const SizedBox(height: 14),

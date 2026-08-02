@@ -7,6 +7,7 @@ void main() {
     expect(usesMobileStudyExperience(TargetPlatform.android), isTrue);
     expect(usesMobileStudyExperience(TargetPlatform.iOS), isTrue);
     expect(usesMobileStudyExperience(TargetPlatform.windows), isFalse);
+    expect(usesMobileStudyExperience(TargetPlatform.macOS), isFalse);
   });
 
   test('platform descriptions do not label iOS as Android', () {
@@ -20,5 +21,6 @@ void main() {
       appPlatformDescription(TargetPlatform.windows),
       'Windows x64 · 크기 조절 지원',
     );
+    expect(appPlatformDescription(TargetPlatform.macOS), 'macOS · 크기 조절 지원');
   });
 }

@@ -14,11 +14,14 @@ import '../domain/accessibility_input_profile.dart';
 import '../domain/learning_item.dart';
 import '../domain/pronunciation_ladder.dart';
 import '../domain/pronunciation_score.dart';
+import '../domain/pronunciation_signal.dart';
 import '../domain/study_history.dart';
 import '../domain/study_preferences.dart';
+import '../services/media_lifecycle_coordinator.dart';
 import '../services/temporary_voice_recording_service.dart';
 import '../services/tts_service.dart';
 import '../state/app_state.dart';
+import '../state/device_preferences_state.dart';
 import '../state/local_storage_state.dart';
 import '../theme/study_accessibility_theme.dart';
 
@@ -42,13 +45,17 @@ class PronunciationScreen extends ConsumerStatefulWidget {
 }
 
 class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
+  late final MediaLifecycleRegistry _mediaLifecycleRegistry;
   final _speech = SpeechToText();
   late final TtsService _tts;
   TemporaryVoiceRecordingService? _voiceRecording;
   final _scorer = const PronunciationScorer();
+  final _signalInspector = const PronunciationSignalInspector();
   final _attemptedItemIds = <String>{};
   final _wrongItemIds = <String>{};
   final _finalCorrectItemIds = <String>{};
+  final _pronunciationMetrics = <PronunciationAttemptMetric>[];
+  final _soundSamples = <double>[];
 
   late List<LearningItem> _queue;
   late String _subjectIdAtStart;
@@ -71,7 +78,10 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
   var _subjectChangeHandled = false;
   String? _errorMessage;
   PronunciationAssessment? _assessment;
+  PronunciationSignalAssessment? _signalAssessment;
+  List<String>? _availableSpeechLocales;
   var _shadowingStage = ShadowingStage.listen;
+  var _shadowingSegmentIndex = 0;
   var _voiceRecordingActive = false;
   var _voiceRecordingAvailable = false;
   var _voicePlaybackActive = false;
@@ -87,6 +97,15 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
     super.initState();
     _tts = widget.ttsService ?? TtsService.device();
     _voiceRecording = widget.voiceRecordingService;
+    _mediaLifecycleRegistry = ref.read(mediaLifecycleRegistryProvider);
+    _mediaLifecycleRegistry.register(
+      this,
+      MediaLifecycleRegistration(
+        stopTextToSpeech: _stopTts,
+        stopSpeechRecognition: _speech.cancel,
+        stopRecording: _clearLifecycleRecording,
+      ),
+    );
     _startedAt = DateTime.now();
     final controller = ref.read(appControllerProvider.notifier);
     final appState = ref.read(appControllerProvider);
@@ -143,6 +162,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
 
   @override
   void dispose() {
+    _mediaLifecycleRegistry.unregister(this);
     unawaited(_speech.cancel());
     unawaited(_stopTts());
     final voiceRecording = _voiceRecording;
@@ -150,6 +170,11 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
       unawaited(voiceRecording.dispose());
     }
     super.dispose();
+  }
+
+  Future<void> _clearLifecycleRecording() async {
+    final recording = _voiceRecording;
+    if (recording != null) await recording.clear();
   }
 
   Future<void> _stopTts() async {
@@ -160,21 +185,37 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
     }
   }
 
-  Future<void> _speak({bool slow = false}) async {
+  Future<void> _speak({bool slow = false, double? rateMultiplier}) async {
+    await _speakText(
+      _item.text,
+      rateMultiplier: rateMultiplier ?? (slow ? 0.75 : 1),
+    );
+  }
+
+  Future<void> _speakText(String text, {double rateMultiplier = 1}) async {
     final preferences = ref.read(appControllerProvider).preferences;
+    final voice = ref
+        .read(devicePreferencesControllerProvider)
+        .preferences
+        .voice;
     try {
       await _tts.speak(
         language: _item.learningLanguage,
-        text: _item.text,
-        rate: slow
-            ? (preferences.ttsRate * 0.75).clamp(0.2, 0.75).toDouble()
-            : preferences.ttsRate,
+        text: text,
+        rate: (preferences.ttsRate * rateMultiplier).clamp(0.2, 1.0).toDouble(),
         preferOfflineVoice: preferences.interaction.preferOfflineVoice,
         repeatCount: preferences.interaction.audioRepeatCount,
+        preferredVoiceId: voice.voiceIdByLanguage[_item.learningLanguage.code],
+        pitch: voice.pitch,
       );
     } catch (_) {
       // Pronunciation scoring still works when the platform has no TTS voice.
     }
+  }
+
+  Future<void> _playTargetAndMine(double rateMultiplier) async {
+    await _speak(rateMultiplier: rateMultiplier);
+    if (_voiceRecordingAvailable) await _playVoiceRecording();
   }
 
   Future<void> _selectShadowingStage(ShadowingStage stage) async {
@@ -308,6 +349,14 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
           });
           return;
         }
+        try {
+          final locales = await _speech.locales();
+          _availableSpeechLocales = [
+            for (final locale in locales) locale.localeId,
+          ];
+        } catch (_) {
+          _availableSpeechLocales = null;
+        }
       } catch (_) {
         if (!mounted) return;
         setState(() {
@@ -324,6 +373,8 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
       _attemptRecorded = false;
       _errorMessage = null;
       _soundLevel = 0;
+      _soundSamples.clear();
+      _signalAssessment = null;
       _listening = true;
     });
     try {
@@ -331,7 +382,12 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
         onResult: _onSpeechResult,
         onSoundLevelChange: (level) {
           if (!mounted) return;
-          setState(() => _soundLevel = level);
+          setState(() {
+            _soundLevel = level;
+            if (_soundSamples.length < 500 && level.isFinite) {
+              _soundSamples.add(level);
+            }
+          });
         },
         listenOptions: SpeechListenOptions(
           cancelOnError: true,
@@ -388,15 +444,30 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
   void _finalizeRecognition() {
     if (!mounted) return;
     final transcript = _recognized.trim();
-    setState(() => _listening = false);
-    if (transcript.isEmpty || _assessment != null) return;
+    final signal = _signalInspector.inspect(
+      transcript: transcript,
+      soundLevels: _soundSamples,
+      requestedLocale: _item.learningLanguage.ttsLocale,
+      availableLocales: _availableSpeechLocales,
+    );
+    setState(() {
+      _listening = false;
+      _signalAssessment = signal;
+      if (!signal.canScore) _errorMessage = signal.message;
+    });
+    if (!signal.canScore || _assessment != null) return;
     final assessment = _scorer.assess(
       expected: _item.text,
       recognized: transcript,
       language: _item.learningLanguage,
+      expectedTokens: _item.sentenceTokens,
     );
     setState(() => _assessment = assessment);
-    _recordAttempt(assessment.passed);
+    _recordAttempt(
+      assessment.passed,
+      score: assessment.score,
+      method: PronunciationEvaluationMethod.speechRecognition,
+    );
     if (ref
         .read(appControllerProvider)
         .preferences
@@ -406,10 +477,21 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
     }
   }
 
-  void _recordAttempt(bool passed) {
+  void _recordAttempt(
+    bool passed, {
+    required int score,
+    required PronunciationEvaluationMethod method,
+  }) {
     if (_attemptRecorded) return;
     _attemptRecorded = true;
     _attemptedItemIds.add(_item.id);
+    _pronunciationMetrics.add(
+      PronunciationAttemptMetric(
+        score: score.clamp(0, 100).toInt(),
+        recordedAt: DateTime.now(),
+        method: method,
+      ),
+    );
     ref
         .read(appControllerProvider.notifier)
         .recordAnswer(
@@ -430,7 +512,11 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
   }
 
   void _submitSelfAssessment(bool passed) {
-    _recordAttempt(passed);
+    _recordAttempt(
+      passed,
+      score: passed ? 100 : 0,
+      method: PronunciationEvaluationMethod.selfAssessment,
+    );
     _next();
   }
 
@@ -441,6 +527,8 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
       _attemptRecorded = false;
       _errorMessage = null;
       _soundLevel = 0;
+      _soundSamples.clear();
+      _signalAssessment = null;
       _shadowingStage = ShadowingStage.repeat;
     });
     _scheduleQuestionAudio();
@@ -466,6 +554,9 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
       _listening = false;
       _speechAvailable = true;
       _shadowingStage = ShadowingStage.listen;
+      _shadowingSegmentIndex = 0;
+      _soundSamples.clear();
+      _signalAssessment = null;
       _voiceRecordingActive = false;
       _voiceRecordingAvailable = false;
       _voicePlaybackActive = false;
@@ -496,6 +587,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
             historyFilter: _historyFilter,
             recordProgress: _recordProgress,
             backlogRecovery: _backlogRecovery,
+            pronunciationMetrics: List.unmodifiable(_pronunciationMetrics),
           ),
         );
   }
@@ -508,6 +600,16 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
     }
     unawaited(_saveSession());
     context.go(_returnRoute);
+  }
+
+  Future<void> _clearPronunciationMetrics() async {
+    final cleared = await ref
+        .read(appControllerProvider.notifier)
+        .clearPronunciationMetrics();
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('비식별 발음 점수 $cleared개를 삭제했습니다.')));
   }
 
   String get _returnRoute => widget.customPlan
@@ -546,6 +648,18 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
     final interaction = ref.watch(
       appControllerProvider.select((state) => state.preferences.interaction),
     );
+    final recentPronunciationMetrics = ref.watch(
+      appControllerProvider.select(
+        (state) => [
+          for (final session in state.recentSessions)
+            ...session.pronunciationMetrics,
+        ],
+      ),
+    );
+    final shadowingSegments = PronunciationLadder.segmentsFor(_item);
+    final selectedSegmentIndex = shadowingSegments.isEmpty
+        ? 0
+        : _shadowingSegmentIndex.clamp(0, shadowingSegments.length - 1).toInt();
     final readingAidsLabel = _item.readingAidsLabelFor(
       showKoreanReading: interaction.showKoreanReading,
       showNativeReading: interaction.showNativeReading,
@@ -709,10 +823,19 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
                             transcript: _recognized,
                             soundLevel: _soundLevel,
                             assessment: _assessment,
+                            signalAssessment: _signalAssessment,
                             errorMessage: _errorMessage,
                           ),
                           const SizedBox(height: 12),
                           const _PronunciationScoreDisclosure(),
+                          if (recentPronunciationMetrics.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            _PronunciationHistoryCard(
+                              metrics: recentPronunciationMetrics,
+                              onClear: () =>
+                                  unawaited(_clearPronunciationMetrics()),
+                            ),
+                          ],
                           const SizedBox(height: 14),
                           _ShadowingLadder(
                             item: _item,
@@ -727,6 +850,18 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
                                 accessibilityProfile.androidSelectionGesture,
                             minimumControlHeight:
                                 accessibilityTheme.minimumRatingControlHeight,
+                            segments: shadowingSegments,
+                            selectedSegmentIndex: selectedSegmentIndex,
+                            onPreviousSegment: selectedSegmentIndex <= 0
+                                ? null
+                                : () =>
+                                      setState(() => _shadowingSegmentIndex--),
+                            onNextSegment:
+                                selectedSegmentIndex + 1 >=
+                                    shadowingSegments.length
+                                ? null
+                                : () =>
+                                      setState(() => _shadowingSegmentIndex++),
                             onStageSelected: (stage) =>
                                 unawaited(_selectShadowingStage(stage)),
                             onListen: () => unawaited(_speak()),
@@ -735,6 +870,10 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
                                 unawaited(_toggleVoiceRecording()),
                             onPlayRecording: () =>
                                 unawaited(_playVoiceRecording()),
+                            onPlayTargetAndMine: (rate) =>
+                                unawaited(_playTargetAndMine(rate)),
+                            onSpeakSegment: (segment) =>
+                                unawaited(_speakText(segment)),
                             onOpenSpeechCheck: () =>
                                 unawaited(_toggleListening()),
                           ),
@@ -798,11 +937,17 @@ class _ShadowingLadder extends StatelessWidget {
     required this.recordingMessage,
     required this.selectionGesture,
     required this.minimumControlHeight,
+    required this.segments,
+    required this.selectedSegmentIndex,
+    required this.onPreviousSegment,
+    required this.onNextSegment,
     required this.onStageSelected,
     required this.onListen,
     required this.onSlowListen,
     required this.onToggleRecording,
     required this.onPlayRecording,
+    required this.onPlayTargetAndMine,
+    required this.onSpeakSegment,
     required this.onOpenSpeechCheck,
   });
 
@@ -816,11 +961,17 @@ class _ShadowingLadder extends StatelessWidget {
   final String? recordingMessage;
   final AndroidSelectionGesture selectionGesture;
   final double minimumControlHeight;
+  final List<String> segments;
+  final int selectedSegmentIndex;
+  final VoidCallback? onPreviousSegment;
+  final VoidCallback? onNextSegment;
   final ValueChanged<ShadowingStage> onStageSelected;
   final VoidCallback onListen;
   final VoidCallback onSlowListen;
   final VoidCallback onToggleRecording;
   final VoidCallback onPlayRecording;
+  final ValueChanged<double> onPlayTargetAndMine;
+  final ValueChanged<String> onSpeakSegment;
   final VoidCallback onOpenSpeechCheck;
 
   int get _selectedIndex => stages.indexOf(selectedStage);
@@ -986,19 +1137,52 @@ class _ShadowingLadder extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '“${item.text}”',
+            '“${segments.isEmpty ? item.text : segments[selectedSegmentIndex]}”',
+            key: const Key('pronunciation-shadowing-segment'),
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
           ),
+          if (segments.length > 1) ...[
+            const SizedBox(height: 5),
+            Text(
+              '짧게 따라 하기 ${selectedSegmentIndex + 1}/${segments.length}',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ],
           const SizedBox(height: 10),
-          OutlinedButton.icon(
-            key: const Key('pronunciation-ladder-repeat-audio'),
-            onPressed: onListen,
-            style: outlinedStyle,
-            icon: const Icon(Icons.hearing_rounded),
-            label: const Text('한 번 더 듣고 따라 읽기'),
+          Row(
+            children: [
+              IconButton.outlined(
+                key: const Key('pronunciation-previous-segment'),
+                onPressed: onPreviousSegment,
+                tooltip: '이전 구간',
+                icon: const Icon(Icons.skip_previous_rounded),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  key: const Key('pronunciation-ladder-repeat-audio'),
+                  onPressed: () => onSpeakSegment(
+                    segments.isEmpty
+                        ? item.text
+                        : segments[selectedSegmentIndex],
+                  ),
+                  style: outlinedStyle,
+                  icon: const Icon(Icons.hearing_rounded),
+                  label: const Text('이 구간 듣고 따라 읽기'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton.outlined(
+                key: const Key('pronunciation-next-segment'),
+                onPressed: onNextSegment,
+                tooltip: '다음 구간',
+                icon: const Icon(Icons.skip_next_rounded),
+              ),
+            ],
           ),
         ],
       ),
@@ -1035,6 +1219,28 @@ class _ShadowingLadder extends StatelessWidget {
                 ),
                 label: Text(playbackActive ? '재생 중…' : '내 음성 듣기'),
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '목표 음성 ↔ 내 음성 A/B 반복',
+            style: Theme.of(context).textTheme.labelLarge,
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            key: const Key('pronunciation-ab-speeds'),
+            spacing: 7,
+            runSpacing: 7,
+            children: [
+              for (final speed in const [0.6, 0.75, 1.0])
+                ActionChip(
+                  key: Key('pronunciation-ab-${speed.toStringAsFixed(2)}'),
+                  onPressed: recordingAvailable
+                      ? () => onPlayTargetAndMine(speed)
+                      : null,
+                  avatar: const Icon(Icons.compare_arrows_rounded, size: 16),
+                  label: Text('${speed.toStringAsFixed(speed == 1 ? 1 : 2)}배'),
+                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -1229,12 +1435,114 @@ class _PronunciationScoreDisclosure extends StatelessWidget {
   }
 }
 
+class _PronunciationHistoryCard extends StatelessWidget {
+  const _PronunciationHistoryCard({
+    required this.metrics,
+    required this.onClear,
+  });
+
+  final List<PronunciationAttemptMetric> metrics;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final ordered = [...metrics]
+      ..sort((left, right) => left.recordedAt.compareTo(right.recordedAt));
+    final recent = ordered.reversed.take(20).toList().reversed.toList();
+    final average = recent.isEmpty
+        ? 0
+        : (recent.fold<int>(0, (sum, metric) => sum + metric.score) /
+                  recent.length)
+              .round();
+    final change = recent.length < 2
+        ? 0
+        : recent.last.score - recent.first.score;
+    return Card(
+      key: const Key('pronunciation-score-history'),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.trending_up_rounded),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '최근 발음 흐름',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Text('평균 $average점 · ${change >= 0 ? '+' : ''}$change'),
+                IconButton(
+                  key: const Key('clear-pronunciation-history'),
+                  onPressed: onClear,
+                  tooltip: '발음 점수 기록 전체 삭제',
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '점수·시각·평가 방식만 저장합니다. 원문, 인식 문장, 음성 파일은 기록하지 않습니다.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 9),
+            Wrap(
+              spacing: 5,
+              runSpacing: 5,
+              children: [
+                for (final metric in recent)
+                  Tooltip(
+                    message:
+                        '${metric.recordedAt.toLocal().month}/'
+                        '${metric.recordedAt.toLocal().day} · '
+                        '${metric.method == PronunciationEvaluationMethod.speechRecognition ? '기기 인식' : '자기 평가'}',
+                    child: Semantics(
+                      label:
+                          '${metric.score}점, '
+                          '${metric.method == PronunciationEvaluationMethod.speechRecognition ? '기기 인식' : '자기 평가'}',
+                      child: Container(
+                        width: 24,
+                        height: 34,
+                        alignment: Alignment.bottomCenter,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: FractionallySizedBox(
+                          heightFactor: metric.score.clamp(5, 100) / 100,
+                          widthFactor: 1,
+                          alignment: Alignment.bottomCenter,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _RecognitionPanel extends StatelessWidget {
   const _RecognitionPanel({
     required this.listening,
     required this.transcript,
     required this.soundLevel,
     required this.assessment,
+    required this.signalAssessment,
     required this.errorMessage,
   });
 
@@ -1242,6 +1550,7 @@ class _RecognitionPanel extends StatelessWidget {
   final String transcript;
   final double soundLevel;
   final PronunciationAssessment? assessment;
+  final PronunciationSignalAssessment? signalAssessment;
   final String? errorMessage;
 
   @override
@@ -1257,7 +1566,8 @@ class _RecognitionPanel extends StatelessWidget {
         ? '발음 인식 오류. $errorMessage'
         : assessment != null
         ? '발음 인식 결과. 인식 내용 ${transcript.trim()}. '
-              '$score점. ${assessment!.feedback}'
+              '$score점. ${assessment!.feedback}. '
+              '${assessment!.tokenDiffs.map((diff) => diff.spokenLabel).join(', ')}'
         : listening
         ? transcript.trim().isEmpty
               ? '발음 인식 중. 말을 시작해 주세요.'
@@ -1355,6 +1665,36 @@ class _RecognitionPanel extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+                if (assessment!.tokenDiffs.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Wrap(
+                    key: const Key('pronunciation-token-diff'),
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final diff in assessment!.tokenDiffs)
+                        Chip(
+                          avatar: Icon(_diffIcon(diff.kind), size: 16),
+                          label: Text(_diffLabel(diff)),
+                          side: BorderSide(
+                            color: _diffColor(colors, diff.kind),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+              if (signalAssessment != null &&
+                  signalAssessment!.issue != PronunciationSignalIssue.none) ...[
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.mic_off_outlined, color: colors.error, size: 19),
+                    const SizedBox(width: 7),
+                    Expanded(child: Text(signalAssessment!.message)),
+                  ],
+                ),
               ],
               if (errorMessage != null) ...[
                 const SizedBox(height: 12),
@@ -1372,6 +1712,29 @@ class _RecognitionPanel extends StatelessWidget {
       ),
     );
   }
+
+  IconData _diffIcon(PronunciationTokenDiffKind kind) => switch (kind) {
+    PronunciationTokenDiffKind.match => Icons.check_rounded,
+    PronunciationTokenDiffKind.missing => Icons.remove_circle_outline_rounded,
+    PronunciationTokenDiffKind.added => Icons.add_circle_outline_rounded,
+    PronunciationTokenDiffKind.substituted => Icons.swap_horiz_rounded,
+  };
+
+  String _diffLabel(PronunciationTokenDiff diff) => switch (diff.kind) {
+    PronunciationTokenDiffKind.match => diff.expected ?? '',
+    PronunciationTokenDiffKind.missing => '${diff.expected ?? ''} · 누락',
+    PronunciationTokenDiffKind.added => '${diff.recognized ?? ''} · 추가',
+    PronunciationTokenDiffKind.substituted =>
+      '${diff.expected ?? ''} → ${diff.recognized ?? ''}',
+  };
+
+  Color _diffColor(ColorScheme colors, PronunciationTokenDiffKind kind) =>
+      switch (kind) {
+        PronunciationTokenDiffKind.match => colors.primary,
+        PronunciationTokenDiffKind.missing => colors.error,
+        PronunciationTokenDiffKind.added => colors.tertiary,
+        PronunciationTokenDiffKind.substituted => colors.error,
+      };
 }
 
 class _PronunciationActions extends StatelessWidget {

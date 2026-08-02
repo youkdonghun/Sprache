@@ -36,8 +36,8 @@ void main() {
       expect(desktopDark.colorScheme, AppTheme.desktopDark.colorScheme);
     });
 
-    test('all six accent palettes remain visually distinct', () {
-      expect(AppAccentPalette.values, hasLength(6));
+    test('all ten accent palettes remain visually distinct', () {
+      expect(AppAccentPalette.values, hasLength(10));
 
       final previews = {
         for (final palette in AppAccentPalette.values)
@@ -58,9 +58,9 @@ void main() {
           ).colorScheme.primary,
       };
 
-      expect(previews, hasLength(6));
-      expect(mobilePrimaries, hasLength(6));
-      expect(desktopPrimaries, hasLength(6));
+      expect(previews, hasLength(10));
+      expect(mobilePrimaries, hasLength(10));
+      expect(desktopPrimaries, hasLength(10));
     });
 
     test('mobile and desktop builders honor light and dark brightness', () {
@@ -107,6 +107,92 @@ void main() {
         expect(mobile.visualDensity, entry.value.$1);
         expect(desktop.visualDensity, entry.value.$2);
       }
+    });
+
+    test('surface, card, contrast, and typography choices reach the theme', () {
+      const preferences = AppExperiencePreferences(
+        colorMode: AppColorMode.oled,
+        surfaceTone: AppSurfaceTone.warm,
+        cornerStyle: AppCornerStyle.square,
+        cardStyle: AppCardStyle.elevated,
+        fontEmphasis: AppFontEmphasis.strong,
+        readingLineHeight: AppReadingLineHeight.relaxed,
+        highContrast: true,
+      );
+      final theme = AppTheme.desktopFor(
+        preferences,
+        brightness: Brightness.dark,
+      );
+
+      expect(theme.scaffoldBackgroundColor, const Color(0xFF000000));
+      expect(theme.colorScheme.surface, const Color(0xFF000000));
+      expect(theme.cardTheme.color, const Color(0xFF000000));
+      expect(theme.cardTheme.elevation, 1);
+      expect(theme.cardTheme.shape, isA<RoundedRectangleBorder>());
+      expect(theme.textTheme.bodyMedium?.fontWeight, FontWeight.w600);
+      expect(theme.textTheme.bodyMedium?.height, 1.65);
+      expect(
+        theme.colorScheme.outline,
+        isNot(theme.colorScheme.outlineVariant),
+      );
+    });
+
+    test('content width profiles expose stable desktop limits', () {
+      expect(AppTheme.contentMaxWidth(AppContentWidth.focused), 880);
+      expect(AppTheme.contentMaxWidth(AppContentWidth.balanced), 1120);
+      expect(AppTheme.contentMaxWidth(AppContentWidth.wide), 1360);
+    });
+
+    testWidgets('motion levels select full, subtle, and immediate navigation', (
+      tester,
+    ) async {
+      late BuildContext context;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Builder(
+            builder: (value) {
+              context = value;
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
+      );
+      final route = MaterialPageRoute<void>(
+        builder: (_) => const SizedBox.shrink(),
+      );
+      const child = SizedBox(key: Key('transition-child'));
+
+      PageTransitionsBuilder builderFor(AppMotionLevel level) =>
+          AppTheme.mobileFor(
+            AppExperiencePreferences(motionLevel: level),
+            brightness: Brightness.light,
+          ).pageTransitionsTheme.builders[TargetPlatform.android]!;
+
+      final full = builderFor(AppMotionLevel.full);
+      final subtle = builderFor(AppMotionLevel.reduced);
+      final off = builderFor(AppMotionLevel.off);
+      expect(subtle.runtimeType, isNot(full.runtimeType));
+      expect(off.runtimeType, isNot(subtle.runtimeType));
+      expect(
+        subtle.buildTransitions<void>(
+          route,
+          context,
+          const AlwaysStoppedAnimation<double>(0.5),
+          const AlwaysStoppedAnimation<double>(0),
+          child,
+        ),
+        isA<FadeTransition>(),
+      );
+      expect(
+        off.buildTransitions<void>(
+          route,
+          context,
+          const AlwaysStoppedAnimation<double>(0.5),
+          const AlwaysStoppedAnimation<double>(0),
+          child,
+        ),
+        same(child),
+      );
     });
   });
 }

@@ -44,7 +44,7 @@ void main() {
     tester,
   ) async {
     final harness = await _pumpPracticeHub(tester);
-    const activityId = '/study?mode=meaning';
+    const activityId = 'meaning-choice';
     const activityTitle = '뜻 고르기';
 
     await _openActivityMenu(tester, activityId, activityTitle);
@@ -116,6 +116,161 @@ void main() {
       find.byKey(const Key('start-recommended-practice')),
     );
     expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'practice hub explains recommendation inputs and daily challenge',
+    (tester) async {
+      final harness = await _pumpPracticeHub(tester);
+
+      expect(find.byKey(const Key('practice-daily-challenge')), findsOneWidget);
+      final challengeTitle = tester
+          .widget<Text>(find.textContaining('오늘의 도전 ·').first)
+          .data!;
+      final basis = find.byKey(const Key('practice-recommendation-basis'));
+      expect(basis, findsOneWidget);
+      expect(
+        find.descendant(of: basis, matching: find.text('복습 0')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: basis, matching: find.text('오답 0')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: basis, matching: find.text('최근 정확도 -')),
+        findsOneWidget,
+      );
+      harness.container.read(appRouterProvider).go('/');
+      await tester.pumpAndSettle();
+      harness.container.read(appRouterProvider).go('/learn');
+      await tester.pumpAndSettle();
+      expect(find.text(challengeTitle), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('started games are recorded and exposed from the recent row', (
+    tester,
+  ) async {
+    final harness = await _pumpPracticeHub(tester);
+
+    await _openPracticeActivity(tester, '혼합 퀴즈');
+    await _tapVisible(tester, find.byKey(const Key('start-practice-session')));
+
+    var catalog = harness.container
+        .read(appControllerProvider)
+        .preferences
+        .interaction
+        .practiceCatalog;
+    expect(catalog.recentActivityIds.first, 'mixed-quiz');
+
+    harness.container.read(appRouterProvider).go('/learn');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('recent-practice-games')), findsOneWidget);
+    expect(find.byKey(const Key('recent-practice-mixed-quiz')), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 30));
+    catalog = harness.store.savedPreferences.interaction.practiceCatalog;
+    expect(catalog.recentActivityIds.first, 'mixed-quiz');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('recommendation-only games remain reachable from recent games', (
+    tester,
+  ) async {
+    final harness = await _pumpPracticeHub(tester);
+
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('start-recommended-practice')),
+    );
+    await _tapVisible(tester, find.byKey(const Key('start-practice-session')));
+    final recentId = harness.container
+        .read(appControllerProvider)
+        .preferences
+        .interaction
+        .practiceCatalog
+        .recentActivityIds
+        .first;
+    expect(recentId, 'words-review');
+
+    harness.container.read(appRouterProvider).go('/learn');
+    await tester.pumpAndSettle();
+    expect(find.byKey(Key('recent-practice-$recentId')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('quick launch skips setup while its menu keeps setup reachable', (
+    tester,
+  ) async {
+    final harness = await _pumpPracticeHub(tester);
+    const activityId = 'mixed-quiz';
+
+    await _openActivityMenu(tester, activityId, '혼합 퀴즈');
+    await tester.tap(find.text('저장 설정으로 바로 시작').last);
+    await tester.pumpAndSettle();
+    expect(
+      harness.container
+          .read(appControllerProvider)
+          .preferences
+          .interaction
+          .practiceCatalog
+          .quickLaunchActivityIds,
+      contains(activityId),
+    );
+
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('practice-activity-혼합 퀴즈')).first,
+    );
+    expect(find.byType(StudyScreen), findsOneWidget);
+    expect(find.byKey(const Key('start-practice-session')), findsNothing);
+
+    harness.container.read(appRouterProvider).go('/learn');
+    await tester.pumpAndSettle();
+    await _openActivityMenu(tester, activityId, '혼합 퀴즈');
+    await tester.tap(find.text('저장 설정 변경').last);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('favorites can be moved forward with a persisted stable order', (
+    tester,
+  ) async {
+    final harness = await _pumpPracticeHub(tester);
+
+    await _openActivityMenu(tester, 'meaning-choice', '뜻 고르기');
+    await tester.tap(find.text('즐겨찾기에 고정').last);
+    await tester.pumpAndSettle();
+    await _openActivityMenu(tester, 'production-writing', '직접 쓰기');
+    await tester.tap(find.text('즐겨찾기에 고정').last);
+    await tester.pumpAndSettle();
+
+    await _openActivityMenu(tester, 'production-writing', '직접 쓰기');
+    await tester.tap(find.text('즐겨찾기에서 앞으로').last);
+    await tester.pumpAndSettle();
+
+    final catalog = harness.container
+        .read(appControllerProvider)
+        .preferences
+        .interaction
+        .practiceCatalog;
+    expect(catalog.favoriteActivityOrder, const [
+      'production-writing',
+      'meaning-choice',
+    ]);
+    await tester.pump(const Duration(milliseconds: 30));
+    expect(
+      harness
+          .store
+          .savedPreferences
+          .interaction
+          .practiceCatalog
+          .favoriteActivityOrder,
+      const ['production-writing', 'meaning-choice'],
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -295,6 +450,15 @@ void main() {
     final controller = harness.container.read(appControllerProvider.notifier);
     final availableItems = controller.selectedItems;
     expect(availableItems.length, greaterThan(1));
+    final expectedIntrinsicIds = controller
+        .queue(
+          _fixedNow(),
+          mode: StudyMode.mixed,
+          itemLimit: 100,
+          historyFilter: StudyHistoryFilter.all,
+        )
+        .map((item) => item.id)
+        .toSet();
     final targetCount = availableItems.length.clamp(2, 5);
     controller.updateSessionPlan(
       controller.activeSessionPlan.copyWith(
@@ -315,14 +479,55 @@ void main() {
     await _tapVisible(tester, find.byKey(const Key('start-practice-session')));
 
     final plan = controller.activeSessionPlan;
-    expect(plan.deck, StudyDeckScope.course);
-    expect(plan.selectedItemIds, isEmpty);
+    expect(plan.deck, StudyDeckScope.selected);
+    expect(plan.selectedItemIds, expectedIntrinsicIds);
+    expect(plan.selectedItemIds, hasLength(100));
     expect(plan.groupIds, isEmpty);
     expect(plan.tags, isEmpty);
     expect(plan.itemLimit, targetCount);
     expect(
       harness.container.read(appControllerProvider).activeStudySession?.itemIds,
       hasLength(targetCount),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('recent wrong practice keeps the queue scoped to wrong items', (
+    tester,
+  ) async {
+    final harness = await _pumpPracticeHub(tester);
+    final controller = harness.container.read(appControllerProvider.notifier);
+    final items = controller.selectedItems;
+    expect(items.length, greaterThan(1));
+
+    controller.recordAnswer(
+      item: items.first,
+      correct: false,
+      studiedAt: _fixedNow().subtract(const Duration(minutes: 2)),
+      exerciseType: 'recognition',
+    );
+    controller.recordAnswer(
+      item: items[1],
+      correct: true,
+      studiedAt: _fixedNow().subtract(const Duration(minutes: 1)),
+      exerciseType: 'recognition',
+    );
+    await tester.pumpAndSettle();
+
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('practice-recommendation-recent-wrong')),
+    );
+    await _tapVisible(tester, find.byKey(const Key('start-practice-session')));
+
+    final plan = controller.activeSessionPlan;
+    expect(plan.deck, StudyDeckScope.selected);
+    expect(plan.mode, StudyMode.weak);
+    expect(plan.historyFilter, StudyHistoryFilter.wrongOnly);
+    expect(plan.selectedItemIds, {items.first.id});
+    expect(
+      harness.container.read(appControllerProvider).activeStudySession?.itemIds,
+      [items.first.id],
     );
     expect(tester.takeException(), isNull);
   });

@@ -873,7 +873,12 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(savedMessage)));
       _savedSuccessfully = true;
-      context.go('/library');
+      context.go(
+        Uri(
+          path: '/library',
+          queryParameters: {'subject': item.subjectId, 'q': item.text},
+        ).toString(),
+      );
     } on LearningContentValidationException catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(

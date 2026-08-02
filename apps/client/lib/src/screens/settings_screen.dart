@@ -7,25 +7,33 @@ import 'package:flutter/material.dart' hide ConnectionState;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart' as widgets show ConnectionState;
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../backup/backup_archive.dart';
+import '../backup/settings_transfer_bundle.dart';
 import '../backup/study_data_csv_exporter.dart';
 import '../backup/study_data_xlsx_exporter.dart';
 import '../domain/app_experience_preferences.dart';
 import '../domain/accessibility_input_profile.dart';
 import '../domain/app_platform.dart';
+import '../domain/device_preferences.dart';
+import '../domain/language.dart';
 import '../domain/study_interaction_preferences.dart';
 import '../domain/study_preferences.dart';
 import '../domain/local_storage.dart';
 import '../integrations/google/google_connection_service.dart';
 import '../services/window_workspace_service.dart';
 import '../services/recovery_backup_catalog.dart';
+import '../services/recovery_checkpoint_service.dart';
 import '../services/app_clock.dart';
 import '../services/study_notification_service.dart';
+import '../services/tts_service.dart';
 import '../state/app_state.dart';
 import '../state/app_state_view.dart';
 import '../state/connection_state.dart';
+import '../state/device_preferences_state.dart';
 import '../state/local_storage_state.dart';
 import '../sync/pending_sync.dart';
 import '../sync/sync_merge_report.dart';
@@ -128,7 +136,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (defaultTargetPlatform == TargetPlatform.windows &&
           _matchesQuery(query, 'windows 윈도우 창 크기 컴팩트 최소화 항상 위 업무'))
         (_windowsSectionKey, _windowsSectionFocus, 'Windows 창 도구'),
-      if (_matchesQuery(query, '데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리'))
+      if (_matchesQuery(
+        query,
+        '데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리 콘텐츠 품질 점검 교정',
+      ))
         (_privacySectionKey, _privacySectionFocus, '데이터와 개인정보'),
       if (_matchesQuery(query, '앱 정보 sprache 버전 플랫폼 환경'))
         (_aboutSectionKey, _aboutSectionFocus, '앱 정보'),
@@ -179,15 +190,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final calendarDay = ref.watch(calendarDayProvider);
     final connection = ref.watch(connectionControllerProvider);
     final localStorage = ref.watch(localStorageControllerProvider);
+    final deviceState = ref.watch(devicePreferencesControllerProvider);
+    final devicePreferences = deviceState.preferences;
     final config = ref.watch(appConfigProvider);
     final connected = state.driveConnected;
     final isWindows = defaultTargetPlatform == TargetPlatform.windows;
     final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    final usesDesktopKeyboard =
+        isWindows ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux;
     final windowWorkspace = ref.watch(windowWorkspaceControllerProvider);
-    final notificationCount = buildStudyNotificationSpecs(
+    final notificationSpecs = buildStudyNotificationSpecs(
       state.preferences.savedSessionPlans,
       now: DateTime.now(),
-    ).length;
+      preferences: devicePreferences.notifications,
+    );
+    final notificationCount = notificationSpecs.length;
     final showStorage = _matches(
       '저장 google 구글 drive 드라이브 로컬 폴더 동기화 백업 계정 연결 railway',
     );
@@ -198,7 +217,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final showWindows =
         isWindows && _matches('windows 윈도우 창 크기 컴팩트 최소화 항상 위 업무');
     final showPrivacy = _matches(
-      '데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리',
+      '데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리 콘텐츠 품질 점검 교정',
     );
     final showAbout = _matches('앱 정보 sprache 버전 플랫폼 환경');
     final hasSearchResult =
@@ -338,6 +357,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
+                        Card(
+                          key: const Key('open-personalization-studio'),
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              child: Icon(Icons.palette_outlined),
+                            ),
+                            title: const Text('개인화 스튜디오'),
+                            subtitle: const Text(
+                              '테마 미리보기, 홈 구성, 내비게이션과 빠른 등록 기본값',
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => context.push('/settings/personalize'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         AdvancedPreferencesPanel(
                           searchQuery: _query,
                           experiencePreferences: state.preferences.experience,
@@ -357,12 +391,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         AccessibilityInputProfileCard(
                           profile:
                               localStorage.settings.accessibilityInputProfile,
-                          isWindows: isWindows,
+                          isWindows: usesDesktopKeyboard,
                           isAndroid: isAndroid,
                           onChanged: (profile) => unawaited(
                             ref
                                 .read(localStorageControllerProvider.notifier)
                                 .updateAccessibilityInputProfile(profile),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        _DeviceFeedbackPreferencesCard(
+                          preferences: devicePreferences.voice,
+                          language: state.selectedLanguage,
+                          ttsService: ref.watch(deviceTtsServiceProvider),
+                          ttsRate: state.preferences.ttsRate,
+                          preferOfflineVoice:
+                              state.preferences.interaction.preferOfflineVoice,
+                          onChanged: (value) => unawaited(
+                            ref
+                                .read(
+                                  devicePreferencesControllerProvider.notifier,
+                                )
+                                .updateVoice(value),
                           ),
                         ),
                       ],
@@ -403,6 +453,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           platformName: appPlatformName(defaultTargetPlatform),
                           onConfigure: () =>
                               _configureStudyNotifications(context, ref),
+                        ),
+                        const SizedBox(height: 10),
+                        _DeviceNotificationPreferencesCard(
+                          preferences: devicePreferences.notifications,
+                          previews: notificationSpecs.take(3).toList(),
+                          hydrated: deviceState.isHydrated,
+                          onChanged: (value) => unawaited(
+                            ref
+                                .read(
+                                  devicePreferencesControllerProvider.notifier,
+                                )
+                                .updateNotifications(value),
+                          ),
+                          onTest: () => _testStudyNotification(
+                            context,
+                            ref,
+                            devicePreferences.notifications,
+                          ),
                         ),
                       ],
                       if (showWindows) ...[
@@ -456,11 +524,53 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
+                        _DevicePrivacyPreferencesCard(
+                          preferences: devicePreferences.privacy,
+                          hydrated: deviceState.isHydrated,
+                          onChanged: (value) => unawaited(
+                            ref
+                                .read(
+                                  devicePreferencesControllerProvider.notifier,
+                                )
+                                .updatePrivacy(value),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          key: const Key('open-data-health'),
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.health_and_safety_outlined,
+                            ),
+                            title: const Text('데이터 건강'),
+                            subtitle: const Text(
+                              '앱 DB·로컬 폴더·Drive·대기 작업과 백업 검증 영수증 확인',
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => context.push('/settings/data-health'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Card(
+                          key: const Key('open-content-quality'),
+                          child: ListTile(
+                            leading: const Icon(Icons.fact_check_outlined),
+                            title: const Text('콘텐츠 품질 점검'),
+                            subtitle: const Text(
+                              '읽기·문맥·출처·연습 준비·교정 메모를 한곳에서 확인',
+                            ),
+                            trailing: const Icon(Icons.chevron_right_rounded),
+                            onTap: () => context.push('/library/quality'),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         _BackupDataCard(
                           customItemCount: state.customItems.length,
                           recentSessionCount: state.recentSessions.length,
                           onExportBackup: () => _exportJson(context, ref),
                           onRestoreBackup: () => _restoreJson(context, ref),
+                          onExportSettings: () => _exportSettings(context, ref),
+                          onImportSettings: () => _importSettings(context, ref),
                           onExportXlsx: () => _exportXlsx(context, ref),
                           onExportCsv: () => _exportCsv(context, ref),
                         ),
@@ -474,6 +584,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               context: context,
                               builder: (context) => StorageMaintenanceDialog(
                                 localCatalog: RecoveryBackupCatalogService(),
+                                onRestoreLocal: (backup) =>
+                                    _restoreRecoveryCheckpoint(
+                                      context,
+                                      ref,
+                                      backup,
+                                    ),
                                 remoteService:
                                     connected &&
                                         service is RemoteStorageRetentionService
@@ -693,6 +809,109 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Future<void> _testStudyNotification(
+    BuildContext context,
+    WidgetRef ref,
+    DeviceNotificationPreferences preferences,
+  ) async {
+    final permission = await ref
+        .read(appControllerProvider.notifier)
+        .requestStudyNotificationPermission();
+    final shown = permission == StudyNotificationPermission.granted
+        ? await showStudyNotificationTest(
+            ref.read(studyNotificationServiceProvider),
+            preferences,
+          )
+        : false;
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          shown ? '테스트 알림을 보냈습니다.' : '테스트 알림을 보내지 못했습니다. 기기 권한을 확인해 주세요.',
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _createRecoveryCheckpoint(
+    BuildContext context,
+    WidgetRef ref, {
+    required RecoveryCheckpointReason reason,
+  }) async {
+    try {
+      final receipt = await RecoveryCheckpointService().create(
+        ref.read(appControllerProvider.notifier).exportArchive(),
+        reason: reason,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${reason.label} 안전 지점을 만들었습니다 · ${receipt.itemCount}개 항목',
+            ),
+          ),
+        );
+      }
+      return true;
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('안전 지점을 만들지 못해 작업을 시작하지 않았습니다.')),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<void> _restoreRecoveryCheckpoint(
+    BuildContext context,
+    WidgetRef ref,
+    LocalRecoveryBackup backup,
+  ) async {
+    try {
+      final service = RecoveryCheckpointService();
+      final archive = await service.load(backup.path);
+      if (!context.mounted) return;
+      final controller = ref.read(appControllerProvider.notifier);
+      final selection = await showDialog<BackupRestoreSelection>(
+        context: context,
+        builder: (context) => _BackupRestoreDialog(
+          archive: archive,
+          fileName: backup.reason ?? backup.id,
+          previewBuilder: (selection) =>
+              controller.previewBackupRestore(archive, selection: selection),
+        ),
+      );
+      if (selection == null || !context.mounted) return;
+      if (!await _createRecoveryCheckpoint(
+        context,
+        ref,
+        reason: RecoveryCheckpointReason.restore,
+      )) {
+        return;
+      }
+      final result = await controller.restoreBackup(
+        archive,
+        selection: selection,
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '안전 지점을 복원했습니다 · 콘텐츠 ${result.customItemCount}개 · '
+            '진도 ${result.progressCount}개 · 세션 ${result.restoredSessionCount}개',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('안전 지점이 손상되었거나 복원할 수 없습니다.')),
+        );
+      }
+    }
+  }
+
   Future<void> _exportJson(BuildContext context, WidgetRef ref) async {
     try {
       final archive = ref.read(appControllerProvider.notifier).exportArchive();
@@ -714,6 +933,106 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('백업 저장에 실패했습니다.')));
+    }
+  }
+
+  Future<void> _exportSettings(BuildContext context, WidgetRef ref) async {
+    try {
+      final bundle = SettingsTransferBundle(
+        appPreferences: ref.read(appControllerProvider).preferences,
+        devicePreferences: ref
+            .read(devicePreferencesControllerProvider)
+            .preferences,
+        exportedAt: DateTime.now().toUtc(),
+      );
+      final content = const SettingsTransferCodec().encode(bundle);
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: 'Sprache 설정만 저장',
+        fileName: 'sprache-settings-${_dateStamp(DateTime.now())}.json',
+        type: FileType.custom,
+        allowedExtensions: const ['json'],
+        bytes: Uint8List.fromList(utf8.encode(content)),
+        lockParentWindow: true,
+      );
+      if (!context.mounted || path == null) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('학습 콘텐츠가 없는 설정 파일을 저장했습니다: $path')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('설정 파일을 저장하지 못했습니다.')));
+    }
+  }
+
+  Future<void> _importSettings(BuildContext context, WidgetRef ref) async {
+    try {
+      final picked = await FilePicker.platform.pickFiles(
+        dialogTitle: 'Sprache 설정 파일 선택',
+        type: FileType.custom,
+        allowedExtensions: const ['json'],
+        allowMultiple: false,
+        withData: true,
+      );
+      if (picked == null || picked.files.isEmpty) return;
+      final file = picked.files.single;
+      if (file.size > SettingsTransferCodec.maxBytes || file.bytes == null) {
+        throw const SettingsTransferException('설정 파일은 512KB 이하여야 합니다.');
+      }
+      final bundle = const SettingsTransferCodec().decode(
+        utf8.decode(file.bytes!, allowMalformed: false),
+      );
+      if (!context.mounted) return;
+      final approved = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('설정만 적용할까요?'),
+          content: Text(
+            '${bundle.exportedAt.toLocal()}에 만든 설정 파일입니다. '
+            '테마·학습 방식·접근성·이 기기 알림과 개인정보 설정만 바꾸며, '
+            '단어·진도·XP·세션은 변경하지 않습니다.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('취소'),
+            ),
+            FilledButton.icon(
+              key: const Key('confirm-settings-import'),
+              onPressed: () => Navigator.pop(dialogContext, true),
+              icon: const Icon(Icons.tune_rounded),
+              label: const Text('설정 적용'),
+            ),
+          ],
+        ),
+      );
+      if (approved != true || !context.mounted) return;
+      ref
+          .read(appControllerProvider.notifier)
+          .updatePreferences(bundle.appPreferences);
+      await ref
+          .read(devicePreferencesControllerProvider.notifier)
+          .replace(bundle.devicePreferences);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('설정만 검증해 적용했습니다. 학습 데이터는 유지했습니다.')),
+      );
+    } on SettingsTransferException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } on FormatException {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('설정 파일의 문자 인코딩이 올바르지 않습니다.')),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('설정 파일을 적용하지 못했습니다.')));
     }
   }
 
@@ -876,15 +1195,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ).showSnackBar(const SnackBar(content: Text('복원할 정상 로컬 저장본이 없습니다.')));
         return;
       }
-      final approved = await showDialog<bool>(
+      final controller = ref.read(appControllerProvider.notifier);
+      final selection = await showDialog<BackupRestoreSelection>(
         context: context,
-        builder: (dialogContext) =>
-            _BackupRestoreDialog(archive: archive, fileName: '선택한 로컬 보관 폴더'),
+        builder: (dialogContext) => _BackupRestoreDialog(
+          archive: archive,
+          fileName: '선택한 로컬 보관 폴더',
+          previewBuilder: (selection) =>
+              controller.previewBackupRestore(archive, selection: selection),
+        ),
       );
-      if (approved != true || !context.mounted) return;
-      final restored = await ref
-          .read(appControllerProvider.notifier)
-          .restoreBackup(archive);
+      if (selection == null || !context.mounted) return;
+      if (!await _createRecoveryCheckpoint(
+        context,
+        ref,
+        reason: RecoveryCheckpointReason.restore,
+      )) {
+        return;
+      }
+      final restored = await controller.restoreBackup(
+        archive,
+        selection: selection,
+      );
       await storageController.markExistingBackupMerged();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -959,15 +1291,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         utf8.decode(bytes, allowMalformed: false),
       );
       if (!context.mounted) return;
-      final approved = await showDialog<bool>(
+      final controller = ref.read(appControllerProvider.notifier);
+      final selection = await showDialog<BackupRestoreSelection>(
         context: context,
-        builder: (dialogContext) =>
-            _BackupRestoreDialog(archive: archive, fileName: file.name),
+        builder: (dialogContext) => _BackupRestoreDialog(
+          archive: archive,
+          fileName: file.name,
+          previewBuilder: (selection) =>
+              controller.previewBackupRestore(archive, selection: selection),
+        ),
       );
-      if (approved != true || !context.mounted) return;
-      final result = await ref
-          .read(appControllerProvider.notifier)
-          .restoreBackup(archive);
+      if (selection == null || !context.mounted) return;
+      if (!await _createRecoveryCheckpoint(
+        context,
+        ref,
+        reason: RecoveryCheckpointReason.restore,
+      )) {
+        return;
+      }
+      final result = await controller.restoreBackup(
+        archive,
+        selection: selection,
+      );
       if (!context.mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       messenger.removeCurrentSnackBar();
@@ -1122,6 +1467,524 @@ class _StudyNotificationsCard extends StatelessWidget {
     );
   }
 }
+
+class _DeviceNotificationPreferencesCard extends StatelessWidget {
+  const _DeviceNotificationPreferencesCard({
+    required this.preferences,
+    required this.previews,
+    required this.hydrated,
+    required this.onChanged,
+    required this.onTest,
+  });
+
+  final DeviceNotificationPreferences preferences;
+  final List<StudyNotificationSpec> previews;
+  final bool hydrated;
+  final ValueChanged<DeviceNotificationPreferences> onChanged;
+  final Future<void> Function() onTest;
+
+  Future<void> _pickTime(BuildContext context, {required bool start}) async {
+    final minutes = start
+        ? preferences.quietStartMinutes
+        : preferences.quietEndMinutes;
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: minutes ~/ 60, minute: minutes % 60),
+      helpText: start ? '조용한 시간 시작' : '조용한 시간 종료',
+    );
+    if (selected == null) return;
+    final value = selected.hour * 60 + selected.minute;
+    onChanged(
+      start
+          ? preferences.copyWith(quietStartMinutes: value)
+          : preferences.copyWith(quietEndMinutes: value),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      key: const Key('device-notification-preferences-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('이 기기에서 알림 사용'),
+              subtitle: const Text('알림 설정은 Drive로 동기화하지 않습니다.'),
+              value: preferences.enabled,
+              onChanged: hydrated
+                  ? (value) => onChanged(preferences.copyWith(enabled: value))
+                  : null,
+            ),
+            const Divider(),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('quiet-start-picker'),
+                  onPressed: preferences.enabled
+                      ? () => _pickTime(context, start: true)
+                      : null,
+                  icon: const Icon(Icons.bedtime_outlined),
+                  label: Text(
+                    '시작 ${_minuteLabel(preferences.quietStartMinutes)}',
+                  ),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('quiet-end-picker'),
+                  onPressed: preferences.enabled
+                      ? () => _pickTime(context, start: false)
+                      : null,
+                  icon: const Icon(Icons.wb_sunny_outlined),
+                  label: Text(
+                    '종료 ${_minuteLabel(preferences.quietEndMinutes)}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<NotificationLockScreenContent>(
+              key: const Key('notification-lock-content-picker'),
+              initialValue: preferences.lockScreenContent,
+              decoration: const InputDecoration(labelText: '잠금화면 공개 범위'),
+              items: [
+                for (final value in NotificationLockScreenContent.values)
+                  DropdownMenuItem(
+                    value: value,
+                    child: Text(_lockScreenLabel(value)),
+                  ),
+              ],
+              onChanged: !preferences.enabled
+                  ? null
+                  : (value) {
+                      if (value != null) {
+                        onChanged(
+                          preferences.copyWith(lockScreenContent: value),
+                        );
+                      }
+                    },
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '다음 알림 미리보기',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                TextButton.icon(
+                  key: const Key('send-test-notification'),
+                  onPressed: preferences.enabled ? onTest : null,
+                  icon: const Icon(Icons.notification_add_outlined),
+                  label: const Text('테스트'),
+                ),
+              ],
+            ),
+            if (previews.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text('예약된 미래 일정이 없습니다.'),
+              )
+            else
+              for (final spec in previews)
+                ListTile(
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.schedule_rounded),
+                  title: Text(spec.title),
+                  subtitle: Text(
+                    '${_dateTimeLabel(spec.scheduledAt.toLocal())} · ${spec.body}',
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DeviceFeedbackPreferencesCard extends StatefulWidget {
+  const _DeviceFeedbackPreferencesCard({
+    required this.preferences,
+    required this.language,
+    required this.ttsService,
+    required this.ttsRate,
+    required this.preferOfflineVoice,
+    required this.onChanged,
+  });
+
+  final DeviceVoicePreferences preferences;
+  final LanguageTag language;
+  final TtsService ttsService;
+  final double ttsRate;
+  final bool preferOfflineVoice;
+  final ValueChanged<DeviceVoicePreferences> onChanged;
+
+  @override
+  State<_DeviceFeedbackPreferencesCard> createState() =>
+      _DeviceFeedbackPreferencesCardState();
+}
+
+class _DeviceFeedbackPreferencesCardState
+    extends State<_DeviceFeedbackPreferencesCard> {
+  late Future<List<TtsVoice>> _voices;
+  late double _pitch;
+  bool _previewing = false;
+  String? _voiceStatus;
+
+  DeviceVoicePreferences get preferences => widget.preferences;
+
+  @override
+  void initState() {
+    super.initState();
+    _pitch = preferences.pitch;
+    _voices = widget.ttsService.voicesFor(widget.language);
+  }
+
+  @override
+  void didUpdateWidget(covariant _DeviceFeedbackPreferencesCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.language != widget.language ||
+        oldWidget.ttsService != widget.ttsService) {
+      _voices = widget.ttsService.voicesFor(widget.language);
+      _voiceStatus = null;
+    }
+    if (oldWidget.preferences.pitch != widget.preferences.pitch) {
+      _pitch = widget.preferences.pitch;
+    }
+  }
+
+  Future<void> _refreshVoices() async {
+    setState(() {
+      _voiceStatus = null;
+      _voices = widget.ttsService.voicesFor(widget.language, refresh: true);
+    });
+    await _voices;
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _preview() async {
+    if (_previewing) return;
+    setState(() {
+      _previewing = true;
+      _voiceStatus = '미리 듣는 중';
+    });
+    try {
+      await widget.ttsService.speak(
+        language: widget.language,
+        text: _voicePreviewText(widget.language),
+        rate: widget.ttsRate,
+        preferOfflineVoice: widget.preferOfflineVoice,
+        preferredVoiceId: preferences.voiceIdByLanguage[widget.language.code],
+        pitch: preferences.pitch,
+      );
+      if (mounted) setState(() => _voiceStatus = '미리 듣기를 재생했습니다.');
+    } catch (_) {
+      if (mounted) {
+        setState(() => _voiceStatus = '이 기기에서 음성을 재생하지 못했습니다.');
+      }
+    } finally {
+      if (mounted) setState(() => _previewing = false);
+    }
+  }
+
+  Widget _strengthPicker({
+    required Key key,
+    required String label,
+    required DeviceFeedbackStrength value,
+    required ValueChanged<DeviceFeedbackStrength> onChanged,
+  }) {
+    return DropdownButtonFormField<DeviceFeedbackStrength>(
+      key: key,
+      initialValue: value,
+      isExpanded: true,
+      decoration: InputDecoration(labelText: label),
+      items: [
+        for (final strength in DeviceFeedbackStrength.values)
+          DropdownMenuItem(
+            value: strength,
+            child: Text(_feedbackStrengthLabel(strength)),
+          ),
+      ],
+      onChanged: (next) {
+        if (next != null) onChanged(next);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: const Key('device-feedback-preferences-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('기기별 음성·피드백', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 3),
+            Text('${widget.language.koreanName} 음성과 효과음·진동 세기는 이 기기에만 저장합니다.'),
+            const SizedBox(height: 12),
+            FutureBuilder<List<TtsVoice>>(
+              future: _voices,
+              builder: (context, snapshot) {
+                final voices = snapshot.data ?? const <TtsVoice>[];
+                final savedId =
+                    preferences.voiceIdByLanguage[widget.language.code];
+                final selectedId = voices.any((voice) => voice.id == savedId)
+                    ? savedId
+                    : null;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String?>(
+                            key: const Key('device-installed-voice'),
+                            initialValue: selectedId,
+                            isExpanded: true,
+                            decoration: InputDecoration(
+                              labelText: '${widget.language.koreanName} 설치 음성',
+                              helperText:
+                                  snapshot.connectionState ==
+                                      widgets.ConnectionState.waiting
+                                  ? '설치된 음성을 확인하는 중입니다.'
+                                  : voices.isEmpty
+                                  ? '일치하는 설치 음성이 없어 시스템 기본값을 사용합니다.'
+                                  : '${voices.length}개 설치 음성',
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                child: Text('자동 선택'),
+                              ),
+                              for (final voice in voices)
+                                DropdownMenuItem<String?>(
+                                  value: voice.id,
+                                  child: Text(
+                                    '${voice.name} · ${voice.locale}'
+                                    '${voice.networkRequired == false
+                                        ? ' · 오프라인'
+                                        : voice.networkRequired == true
+                                        ? ' · 네트워크'
+                                        : ''}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                            onChanged:
+                                snapshot.connectionState ==
+                                    widgets.ConnectionState.waiting
+                                ? null
+                                : (value) => widget.onChanged(
+                                    preferences.selectVoice(
+                                      widget.language.code,
+                                      value,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton.outlined(
+                          key: const Key('refresh-installed-voices'),
+                          tooltip: '설치 음성 새로 고침',
+                          onPressed: _refreshVoices,
+                          icon: const Icon(Icons.refresh_rounded),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 10),
+            Text('음성 높낮이 ${_pitch.toStringAsFixed(2)}×'),
+            Slider(
+              key: const Key('device-voice-pitch'),
+              value: _pitch,
+              min: 0.5,
+              max: 2,
+              divisions: 15,
+              label: _pitch.toStringAsFixed(2),
+              semanticFormatterCallback: (value) =>
+                  '음성 높낮이 ${value.toStringAsFixed(2)}배',
+              onChanged: (value) => setState(() => _pitch = value),
+              onChangeEnd: (value) =>
+                  widget.onChanged(preferences.copyWith(pitch: value)),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton.icon(
+                key: const Key('preview-device-voice'),
+                onPressed: _previewing ? null : _preview,
+                icon: Icon(
+                  _previewing
+                      ? Icons.hourglass_top_rounded
+                      : Icons.play_arrow_rounded,
+                ),
+                label: Text(_previewing ? '재생 중' : '현재 음성 미리 듣기'),
+              ),
+            ),
+            if (_voiceStatus case final status?)
+              Semantics(
+                liveRegion: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(status, key: const Key('device-voice-status')),
+                ),
+              ),
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final sound = _strengthPicker(
+                  key: const Key('device-sound-strength'),
+                  label: '효과음',
+                  value: preferences.soundStrength,
+                  onChanged: (value) => widget.onChanged(
+                    preferences.copyWith(soundStrength: value),
+                  ),
+                );
+                final haptic = _strengthPicker(
+                  key: const Key('device-haptic-strength'),
+                  label: '진동',
+                  value: preferences.hapticStrength,
+                  onChanged: (value) => widget.onChanged(
+                    preferences.copyWith(hapticStrength: value),
+                  ),
+                );
+                final stacked =
+                    constraints.maxWidth < 440 ||
+                    MediaQuery.textScalerOf(context).scale(1) > 1.3;
+                if (stacked) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [sound, const SizedBox(height: 10), haptic],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: sound),
+                    const SizedBox(width: 10),
+                    Expanded(child: haptic),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _voicePreviewText(LanguageTag language) => switch (language) {
+  LanguageTag.korean => '안녕하세요. 오늘도 함께 학습해요.',
+  LanguageTag.english => 'Hello. Let us learn together today.',
+  LanguageTag.japanese => 'こんにちは。今日も一緒に勉強しましょう。',
+  LanguageTag.german => 'Hallo. Lernen wir heute gemeinsam.',
+  LanguageTag.french => 'Bonjour. Apprenons ensemble aujourd’hui.',
+  LanguageTag.spanish => 'Hola. Aprendamos juntos hoy.',
+  LanguageTag.simplifiedChinese => '你好。今天我们一起学习吧。',
+};
+
+class _DevicePrivacyPreferencesCard extends StatelessWidget {
+  const _DevicePrivacyPreferencesCard({
+    required this.preferences,
+    required this.hydrated,
+    required this.onChanged,
+  });
+
+  final DevicePrivacyPreferences preferences;
+  final bool hydrated;
+  final ValueChanged<DevicePrivacyPreferences> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      key: const Key('device-privacy-preferences-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('사생활 보호 모드'),
+              subtitle: const Text('원문·뜻·계정 식별자를 화면에서 가립니다.'),
+              value: preferences.privacyMode,
+              onChanged: hydrated
+                  ? (value) =>
+                        onChanged(preferences.copyWith(privacyMode: value))
+                  : null,
+            ),
+            const SizedBox(height: 6),
+            DropdownButtonFormField<PrivacyCurtainDelay>(
+              key: const Key('privacy-curtain-delay'),
+              initialValue: preferences.curtainDelay,
+              decoration: const InputDecoration(labelText: '백그라운드 보호 커튼'),
+              items: [
+                for (final value in PrivacyCurtainDelay.values)
+                  DropdownMenuItem(
+                    value: value,
+                    child: Text(_curtainDelayLabel(value)),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  onChanged(preferences.copyWith(curtainDelay: value));
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '보호 시간과 알림·음성 설정은 기기 전용이며 Drive 스냅샷에 포함되지 않습니다.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _minuteLabel(int minutes) =>
+    '${(minutes ~/ 60).toString().padLeft(2, '0')}:'
+    '${(minutes % 60).toString().padLeft(2, '0')}';
+
+String _dateTimeLabel(DateTime value) =>
+    '${value.month}/${value.day} '
+    '${value.hour.toString().padLeft(2, '0')}:'
+    '${value.minute.toString().padLeft(2, '0')}';
+
+String _lockScreenLabel(NotificationLockScreenContent value) => switch (value) {
+  NotificationLockScreenContent.hidden => '내용 숨김',
+  NotificationLockScreenContent.generic => '일반 안내만',
+  NotificationLockScreenContent.detailed => '학습 내용 표시',
+};
+
+String _feedbackStrengthLabel(DeviceFeedbackStrength value) => switch (value) {
+  DeviceFeedbackStrength.off => '끔',
+  DeviceFeedbackStrength.light => '약하게',
+  DeviceFeedbackStrength.normal => '보통',
+  DeviceFeedbackStrength.strong => '강하게',
+};
+
+String _curtainDelayLabel(PrivacyCurtainDelay value) => switch (value) {
+  PrivacyCurtainDelay.disabled => '사용 안 함',
+  PrivacyCurtainDelay.immediate => '즉시',
+  PrivacyCurtainDelay.seconds15 => '15초 뒤',
+  PrivacyCurtainDelay.seconds60 => '60초 뒤',
+};
 
 class _WindowsWorkspaceCard extends StatelessWidget {
   const _WindowsWorkspaceCard({
@@ -2026,7 +2889,9 @@ class _ConnectionCard extends ConsumerWidget {
               if (canSync) {
                 return FilledButton.icon(
                   key: const Key('sync-now'),
-                  onPressed: connection.busy ? null : onSync,
+                  onPressed: connection.busy || connection.policy.offlineLock
+                      ? null
+                      : onSync,
                   icon: connection.phase == ConnectionPhase.syncing
                       ? const SizedBox.square(
                           dimension: 17,
@@ -2038,7 +2903,9 @@ class _ConnectionCard extends ConsumerWidget {
               }
               return FilledButton.icon(
                 key: const Key('connect-google'),
-                onPressed: connection.busy ? null : onConnect,
+                onPressed: connection.busy || connection.policy.offlineLock
+                    ? null
+                    : onConnect,
                 icon: connection.phase == ConnectionPhase.connecting
                     ? const SizedBox.square(
                         dimension: 17,
@@ -2053,13 +2920,17 @@ class _ConnectionCard extends ConsumerWidget {
               if (!connected) {
                 return OutlinedButton.icon(
                   key: const Key('connect-google'),
-                  onPressed: connection.busy ? null : onConnect,
+                  onPressed: connection.busy || connection.policy.offlineLock
+                      ? null
+                      : onConnect,
                   icon: const Icon(Icons.add_to_drive_rounded),
                   label: Text(mockMode ? 'Mock 연결' : 'Google 연결'),
                 );
               }
               return TextButton(
-                onPressed: connection.busy ? null : onDisconnect,
+                onPressed: connection.busy || connection.policy.offlineLock
+                    ? null
+                    : onDisconnect,
                 child: const Text('이 기기에서 연결 해제'),
               );
             }
@@ -2151,6 +3022,23 @@ class _SyncPolicyPanel extends StatelessWidget {
                   onSelected: (_) => onChanged(policy.copyWith(mode: mode)),
                 ),
             ],
+          ),
+          const SizedBox(height: 6),
+          Material(
+            type: MaterialType.transparency,
+            child: SwitchListTile(
+              key: const Key('complete-offline-lock'),
+              contentPadding: EdgeInsets.zero,
+              value: policy.offlineLock,
+              onChanged: (value) =>
+                  onChanged(policy.copyWith(offlineLock: value)),
+              title: const Text('완전 오프라인 잠금'),
+              subtitle: Text(
+                policy.offlineLock
+                    ? '잠금 해제 전까지 연결·복원·수동/자동 Drive 요청을 모두 막습니다.'
+                    : '필요할 때 기기 밖 네트워크 요청을 명시적으로 잠글 수 있습니다.',
+              ),
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -2283,7 +3171,9 @@ class _SyncCenterDialog extends ConsumerWidget {
                     FilledButton.icon(
                       key: const Key('apply-sync-selections'),
                       onPressed:
-                          connection.selections.isEmpty || connection.busy
+                          connection.selections.isEmpty ||
+                              connection.busy ||
+                              connection.policy.offlineLock
                           ? null
                           : controller.applySelectedVersions,
                       icon: const Icon(Icons.merge_rounded),
@@ -2337,7 +3227,8 @@ class _SyncCenterDialog extends ConsumerWidget {
                       const SizedBox(width: 8),
                       OutlinedButton(
                         key: const Key('restore-last-sync-merge'),
-                        onPressed: connection.busy
+                        onPressed:
+                            connection.busy || connection.policy.offlineLock
                             ? null
                             : controller.restoreLastMerge,
                         child: const Text('복구'),
@@ -3556,6 +4447,8 @@ class _BackupDataCard extends StatelessWidget {
     required this.recentSessionCount,
     required this.onExportBackup,
     required this.onRestoreBackup,
+    required this.onExportSettings,
+    required this.onImportSettings,
     required this.onExportXlsx,
     required this.onExportCsv,
   });
@@ -3564,6 +4457,8 @@ class _BackupDataCard extends StatelessWidget {
   final int recentSessionCount;
   final VoidCallback onExportBackup;
   final VoidCallback onRestoreBackup;
+  final VoidCallback onExportSettings;
+  final VoidCallback onImportSettings;
   final VoidCallback onExportXlsx;
   final VoidCallback onExportCsv;
 
@@ -3632,6 +4527,18 @@ class _BackupDataCard extends StatelessWidget {
                   label: const Text('JSON 복원'),
                 ),
                 OutlinedButton.icon(
+                  key: const Key('export-settings-json'),
+                  onPressed: onExportSettings,
+                  icon: const Icon(Icons.tune_rounded),
+                  label: const Text('설정만 내보내기'),
+                ),
+                OutlinedButton.icon(
+                  key: const Key('import-settings-json'),
+                  onPressed: onImportSettings,
+                  icon: const Icon(Icons.settings_backup_restore_rounded),
+                  label: const Text('설정만 가져오기'),
+                ),
+                OutlinedButton.icon(
                   key: const Key('export-content-xlsx'),
                   onPressed: onExportXlsx,
                   icon: const Icon(Icons.grid_on_rounded),
@@ -3675,62 +4582,131 @@ class _StorageMaintenanceCard extends StatelessWidget {
   }
 }
 
-class _BackupRestoreDialog extends StatelessWidget {
-  const _BackupRestoreDialog({required this.archive, required this.fileName});
+class _BackupRestoreDialog extends StatefulWidget {
+  const _BackupRestoreDialog({
+    required this.archive,
+    required this.fileName,
+    required this.previewBuilder,
+  });
 
   final BackupArchive archive;
   final String fileName;
+  final BackupRestorePreview Function(BackupRestoreSelection selection)
+  previewBuilder;
+
+  @override
+  State<_BackupRestoreDialog> createState() => _BackupRestoreDialogState();
+}
+
+class _BackupRestoreDialogState extends State<_BackupRestoreDialog> {
+  BackupRestoreSelection _selection = const BackupRestoreSelection();
+
+  void _toggle(BackupRestoreCategory category, bool value) {
+    setState(() {
+      _selection = switch (category) {
+        BackupRestoreCategory.content => _selection.copyWith(content: value),
+        BackupRestoreCategory.progress => _selection.copyWith(progress: value),
+        BackupRestoreCategory.sessions => _selection.copyWith(sessions: value),
+        BackupRestoreCategory.settings => _selection.copyWith(settings: value),
+      };
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final preview = widget.previewBuilder(_selection);
+    final total = preview.total;
     return AlertDialog(
       title: const Text('검증된 백업을 복원할까요?'),
       content: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 460),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              fileName,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                Chip(label: Text(archive.selectedLanguage.koreanName)),
-                Chip(label: Text('XP ${archive.totalXp}')),
-                Chip(label: Text('개인 콘텐츠 ${archive.customItemCount}')),
-                Chip(label: Text('진도 ${archive.progressCount}')),
-                Chip(label: Text('세션 ${archive.sessions.length}')),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              '현재 로컬 데이터를 지우지 않고 항목별 최신값을 병합합니다. 손상되거나 지원하지 않는 값은 복원 전에 차단됩니다.',
-            ),
-          ],
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 620),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.fileName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  Chip(label: Text(widget.archive.selectedLanguage.koreanName)),
+                  Chip(label: Text('XP ${widget.archive.totalXp}')),
+                  Chip(label: Text('개인 콘텐츠 ${widget.archive.customItemCount}')),
+                  Chip(label: Text('진도 ${widget.archive.progressCount}')),
+                  Chip(label: Text('세션 ${widget.archive.sessions.length}')),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Text(
+                '복원 범주 선택',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              for (final category in BackupRestoreCategory.values)
+                CheckboxListTile(
+                  key: Key('restore-category-${category.name}'),
+                  dense: true,
+                  contentPadding: EdgeInsets.zero,
+                  value: _selection.includes(category),
+                  onChanged: (value) => _toggle(category, value ?? false),
+                  title: Text(category.label),
+                  subtitle: Text(
+                    _restoreDeltaLabel(
+                      preview.byCategory[category] ??
+                          const BackupRestoreDelta(),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 6),
+              Container(
+                key: const Key('backup-restore-preview'),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '적용 미리보기 · 추가 ${total.added} · 변경 ${total.changed} · '
+                  '그대로 유지 ${total.preserved}',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '현재 로컬 데이터를 지우지 않고 선택한 범주만 항목별 최신값으로 병합합니다. 손상되거나 지원하지 않는 값은 복원 전에 차단됩니다.',
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
+          onPressed: () => Navigator.of(context).pop(),
           child: const Text('취소'),
         ),
         FilledButton.icon(
           key: const Key('confirm-backup-restore'),
-          onPressed: () => Navigator.of(context).pop(true),
+          onPressed: _selection.any
+              ? () => Navigator.of(context).pop(_selection)
+              : null,
           icon: const Icon(Icons.restore_rounded),
-          label: const Text('병합 복원'),
+          label: const Text('선택 범주 병합'),
         ),
       ],
     );
   }
 }
+
+String _restoreDeltaLabel(BackupRestoreDelta value) =>
+    '추가 ${value.added} · 변경 ${value.changed} · 유지 ${value.preserved}';
 
 class _PrivacyRow extends StatelessWidget {
   const _PrivacyRow({

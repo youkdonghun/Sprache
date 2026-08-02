@@ -165,6 +165,83 @@ void main() {
       controller.dispose();
     },
   );
+
+  test(
+    'notification actions snooze atomically and start the matching subject',
+    () async {
+      final store = MemoryStudyStore();
+      final notifications = _RecordingStudyNotificationService();
+      final controller = AppController(
+        store,
+        notificationService: notifications,
+      );
+      await Future<void>.delayed(Duration.zero);
+
+      controller.selectSubject('language:ja');
+      final saved = controller.saveSessionPlan(
+        StudySessionPlan(
+          title: 'Japanese review',
+          scheduledAt: DateTime.utc(2026, 8, 2, 12),
+        ),
+      );
+      controller.selectSubject('language:en');
+      const receivedAt = '2026-08-02T12:05:00Z';
+
+      final snoozed = await controller.applyStudyNotificationAction(
+        StudyNotificationAction(
+          kind: StudyNotificationActionKind.snooze10,
+          planId: saved.planId,
+          receivedAt: DateTime.parse(receivedAt),
+          notificationId: 41,
+        ),
+      );
+
+      expect(snoozed, isTrue);
+      expect(
+        controller.state.preferences.savedSessionPlans
+            .singleWhere((plan) => plan.planId == saved.planId)
+            .scheduledAt,
+        DateTime.utc(2026, 8, 2, 12, 15),
+      );
+      expect(
+        store.savedPreferences.savedSessionPlans
+            .singleWhere((plan) => plan.planId == saved.planId)
+            .scheduledAt,
+        DateTime.utc(2026, 8, 2, 12, 15),
+      );
+
+      final started = await controller.applyStudyNotificationAction(
+        StudyNotificationAction(
+          kind: StudyNotificationActionKind.start,
+          planId: saved.planId,
+          receivedAt: DateTime.utc(2026, 8, 2, 12, 6),
+          notificationId: 41,
+        ),
+      );
+
+      expect(started, isTrue);
+      expect(controller.state.activeSubjectId, 'language:ja');
+      expect(controller.activeSessionPlan.planId, saved.planId);
+      expect(controller.activeSessionPlan.scheduledAt, isNull);
+      expect(
+        store.savedPreferences.savedSessionPlans
+            .singleWhere((plan) => plan.planId == saved.planId)
+            .scheduledAt,
+        isNull,
+      );
+      expect(notifications.reconciliations.last.single.scheduledAt, isNull);
+
+      final missing = await controller.applyStudyNotificationAction(
+        StudyNotificationAction(
+          kind: StudyNotificationActionKind.open,
+          planId: 'deleted-plan',
+          receivedAt: DateTime.utc(2026, 8, 2, 12, 7),
+        ),
+      );
+      expect(missing, isFalse);
+      controller.dispose();
+    },
+  );
 }
 
 class _RecordingStudyNotificationService implements StudyNotificationService {

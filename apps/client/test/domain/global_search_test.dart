@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/global_search.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
+import 'package:sprache/src/domain/progress.dart';
 import 'package:sprache/src/domain/study_subject.dart';
 
 void main() {
@@ -60,5 +61,29 @@ void main() {
 
     expect(results.whereType<GlobalItemSearchResult>(), hasLength(1));
     expect(results.first, isA<GlobalItemSearchResult>());
+  });
+
+  test('applies local type and learning-state operators across subjects', () {
+    final results = searchAcrossSubjects(
+      query: 'type:word state:favorite state:due',
+      subjects: [english, french],
+      items: items,
+      favoriteItemIds: {'french-greeting'},
+      progressById: {
+        'french-greeting': ProgressRecord(
+          itemId: 'french-greeting',
+          correctCount: 1,
+          status: LearningStatus.review,
+          nextReviewAt: DateTime.utc(2026, 8, 1),
+        ),
+      },
+      now: DateTime.utc(2026, 8, 3),
+    );
+
+    expect(results.whereType<GlobalSubjectSearchResult>(), isEmpty);
+    expect(
+      results.whereType<GlobalItemSearchResult>().single.item.id,
+      'french-greeting',
+    );
   });
 }

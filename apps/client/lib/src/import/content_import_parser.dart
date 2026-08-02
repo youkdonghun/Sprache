@@ -93,6 +93,7 @@ class ContentImportParser {
   ImportPreview parseCsv(
     String input, {
     required LanguageTag defaultLanguage,
+    String? delimiter,
     String? defaultSubjectId,
     String? distributionKey,
     String? distributionGroup,
@@ -104,7 +105,13 @@ class ContentImportParser {
     Map<String, String> columnMapping = const {},
   }) {
     limits.ensureTextLength(input.length);
-    final rows = csv.decode(input);
+    final rows = delimiter == null
+        ? csv.decode(input)
+        : Csv(
+            fieldDelimiter: delimiter,
+            autoDetect: false,
+            dynamicTyping: false,
+          ).decode(input);
     if (rows.isEmpty) {
       return const ImportPreview(entries: [], issues: [], duplicates: []);
     }
@@ -160,6 +167,7 @@ class ContentImportParser {
   ImportPreview parseExcel(
     List<int> bytes, {
     required LanguageTag defaultLanguage,
+    String? sheetName,
     String? defaultSubjectId,
     String? distributionKey,
     String? distributionGroup,
@@ -173,7 +181,9 @@ class ContentImportParser {
     limits.ensureFileSize(bytes.length);
     final sheets = XlsxImportReader(limits: limits).read(bytes);
     const mapper = ImportColumnMapper();
-    for (final sheet in sheets) {
+    for (final sheet in sheets.where(
+      (sheet) => sheetName == null || sheet.name == sheetName,
+    )) {
       if (sheet.rows.isEmpty) continue;
       final headerIndex = mapper.findExcelHeaderIndex(
         sheet.rows,
@@ -225,8 +235,10 @@ class ContentImportParser {
         languageCodeByDistributionKey: languageCodeByDistributionKey,
       );
     }
-    throw const FormatException(
-      '엑셀에서 term(표현)과 meaning(뜻) 헤더가 있는 시트를 찾지 못했습니다.',
+    throw FormatException(
+      sheetName == null
+          ? '엑셀에서 term(표현)과 meaning(뜻) 헤더가 있는 시트를 찾지 못했습니다.'
+          : '선택한 “$sheetName” 시트에서 문제와 정답 헤더를 찾지 못했습니다.',
     );
   }
 

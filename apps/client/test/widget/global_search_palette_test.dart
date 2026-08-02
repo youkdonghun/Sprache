@@ -66,7 +66,7 @@ void main() {
       LanguageTag.japanese,
     );
     final queryField = tester.widget<TextField>(
-      find.byKey(const Key('library-search-field')),
+      find.byKey(const Key('library-search-field'), skipOffstage: false),
     );
     expect(queryField.controller?.text, japaneseItem.text);
     expect(tester.takeException(), isNull);

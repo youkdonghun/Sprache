@@ -7,24 +7,32 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/active_study_session.dart';
+import '../domain/app_experience_preferences.dart';
 import '../domain/language.dart';
+import '../domain/learning_insights.dart';
 import '../domain/learning_item.dart';
 import '../domain/onboarding_profile.dart';
 import '../domain/progress.dart';
 import '../domain/session_enhancements.dart';
 import '../domain/smart_collection.dart';
 import '../domain/study_limits.dart';
+import '../domain/study_interaction_preferences.dart';
 import '../domain/study_preferences.dart';
+import '../domain/study_routines.dart';
+import '../domain/study_subject.dart';
 import '../services/window_workspace_service.dart';
 import '../services/app_clock.dart';
+import '../services/study_notification_service.dart';
 import '../state/app_state.dart';
 import '../state/app_state_view.dart';
 import '../state/connection_state.dart';
 import '../state/local_storage_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/learning_data_flow_card.dart';
+import '../widgets/onboarding_setup_dialog.dart';
 import '../widgets/quick_content_result_handler.dart';
 import '../widgets/quick_content_sheet.dart';
+import '../widgets/privacy_mode_scope.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -33,6 +41,30 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appControllerProvider);
     final localStorage = ref.watch(localStorageControllerProvider);
+    final reconnectSummary = ref.watch(
+      connectionControllerProvider.select((value) => value.reconnectSummary),
+    );
+    if (reconnectSummary != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!context.mounted) return;
+        final latest = ref.read(connectionControllerProvider).reconnectSummary;
+        if (latest?.id != reconnectSummary.id) return;
+        ref
+            .read(connectionControllerProvider.notifier)
+            .dismissReconnectSummary(reconnectSummary.id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            key: const Key('reconnect-sync-summary'),
+            content: Text(reconnectSummary.message),
+            duration: const Duration(seconds: 6),
+            action: SnackBarAction(
+              label: '상세',
+              onPressed: () => context.go('/settings'),
+            ),
+          ),
+        );
+      });
+    }
     final controller = ref.read(appControllerProvider.notifier);
     final activeSubject = controller.activeSubject;
     final activeSession =
@@ -47,13 +79,35 @@ class HomeScreen extends ConsumerWidget {
           );
     final now = ref.watch(appClockProvider)();
     final calendarDay = ref.watch(calendarDayProvider);
+    final onboardingProfile = state.preferences.onboardingProfile;
+    final onboardingDisplayLanguage = LanguageTag.values.firstWhere(
+      (language) =>
+          language.available && language.code == onboardingProfile.languageCode,
+      orElse: () => state.selectedLanguage,
+    );
+    final hasOnboardingDraft =
+        onboardingProfile.languageCode.isNotEmpty ||
+        onboardingProfile.draftStep > 0 ||
+        onboardingProfile.deferred;
+    final isPlannedStudyDay = onboardingProfile.isStudyDay(now.toLocal());
+    final nextPlannedStudyDate = onboardingProfile.nextStudyDate(
+      now.toLocal(),
+      includeToday: false,
+    );
     final coursePath = controller.coursePath;
     final recommendedUnit = coursePath.recommendedUnit;
     final queue = controller.queue(now);
     final selectedItems = controller.selectedItems;
+    final experience = state.preferences.experience;
     final isWindows = defaultTargetPlatform == TargetPlatform.windows;
+    final isDesktop =
+        isWindows ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.linux;
+    final supportsWindowWorkspace =
+        isWindows || defaultTargetPlatform == TargetPlatform.macOS;
     final windowWorkspace = ref.watch(windowWorkspaceControllerProvider);
-    if (isWindows) {
+    if (supportsWindowWorkspace) {
       ref.listen(windowWorkspaceControllerProvider, (previous, next) {
         if (next.errorMessage != null &&
             next.errorMessage != previous?.errorMessage) {
@@ -64,22 +118,42 @@ class HomeScreen extends ConsumerWidget {
       });
     }
     final forecast = controller.reviewForecast(now);
-    final reviewCount = forecast.dueNow;
-    final newCount = min(
-      state.preferences.newItemLimit,
-      selectedItems
-          .where(
-            (item) =>
-                state.progress[item.id] == null ||
-                state.progress[item.id]!.status == LearningStatus.newItem,
-          )
-          .length,
+    final weeklyInsights = LearningInsights.build(
+      sessions: state.recentSessions,
+      items: selectedItems,
+      progress: state.progress,
+      now: now,
+      range: LearningInsightRange.sevenDays,
+      courseId: state.activeCourseId,
     );
+    final reviewCount = forecast.dueNow;
+    final newCount = isPlannedStudyDay
+        ? min(
+            state.preferences.newItemLimit,
+            selectedItems
+                .where(
+                  (item) =>
+                      state.progress[item.id] == null ||
+                      state.progress[item.id]!.status == LearningStatus.newItem,
+                )
+                .length,
+          )
+        : 0;
     final weakCount = state.progress.values.where((progress) {
       return progress.attempts > 0 &&
           progress.accuracy < 0.7 &&
           selectedItems.any((item) => item.id == progress.itemId);
     }).length;
+    final quickStudyPlan = buildTwoMinuteStudyPlan(
+      subjectId: activeSubject.id,
+      dueItemIds: selectedItems
+          .where((item) {
+            final due = state.progress[item.id]?.nextReviewAt;
+            return due != null && !due.isAfter(now);
+          })
+          .map((item) => item.id),
+      weakItemIds: controller.weakItems.map((item) => item.id),
+    );
     final scheduledPlans = controller.activeSubjectScheduledSessionPlans;
     final primaryScheduledPlan =
         activeSession == null && reviewCount == 0 && scheduledPlans.isNotEmpty
@@ -95,6 +169,9 @@ class HomeScreen extends ConsumerWidget {
     final pinnedCollections = controller.smartCollections
         .where((collection) => collection.pinned)
         .toList(growable: false);
+    final hasCompletedCourseSession = state.recentSessions.any(
+      (session) => session.courseId == state.activeCourseId,
+    );
     final recentCustomItems =
         state.customItems
             .where((item) => item.effectiveSubjectId == activeSubject.id)
@@ -128,6 +205,43 @@ class HomeScreen extends ConsumerWidget {
       context.push('/study?mode=mixed&limit=1&custom=true');
     }
 
+    void startTwoMinuteStudy() {
+      final plan = quickStudyPlan;
+      if (plan == null) return;
+      controller.updateSessionPlan(plan);
+      context.push('/study?mode=mixed&custom=true');
+    }
+
+    Future<void> scheduleTwoMinuteStudy() async {
+      final plan = quickStudyPlan;
+      if (plan == null) return;
+      final localNow = now.toLocal();
+      final candidate = plan.copyWith(
+        routineName: '2분 복습 루틴',
+        routineWeekdays: onboardingProfile.normalizedStudyWeekdays,
+        routineMinuteOfDay: localNow.hour * 60 + localNow.minute,
+      );
+      final saved = controller.saveSessionPlan(
+        candidate.copyWith(
+          scheduledAt: nextRoutineOccurrence(
+            candidate,
+            after: now.add(const Duration(minutes: 1)),
+          ),
+        ),
+      );
+      final permission = await controller.requestStudyNotificationPermission();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            permission == StudyNotificationPermission.granted
+                ? '“${saved.title}” 알림과 루틴을 저장했습니다.'
+                : '루틴을 저장했습니다. 기기 설정에서 알림 권한을 켜면 알려드려요.',
+          ),
+        ),
+      );
+    }
+
     Future<void> trashRecentItem(LearningItem item) async {
       final batch = await controller.trashCustomItems({item.id});
       if (!context.mounted || batch.entries.isEmpty) return;
@@ -156,6 +270,24 @@ class HomeScreen extends ConsumerWidget {
         state.preferences.preferredMode == StudyMode.pronunciation
         ? '/pronunciation'
         : '/study?mode=${state.preferences.preferredMode.name}';
+
+    void runHomeQuickAction(HomeQuickAction action) {
+      switch (action) {
+        case HomeQuickAction.study:
+          context.push(recommendedRoute);
+        case HomeQuickAction.quickAdd:
+          unawaited(openQuickContent());
+        case HomeQuickAction.practice:
+          context.go('/learn');
+        case HomeQuickAction.library:
+          context.go('/library');
+        case HomeQuickAction.importData:
+          context.push('/import');
+        case HomeQuickAction.stats:
+          context.go('/stats');
+      }
+    }
+
     late final _HomeNextAction nextAction;
     if (selectedItems.isEmpty) {
       nextAction = _HomeNextAction(
@@ -191,6 +323,16 @@ class HomeScreen extends ConsumerWidget {
           }
         },
       );
+    } else if (!isPlannedStudyDay) {
+      nextAction = _HomeNextAction(
+        eyebrow: '${activeSubject.name} · 자율 학습',
+        title: '오늘은 계획한 쉬는 날이에요',
+        description:
+            '새 표현은 다음 학습일로 미뤘습니다. 원하면 ${state.preferences.preferredMode.label}로 가볍게 시작할 수 있어요.',
+        buttonLabel: '그래도 학습',
+        icon: Icons.self_improvement_rounded,
+        onPressed: () => context.push(recommendedRoute),
+      );
     } else {
       final unitTitle = activeSubject.isLanguage
           ? 'Unit ${recommendedUnit.index + 1} · ${recommendedUnit.title}'
@@ -201,7 +343,7 @@ class HomeScreen extends ConsumerWidget {
         description: queue.isEmpty
             ? '${state.preferences.preferredMode.label}로 가볍게 더 연습할 수 있어요.'
             : '${state.preferences.preferredMode.label} · 새 표현 $newCount개',
-        buttonLabel: isWindows ? '다음 학습' : '다음 레슨',
+        buttonLabel: isDesktop ? '다음 학습' : '다음 레슨',
         icon: Icons.play_arrow_rounded,
         onPressed: () => context.push(recommendedRoute),
       );
@@ -326,6 +468,7 @@ class HomeScreen extends ConsumerWidget {
             return _DailyHero(
               compact: compact,
               action: nextAction,
+              showXp: experience.showXp,
               dailyXp: state.activeCourseDailyXpAt(calendarDay),
               dailyGoal: state.dailyGoal,
               level: state.level,
@@ -338,6 +481,20 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 primaryStudyCard(compact: compact),
+                const SizedBox(height: 8),
+                _WeeklyTargetSummaryCard(
+                  studiedDays: weeklyInsights.studiedDaysInLastSeven(),
+                  targetDays: state.preferences.weeklyTargetDays,
+                  studiedMinutes: weeklyInsights
+                      .durationInLastSeven()
+                      .inMinutes,
+                  targetMinutes: state.preferences.weeklyTargetMinutes,
+                  progress: weeklyInsights.weeklyCombinedGoalProgress(
+                    targetDays: state.preferences.weeklyTargetDays,
+                    targetMinutes: state.preferences.weeklyTargetMinutes,
+                  ),
+                  onOpen: () => context.go('/stats'),
+                ),
                 if (primaryScheduledPlan case final plan?) ...[
                   const SizedBox(height: 8),
                   _ScheduleQuickActions(
@@ -350,6 +507,134 @@ class HomeScreen extends ConsumerWidget {
                 ],
               ],
             );
+          }
+
+          Widget studyOverview() {
+            final plan = _TodayPlan(
+              compact: officeCompact || mobile,
+              reviewCount: reviewCount,
+              newCount: newCount,
+              weakCount: weakCount,
+              isStudyDay: isPlannedStudyDay,
+              nextStudyDate: nextPlannedStudyDate,
+            );
+            if (experience.homeLayout == AppHomeLayout.focus) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 880),
+                      child: primaryStudyArea(compact: officeCompact || mobile),
+                    ),
+                  ),
+                  if (experience.showTodayPlan) ...[
+                    SizedBox(height: officeCompact ? 12 : 16),
+                    plan,
+                  ],
+                ],
+              );
+            }
+            if (wide && experience.showTodayPlan) {
+              final primary = Expanded(
+                flex: experience.homeLayout == AppHomeLayout.insights ? 4 : 5,
+                child: primaryStudyArea(compact: false),
+              );
+              final insights = Expanded(
+                flex: experience.homeLayout == AppHomeLayout.insights ? 5 : 4,
+                child: plan,
+              );
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: experience.homeLayout == AppHomeLayout.insights
+                    ? [insights, const SizedBox(width: 14), primary]
+                    : [primary, const SizedBox(width: 14), insights],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                primaryStudyArea(compact: officeCompact || mobile),
+                if (experience.showTodayPlan) ...[
+                  SizedBox(height: officeCompact ? 12 : 16),
+                  plan,
+                ],
+              ],
+            );
+          }
+
+          final personalizedSections = <Widget>[];
+          for (final section in experience.homeSectionOrder) {
+            final Widget? content = switch (section) {
+              AppHomeSection.pinnedCollections =>
+                experience.showPinnedCollections && pinnedCollections.isNotEmpty
+                    ? _HomePinnedCollections(
+                        collections: pinnedCollections,
+                        itemCountFor: (collection) => controller
+                            .itemsForSmartCollection(collection)
+                            .length,
+                        onOpen: openPinnedCollection,
+                        onManage: () => context.go('/library'),
+                      )
+                    : null,
+              AppHomeSection.recentAdditions =>
+                experience.showRecentAdditions && recentCustomItems.isNotEmpty
+                    ? _RecentAdditionsTray(
+                        items: recentCustomItems.take(5).toList(),
+                        onOpen: (item) =>
+                            context.push('/library/edit/${item.id}'),
+                        onStudy: studyRecentItem,
+                        onTrash: (item) => unawaited(trashRecentItem(item)),
+                      )
+                    : null,
+              AppHomeSection.dataFlow =>
+                experience.showDataFlow && !officeCompact
+                    ? LearningDataFlowCard(
+                        totalCount: selectedItems.length,
+                        localCopyCount: localCopyCount,
+                        groupCount: groupCount,
+                        driveConnected: state.driveConnected,
+                        currentStep: selectedItems.isEmpty
+                            ? LearningDataStep.add
+                            : localCopyCount > 0 && groupCount == 0
+                            ? LearningDataStep.organize
+                            : LearningDataStep.learn,
+                        onAdd: () => unawaited(openQuickContent()),
+                        onOrganize: () => context.go('/library/groups'),
+                        onLearn: () => context.go('/learn'),
+                        localFolderConfigured: localStorage.configured,
+                        localFolderName: localStorage.settings.displayName,
+                        onManageStorage: () => context.go('/settings'),
+                        syncLabel: state.driveConnected
+                            ? 'Drive 연결됨'
+                            : localStorage.configured
+                            ? '로컬 · ${localStorage.settings.displayName}'
+                            : '로컬 폴더 선택 필요',
+                      )
+                    : null,
+              AppHomeSection.schedules =>
+                experience.showSchedules && secondaryScheduledPlans.isNotEmpty
+                    ? _ScheduledPlansCard(
+                        plans: secondaryScheduledPlans,
+                        now: now,
+                        compact: officeCompact || mobile,
+                        onOpen: (plan) {
+                          final loaded = controller.useSavedSessionPlan(plan);
+                          if (loaded != null) context.push('/session-builder');
+                        },
+                        onManage: () => context.push('/session-builder'),
+                        onComplete: completeScheduledPlan,
+                        onSnooze: snoozeScheduledPlan,
+                        onDefer: deferScheduledPlan,
+                        onChangeTime: changeScheduledPlanTime,
+                      )
+                    : null,
+            };
+            if (content != null) {
+              personalizedSections
+                ..add(SizedBox(height: mobile ? 12 : 16))
+                ..add(content);
+            }
           }
 
           return CustomScrollView(
@@ -369,54 +654,68 @@ class HomeScreen extends ConsumerWidget {
                 sliver: SliverToBoxAdapter(
                   child: Center(
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 1120),
+                      constraints: BoxConstraints(
+                        maxWidth: AppTheme.contentMaxWidth(
+                          experience.contentWidth,
+                        ),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          _HomeHeader(
-                            compact: officeCompact,
-                            now: now,
-                            subjectName: activeSubject.name,
-                            subjectSymbol: activeSubject.symbol,
-                            generalTopic: !activeSubject.isLanguage,
-                            subtitle: activeSubject.isLanguage
-                                ? activeSubject.contentLanguage.nativeName
-                                : '나만의 학습 주제',
-                            streakDays: state.streakDays,
-                            connected: state.driveConnected,
-                            windowWorkspace: isWindows ? windowWorkspace : null,
-                            onToggleCompact: isWindows
-                                ? () => unawaited(
-                                    ref
-                                        .read(
-                                          windowWorkspaceControllerProvider
-                                              .notifier,
-                                        )
-                                        .toggleCompact(),
-                                  )
-                                : null,
-                            onMinimize: isWindows
-                                ? () => unawaited(
-                                    ref
-                                        .read(
-                                          windowWorkspaceControllerProvider
-                                              .notifier,
-                                        )
-                                        .minimize(),
-                                  )
-                                : null,
-                            onSettings: () => context.go('/settings'),
-                          ),
+                          if (experience.showHomeHeader)
+                            _HomeHeader(
+                              compact: officeCompact,
+                              now: now,
+                              subjectName: activeSubject.name,
+                              subjectSymbol: activeSubject.symbol,
+                              generalTopic: !activeSubject.isLanguage,
+                              subtitle: activeSubject.isLanguage
+                                  ? activeSubject.contentLanguage.nativeName
+                                  : '나만의 학습 주제',
+                              streakDays: state.streakDays,
+                              connected: state.driveConnected,
+                              showStreak: experience.showStreak,
+                              showSyncStatus: experience.showSyncStatus,
+                              windowWorkspace: supportsWindowWorkspace
+                                  ? windowWorkspace
+                                  : null,
+                              onToggleCompact: supportsWindowWorkspace
+                                  ? () => unawaited(
+                                      ref
+                                          .read(
+                                            windowWorkspaceControllerProvider
+                                                .notifier,
+                                          )
+                                          .toggleCompact(),
+                                    )
+                                  : null,
+                              onMinimize: supportsWindowWorkspace
+                                  ? () => unawaited(
+                                      ref
+                                          .read(
+                                            windowWorkspaceControllerProvider
+                                                .notifier,
+                                          )
+                                          .minimize(),
+                                    )
+                                  : null,
+                              onSettings: () => context.go('/settings'),
+                            ),
                           if (!state.preferences.onboardingCompleted) ...[
                             SizedBox(height: officeCompact ? 12 : 16),
                             _GettingStartedCard(
                               compact: officeCompact || mobile,
-                              language: state.selectedLanguage,
-                              dailyGoal: state.dailyGoal,
+                              language: onboardingDisplayLanguage,
+                              dailyGoal: hasOnboardingDraft
+                                  ? onboardingProfile.dailyGoal
+                                  : state.dailyGoal,
+                              resuming: hasOnboardingDraft,
                               onPressed: () => _showFirstRunSetup(
                                 context: context,
                                 language: state.selectedLanguage,
                                 dailyGoal: state.dailyGoal,
+                                profile: state.preferences.onboardingProfile,
+                                onDraft: controller.saveOnboardingDraft,
                                 onComplete: (selection) {
                                   controller.completeOnboarding(
                                     language: selection.language,
@@ -425,14 +724,93 @@ class HomeScreen extends ConsumerWidget {
                                   final completed = ref.read(
                                     appControllerProvider,
                                   );
+                                  final profile = selection.onboardingProfile;
+                                  final activityId =
+                                      profile.recommendedActivityId;
+                                  final currentCatalog = completed
+                                      .preferences
+                                      .interaction
+                                      .practiceCatalog;
+                                  final recommendedLaunch = currentCatalog
+                                      .launchFor(activityId)
+                                      .copyWith(
+                                        length: PracticeSessionLength.tenItems,
+                                        largeControls: profile.easyAccess,
+                                      );
+                                  final recommendedCatalog = currentCatalog
+                                      .copyWith(
+                                        quickLaunchActivityIds: {
+                                          ...currentCatalog
+                                              .quickLaunchActivityIds,
+                                          activityId,
+                                        },
+                                        launchByActivityId: {
+                                          ...currentCatalog.launchByActivityId,
+                                          activityId: recommendedLaunch,
+                                        },
+                                      )
+                                      .adjustRecommendationWeight(
+                                        activityId,
+                                        3,
+                                      );
                                   controller.updatePreferences(
                                     completed.preferences.copyWith(
                                       preferredMode: selection.preferredMode,
                                       newItemLimit: selection.newItemLimit,
                                       sessionItemLimit:
                                           selection.sessionItemLimit,
-                                      onboardingProfile:
-                                          selection.onboardingProfile,
+                                      onboardingProfile: profile,
+                                      sessionPlan: completed
+                                          .preferences
+                                          .sessionPlan
+                                          .copyWith(
+                                            planId: '',
+                                            subjectId: languageSubjectId(
+                                              selection.language,
+                                            ),
+                                            title: profile
+                                                .recommendedStarterGroupLabel,
+                                            mode: selection.preferredMode,
+                                            itemLimit:
+                                                selection.sessionItemLimit,
+                                            lengthMode: StudySessionLengthMode
+                                                .itemCount,
+                                            largeControls: profile.easyAccess,
+                                            scheduledAt: null,
+                                          ),
+                                      experience: completed
+                                          .preferences
+                                          .experience
+                                          .copyWith(
+                                            colorMode: profile.appColorMode,
+                                            accentPalette:
+                                                profile.appAccentPalette,
+                                            textScale: profile.easyAccess
+                                                ? AppTextScale.large
+                                                : completed
+                                                      .preferences
+                                                      .experience
+                                                      .textScale,
+                                            highContrast:
+                                                profile.easyAccess ||
+                                                completed
+                                                    .preferences
+                                                    .experience
+                                                    .highContrast,
+                                            showFocusRing: true,
+                                          ),
+                                      interaction: completed
+                                          .preferences
+                                          .interaction
+                                          .copyWith(
+                                            choiceLayout: profile.easyAccess
+                                                ? StudyChoiceLayout.list
+                                                : completed
+                                                      .preferences
+                                                      .interaction
+                                                      .choiceLayout,
+                                            practiceCatalog: recommendedCatalog,
+                                          ),
                                     ),
                                   );
                                   if (selection.entry ==
@@ -440,17 +818,45 @@ class HomeScreen extends ConsumerWidget {
                                     context.push('/import');
                                   } else {
                                     context.push(
-                                      '/study?mode=${selection.preferredMode.name}',
+                                      '/study?mode=${selection.preferredMode.name}&limit=3',
                                     );
                                   }
                                 },
                               ),
-                              onDismiss: () => controller.updatePreferences(
-                                state.preferences.copyWith(
-                                  onboardingCompleted: true,
-                                ),
-                              ),
+                              onDismiss: () {
+                                controller.saveOnboardingDraft(
+                                  state.preferences.onboardingProfile.copyWith(
+                                    deferred: true,
+                                  ),
+                                );
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      '선택을 저장했습니다. 홈의 시작 설정에서 언제든 이어갈 수 있어요.',
+                                    ),
+                                  ),
+                                );
+                              },
                             ),
+                          ] else ...[
+                            SizedBox(height: officeCompact ? 10 : 12),
+                            _HomeQuickActions(
+                              actions: onboardingProfile.quickActions,
+                              compact: officeCompact || mobile,
+                              onSelected: runHomeQuickAction,
+                            ),
+                            if (!hasCompletedCourseSession &&
+                                onboardingProfile.languageCode.isNotEmpty) ...[
+                              SizedBox(height: officeCompact ? 8 : 10),
+                              _FirstStartRecommendationCard(
+                                profile: onboardingProfile,
+                                mode: state.preferences.preferredMode,
+                                itemCount: state.preferences.sessionItemLimit,
+                                compact: officeCompact || mobile,
+                                onStart: () => context.push(recommendedRoute),
+                                onPractice: () => context.go('/learn'),
+                              ),
+                            ],
                           ],
                           SizedBox(
                             height: officeCompact
@@ -459,83 +865,78 @@ class HomeScreen extends ConsumerWidget {
                                 ? 14
                                 : 20,
                           ),
-                          if (wide)
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 5,
-                                  child: primaryStudyArea(compact: false),
+                          studyOverview(),
+                          if (quickStudyPlan != null) ...[
+                            SizedBox(height: mobile ? 12 : 16),
+                            Card(
+                              key: const Key('two-minute-study-card'),
+                              child: Padding(
+                                padding: const EdgeInsets.all(14),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.timer_outlined,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '2분 취약·복습',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleSmall,
+                                          ),
+                                          Text(
+                                            '복습·취약 표현 ${quickStudyPlan.selectedItemIds.length}개만 바로 학습해요.',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (!mobile)
+                                      TextButton.icon(
+                                        key: const Key(
+                                          'schedule-two-minute-study',
+                                        ),
+                                        onPressed: () =>
+                                            unawaited(scheduleTwoMinuteStudy()),
+                                        icon: const Icon(
+                                          Icons.notifications_outlined,
+                                        ),
+                                        label: const Text('알림'),
+                                      )
+                                    else
+                                      IconButton(
+                                        key: const Key(
+                                          'schedule-two-minute-study',
+                                        ),
+                                        tooltip: '2분 학습 알림 저장',
+                                        onPressed: () =>
+                                            unawaited(scheduleTwoMinuteStudy()),
+                                        icon: const Icon(
+                                          Icons.notifications_outlined,
+                                        ),
+                                      ),
+                                    const SizedBox(width: 6),
+                                    FilledButton(
+                                      key: const Key('start-two-minute-study'),
+                                      onPressed: startTwoMinuteStudy,
+                                      child: const Text('바로 시작'),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  flex: 4,
-                                  child: _TodayPlan(
-                                    reviewCount: reviewCount,
-                                    newCount: newCount,
-                                    weakCount: weakCount,
-                                  ),
-                                ),
-                              ],
-                            )
-                          else ...[
-                            primaryStudyArea(compact: officeCompact || mobile),
-                            SizedBox(height: officeCompact ? 12 : 16),
-                            _TodayPlan(
-                              compact: officeCompact || mobile,
-                              reviewCount: reviewCount,
-                              newCount: newCount,
-                              weakCount: weakCount,
+                              ),
                             ),
                           ],
-                          if (pinnedCollections.isNotEmpty) ...[
-                            SizedBox(height: mobile ? 12 : 16),
-                            _HomePinnedCollections(
-                              collections: pinnedCollections,
-                              itemCountFor: (collection) => controller
-                                  .itemsForSmartCollection(collection)
-                                  .length,
-                              onOpen: openPinnedCollection,
-                              onManage: () => context.go('/library'),
-                            ),
-                          ],
-                          if (recentCustomItems.isNotEmpty) ...[
-                            SizedBox(height: mobile ? 12 : 16),
-                            _RecentAdditionsTray(
-                              items: recentCustomItems.take(5).toList(),
-                              onOpen: (item) =>
-                                  context.push('/library/edit/${item.id}'),
-                              onStudy: studyRecentItem,
-                              onTrash: (item) =>
-                                  unawaited(trashRecentItem(item)),
-                            ),
-                          ],
-                          if (!officeCompact) ...[
-                            SizedBox(height: mobile ? 12 : 16),
-                            LearningDataFlowCard(
-                              totalCount: selectedItems.length,
-                              localCopyCount: localCopyCount,
-                              groupCount: groupCount,
-                              driveConnected: state.driveConnected,
-                              currentStep: selectedItems.isEmpty
-                                  ? LearningDataStep.add
-                                  : localCopyCount > 0 && groupCount == 0
-                                  ? LearningDataStep.organize
-                                  : LearningDataStep.learn,
-                              onAdd: () => unawaited(openQuickContent()),
-                              onOrganize: () => context.go('/library/groups'),
-                              onLearn: () => context.go('/learn'),
-                              localFolderConfigured: localStorage.configured,
-                              localFolderName:
-                                  localStorage.settings.displayName,
-                              onManageStorage: () => context.go('/settings'),
-                              syncLabel: state.driveConnected
-                                  ? 'Drive 연결됨'
-                                  : localStorage.configured
-                                  ? '로컬 · ${localStorage.settings.displayName}'
-                                  : '로컬 폴더 선택 필요',
-                            ),
-                          ],
+                          ...personalizedSections,
                           if (localStorage.requiresSetup ||
                               localStorage.errorMessage != null) ...[
                             SizedBox(height: mobile ? 10 : 14),
@@ -543,27 +944,6 @@ class HomeScreen extends ConsumerWidget {
                               compact: officeCompact || mobile,
                               errorMessage: localStorage.errorMessage,
                               onPressed: () => context.go('/settings'),
-                            ),
-                          ],
-                          if (secondaryScheduledPlans.isNotEmpty) ...[
-                            SizedBox(height: officeCompact ? 12 : 16),
-                            _ScheduledPlansCard(
-                              plans: secondaryScheduledPlans,
-                              now: now,
-                              compact: officeCompact || mobile,
-                              onOpen: (plan) {
-                                final loaded = controller.useSavedSessionPlan(
-                                  plan,
-                                );
-                                if (loaded != null) {
-                                  context.push('/session-builder');
-                                }
-                              },
-                              onManage: () => context.push('/session-builder'),
-                              onComplete: completeScheduledPlan,
-                              onSnooze: snoozeScheduledPlan,
-                              onDefer: deferScheduledPlan,
-                              onChangeTime: changeScheduledPlanTime,
                             ),
                           ],
                         ],
@@ -579,6 +959,183 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
+
+class _HomeQuickActions extends StatelessWidget {
+  const _HomeQuickActions({
+    required this.actions,
+    required this.compact,
+    required this.onSelected,
+  });
+
+  final List<HomeQuickAction> actions;
+  final bool compact;
+  final ValueChanged<HomeQuickAction> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeActions = <HomeQuickAction>[];
+    for (final action in [...actions, ...defaultHomeQuickActions]) {
+      if (!safeActions.contains(action)) safeActions.add(action);
+      if (safeActions.length == 3) break;
+    }
+    return Semantics(
+      container: true,
+      label: '내 홈 빠른 행동',
+      child: Card(
+        key: const Key('home-custom-quick-actions'),
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: EdgeInsets.all(compact ? 8 : 10),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width =
+                  (constraints.maxWidth - (safeActions.length - 1) * 6) /
+                  safeActions.length;
+              return Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final (index, action) in safeActions.indexed)
+                    SizedBox(
+                      width: width,
+                      child: FilledButton.tonalIcon(
+                        key: Key('home-quick-action-$index-${action.name}'),
+                        onPressed: () => onSelected(action),
+                        style: FilledButton.styleFrom(
+                          minimumSize: Size(0, compact ? 44 : 48),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: compact ? 6 : 10,
+                          ),
+                        ),
+                        icon: Icon(action.icon, size: 18),
+                        label: Text(
+                          action.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FirstStartRecommendationCard extends StatelessWidget {
+  const _FirstStartRecommendationCard({
+    required this.profile,
+    required this.mode,
+    required this.itemCount,
+    required this.compact,
+    required this.onStart,
+    required this.onPractice,
+  });
+
+  final OnboardingProfile profile;
+  final StudyMode mode;
+  final int itemCount;
+  final bool compact;
+  final VoidCallback onStart;
+  final VoidCallback onPractice;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final details = Wrap(
+      spacing: 6,
+      runSpacing: 6,
+      children: [
+        _RecommendationChip(
+          icon: Icons.playlist_play_rounded,
+          label: '첫 큐 ${mode.label} $itemCount개',
+        ),
+        _RecommendationChip(
+          icon: Icons.folder_special_outlined,
+          label: profile.recommendedStarterGroupLabel,
+        ),
+        _RecommendationChip(
+          icon: Icons.sports_esports_rounded,
+          label: _recommendedGameLabel(profile.recommendedActivityId),
+        ),
+      ],
+    );
+    return Card(
+      key: const Key('home-first-recommendation'),
+      color: colors.primaryContainer.withValues(alpha: 0.32),
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: EdgeInsets.all(compact ? 12 : 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded, color: colors.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '내 시작 설정을 반영한 첫 추천',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            details,
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('open-onboarding-game-recommendation'),
+                  onPressed: onPractice,
+                  icon: const Icon(Icons.sports_esports_rounded, size: 18),
+                  label: const Text('게임 보기'),
+                ),
+                FilledButton.icon(
+                  key: const Key('start-onboarding-queue'),
+                  onPressed: onStart,
+                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                  label: const Text('추천 큐 시작'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RecommendationChip extends StatelessWidget {
+  const _RecommendationChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Chip(
+    avatar: Icon(icon, size: 17),
+    label: Text(label),
+    visualDensity: VisualDensity.compact,
+  );
+}
+
+String _recommendedGameLabel(String id) => switch (id) {
+  'pronunciation' => '말하기 연습',
+  'production-writing' => '직접 쓰기',
+  'meaning-choice' => '뜻 고르기',
+  'words-review' => '단어 게임',
+  _ => '혼합 퀴즈',
+};
 
 class _RecentAdditionsTray extends StatelessWidget {
   const _RecentAdditionsTray({
@@ -638,12 +1195,12 @@ class _RecentAdditionsTray extends StatelessWidget {
                   ),
                 ),
                 title: Text(
-                  item.text,
+                  PrivacyModeScope.redact(context, item.text),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 subtitle: Text(
-                  item.primaryTranslation,
+                  PrivacyModeScope.redact(context, item.primaryTranslation),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -652,12 +1209,16 @@ class _RecentAdditionsTray extends StatelessWidget {
                   spacing: 2,
                   children: [
                     IconButton(
-                      tooltip: '${item.text} 바로 학습',
+                      tooltip: PrivacyModeScope.enabledOf(context)
+                          ? '숨긴 자료 바로 학습'
+                          : '${item.text} 바로 학습',
                       onPressed: () => onStudy(item),
                       icon: const Icon(Icons.play_arrow_rounded),
                     ),
                     IconButton(
-                      tooltip: '${item.text} 휴지통으로 이동',
+                      tooltip: PrivacyModeScope.enabledOf(context)
+                          ? '숨긴 자료 휴지통으로 이동'
+                          : '${item.text} 휴지통으로 이동',
                       onPressed: () => onTrash(item),
                       icon: const Icon(Icons.delete_outline_rounded),
                     ),
@@ -817,8 +1378,39 @@ Future<void> _showFirstRunSetup({
   required BuildContext context,
   required LanguageTag language,
   required int dailyGoal,
+  required OnboardingProfile profile,
+  required ValueChanged<OnboardingProfile> onDraft,
   required ValueChanged<_FirstRunSelection> onComplete,
 }) async {
+  // Fuchsia keeps the compact legacy sheet as a conservative fallback. All
+  // shipped targets use the resumable, previewable step flow.
+  if (defaultTargetPlatform != TargetPlatform.fuchsia) {
+    final seededProfile =
+        profile.languageCode.isEmpty &&
+            profile.draftStep == 0 &&
+            !profile.deferred
+        ? profile.copyWith(
+            languageCode: language.code,
+            dailyGoal: dailyGoal,
+            dailyMinutes: switch (dailyGoal) {
+              <= 50 => 3,
+              <= 100 => 5,
+              <= 150 => 10,
+              _ => 15,
+            },
+          )
+        : profile;
+    final result = await showOnboardingSetupDialog(
+      context: context,
+      initialLanguage: language,
+      initialProfile: seededProfile,
+      onDraft: onDraft,
+    );
+    if (result != null && context.mounted) {
+      onComplete(_FirstRunSelection.fromResult(result));
+    }
+    return;
+  }
   final mobile =
       defaultTargetPlatform != TargetPlatform.windows ||
       MediaQuery.sizeOf(context).width < 720;
@@ -891,13 +1483,6 @@ extension on _FirstRunPurpose {
     _FirstRunPurpose.vocabulary => Icons.auto_stories_rounded,
     _FirstRunPurpose.exam => Icons.fact_check_rounded,
   };
-
-  StudyMode get mode => switch (this) {
-    _FirstRunPurpose.routine => StudyMode.mixed,
-    _FirstRunPurpose.conversation => StudyMode.sentences,
-    _FirstRunPurpose.vocabulary => StudyMode.words,
-    _FirstRunPurpose.exam => StudyMode.review,
-  };
 }
 
 extension on _FirstRunLevel {
@@ -905,12 +1490,6 @@ extension on _FirstRunLevel {
     _FirstRunLevel.beginner => '처음',
     _FirstRunLevel.intermediate => '기초 경험 있음',
     _FirstRunLevel.advanced => '중급 이상',
-  };
-
-  int get newItemLimit => switch (this) {
-    _FirstRunLevel.beginner => 10,
-    _FirstRunLevel.intermediate => 8,
-    _FirstRunLevel.advanced => 5,
   };
 }
 
@@ -921,16 +1500,53 @@ class _FirstRunSelection {
     required this.purpose,
     required this.level,
     required this.entry,
+    this.savedProfile,
   });
+
+  factory _FirstRunSelection.fromResult(OnboardingSetupResult result) {
+    final profile = result.profile;
+    return _FirstRunSelection(
+      language: result.language,
+      dailyGoal: profile.dailyGoal,
+      purpose: switch (profile.purpose) {
+        LearningPurpose.dailyConversation => _FirstRunPurpose.routine,
+        LearningPurpose.travel => _FirstRunPurpose.conversation,
+        LearningPurpose.hobby => _FirstRunPurpose.vocabulary,
+        LearningPurpose.work || LearningPurpose.exam => _FirstRunPurpose.exam,
+      },
+      level: switch (profile.level) {
+        SelfAssessedLevel.beginner => _FirstRunLevel.beginner,
+        SelfAssessedLevel.elementary ||
+        SelfAssessedLevel.intermediate => _FirstRunLevel.intermediate,
+        SelfAssessedLevel.advanced => _FirstRunLevel.advanced,
+      },
+      entry: profile.entryChoice == OnboardingEntryChoice.importMyData
+          ? _FirstRunEntry.importData
+          : _FirstRunEntry.sample,
+      savedProfile: profile,
+    );
+  }
 
   final LanguageTag language;
   final int dailyGoal;
   final _FirstRunPurpose purpose;
   final _FirstRunLevel level;
   final _FirstRunEntry entry;
+  final OnboardingProfile? savedProfile;
 
-  StudyMode get preferredMode => purpose.mode;
-  int get newItemLimit => level.newItemLimit;
+  StudyMode get preferredMode => switch (onboardingProfile.purpose) {
+    LearningPurpose.dailyConversation => StudyMode.mixed,
+    LearningPurpose.travel => StudyMode.sentences,
+    LearningPurpose.work => StudyMode.production,
+    LearningPurpose.exam => StudyMode.meaning,
+    LearningPurpose.hobby => StudyMode.words,
+  };
+  int get newItemLimit => switch (onboardingProfile.level) {
+    SelfAssessedLevel.beginner => 10,
+    SelfAssessedLevel.elementary => 8,
+    SelfAssessedLevel.intermediate => 6,
+    SelfAssessedLevel.advanced => 5,
+  };
   int get sessionItemLimit => switch (dailyGoal) {
     <= 50 => 5,
     <= 100 => 10,
@@ -938,29 +1554,33 @@ class _FirstRunSelection {
     _ => 20,
   };
 
-  OnboardingProfile get onboardingProfile => OnboardingProfile(
-    purpose: switch (purpose) {
-      _FirstRunPurpose.routine => LearningPurpose.dailyConversation,
-      _FirstRunPurpose.conversation => LearningPurpose.travel,
-      _FirstRunPurpose.vocabulary => LearningPurpose.hobby,
-      _FirstRunPurpose.exam => LearningPurpose.exam,
-    },
-    level: switch (level) {
-      _FirstRunLevel.beginner => SelfAssessedLevel.beginner,
-      _FirstRunLevel.intermediate => SelfAssessedLevel.elementary,
-      _FirstRunLevel.advanced => SelfAssessedLevel.advanced,
-    },
-    dailyMinutes: switch (dailyGoal) {
-      <= 50 => 3,
-      <= 100 => 5,
-      <= 150 => 10,
-      _ => 15,
-    },
-    entryChoice: switch (entry) {
-      _FirstRunEntry.sample => OnboardingEntryChoice.sampleLesson,
-      _FirstRunEntry.importData => OnboardingEntryChoice.importMyData,
-    },
-  );
+  OnboardingProfile get onboardingProfile =>
+      savedProfile ??
+      OnboardingProfile(
+        languageCode: language.code,
+        purpose: switch (purpose) {
+          _FirstRunPurpose.routine => LearningPurpose.dailyConversation,
+          _FirstRunPurpose.conversation => LearningPurpose.travel,
+          _FirstRunPurpose.vocabulary => LearningPurpose.hobby,
+          _FirstRunPurpose.exam => LearningPurpose.exam,
+        },
+        level: switch (level) {
+          _FirstRunLevel.beginner => SelfAssessedLevel.beginner,
+          _FirstRunLevel.intermediate => SelfAssessedLevel.elementary,
+          _FirstRunLevel.advanced => SelfAssessedLevel.advanced,
+        },
+        dailyMinutes: switch (dailyGoal) {
+          <= 50 => 3,
+          <= 100 => 5,
+          <= 150 => 10,
+          _ => 15,
+        },
+        dailyGoal: dailyGoal,
+        entryChoice: switch (entry) {
+          _FirstRunEntry.sample => OnboardingEntryChoice.sampleLesson,
+          _FirstRunEntry.importData => OnboardingEntryChoice.importMyData,
+        },
+      );
 }
 
 class _GettingStartedCard extends StatelessWidget {
@@ -968,6 +1588,7 @@ class _GettingStartedCard extends StatelessWidget {
     required this.compact,
     required this.language,
     required this.dailyGoal,
+    required this.resuming,
     required this.onPressed,
     required this.onDismiss,
   });
@@ -975,6 +1596,7 @@ class _GettingStartedCard extends StatelessWidget {
   final bool compact;
   final LanguageTag language;
   final int dailyGoal;
+  final bool resuming;
   final VoidCallback onPressed;
   final VoidCallback onDismiss;
 
@@ -1003,9 +1625,15 @@ class _GettingStartedCard extends StatelessWidget {
           children: [
             Text(
               veryNarrow
-                  ? '첫 학습 루틴'
+                  ? resuming
+                        ? '설정 이어하기'
+                        : '첫 학습 루틴'
                   : compact
-                  ? '첫 학습 루틴 설정'
+                  ? resuming
+                        ? '첫 학습 설정 이어하기'
+                        : '첫 학습 루틴 설정'
+                  : resuming
+                  ? '저장한 단계부터 학습 설정을 이어가세요'
                   : '내 학습 루틴을 1분 안에 설정해 보세요',
               style: Theme.of(
                 context,
@@ -1343,6 +1971,8 @@ class _HomeHeader extends StatelessWidget {
     required this.subtitle,
     required this.streakDays,
     required this.connected,
+    required this.showStreak,
+    required this.showSyncStatus,
     required this.onSettings,
     this.windowWorkspace,
     this.onToggleCompact,
@@ -1357,6 +1987,8 @@ class _HomeHeader extends StatelessWidget {
   final String subtitle;
   final int streakDays;
   final bool connected;
+  final bool showStreak;
+  final bool showSyncStatus;
   final VoidCallback onSettings;
   final WindowWorkspaceState? windowWorkspace;
   final VoidCallback? onToggleCompact;
@@ -1367,6 +1999,7 @@ class _HomeHeader extends StatelessWidget {
     const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
     final date = '${now.month}월 ${now.day}일 ${weekdays[now.weekday - 1]}요일';
     return LayoutBuilder(
+      key: const Key('home-header'),
       builder: (context, constraints) {
         final narrow = constraints.maxWidth < 520;
         final veryNarrow = constraints.maxWidth < 370;
@@ -1404,13 +2037,14 @@ class _HomeHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            _HeaderBadge(
-              icon: Icons.local_fire_department_rounded,
-              label: '$streakDays일',
-              color: AppTheme.warning,
-              tooltip: '연속 학습 $streakDays일',
-              showLabel: !narrow,
-            ),
+            if (showStreak)
+              _HeaderBadge(
+                icon: Icons.local_fire_department_rounded,
+                label: '$streakDays일',
+                color: AppTheme.warning,
+                tooltip: '연속 학습 $streakDays일',
+                showLabel: !narrow,
+              ),
             if (windowWorkspace != null && onToggleCompact != null) ...[
               const SizedBox(width: 8),
               _HeaderBadge(
@@ -1442,14 +2076,18 @@ class _HomeHeader extends StatelessWidget {
             const SizedBox(width: 8),
             _HeaderBadge(
               key: const Key('home-settings'),
-              icon: connected
-                  ? Icons.cloud_done_rounded
-                  : Icons.cloud_off_rounded,
-              label: connected ? '저장됨' : '설정',
-              color: connected
+              icon: showSyncStatus
+                  ? connected
+                        ? Icons.cloud_done_rounded
+                        : Icons.cloud_off_rounded
+                  : Icons.settings_rounded,
+              label: showSyncStatus && connected ? '저장됨' : '설정',
+              color: showSyncStatus && connected
                   ? AppTheme.success
                   : Theme.of(context).colorScheme.outline,
-              tooltip: connected ? 'Google Drive 및 설정 열기' : '로컬 저장 및 설정 열기',
+              tooltip: showSyncStatus && connected
+                  ? 'Google Drive 및 설정 열기'
+                  : '설정 열기',
               showLabel: !compact && !narrow,
               onTap: onSettings,
             ),
@@ -1717,10 +2355,94 @@ class _HomeNextAction {
   final VoidCallback onPressed;
 }
 
+class _WeeklyTargetSummaryCard extends StatelessWidget {
+  const _WeeklyTargetSummaryCard({
+    required this.studiedDays,
+    required this.targetDays,
+    required this.studiedMinutes,
+    required this.targetMinutes,
+    required this.progress,
+    required this.onOpen,
+  });
+
+  final int studiedDays;
+  final int targetDays;
+  final int studiedMinutes;
+  final int targetMinutes;
+  final double progress;
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final percent = (progress * 100).round();
+    return Semantics(
+      button: true,
+      label:
+          '주간 목표 달성률 $percent퍼센트. 학습일 $studiedDays/$targetDays일. '
+          '학습 분량 $studiedMinutes/$targetMinutes분.',
+      child: Card(
+        key: const Key('home-weekly-target-summary'),
+        margin: EdgeInsets.zero,
+        child: InkWell(
+          onTap: onOpen,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            child: Row(
+              children: [
+                Icon(Icons.calendar_view_week_rounded, color: colors.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '이번 주 목표',
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$studiedDays/$targetDays일 · '
+                        '$studiedMinutes/$targetMinutes분',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(
+                  width: 92,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text('$percent%'),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right_rounded),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _DailyHero extends StatelessWidget {
   const _DailyHero({
     required this.compact,
     required this.action,
+    required this.showXp,
     required this.dailyXp,
     required this.dailyGoal,
     required this.level,
@@ -1729,6 +2451,7 @@ class _DailyHero extends StatelessWidget {
 
   final bool compact;
   final _HomeNextAction action;
+  final bool showXp;
   final int dailyXp;
   final int dailyGoal;
   final int level;
@@ -1748,7 +2471,7 @@ class _DailyHero extends StatelessWidget {
         padding: EdgeInsets.all(compact ? 16 : 22),
         child: Row(
           children: [
-            if (!compact) ...[
+            if (!compact && showXp) ...[
               _ProgressDial(progress: progress, xp: dailyXp, goal: dailyGoal),
               const SizedBox(width: 20),
             ],
@@ -1782,15 +2505,20 @@ class _DailyHero extends StatelessWidget {
                       color: colors.onPrimaryContainer.withValues(alpha: 0.82),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '오늘 $dailyXp/$dailyGoal XP · 계정 레벨 $level · '
-                    '누적 $accountTotalXp XP',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.onPrimaryContainer.withValues(alpha: 0.78),
+                  if (showXp) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      key: const Key('home-xp-summary'),
+                      '오늘 $dailyXp/$dailyGoal XP · 계정 레벨 $level · '
+                      '누적 $accountTotalXp XP',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.onPrimaryContainer.withValues(
+                          alpha: 0.78,
+                        ),
+                      ),
                     ),
-                  ),
-                  if (compact) ...[
+                  ],
+                  if (compact && showXp) ...[
                     const SizedBox(height: 9),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
@@ -1887,22 +2615,54 @@ class _TodayPlan extends StatelessWidget {
     required this.reviewCount,
     required this.newCount,
     required this.weakCount,
+    required this.isStudyDay,
+    required this.nextStudyDate,
     this.compact = false,
   });
 
   final int reviewCount;
   final int newCount;
   final int weakCount;
+  final bool isStudyDay;
+  final DateTime nextStudyDate;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      key: const Key('home-today-plan'),
       child: Padding(
         padding: EdgeInsets.all(compact ? 12 : 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (!isStudyDay) ...[
+              DecoratedBox(
+                key: const Key('home-rest-day-banner'),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondaryContainer.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.self_improvement_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '쉬는 날 · 다음 학습 ${nextStudyDate.month}/${nextStudyDate.day}',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             if (!compact) ...[
               Text('오늘의 학습', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 4),

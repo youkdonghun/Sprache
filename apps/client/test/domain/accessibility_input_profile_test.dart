@@ -10,6 +10,7 @@ void main() {
         cardScale: AccessibilityCardScale.extraLarge,
         highContrast: true,
         reduceMotion: true,
+        reduceTransparency: true,
         disableTimedChallenges: true,
         androidSelectionGesture: AndroidSelectionGesture.swipeAndButtons,
       ).remapShortcut(StudyShortcutAction.playAudio, StudyShortcutKey.keyA);
@@ -27,6 +28,7 @@ void main() {
       expect(actual.cardScaleFactor, 1.28);
       expect(actual.highContrast, isTrue);
       expect(actual.reduceMotion, isTrue);
+      expect(actual.reduceTransparency, isTrue);
       expect(actual.disableTimedChallenges, isTrue);
       expect(actual.allowsTimedChallenges, isFalse);
       expect(
@@ -89,6 +91,49 @@ void main() {
       );
       expect(remapped.requiresVisibleSelectionControls, isTrue);
       expect(remapped.minimumRatingControlHeight, 48);
+    });
+
+    test('reports displaced study and global shortcut conflicts', () {
+      final studyResult = const AccessibilityInputProfile().remapStudyShortcut(
+        StudyShortcutAction.dontKnow,
+        StudyShortcutKey.controlH,
+      );
+      final globalResult = studyResult.profile.remapGlobalShortcut(
+        GlobalShortcutAction.quickAdd,
+        StudyShortcutKey.controlK,
+      );
+
+      expect(studyResult.displacedAction, StudyShortcutAction.showHint);
+      expect(
+        studyResult.profile.shortcutFor(StudyShortcutAction.showHint),
+        StudyShortcutKey.none,
+      );
+      expect(globalResult.displacedAction, GlobalShortcutAction.openSearch);
+      expect(
+        globalResult.profile.globalShortcutFor(GlobalShortcutAction.openSearch),
+        StudyShortcutKey.none,
+      );
+      expect(
+        globalResult.profile.globalShortcutFor(GlobalShortcutAction.quickAdd),
+        StudyShortcutKey.controlK,
+      );
+    });
+
+    test('legacy JSON receives the new accessible shortcut defaults', () {
+      final profile = AccessibilityInputProfile.fromJson(const {});
+
+      expect(
+        profile.shortcutFor(StudyShortcutAction.showHint),
+        StudyShortcutKey.controlH,
+      );
+      expect(
+        profile.shortcutFor(StudyShortcutAction.pause),
+        StudyShortcutKey.escape,
+      );
+      expect(
+        profile.globalShortcutFor(GlobalShortcutAction.keyboardHelp),
+        StudyShortcutKey.controlSlash,
+      );
     });
   });
 }

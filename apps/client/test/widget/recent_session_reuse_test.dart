@@ -32,10 +32,7 @@ void main() {
         earnedXp: 25,
         itemIds: items.map((item) => item.id).toList(growable: false),
         wrongItemIds: {items.last.id},
-        finalCorrectItemIds: {
-          items.first.id,
-          items[1].id,
-        },
+        finalCorrectItemIds: {items.first.id, items[1].id},
       ),
     );
 
@@ -55,6 +52,7 @@ void main() {
       await tester.drag(find.byType(ListView).first, const Offset(0, -1600));
       await tester.pumpAndSettle();
       await tester.ensureVisible(actions);
+      await tester.pumpAndSettle();
       await tester.tap(actions);
       await tester.pumpAndSettle();
       await tester.tap(find.text('맞힌 항목 제외하고 학습'));

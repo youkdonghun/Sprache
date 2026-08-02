@@ -64,6 +64,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(clipboardReads, 1);
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.byKey(const Key('bulk-paste-system-clipboard')),
+          )
+          .onPressed,
+      isNull,
+    );
     expect(find.textContaining('감지 형식 혼합 구분자'), findsOneWidget);
     expect(find.textContaining('가져올 6개'), findsOneWidget);
     expect(find.byKey(const Key('bulk-paste-entry-preview')), findsOneWidget);
@@ -78,10 +86,30 @@ void main() {
       findsNothing,
     );
 
-    await tester.tap(find.byKey(const Key('clear-bulk-paste-input')));
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(open);
+    await tester.tap(open);
     await tester.pumpAndSettle();
 
     expect(clipboardReads, 1);
+    expect(
+      tester
+          .widget<TextField>(find.byKey(const Key('bulk-paste-import-input')))
+          .controller
+          ?.text,
+      isEmpty,
+      reason: '확정하지 않은 클립보드 내용은 창을 나갈 때 폐기한다.',
+    );
+
+    await tester.tap(find.byKey(const Key('bulk-paste-system-clipboard')));
+    await tester.pumpAndSettle();
+    expect(clipboardReads, 2);
+
+    await tester.tap(find.byKey(const Key('clear-bulk-paste-input')));
+    await tester.pumpAndSettle();
+
+    expect(clipboardReads, 2);
     expect(
       tester
           .widget<TextField>(find.byKey(const Key('bulk-paste-import-input')))
@@ -97,6 +125,7 @@ void main() {
           .onPressed,
       isNull,
     );
+
     expect(tester.takeException(), isNull);
   });
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   GoogleDesktopOAuthBrokerError,
+  isGoogleDesktopOAuthBrokerError,
   RailwayGoogleDesktopOAuthBroker,
 } from "./googleDesktopOAuthBroker.js";
 
@@ -76,5 +77,42 @@ describe("RailwayGoogleDesktopOAuthBroker", () => {
       code: "invalid_grant",
       description: "Authorization code expired.",
     });
+  });
+
+  it("recognizes only bounded branded broker errors across constructor identities", () => {
+    const splitIdentityError = new GoogleDesktopOAuthBrokerError(
+      400,
+      "invalid_grant",
+      "Authorization code expired.",
+    );
+    Object.setPrototypeOf(splitIdentityError, Error.prototype);
+
+    expect(splitIdentityError).not.toBeInstanceOf(
+      GoogleDesktopOAuthBrokerError,
+    );
+    expect(isGoogleDesktopOAuthBrokerError(splitIdentityError)).toBe(true);
+    expect(
+      isGoogleDesktopOAuthBrokerError({
+        name: "GoogleDesktopOAuthBrokerError",
+        statusCode: 400,
+        code: "invalid_grant",
+        description: null,
+      }),
+    ).toBe(false);
+    expect(
+      isGoogleDesktopOAuthBrokerError(
+        new GoogleDesktopOAuthBrokerError(200, "invalid_grant"),
+      ),
+    ).toBe(false);
+    expect(
+      isGoogleDesktopOAuthBrokerError(
+        new GoogleDesktopOAuthBrokerError(400, "invalid grant"),
+      ),
+    ).toBe(false);
+    expect(
+      isGoogleDesktopOAuthBrokerError(
+        new GoogleDesktopOAuthBrokerError(400, "invalid_grant", "x".repeat(321)),
+      ),
+    ).toBe(false);
   });
 });

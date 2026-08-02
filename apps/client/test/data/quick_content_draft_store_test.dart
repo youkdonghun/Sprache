@@ -4,6 +4,7 @@ import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/quick_content_draft.dart';
 import 'package:sprache/src/domain/quick_content_preferences.dart';
+import 'package:sprache/src/domain/search_preferences.dart';
 
 void main() {
   test('memory store saves and clears a device-local quick draft', () async {
@@ -34,6 +35,25 @@ void main() {
 
     await store.clearQuickContentDraft();
     expect(await store.loadQuickContentDraft(), isNull);
+  });
+
+  test('stores device-local search history and result layout', () async {
+    final store = MemoryStudyStore();
+    final preferences = const SearchLocalPreferences()
+        .rememberGlobal('bonjour')
+        .rememberSubject('language:fr', 'state:due')
+        .copyWith(
+          globalResultLayout: GlobalSearchResultLayout.subject,
+          libraryViewMode: LibraryViewMode.compact,
+        );
+
+    await store.saveSearchLocalPreferences(preferences);
+    final restored = await store.loadSearchLocalPreferences();
+
+    expect(restored.globalRecent, ['bonjour']);
+    expect(restored.recentForSubject('language:fr'), ['state:due']);
+    expect(restored.globalResultLayout, GlobalSearchResultLayout.subject);
+    expect(restored.libraryViewMode, LibraryViewMode.compact);
   });
 
   test('draft JSON keeps explicit tokens and language reading schemes', () {

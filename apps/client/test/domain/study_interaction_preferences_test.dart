@@ -19,6 +19,9 @@ void main() {
       practiceCatalog: const PracticeCatalogPreferences(
         favoriteActivityIds: {'/study?mode=meaning'},
         hiddenActivityIds: {'/path'},
+        recentActivityIds: ['/study?mode=meaning'],
+        favoriteActivityOrder: ['/study?mode=meaning'],
+        quickLaunchActivityIds: {'/study?mode=meaning'},
         launchByActivityId: {
           '/study?mode=meaning': PracticeLaunchPreferences(
             length: PracticeSessionLength.fiveMinutes,
@@ -52,10 +55,11 @@ void main() {
     expect(restored.shuffleChoices, isFalse);
     expect(restored.autoAdvanceCorrect, isTrue);
     expect(restored.autoAdvanceDelayMs, 1450);
-    expect(restored.practiceCatalog.favoriteActivityIds, {
-      '/study?mode=meaning',
-    });
-    expect(restored.practiceCatalog.hiddenActivityIds, {'/path'});
+    expect(restored.practiceCatalog.favoriteActivityIds, {'meaning-choice'});
+    expect(restored.practiceCatalog.hiddenActivityIds, {'course-path'});
+    expect(restored.practiceCatalog.recentActivityIds, ['meaning-choice']);
+    expect(restored.practiceCatalog.favoriteActivityOrder, ['meaning-choice']);
+    expect(restored.practiceCatalog.quickLaunchActivityIds, {'meaning-choice'});
     final launch = restored.practiceCatalog.launchFor('/study?mode=meaning');
     expect(launch.length, PracticeSessionLength.fiveMinutes);
     expect(launch.difficulty, PracticeDifficultyPreset.challenge);
@@ -85,6 +89,24 @@ void main() {
     expect(restored.choiceLayout, StudyChoiceLayout.automatic);
   });
 
+  test('malformed numeric types fall back without breaking hydration', () {
+    final restored = StudyInteractionPreferences.fromJson({
+      'audioRepeatCount': 'three',
+      'autoAdvanceDelayMs': true,
+      'practiceCatalog': {
+        'launchByActivityId': {
+          'mixed-quiz': {'itemCount': 'ten', 'choiceCount': false},
+        },
+      },
+    });
+
+    expect(restored.audioRepeatCount, 1);
+    expect(restored.autoAdvanceDelayMs, 900);
+    final launch = restored.practiceCatalog.launchFor('mixed-quiz');
+    expect(launch.itemCount, 10);
+    expect(launch.choiceCount, 4);
+  });
+
   test('practice catalog rejects unsafe ids and invalid choice counts', () {
     final tooLong = List.filled(200, 'x').join();
     final restored = PracticeCatalogPreferences.fromJson({
@@ -97,7 +119,7 @@ void main() {
     });
 
     expect(restored.favoriteActivityIds, isEmpty);
-    expect(restored.hiddenActivityIds, {'/study?mode=mixed'});
+    expect(restored.hiddenActivityIds, {'mixed-quiz'});
     expect(restored.launchFor('/study?mode=meaning').choiceCount, 4);
     expect(restored.launchByActivityId, hasLength(1));
   });

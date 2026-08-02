@@ -15,6 +15,8 @@ class TtsVoice {
   final bool? networkRequired;
   final int quality;
 
+  String get id => '${normalizeTtsLocale(locale)}::$name';
+
   Map<String, String> get platformValue => {'name': name, 'locale': locale};
 
   static TtsVoice? tryParse(Object? source) {
@@ -102,7 +104,12 @@ abstract interface class TtsPlatformAdapter {
   Future<void> stop();
 }
 
-class FlutterTtsPlatformAdapter implements TtsPlatformAdapter {
+abstract interface class TtsPitchPlatformAdapter {
+  Future<void> setPitch(double pitch);
+}
+
+class FlutterTtsPlatformAdapter
+    implements TtsPlatformAdapter, TtsPitchPlatformAdapter {
   FlutterTtsPlatformAdapter({FlutterTts? flutterTts})
     : _flutterTts = flutterTts ?? FlutterTts();
 
@@ -129,6 +136,11 @@ class FlutterTtsPlatformAdapter implements TtsPlatformAdapter {
   @override
   Future<void> setSpeechRate(double rate) async {
     await _flutterTts.setSpeechRate(rate);
+  }
+
+  @override
+  Future<void> setPitch(double pitch) async {
+    await _flutterTts.setPitch(pitch);
   }
 
   @override
@@ -159,20 +171,60 @@ class TtsService {
   final TtsVoiceSelector selector;
   List<TtsVoice>? _voiceCache;
 
+  Future<List<TtsVoice>> installedVoices({bool refresh = false}) async {
+    if (refresh) _voiceCache = null;
+    return List.unmodifiable(_voiceCache ??= await _loadVoicesSafely());
+  }
+
+  Future<List<TtsVoice>> voicesFor(
+    LanguageTag language, {
+    bool refresh = false,
+  }) async {
+    final target = normalizeTtsLocale(language.ttsLocale);
+    return [
+      for (final voice in await installedVoices(refresh: refresh))
+        if (_localeRank(target, voice.locale) < _noLocaleMatch) voice,
+    ]..sort((left, right) {
+      final localeOrder = _localeRank(
+        target,
+        left.locale,
+      ).compareTo(_localeRank(target, right.locale));
+      if (localeOrder != 0) return localeOrder;
+      final networkOrder = _networkRank(
+        left.networkRequired,
+      ).compareTo(_networkRank(right.networkRequired));
+      if (networkOrder != 0) return networkOrder;
+      return left.name.compareTo(right.name);
+    });
+  }
+
   Future<TtsVoiceSelection> resolve(
     LanguageTag language, {
     bool refresh = false,
     bool preferOfflineVoice = true,
+    String? preferredVoiceId,
   }) async {
-    if (refresh) _voiceCache = null;
-    final voices = _voiceCache ??= await _loadVoicesSafely();
+    final voices = await installedVoices(refresh: refresh);
+    TtsVoice? preferred;
+    if (preferredVoiceId != null && preferredVoiceId.trim().isNotEmpty) {
+      final target = normalizeTtsLocale(language.ttsLocale);
+      for (final voice in voices) {
+        if (voice.id == preferredVoiceId &&
+            _localeRank(target, voice.locale) < _noLocaleMatch) {
+          preferred = voice;
+          break;
+        }
+      }
+    }
     return TtsVoiceSelection(
       locale: language.ttsLocale,
-      voice: selector.select(
-        language,
-        voices,
-        preferOfflineVoice: preferOfflineVoice,
-      ),
+      voice:
+          preferred ??
+          selector.select(
+            language,
+            voices,
+            preferOfflineVoice: preferOfflineVoice,
+          ),
     );
   }
 
@@ -180,11 +232,14 @@ class TtsService {
     LanguageTag language, {
     bool refresh = false,
     bool preferOfflineVoice = true,
+    String? preferredVoiceId,
+    double pitch = 1,
   }) async {
     final selection = await resolve(
       language,
       refresh: refresh,
       preferOfflineVoice: preferOfflineVoice,
+      preferredVoiceId: preferredVoiceId,
     );
     await platform.setLanguage(selection.locale);
     final voice = selection.voice;
@@ -196,6 +251,16 @@ class TtsService {
         // selection. The language fallback remains usable in that case.
       }
     }
+    final pitchAdapter = platform;
+    if (pitchAdapter is TtsPitchPlatformAdapter) {
+      try {
+        await (pitchAdapter as TtsPitchPlatformAdapter).setPitch(
+          pitch.clamp(0.5, 2).toDouble(),
+        );
+      } catch (_) {
+        // Pitch is optional on some engines; selected voice remains usable.
+      }
+    }
     return selection;
   }
 
@@ -205,6 +270,8 @@ class TtsService {
     double rate = 0.45,
     bool preferOfflineVoice = true,
     int repeatCount = 1,
+    String? preferredVoiceId,
+    double pitch = 1,
   }) async {
     final normalized = text.trim();
     if (normalized.isEmpty) {
@@ -214,6 +281,8 @@ class TtsService {
     final selection = await configure(
       language,
       preferOfflineVoice: preferOfflineVoice,
+      preferredVoiceId: preferredVoiceId,
+      pitch: pitch,
     );
     await platform.setSpeechRate(rate.clamp(0.2, 0.8).toDouble());
     final repeats = repeatCount.clamp(1, 3);

@@ -1,4 +1,5 @@
 import 'answer_normalizer.dart';
+import 'adaptive_study_session.dart';
 import 'learning_item.dart';
 import 'progress.dart';
 import 'session_enhancements.dart';
@@ -92,21 +93,49 @@ class QuizSessionOptions {
     required this.answerDirection,
     required this.gradingStrength,
     required this.inputProfile,
+    this.strategy = StudySessionStrategy.adaptive,
+    this.breakReminderMinutes = 20,
+    this.showKoreanReading = true,
+    this.showNativeReading = true,
+    this.ttsRate = 0.45,
   });
 
   final StudyAnswerDirection answerDirection;
   final StudyGradingStrictness gradingStrength;
   final PracticeInputProfile inputProfile;
+  final StudySessionStrategy strategy;
+  final int breakReminderMinutes;
+  final bool showKoreanReading;
+  final bool showNativeReading;
+  final double ttsRate;
+
+  StudySessionRuntimeOptions get runtimeOptions => StudySessionRuntimeOptions(
+    strategy: strategy,
+    breakReminderMinutes: breakReminderMinutes,
+    showKoreanReading: showKoreanReading,
+    showNativeReading: showNativeReading,
+    ttsRate: ttsRate,
+  );
 
   QuizSessionOptions copyWith({
     StudyAnswerDirection? answerDirection,
     StudyGradingStrictness? gradingStrength,
     PracticeInputProfile? inputProfile,
+    StudySessionStrategy? strategy,
+    int? breakReminderMinutes,
+    bool? showKoreanReading,
+    bool? showNativeReading,
+    double? ttsRate,
   }) {
     return QuizSessionOptions(
       answerDirection: answerDirection ?? this.answerDirection,
       gradingStrength: gradingStrength ?? this.gradingStrength,
       inputProfile: inputProfile ?? this.inputProfile,
+      strategy: strategy ?? this.strategy,
+      breakReminderMinutes: breakReminderMinutes ?? this.breakReminderMinutes,
+      showKoreanReading: showKoreanReading ?? this.showKoreanReading,
+      showNativeReading: showNativeReading ?? this.showNativeReading,
+      ttsRate: ttsRate ?? this.ttsRate,
     );
   }
 }

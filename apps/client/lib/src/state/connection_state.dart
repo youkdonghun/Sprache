@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
@@ -130,6 +131,37 @@ class ConnectionDiagnostic {
   }
 }
 
+class ReconnectSyncSummary {
+  const ReconnectSyncSummary({
+    required this.id,
+    required this.completedAt,
+    required this.comparedChanges,
+    required this.uploaded,
+    required this.downloaded,
+    required this.conflicts,
+  });
+
+  final String id;
+  final DateTime completedAt;
+  final int comparedChanges;
+  final int uploaded;
+  final int downloaded;
+  final int conflicts;
+
+  String get message {
+    if (comparedChanges == 0 && uploaded == 0 && downloaded == 0) {
+      return '오프라인 변경을 Drive와 안전하게 확인했습니다.';
+    }
+    final parts = <String>[
+      '오프라인 변경을 안전하게 병합했습니다.',
+      if (uploaded > 0) '올림 $uploaded',
+      if (downloaded > 0) '받음 $downloaded',
+      if (conflicts > 0) '충돌 검토 $conflicts',
+    ];
+    return parts.join(' · ');
+  }
+}
+
 class ConnectionState {
   const ConnectionState({
     required this.phase,
@@ -147,6 +179,7 @@ class ConnectionState {
     this.recoveryAvailable = false,
     this.pendingChanges = false,
     this.deviceSettingsLoaded = false,
+    this.reconnectSummary,
   });
 
   const ConnectionState.disconnected()
@@ -164,7 +197,8 @@ class ConnectionState {
       selections = const {},
       recoveryAvailable = false,
       pendingChanges = false,
-      deviceSettingsLoaded = false;
+      deviceSettingsLoaded = false,
+      reconnectSummary = null;
 
   final ConnectionPhase phase;
   final String? folderName;
@@ -181,6 +215,7 @@ class ConnectionState {
   final bool recoveryAvailable;
   final bool pendingChanges;
   final bool deviceSettingsLoaded;
+  final ReconnectSyncSummary? reconnectSummary;
 
   String? get errorMessage => diagnostic?.message;
 
@@ -219,6 +254,7 @@ class ConnectionState {
     bool? recoveryAvailable,
     bool? pendingChanges,
     bool? deviceSettingsLoaded,
+    Object? reconnectSummary = _keepConnectionValue,
   }) {
     return ConnectionState(
       phase: phase ?? this.phase,
@@ -246,6 +282,9 @@ class ConnectionState {
       recoveryAvailable: recoveryAvailable ?? this.recoveryAvailable,
       pendingChanges: pendingChanges ?? this.pendingChanges,
       deviceSettingsLoaded: deviceSettingsLoaded ?? this.deviceSettingsLoaded,
+      reconnectSummary: identical(reconnectSummary, _keepConnectionValue)
+          ? this.reconnectSummary
+          : reconnectSummary as ReconnectSyncSummary?,
     );
   }
 }
@@ -288,10 +327,21 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   Timer? _retryTimer;
   bool _automaticSyncScheduled = false;
 
+  void dismissReconnectSummary(String id) {
+    if (state.reconnectSummary?.id != id) return;
+    state = state.copyWith(reconnectSummary: null);
+  }
+
+  bool _completionCleanupScheduled = false;
+
   Future<void> _loadDeviceSettings() async {
     final store = _store;
     if (store != null) {
       _deviceSettings = await store.loadSyncDeviceSettings();
+    }
+    final pending = _appController.state.pendingSync;
+    if (pending != null && _hasCompletionReceipt(pending)) {
+      await _appController.completePendingSync(pending.operationId);
     }
     if (!mounted) return;
     state = state.copyWith(
@@ -305,6 +355,22 @@ class ConnectionController extends StateNotifier<ConnectionState> {
 
   void observeAppState(AppState appState) {
     if (!mounted) return;
+    final pendingOperation = appState.pendingSync;
+    if (pendingOperation != null &&
+        _hasCompletionReceipt(pendingOperation) &&
+        !_completionCleanupScheduled) {
+      _completionCleanupScheduled = true;
+      scheduleMicrotask(() async {
+        try {
+          await _appController.completePendingSync(
+            pendingOperation.operationId,
+          );
+        } finally {
+          _completionCleanupScheduled = false;
+        }
+      });
+      return;
+    }
     final hadPending = state.pendingChanges;
     final hasPending = appState.pendingSync != null;
     if (hadPending != hasPending) {
@@ -313,6 +379,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     if (!hadPending &&
         hasPending &&
         state.phase == ConnectionPhase.connected &&
+        !state.policy.offlineLock &&
         state.policy.mode != SyncMode.manual &&
         !_automaticSyncScheduled) {
       _automaticSyncScheduled = true;
@@ -331,6 +398,10 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     await _persistDeviceSettings();
     if (!mounted) return;
     state = state.copyWith(policy: policy);
+    if (policy.offlineLock) {
+      _resetRetry();
+      return;
+    }
     if (policy.mode != SyncMode.manual && state.pendingChanges) {
       unawaited(syncAutomatically());
     }
@@ -370,7 +441,12 @@ class ConnectionController extends StateNotifier<ConnectionState> {
 
   Future<void> applySelectedVersions() async {
     final recovery = _deviceSettings.recoveryPoint;
-    if (recovery == null || state.selections.isEmpty || state.busy) return;
+    if (recovery == null ||
+        state.selections.isEmpty ||
+        state.busy ||
+        state.policy.offlineLock) {
+      return;
+    }
     final startedAt = DateTime.now().toUtc();
     final before = _appController.exportSyncSnapshot();
     final resolved = _snapshotResolver.resolve(
@@ -396,6 +472,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       operation = await _appController.queueSyncSnapshot(payload: applied);
       if (state.runtimeReady) {
         await _service.pushSnapshot(applied);
+        await _rememberOperationCompleted(operation);
         await _appController.completePendingSync(operation.operationId);
       }
       await _rememberSuccessfulSync(
@@ -436,7 +513,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
 
   Future<void> restoreLastMerge() async {
     final recovery = _deviceSettings.recoveryPoint;
-    if (recovery == null || state.busy) return;
+    if (recovery == null || state.busy || state.policy.offlineLock) return;
     final startedAt = DateTime.now().toUtc();
     state = state.copyWith(
       phase: state.runtimeReady
@@ -453,6 +530,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       operation = await _appController.queueSyncSnapshot(payload: restored);
       if (state.runtimeReady) {
         await _service.pushSnapshot(restored);
+        await _rememberOperationCompleted(operation);
         await _appController.completePendingSync(operation.operationId);
       }
       final endedAt = DateTime.now().toUtc();
@@ -510,8 +588,16 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   String exportSyncDiagnostics() {
+    Map<String, int> sectionCounts(Iterable<SyncItemComparison> comparisons) {
+      final counts = <String, int>{};
+      for (final comparison in comparisons) {
+        counts[comparison.section] = (counts[comparison.section] ?? 0) + 1;
+      }
+      return counts;
+    }
+
     return const JsonEncoder.withIndent('  ').convert({
-      'format': 'sprache-sync-diagnostic-v1',
+      'format': 'sprache-sync-diagnostic-v2',
       'generatedAt': DateTime.now().toUtc().toIso8601String(),
       'phase': state.phase.name,
       'displayStatus': state.displayStatus.name,
@@ -531,16 +617,53 @@ class ConnectionController extends StateNotifier<ConnectionState> {
               'reconnectRequired': state.diagnostic!.reconnectRequired,
               'stageLabel': state.diagnostic!.stageLabel,
             },
-      'history': [for (final entry in state.history) entry.toJson()],
-      'lastComparison': [
-        for (final comparison in state.lastComparison) comparison.toJson(),
+      'history': [
+        for (final entry in state.history)
+          {
+            'status': entry.status.name,
+            'startedAt': entry.startedAt.toUtc().toIso8601String(),
+            'endedAt': entry.endedAt.toUtc().toIso8601String(),
+            'changeCount': entry.changeCount,
+            if (entry.diagnosticCode != null)
+              'diagnosticCode': entry.diagnosticCode,
+            'comparisonSections': sectionCounts(entry.comparisons),
+          },
       ],
+      'lastComparisonSections': sectionCounts(state.lastComparison),
       'recoveryAvailable': state.recoveryAvailable,
     });
   }
 
   Future<void> _persistDeviceSettings() async {
     await _store?.saveSyncDeviceSettings(_deviceSettings);
+  }
+
+  bool _hasCompletionReceipt(PendingSyncOperation operation) {
+    final fingerprint = _pendingPayloadFingerprint(operation);
+    return _deviceSettings.completionReceipts.any(
+      (receipt) =>
+          receipt.operationId == operation.operationId &&
+          receipt.payloadSha256 == fingerprint,
+    );
+  }
+
+  Future<void> _rememberOperationCompleted(
+    PendingSyncOperation operation,
+  ) async {
+    final receipt = SyncCompletionReceipt(
+      operationId: operation.operationId,
+      completedAt: DateTime.now().toUtc(),
+      payloadSha256: _pendingPayloadFingerprint(operation),
+    );
+    _deviceSettings = _deviceSettings.copyWith(
+      completionReceipts: [
+        receipt,
+        ..._deviceSettings.completionReceipts.where(
+          (value) => value.operationId != operation.operationId,
+        ),
+      ].take(50).toList(growable: false),
+    );
+    await _persistDeviceSettings();
   }
 
   Future<void> _rememberSuccessfulSync({
@@ -642,11 +765,13 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   Future<void> connect() {
+    if (state.policy.offlineLock) return Future.value();
     return _establishConnection();
   }
 
   Future<void> restoreSavedConnection() async {
-    if (state.busy ||
+    if (state.policy.offlineLock ||
+        state.busy ||
         !_appController.state.isHydrated ||
         !_appController.state.driveConnected) {
       return;
@@ -659,7 +784,9 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   Future<void> syncOrRestore({bool manual = false}) async {
-    if (!_appController.state.driveConnected) return;
+    if (state.policy.offlineLock || !_appController.state.driveConnected) {
+      return;
+    }
     if (state.phase == ConnectionPhase.connected ||
         (state.phase == ConnectionPhase.failed && state.runtimeReady)) {
       return manual ? syncNow() : syncAutomatically();
@@ -672,9 +799,11 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   Future<void> _establishConnection({
     RestorableGoogleConnectionService? restorableService,
   }) async {
-    if (state.busy) return;
+    if (state.busy || state.policy.offlineLock) return;
     final startedAt = DateTime.now().toUtc();
     final localBefore = _appController.exportSyncSnapshot();
+    final hadQueuedLocalChanges =
+        state.pendingChanges || _appController.state.pendingSync != null;
     state = state.copyWith(
       phase: ConnectionPhase.connecting,
       stage: GoogleConnectionStage.checkingConnection,
@@ -712,6 +841,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       );
       _setStage(GoogleConnectionStage.pushing);
       await _service.pushSnapshot(merged);
+      await _rememberOperationCompleted(attemptedOperation);
       if (!wasDriveConnected) {
         _appController.setDriveConnected(true);
       }
@@ -724,16 +854,28 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         comparisons: comparisons,
       );
       _resetRetry();
+      final completedAt = DateTime.now();
+      final report = _appController.lastMergeReport;
       state = state.copyWith(
         phase: ConnectionPhase.connected,
         folderName: connectionResult.folderName,
         mock: connectionResult.mock,
         runtimeReady: true,
-        lastSyncedAt: DateTime.now(),
-        lastMergeReport: _appController.lastMergeReport,
+        lastSyncedAt: completedAt,
+        lastMergeReport: report,
         stage: null,
         diagnostic: null,
         pendingChanges: false,
+        reconnectSummary: hadQueuedLocalChanges
+            ? ReconnectSyncSummary(
+                id: attemptedOperation.operationId,
+                completedAt: completedAt.toUtc(),
+                comparedChanges: comparisons.length,
+                uploaded: report?.uploadCount ?? 0,
+                downloaded: report?.downloadCount ?? 0,
+                conflicts: report?.conflictCount ?? 0,
+              )
+            : state.reconnectSummary,
       );
       _scheduleRemainingOperation();
     } catch (error) {
@@ -772,6 +914,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   Future<void> syncNow() async {
+    if (state.policy.offlineLock) return;
     final canRetry =
         state.phase == ConnectionPhase.failed && state.runtimeReady;
     if (state.busy || (state.phase != ConnectionPhase.connected && !canRetry)) {
@@ -781,11 +924,15 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   Future<void> syncAutomatically() async {
+    if (state.policy.offlineLock) return;
     if (!await _automaticSyncAllowed()) return;
     await _runSync();
   }
 
   Future<bool> _automaticSyncAllowed() async {
+    if (state.policy.offlineLock) {
+      return false;
+    }
     switch (state.policy.mode) {
       case SyncMode.automatic:
         return true;
@@ -808,6 +955,8 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     }
     final startedAt = DateTime.now().toUtc();
     final localBefore = _appController.exportSyncSnapshot();
+    final hadQueuedLocalChanges =
+        state.pendingChanges || _appController.state.pendingSync != null;
     final wasDriveConnected = _appController.state.driveConnected;
     final previous = state;
     state = state.copyWith(
@@ -838,6 +987,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       );
       _setStage(GoogleConnectionStage.pushing);
       await _service.pushSnapshot(merged);
+      await _rememberOperationCompleted(attemptedOperation);
       if (!wasDriveConnected) {
         _appController.setDriveConnected(true);
       }
@@ -850,16 +1000,28 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         comparisons: comparisons,
       );
       _resetRetry();
+      final completedAt = DateTime.now();
+      final report = _appController.lastMergeReport;
       state = state.copyWith(
         phase: ConnectionPhase.connected,
         folderName: previous.folderName,
         mock: previous.mock,
         runtimeReady: true,
-        lastSyncedAt: DateTime.now(),
-        lastMergeReport: _appController.lastMergeReport,
+        lastSyncedAt: completedAt,
+        lastMergeReport: report,
         stage: null,
         diagnostic: null,
         pendingChanges: false,
+        reconnectSummary: hadQueuedLocalChanges
+            ? ReconnectSyncSummary(
+                id: attemptedOperation.operationId,
+                completedAt: completedAt.toUtc(),
+                comparedChanges: comparisons.length,
+                uploaded: report?.uploadCount ?? 0,
+                downloaded: report?.downloadCount ?? 0,
+                conflicts: report?.conflictCount ?? 0,
+              )
+            : state.reconnectSummary,
       );
       _scheduleRemainingOperation();
     } catch (error) {
@@ -896,7 +1058,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   Future<void> disconnect() async {
-    if (state.busy) return;
+    if (state.busy || state.policy.offlineLock) return;
     _resetRetry();
     state = state.copyWith(
       phase: ConnectionPhase.disconnecting,
@@ -925,7 +1087,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   Future<void> deleteAccountBinding() async {
-    if (state.busy) return;
+    if (state.busy || state.policy.offlineLock) return;
     final deletionService = _service is AccountBindingDeletionService
         ? _service as AccountBindingDeletionService
         : null;
@@ -1337,6 +1499,9 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     super.dispose();
   }
 }
+
+String _pendingPayloadFingerprint(PendingSyncOperation operation) =>
+    sha256.convert(utf8.encode(jsonEncode(operation.payload))).toString();
 
 final connectionControllerProvider =
     StateNotifierProvider<ConnectionController, ConnectionState>((ref) {

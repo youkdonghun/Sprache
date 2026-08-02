@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../domain/accessibility_input_profile.dart';
@@ -33,24 +34,32 @@ abstract final class AppTheme {
     AccessibilityInputProfile accessibilityProfile =
         const AccessibilityInputProfile(),
   }) {
+    final surfaces = _surfaceColors(
+      preferences,
+      brightness: brightness,
+      isDesktop: false,
+    );
     final palette = _palette(
-      preferences.accentPalette,
+      preferences.accentPaletteForBrightness(
+        isDark: brightness == Brightness.dark,
+      ),
       brightness: brightness,
       isDesktop: false,
     );
     return _build(
-      seed: palette.primary,
+      seed: preferences.customAccentEnabled
+          ? safeCustomAccentColor(
+              preferences.customAccentRgb,
+              brightness: brightness,
+              background: surfaces.scaffold,
+            )
+          : palette.primary,
       accent: palette.secondary,
-      scaffold: brightness == Brightness.light
-          ? const Color(0xFFF7F8F4)
-          : const Color(0xFF101512),
-      surface: brightness == Brightness.light
-          ? const Color(0xFFFFFFFF)
-          : const Color(0xFF181E1A),
+      scaffold: surfaces.scaffold,
+      surface: surfaces.surface,
       brightness: brightness,
-      radius: 14,
       isDesktop: false,
-      density: preferences.density,
+      preferences: preferences,
       accessibilityProfile: accessibilityProfile,
     );
   }
@@ -61,24 +70,32 @@ abstract final class AppTheme {
     AccessibilityInputProfile accessibilityProfile =
         const AccessibilityInputProfile(),
   }) {
+    final surfaces = _surfaceColors(
+      preferences,
+      brightness: brightness,
+      isDesktop: true,
+    );
     final palette = _palette(
-      preferences.accentPalette,
+      preferences.accentPaletteForBrightness(
+        isDark: brightness == Brightness.dark,
+      ),
       brightness: brightness,
       isDesktop: true,
     );
     return _build(
-      seed: palette.primary,
+      seed: preferences.customAccentEnabled
+          ? safeCustomAccentColor(
+              preferences.customAccentRgb,
+              brightness: brightness,
+              background: surfaces.scaffold,
+            )
+          : palette.primary,
       accent: palette.secondary,
-      scaffold: brightness == Brightness.light
-          ? const Color(0xFFF3F5F7)
-          : const Color(0xFF11171B),
-      surface: brightness == Brightness.light
-          ? const Color(0xFFFFFFFF)
-          : const Color(0xFF192126),
+      scaffold: surfaces.scaffold,
+      surface: surfaces.surface,
       brightness: brightness,
-      radius: 12,
       isDesktop: true,
-      density: preferences.density,
+      preferences: preferences,
       accessibilityProfile: accessibilityProfile,
     );
   }
@@ -86,17 +103,48 @@ abstract final class AppTheme {
   static Color palettePreview(AppAccentPalette palette) =>
       _palette(palette, brightness: Brightness.light, isDesktop: false).primary;
 
+  static Color safeCustomAccentColor(
+    int rgb, {
+    required Brightness brightness,
+    Color? background,
+  }) {
+    final raw = Color(0xFF000000 | (rgb & 0xFFFFFF));
+    final surface =
+        background ??
+        (brightness == Brightness.dark
+            ? const Color(0xFF101512)
+            : Colors.white);
+    if (_contrastRatio(raw, surface) >= 3) return raw;
+    final target = brightness == Brightness.dark ? Colors.white : Colors.black;
+    for (var step = 1; step <= 20; step++) {
+      final candidate = Color.lerp(raw, target, step / 20)!;
+      if (_contrastRatio(candidate, surface) >= 3) return candidate;
+    }
+    return target;
+  }
+
+  static double contentMaxWidth(AppContentWidth width) => switch (width) {
+    AppContentWidth.focused => 880,
+    AppContentWidth.balanced => 1120,
+    AppContentWidth.wide => 1360,
+  };
+
   static ThemeData _build({
     required Color seed,
     required Color accent,
     required Color scaffold,
     required Color surface,
     required Brightness brightness,
-    required double radius,
     required bool isDesktop,
-    required AppDensity density,
+    required AppExperiencePreferences preferences,
     required AccessibilityInputProfile accessibilityProfile,
   }) {
+    final radius = _cornerRadius(preferences.cornerStyle, isDesktop);
+    final controlRadius = _controlRadius(preferences.cornerStyle, isDesktop);
+    final fontFamily = _fontFamilyName(
+      preferences.fontFamily,
+      defaultTargetPlatform,
+    );
     final generatedColors =
         ColorScheme.fromSeed(
           seedColor: seed,
@@ -116,7 +164,9 @@ abstract final class AppTheme {
               ? const Color(0xFFE2E7EB)
               : const Color(0xFFE4E9E1),
         );
-    final highContrast = accessibilityProfile.highContrast;
+    final highContrast =
+        accessibilityProfile.highContrast || preferences.highContrast;
+    final reduceTransparency = accessibilityProfile.reduceTransparency;
     final colors = highContrast
         ? generatedColors.copyWith(
             outline: brightness == Brightness.dark
@@ -133,9 +183,20 @@ abstract final class AppTheme {
       colorScheme: colors,
       scaffoldBackgroundColor: scaffold,
       brightness: brightness,
-      fontFamily: 'NotoSansKR',
+      fontFamily: fontFamily,
       materialTapTargetSize: MaterialTapTargetSize.padded,
-      focusColor: seed.withValues(alpha: highContrast ? 0.34 : 0.2),
+      focusColor: preferences.showFocusRing
+          ? reduceTransparency
+                ? colors.primaryContainer
+                : seed.withValues(alpha: highContrast ? 0.34 : 0.2)
+          : Colors.transparent,
+    );
+    final bodyWeight = preferences.fontEmphasis == AppFontEmphasis.strong
+        ? FontWeight.w600
+        : null;
+    final bodyHeight = _readingLineHeight(
+      preferences.readingLineHeight,
+      isDesktop,
     );
     final textTheme = base.textTheme.copyWith(
       displaySmall: base.textTheme.displaySmall?.copyWith(
@@ -163,10 +224,12 @@ abstract final class AppTheme {
         fontWeight: FontWeight.w700,
       ),
       bodyLarge: base.textTheme.bodyLarge?.copyWith(
-        height: isDesktop ? 1.45 : 1.35,
+        height: bodyHeight,
+        fontWeight: bodyWeight,
       ),
       bodyMedium: base.textTheme.bodyMedium?.copyWith(
-        height: isDesktop ? 1.45 : 1.35,
+        height: bodyHeight,
+        fontWeight: bodyWeight,
         color: colors.onSurfaceVariant,
       ),
       labelLarge: base.textTheme.labelLarge?.copyWith(
@@ -178,17 +241,26 @@ abstract final class AppTheme {
     return base.copyWith(
       textTheme: textTheme,
       cardTheme: CardThemeData(
-        elevation: brightness == Brightness.light ? 0.4 : 0,
+        elevation: reduceTransparency
+            ? 0
+            : _cardElevation(preferences, brightness),
         margin: EdgeInsets.zero,
         color: surface,
         surfaceTintColor: Colors.transparent,
+        shadowColor: reduceTransparency
+            ? Colors.transparent
+            : preferences.decorationIntensity == AppDecorationIntensity.vivid
+            ? seed.withValues(alpha: 0.28)
+            : null,
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radius),
-          side: BorderSide(
-            color: highContrast ? colors.outline : colors.outlineVariant,
-            width: highContrast ? 1.6 : 1,
-          ),
+          side: preferences.cardStyle == AppCardStyle.flat && !highContrast
+              ? BorderSide.none
+              : BorderSide(
+                  color: highContrast ? colors.outline : colors.outlineVariant,
+                  width: highContrast ? 1.6 : 1,
+                ),
         ),
       ),
       appBarTheme: AppBarTheme(
@@ -199,6 +271,25 @@ abstract final class AppTheme {
         foregroundColor: colors.onSurface,
         surfaceTintColor: Colors.transparent,
       ),
+      dialogTheme: DialogThemeData(
+        elevation: reduceTransparency ? 0 : 6,
+        backgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: reduceTransparency ? Colors.transparent : colors.shadow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(color: colors.outlineVariant),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        elevation: reduceTransparency ? 0 : 8,
+        modalElevation: reduceTransparency ? 0 : 12,
+        backgroundColor: surface,
+        modalBackgroundColor: surface,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: reduceTransparency ? Colors.transparent : colors.shadow,
+        shape: Border(top: BorderSide(color: colors.outlineVariant)),
+      ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: Size(0, isDesktop ? 46 : 48),
@@ -207,10 +298,10 @@ abstract final class AppTheme {
             vertical: isDesktop ? 12 : 10,
           ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(isDesktop ? 9 : 16),
+            borderRadius: BorderRadius.circular(controlRadius),
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'NotoSansKR',
+          textStyle: TextStyle(
+            fontFamily: fontFamily,
             fontSize: 15,
             fontWeight: FontWeight.w800,
           ),
@@ -225,10 +316,10 @@ abstract final class AppTheme {
           ),
           side: BorderSide(color: colors.outline),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(isDesktop ? 9 : 15),
+            borderRadius: BorderRadius.circular(controlRadius),
           ),
-          textStyle: const TextStyle(
-            fontFamily: 'NotoSansKR',
+          textStyle: TextStyle(
+            fontFamily: fontFamily,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -241,21 +332,21 @@ abstract final class AppTheme {
           vertical: isDesktop ? 15 : 13,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(isDesktop ? 9 : 15),
+          borderRadius: BorderRadius.circular(controlRadius),
           borderSide: BorderSide(
             color: colors.outline,
             width: highContrast ? 1.6 : 1,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(isDesktop ? 9 : 15),
+          borderRadius: BorderRadius.circular(controlRadius),
           borderSide: BorderSide(
             color: highContrast ? colors.outline : colors.outlineVariant,
             width: highContrast ? 1.6 : 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(isDesktop ? 9 : 15),
+          borderRadius: BorderRadius.circular(controlRadius),
           borderSide: BorderSide(color: colors.primary, width: 2),
         ),
       ),
@@ -277,11 +368,15 @@ abstract final class AppTheme {
         backgroundColor: colors.surfaceContainerLow,
         side: BorderSide(color: colors.outlineVariant),
         labelStyle: TextStyle(
-          fontFamily: 'NotoSansKR',
+          fontFamily: fontFamily,
           fontWeight: FontWeight.w700,
           color: colors.onSurfaceVariant,
         ),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(
+            preferences.cornerStyle == AppCornerStyle.square ? 4 : 10,
+          ),
+        ),
       ),
       dividerTheme: DividerThemeData(
         color: highContrast ? colors.outline : colors.outlineVariant,
@@ -289,7 +384,9 @@ abstract final class AppTheme {
         space: 1,
       ),
       snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
+        behavior: reduceTransparency
+            ? SnackBarBehavior.fixed
+            : SnackBarBehavior.floating,
         backgroundColor: brightness == Brightness.dark
             ? const Color(0xFFE3E9EC)
             : const Color(0xFF27343C),
@@ -321,13 +418,26 @@ abstract final class AppTheme {
               : colors.outline,
         ),
       ),
-      visualDensity: switch (density) {
+      visualDensity: switch (preferences.density) {
         AppDensity.platform =>
           isDesktop ? VisualDensity.compact : VisualDensity.standard,
         AppDensity.comfortable => VisualDensity.comfortable,
         AppDensity.compact => VisualDensity.compact,
       },
+      pageTransitionsTheme: _pageTransitionsTheme(preferences.motionLevel),
       extensions: [StudyAccessibilityTheme.fromProfile(accessibilityProfile)],
+    );
+  }
+
+  static PageTransitionsTheme _pageTransitionsTheme(AppMotionLevel level) {
+    if (level == AppMotionLevel.full) return const PageTransitionsTheme();
+    final builder = level == AppMotionLevel.off
+        ? const _NoMotionPageTransitionsBuilder()
+        : const _SubtlePageTransitionsBuilder();
+    return PageTransitionsTheme(
+      builders: {
+        for (final platform in TargetPlatform.values) platform: builder,
+      },
     );
   }
 
@@ -374,8 +484,170 @@ abstract final class AppTheme {
         primary: dark ? const Color(0xFFA8B5C2) : const Color(0xFF506273),
         secondary: dark ? const Color(0xFF8DC4CB) : const Color(0xFF3D747C),
       ),
+      AppAccentPalette.sunrise => _AppPalette(
+        primary: dark ? const Color(0xFFFFB36B) : const Color(0xFFB85C18),
+        secondary: dark ? const Color(0xFF8FB7E8) : const Color(0xFF315F91),
+      ),
+      AppAccentPalette.mint => _AppPalette(
+        primary: dark ? const Color(0xFF83D7B0) : const Color(0xFF277A59),
+        secondary: dark ? const Color(0xFF8EC8D0) : const Color(0xFF367681),
+      ),
+      AppAccentPalette.rose => _AppPalette(
+        primary: dark ? const Color(0xFFF3A0B5) : const Color(0xFFA83E5C),
+        secondary: dark ? const Color(0xFFD5A3E8) : const Color(0xFF744A9B),
+      ),
+      AppAccentPalette.mono => _AppPalette(
+        primary: dark ? const Color(0xFFE4E8EA) : const Color(0xFF3F4A50),
+        secondary: dark ? const Color(0xFFAEC5CD) : const Color(0xFF596F78),
+      ),
     };
   }
+
+  static _SurfaceColors _surfaceColors(
+    AppExperiencePreferences preferences, {
+    required Brightness brightness,
+    required bool isDesktop,
+  }) {
+    if (brightness == Brightness.dark &&
+        preferences.colorMode == AppColorMode.oled) {
+      return const _SurfaceColors(
+        scaffold: Color(0xFF000000),
+        surface: Color(0xFF000000),
+      );
+    }
+    final dark = brightness == Brightness.dark;
+    return switch (preferences.surfaceTone) {
+      AppSurfaceTone.neutral => _SurfaceColors(
+        scaffold: dark
+            ? isDesktop
+                  ? const Color(0xFF11171B)
+                  : const Color(0xFF101512)
+            : isDesktop
+            ? const Color(0xFFF3F5F7)
+            : const Color(0xFFF7F8F4),
+        surface: dark
+            ? isDesktop
+                  ? const Color(0xFF192126)
+                  : const Color(0xFF181E1A)
+            : const Color(0xFFFFFFFF),
+      ),
+      AppSurfaceTone.warm => _SurfaceColors(
+        scaffold: dark ? const Color(0xFF17130F) : const Color(0xFFF8F3E9),
+        surface: dark ? const Color(0xFF211B16) : const Color(0xFFFFFCF5),
+      ),
+      AppSurfaceTone.cool => _SurfaceColors(
+        scaffold: dark ? const Color(0xFF0F1519) : const Color(0xFFF1F6F8),
+        surface: dark ? const Color(0xFF171F24) : const Color(0xFFFBFDFF),
+      ),
+    };
+  }
+
+  static double _cornerRadius(AppCornerStyle style, bool isDesktop) =>
+      switch (style) {
+        AppCornerStyle.rounded => isDesktop ? 16 : 20,
+        AppCornerStyle.balanced => isDesktop ? 12 : 14,
+        AppCornerStyle.square => 4,
+      };
+
+  static double _controlRadius(AppCornerStyle style, bool isDesktop) =>
+      switch (style) {
+        AppCornerStyle.rounded => isDesktop ? 13 : 18,
+        AppCornerStyle.balanced => isDesktop ? 9 : 15,
+        AppCornerStyle.square => 4,
+      };
+
+  static double _readingLineHeight(
+    AppReadingLineHeight value,
+    bool isDesktop,
+  ) => switch (value) {
+    AppReadingLineHeight.compact => isDesktop ? 1.32 : 1.25,
+    AppReadingLineHeight.comfortable => isDesktop ? 1.45 : 1.35,
+    AppReadingLineHeight.relaxed => isDesktop ? 1.65 : 1.55,
+  };
+
+  static double _cardElevation(
+    AppExperiencePreferences preferences,
+    Brightness brightness,
+  ) {
+    if (preferences.decorationIntensity == AppDecorationIntensity.minimal) {
+      return 0;
+    }
+    final base = switch (preferences.cardStyle) {
+      AppCardStyle.flat => 0.0,
+      AppCardStyle.outlined => brightness == Brightness.light ? 0.4 : 0.0,
+      AppCardStyle.elevated => brightness == Brightness.light ? 3.0 : 1.0,
+    };
+    return preferences.decorationIntensity == AppDecorationIntensity.vivid
+        ? base + 2
+        : base;
+  }
+
+  static String? _fontFamilyName(
+    AppFontFamily family,
+    TargetPlatform platform,
+  ) => switch (family) {
+    AppFontFamily.notoSans => 'NotoSansKR',
+    AppFontFamily.system => null,
+    AppFontFamily.serif => switch (platform) {
+      TargetPlatform.windows => 'Georgia',
+      TargetPlatform.iOS || TargetPlatform.macOS => 'New York',
+      TargetPlatform.android ||
+      TargetPlatform.linux ||
+      TargetPlatform.fuchsia => 'serif',
+    },
+    AppFontFamily.monospace => switch (platform) {
+      TargetPlatform.windows => 'Consolas',
+      TargetPlatform.iOS || TargetPlatform.macOS => 'Menlo',
+      TargetPlatform.android ||
+      TargetPlatform.linux ||
+      TargetPlatform.fuchsia => 'monospace',
+    },
+  };
+
+  static double _contrastRatio(Color foreground, Color background) {
+    final foregroundLuminance = foreground.computeLuminance();
+    final backgroundLuminance = background.computeLuminance();
+    final lighter = foregroundLuminance > backgroundLuminance
+        ? foregroundLuminance
+        : backgroundLuminance;
+    final darker = foregroundLuminance > backgroundLuminance
+        ? backgroundLuminance
+        : foregroundLuminance;
+    return (lighter + 0.05) / (darker + 0.05);
+  }
+}
+
+/// Keeps navigation legible while replacing spatial movement with a short,
+/// low-stimulation fade. The route still owns the transition duration, so
+/// interrupted navigation and back gestures retain Flutter's normal lifecycle.
+class _SubtlePageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SubtlePageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => FadeTransition(
+    opacity: CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+    child: child,
+  );
+}
+
+/// Presents the destination immediately for learners who disable motion.
+class _NoMotionPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _NoMotionPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => child;
 }
 
 class _AppPalette {
@@ -383,4 +655,11 @@ class _AppPalette {
 
   final Color primary;
   final Color secondary;
+}
+
+class _SurfaceColors {
+  const _SurfaceColors({required this.scaffold, required this.surface});
+
+  final Color scaffold;
+  final Color surface;
 }

@@ -4,7 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/study_preferences.dart';
 import '../domain/study_limits.dart';
+import '../domain/study_interaction_preferences.dart';
 import '../screens/course_path_screen.dart';
+import '../screens/content_quality_screen.dart';
+import '../screens/data_health_screen.dart';
 import '../screens/flashcard_screen.dart';
 import '../screens/group_organizer_screen.dart';
 import '../screens/home_screen.dart';
@@ -13,6 +16,7 @@ import '../screens/item_editor_screen.dart';
 import '../screens/learning_hub_screen.dart';
 import '../screens/library_screen.dart';
 import '../screens/mission_screen.dart';
+import '../screens/personalization_screen.dart';
 import '../screens/pronunciation_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/session_builder_screen.dart';
@@ -163,6 +167,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const GroupOrganizerScreen(),
               ),
               GoRoute(
+                path: '/library/quality',
+                builder: (context, state) => const ContentQualityScreen(),
+              ),
+              GoRoute(
                 path: '/library/new',
                 builder: (context, state) => const ItemEditorScreen(),
               ),
@@ -201,6 +209,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/settings',
                 pageBuilder: (context, state) =>
                     _topLevelTabPage(state, const SettingsScreen()),
+              ),
+              GoRoute(
+                path: '/settings/personalize',
+                builder: (context, state) => const PersonalizationScreen(),
+              ),
+              GoRoute(
+                path: '/settings/data-health',
+                builder: (context, state) => const DataHealthScreen(),
               ),
             ],
           ),
@@ -244,6 +260,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final subjectScope =
               activeSession?.courseId ??
               ref.read(appControllerProvider).activeCourseId;
+          final playlistActivityIds =
+              (state.uri.queryParameters['playlist'] ?? '')
+                  .split(',')
+                  .where(isPlaylistCompatiblePracticeActivity)
+                  .take(5)
+                  .toList(growable: false);
           return StudyScreen(
             key: ValueKey(
               'study:$subjectScope:${activeSession?.sessionId ?? 'new'}:'
@@ -262,6 +284,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             resume: activeSession != null,
             customPlan: state.uri.queryParameters['custom'] == 'true',
             startMatchSprint: state.uri.queryParameters['match'] == 'true',
+            practiceActivityId: state.uri.queryParameters['practiceActivityId'],
+            playlistActivityIds: playlistActivityIds,
+            playlistIndex:
+                int.tryParse(
+                  state.uri.queryParameters['playlistIndex'] ?? '',
+                ) ??
+                0,
           );
         },
       ),

@@ -30,6 +30,8 @@ void main() {
       onboardingCompleted: true,
       dailyGoal: 150,
       dailyGoalsBySubject: const {'language:en': 100, 'language:ja': 200},
+      weeklyTargetDays: 6,
+      weeklyTargetMinutes: 150,
       dailyGoalChangedAtBySubject: {
         'language:en': DateTime.utc(2026, 7, 28, 7),
         'language:ja': DateTime.utc(2026, 7, 28, 8),
@@ -133,6 +135,8 @@ void main() {
     expect(restored.dailyGoalFor('language:en'), 100);
     expect(restored.dailyGoalFor('language:ja'), 200);
     expect(restored.dailyGoalFor('language:de'), 150);
+    expect(restored.weeklyTargetDays, 6);
+    expect(restored.weeklyTargetMinutes, 150);
     expect(
       restored.dailyGoalChangedAtBySubject['language:en'],
       DateTime.utc(2026, 7, 28, 7),
@@ -147,7 +151,9 @@ void main() {
     expect(restored.experience.accentPalette, AppAccentPalette.ocean);
     expect(restored.experience.density, AppDensity.compact);
     expect(restored.experience.textScale, AppTextScale.large);
-    expect(restored.experience.reduceMotion, isTrue);
+    // Motion is device-only in 1.31; the legacy haptics value remains in the
+    // account document for backward compatibility but is no longer applied.
+    expect(restored.experience.reduceMotion, isFalse);
     expect(restored.experience.hapticsEnabled, isTrue);
     expect(restored.experience.updatedAt, DateTime.utc(2026, 7, 28, 9, 10));
     expect(restored.interaction.autoPlayQuestionAudio, isTrue);

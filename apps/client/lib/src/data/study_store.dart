@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:drift/drift.dart';
 
 import '../domain/content_validation.dart';
+import '../domain/device_preferences.dart';
 import '../domain/language.dart';
 import '../domain/learning_item.dart';
 import '../domain/active_study_session.dart';
@@ -11,8 +12,10 @@ import '../domain/local_storage.dart';
 import '../domain/progress.dart';
 import '../domain/quick_content_draft.dart';
 import '../domain/quick_content_preferences.dart';
+import '../domain/search_preferences.dart';
 import '../domain/study_history.dart';
 import '../domain/study_preferences.dart';
+import '../import/import_review_draft.dart';
 import '../sync/pending_sync.dart';
 import '../sync/sync_policy.dart';
 import 'database/app_database.dart';
@@ -118,6 +121,20 @@ abstract interface class StudyStore {
     QuickContentLocalPreferences preferences,
   );
 
+  Future<SearchLocalPreferences> loadSearchLocalPreferences();
+
+  Future<void> saveSearchLocalPreferences(SearchLocalPreferences preferences);
+
+  Future<DevicePreferences> loadDevicePreferences();
+
+  Future<void> saveDevicePreferences(DevicePreferences preferences);
+
+  Future<ImportReviewDraft?> loadImportReviewDraft();
+
+  Future<void> saveImportReviewDraft(ImportReviewDraft draft);
+
+  Future<void> clearImportReviewDraft();
+
   Future<List<LearningItem>> loadCustomItems();
 
   Future<void> saveCustomItems(Iterable<LearningItem> items);
@@ -177,6 +194,9 @@ class MemoryStudyStore implements StudyStore {
     SyncDeviceSettings? syncDeviceSettings,
     QuickContentDraft? quickContentDraft,
     QuickContentLocalPreferences? quickContentLocalPreferences,
+    SearchLocalPreferences? searchLocalPreferences,
+    DevicePreferences? devicePreferences,
+    ImportReviewDraft? importReviewDraft,
     String? replicaId,
   }) : _profile = _profileWithReplicaId(profile, replicaId),
        _preferences = preferences ?? const StudyPreferences(),
@@ -197,7 +217,13 @@ class MemoryStudyStore implements StudyStore {
        // ignore: prefer_initializing_formals
        _quickContentDraft = quickContentDraft,
        _quickContentLocalPreferences =
-           quickContentLocalPreferences ?? const QuickContentLocalPreferences();
+           quickContentLocalPreferences ?? const QuickContentLocalPreferences(),
+       _searchLocalPreferences =
+           searchLocalPreferences ?? const SearchLocalPreferences(),
+       _devicePreferences = devicePreferences ?? const DevicePreferences(),
+       // The public constructor name is intentionally clearer for tests/callers.
+       // ignore: prefer_initializing_formals
+       _importReviewDraft = importReviewDraft;
 
   StoredProfile _profile;
   StudyPreferences _preferences;
@@ -212,6 +238,9 @@ class MemoryStudyStore implements StudyStore {
   SyncDeviceSettings _syncDeviceSettings;
   QuickContentDraft? _quickContentDraft;
   QuickContentLocalPreferences _quickContentLocalPreferences;
+  SearchLocalPreferences _searchLocalPreferences;
+  DevicePreferences _devicePreferences;
+  ImportReviewDraft? _importReviewDraft;
 
   List<StudyEventEntry> get savedEvents => List.unmodifiable(_events.values);
 
@@ -291,6 +320,39 @@ class MemoryStudyStore implements StudyStore {
     QuickContentLocalPreferences preferences,
   ) async {
     _quickContentLocalPreferences = preferences;
+  }
+
+  @override
+  Future<SearchLocalPreferences> loadSearchLocalPreferences() async =>
+      _searchLocalPreferences;
+
+  @override
+  Future<void> saveSearchLocalPreferences(
+    SearchLocalPreferences preferences,
+  ) async {
+    _searchLocalPreferences = preferences;
+  }
+
+  @override
+  Future<DevicePreferences> loadDevicePreferences() async => _devicePreferences;
+
+  @override
+  Future<void> saveDevicePreferences(DevicePreferences preferences) async {
+    _devicePreferences = preferences;
+  }
+
+  @override
+  Future<ImportReviewDraft?> loadImportReviewDraft() async =>
+      _importReviewDraft;
+
+  @override
+  Future<void> saveImportReviewDraft(ImportReviewDraft draft) async {
+    _importReviewDraft = draft;
+  }
+
+  @override
+  Future<void> clearImportReviewDraft() async {
+    _importReviewDraft = null;
   }
 
   @override
@@ -807,6 +869,108 @@ class DriftStudyStore implements StudyStore {
             updatedAt: DateTime.now().toUtc(),
           ),
         );
+  }
+
+  @override
+  Future<SearchLocalPreferences> loadSearchLocalPreferences() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('search_local_preferences')))
+            .getSingleOrNull();
+    if (setting == null) return const SearchLocalPreferences();
+    try {
+      return SearchLocalPreferences.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const SearchLocalPreferences();
+    }
+  }
+
+  @override
+  Future<void> saveSearchLocalPreferences(
+    SearchLocalPreferences preferences,
+  ) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'search_local_preferences',
+            valueJson: jsonEncode(preferences.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<DevicePreferences> loadDevicePreferences() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('device_preferences')))
+            .getSingleOrNull();
+    if (setting == null) return const DevicePreferences();
+    try {
+      return DevicePreferences.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const DevicePreferences();
+    }
+  }
+
+  @override
+  Future<void> saveDevicePreferences(DevicePreferences preferences) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'device_preferences',
+            valueJson: jsonEncode(preferences.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<ImportReviewDraft?> loadImportReviewDraft() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('import_review_draft')))
+            .getSingleOrNull();
+    if (setting == null) return null;
+    try {
+      return ImportReviewDraft.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveImportReviewDraft(ImportReviewDraft draft) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'import_review_draft',
+            valueJson: jsonEncode(draft.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<void> clearImportReviewDraft() async {
+    await (database.delete(
+      database.appSettings,
+    )..where((table) => table.key.equals('import_review_draft'))).go();
   }
 
   @override

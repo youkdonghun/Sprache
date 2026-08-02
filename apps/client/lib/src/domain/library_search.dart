@@ -1,6 +1,5 @@
-import 'package:unorm_dart/unorm_dart.dart' as unicode;
-
 import 'learning_item.dart';
+import 'local_search_query.dart';
 import 'progress.dart';
 import 'smart_collection.dart';
 
@@ -253,12 +252,7 @@ extension LibrarySearchCriteriaSmartCollection on LibrarySearchCriteria {
 }
 
 String foldLibrarySearchText(String value) {
-  final decomposed = unicode.nfkd(unicode.nfkc(value)).toLowerCase();
-  return decomposed
-      .replaceAll(RegExp(r'[\u0300-\u036f]'), '')
-      .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
-      .trim()
-      .replaceAll(RegExp(r'\s+'), ' ');
+  return foldLocalSearchText(value);
 }
 
 bool libraryItemMatches({
@@ -267,6 +261,7 @@ bool libraryItemMatches({
   required LibrarySearchCriteria criteria,
   required DateTime now,
   bool excluded = false,
+  bool favorite = false,
 }) {
   if (criteria.kinds.isNotEmpty && !criteria.kinds.contains(item.kind)) {
     return false;
@@ -301,25 +296,14 @@ bool libraryItemMatches({
   };
   if (!matchesLearningState) return false;
 
-  final query = foldLibrarySearchText(criteria.query);
-  if (query.isEmpty) return true;
-  final haystack = foldLibrarySearchText(
-    [
-      item.text,
-      ...item.translations,
-      ...item.acceptedAnswers,
-      ...item.readings.map((reading) => reading.value),
-      if (item.example != null) item.example!,
-      if (item.exampleTranslation != null) item.exampleTranslation!,
-      ...item.tags,
-      item.level,
-      if (item.partOfSpeech != null) item.partOfSpeech!.koreanLabel,
-      item.source.name,
-      item.source.license,
-      if (item.source.author != null) item.source.author!,
-    ].join(' '),
+  return localSearchItemMatches(
+    query: LocalSearchQuery.parse(criteria.query),
+    item: item,
+    progress: progress,
+    favorite: favorite,
+    excluded: excluded,
+    now: now,
   );
-  return query.split(' ').every(haystack.contains);
 }
 
 List<LearningItem> filterAndSortLibraryItems({
@@ -328,6 +312,7 @@ List<LearningItem> filterAndSortLibraryItems({
   required LibrarySearchCriteria criteria,
   required DateTime now,
   Set<String> excludedItemIds = const {},
+  Set<String> favoriteItemIds = const {},
 }) {
   final source = items.toList(growable: false);
   final originalIndex = {
@@ -341,6 +326,7 @@ List<LearningItem> filterAndSortLibraryItems({
           criteria: criteria,
           now: now,
           excluded: excludedItemIds.contains(item.id),
+          favorite: favoriteItemIds.contains(item.id),
         ),
       )
       .toList(growable: true);

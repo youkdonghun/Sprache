@@ -149,8 +149,14 @@ class ImportColumnMapper {
     return result;
   }
 
-  List<String> inspectCsv(String input) {
-    final rows = csv.decode(input);
+  List<String> inspectCsv(String input, {String? delimiter}) {
+    final rows = delimiter == null
+        ? csv.decode(input)
+        : Csv(
+            fieldDelimiter: delimiter,
+            autoDetect: false,
+            dynamicTyping: false,
+          ).decode(input);
     if (rows.isEmpty) return const [];
     return rows.first
         .map((value) => value.toString().trim().replaceFirst('\uFEFF', ''))
@@ -161,9 +167,12 @@ class ImportColumnMapper {
   List<String> inspectExcel(
     List<int> bytes, {
     ImportLimits limits = const ImportLimits(),
+    String? sheetName,
   }) {
     final sheets = XlsxImportReader(limits: limits).read(bytes);
-    for (final sheet in sheets) {
+    for (final sheet in sheets.where(
+      (sheet) => sheetName == null || sheet.name == sheetName,
+    )) {
       final index = findExcelHeaderIndex(sheet.rows);
       if (index >= 0) {
         return sheet.rows[index].values

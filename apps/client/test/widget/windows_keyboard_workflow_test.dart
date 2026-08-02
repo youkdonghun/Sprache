@@ -55,7 +55,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byIcon(Icons.menu_book_rounded).first);
+      await tester.tap(find.byKey(const Key('nav-library')));
       await tester.pumpAndSettle();
 
       final searchFinder = find.byKey(const Key('library-search-field'));

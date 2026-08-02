@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 class LocalRecoveryBackup {
@@ -10,6 +13,10 @@ class LocalRecoveryBackup {
     required this.modifiedAt,
     required this.fileCount,
     required this.eligibleForCleanup,
+    this.reason,
+    this.sha256Hex,
+    this.itemCount,
+    this.verified = false,
   });
 
   final String id;
@@ -18,6 +25,10 @@ class LocalRecoveryBackup {
   final DateTime modifiedAt;
   final int fileCount;
   final bool eligibleForCleanup;
+  final String? reason;
+  final String? sha256Hex;
+  final int? itemCount;
+  final bool verified;
 }
 
 class LocalRecoveryInventory {
@@ -91,6 +102,7 @@ class RecoveryBackupCatalogService {
       }
       final directoryStat = await entity.stat();
       final modifiedAt = latest ?? directoryStat.modified.toUtc();
+      final checkpoint = await _checkpointMetadata(entity);
       items.add(
         LocalRecoveryBackup(
           id: entity.uri.pathSegments
@@ -101,6 +113,10 @@ class RecoveryBackupCatalogService {
           modifiedAt: modifiedAt,
           fileCount: count,
           eligibleForCleanup: !modifiedAt.isAfter(now.subtract(minimumAge)),
+          reason: checkpoint?.reason,
+          sha256Hex: checkpoint?.sha256Hex,
+          itemCount: checkpoint?.itemCount,
+          verified: checkpoint?.verified ?? false,
         ),
       );
     }
@@ -110,6 +126,46 @@ class RecoveryBackupCatalogService {
       minimumAge: minimumAge,
       inspectedAt: now,
     );
+  }
+
+  Future<({String reason, String sha256Hex, int itemCount, bool verified})?>
+  _checkpointMetadata(Directory directory) async {
+    final metadataFile = File(
+      path.join(directory.path, 'checkpoint-metadata.json'),
+    );
+    final archiveFile = File(path.join(directory.path, 'checkpoint.json'));
+    if (!await metadataFile.exists() || !await archiveFile.exists()) {
+      return null;
+    }
+    try {
+      final metadata = Map<String, Object?>.from(
+        jsonDecode(await metadataFile.readAsString()) as Map,
+      );
+      if (metadata['format'] != 'sprache-recovery-checkpoint-v1') return null;
+      final expectedHash = metadata['sha256'];
+      final expectedLength = metadata['byteLength'];
+      final bytes = await archiveFile.readAsBytes();
+      final verified =
+          expectedHash is String &&
+          expectedLength is int &&
+          bytes.length == expectedLength &&
+          sha256.convert(bytes).toString() == expectedHash;
+      int safeCount(String key) => switch (metadata[key]) {
+        final int value when value >= 0 => value,
+        _ => 0,
+      };
+      return (
+        reason: metadata['reason'] as String? ?? 'manual',
+        sha256Hex: expectedHash is String ? expectedHash : '',
+        itemCount:
+            safeCount('customItemCount') +
+            safeCount('progressCount') +
+            safeCount('sessionCount'),
+        verified: verified,
+      );
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<LocalRecoveryCleanupResult> deleteSelected({

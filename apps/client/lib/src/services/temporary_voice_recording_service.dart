@@ -21,6 +21,45 @@ abstract interface class TemporaryVoiceRecordingService {
   Future<void> dispose();
 }
 
+typedef TemporaryVoiceRootResolver = Future<String> Function();
+
+class TemporaryVoiceRecordingJanitor {
+  const TemporaryVoiceRecordingJanitor({TemporaryVoiceRootResolver? root})
+    : _root = root ?? _defaultRoot;
+
+  final TemporaryVoiceRootResolver _root;
+
+  Future<int> clearAbandonedFiles() async {
+    late final Directory directory;
+    try {
+      directory = Directory(await _root());
+    } on Object {
+      return 0;
+    }
+    if (!await directory.exists()) return 0;
+    var deleted = 0;
+    await for (final entity in directory.list(followLinks: false)) {
+      if (entity is! File) continue;
+      final name = path.basename(entity.path).toLowerCase();
+      if (!RegExp(r'^voice-[a-z0-9-]+\.(wav|m4a|aac)$').hasMatch(name)) {
+        continue;
+      }
+      try {
+        await entity.delete();
+        deleted += 1;
+      } on FileSystemException {
+        // A locked or already removed file is retried on the next app start.
+      }
+    }
+    return deleted;
+  }
+
+  static Future<String> _defaultRoot() async {
+    final directory = await getTemporaryDirectory();
+    return path.join(directory.path, 'sprache', 'voice-practice');
+  }
+}
+
 class DeviceTemporaryVoiceRecordingService
     implements TemporaryVoiceRecordingService {
   DeviceTemporaryVoiceRecordingService({

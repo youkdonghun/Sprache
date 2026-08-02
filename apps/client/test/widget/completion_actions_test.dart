@@ -55,9 +55,13 @@ void main() {
         final retry = find.byKey(const Key('completion-retry-mistakes'));
         final next = find.byKey(const Key('completion-next-recommended'));
         final back = find.byKey(const Key('completion-return'));
+        final receipt = find.byKey(const Key('completion-local-receipt'));
         expect(retry, findsNothing);
         expect(next, findsOneWidget);
         expect(back, findsOneWidget);
+        expect(receipt, findsOneWidget);
+        expect(find.text('로컬 저장 영수증'), findsOneWidget);
+        expect(find.textContaining('동기화 대기 1건'), findsOneWidget);
         expect(
           tester.getTopLeft(next).dy,
           lessThan(tester.getTopLeft(back).dy),

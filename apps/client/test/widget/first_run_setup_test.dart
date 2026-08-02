@@ -30,33 +30,25 @@ void main() {
         expect(find.byKey(const Key('first-run-setup-card')), findsOneWidget);
         await tester.tap(find.byKey(const Key('open-first-run-setup')));
         await tester.pumpAndSettle();
-        expect(find.byKey(const Key('first-run-setup-panel')), findsOneWidget);
-        expect(find.text('1'), findsWidgets);
+        expect(find.byKey(const Key('onboarding-step-panel')), findsOneWidget);
         expect(
-          find.byKey(const Key('onboarding-purpose-vocabulary')),
+          find.byKey(const Key('onboarding-purpose-hobby')),
           findsOneWidget,
         );
-        expect(
-          find.byKey(const Key('onboarding-level-advanced')),
-          findsOneWidget,
-        );
-        expect(find.byKey(const Key('onboarding-import-data')), findsOneWidget);
 
         await tester.tap(find.byKey(const Key('onboarding-language-ja')));
-        await tester.ensureVisible(
-          find.byKey(const Key('onboarding-purpose-vocabulary')),
-        );
-        await tester.tap(
-          find.byKey(const Key('onboarding-purpose-vocabulary')),
-        );
-        await tester.ensureVisible(
-          find.byKey(const Key('onboarding-level-advanced')),
-        );
+        await tester.tap(find.byKey(const Key('onboarding-purpose-hobby')));
+        await tester.tap(find.byKey(const Key('onboarding-next')));
+        await tester.pumpAndSettle();
+
         await tester.tap(find.byKey(const Key('onboarding-level-advanced')));
-        await tester.ensureVisible(
-          find.byKey(const Key('onboarding-goal-150')),
-        );
         await tester.tap(find.byKey(const Key('onboarding-goal-150')));
+        for (var step = 0; step < 4; step++) {
+          await tester.tap(find.byKey(const Key('onboarding-next')));
+          await tester.pumpAndSettle();
+        }
+
+        expect(find.byKey(const Key('onboarding-import-data')), findsOneWidget);
         await tester.ensureVisible(
           find.byKey(const Key('complete-first-run-setup')),
         );

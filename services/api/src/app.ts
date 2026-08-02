@@ -16,7 +16,7 @@ import {
 import type { AppConfig } from "./config.js";
 import { createAccountKey } from "./domain/accountKey.js";
 import {
-  GoogleDesktopOAuthBrokerError,
+  isGoogleDesktopOAuthBrokerError,
   RailwayGoogleDesktopOAuthBroker,
   UnavailableGoogleDesktopOAuthBroker,
   type GoogleDesktopOAuthBroker,
@@ -253,7 +253,7 @@ export async function buildApp(options: BuildAppOptions): Promise<FastifyInstanc
         const token = await googleDesktopOAuthBroker.requestToken(input);
         return reply.code(200).send(token);
       } catch (error) {
-        if (error instanceof GoogleDesktopOAuthBrokerError) {
+        if (isGoogleDesktopOAuthBrokerError(error)) {
           return reply.code(error.statusCode).send({
             error: error.code,
             message: "Google OAuth token request failed",

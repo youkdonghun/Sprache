@@ -66,6 +66,11 @@ class AdvancedPreferencesPanel extends StatelessWidget {
                   keyName: 'dark',
                   label: '다크',
                 ),
+                _PreferenceOption(
+                  value: AppColorMode.oled,
+                  keyName: 'oled',
+                  label: 'OLED',
+                ),
               ],
               onChanged: (value) => onExperiencePreferencesChanged(
                 experiencePreferences.copyWith(colorMode: value),
@@ -141,6 +146,11 @@ class AdvancedPreferencesPanel extends StatelessWidget {
                   keyName: 'large',
                   label: '크게',
                 ),
+                _PreferenceOption(
+                  value: AppTextScale.extraLarge,
+                  keyName: 'extra-large',
+                  label: '아주 크게',
+                ),
               ],
               onChanged: (value) => onExperiencePreferencesChanged(
                 experiencePreferences.copyWith(textScale: value),
@@ -151,9 +161,14 @@ class AdvancedPreferencesPanel extends StatelessWidget {
               semanticLabel: '움직임 줄이기 설정',
               title: '움직임 줄이기',
               subtitle: '화면 전환과 강조 애니메이션을 최소화합니다.',
-              value: experiencePreferences.reduceMotion,
+              value: experiencePreferences.motionLevel != AppMotionLevel.full,
               onChanged: (value) => onExperiencePreferencesChanged(
-                experiencePreferences.copyWith(reduceMotion: value),
+                experiencePreferences.copyWith(
+                  motionLevel: value
+                      ? AppMotionLevel.reduced
+                      : AppMotionLevel.full,
+                  reduceMotion: false,
+                ),
               ),
             ),
             _CompactSwitch(
@@ -696,6 +711,7 @@ String _colorModeLabel(AppColorMode value) => switch (value) {
   AppColorMode.system => '시스템',
   AppColorMode.light => '라이트',
   AppColorMode.dark => '다크',
+  AppColorMode.oled => 'OLED',
 };
 
 String _paletteLabel(AppAccentPalette value) => switch (value) {
@@ -705,6 +721,10 @@ String _paletteLabel(AppAccentPalette value) => switch (value) {
   AppAccentPalette.violet => '바이올렛',
   AppAccentPalette.coral => '코랄',
   AppAccentPalette.slate => '슬레이트',
+  AppAccentPalette.sunrise => '선라이즈',
+  AppAccentPalette.mint => '민트',
+  AppAccentPalette.rose => '로즈',
+  AppAccentPalette.mono => '모노',
 };
 
 String _densityLabel(AppDensity value) => switch (value) {

@@ -96,6 +96,29 @@ void main() {
     expect(result, const [fullWidth, cafe]);
   });
 
+  test('inline tag, type, state and group operators combine', () {
+    final groupedCafe = cafe.copyWith(tags: const ['여행', 'group:파리 출장']);
+    final result = filterAndSortLibraryItems(
+      items: [groupedCafe, fullWidth],
+      progressById: {
+        cafe.id: ProgressRecord(
+          itemId: cafe.id,
+          correctCount: 1,
+          wrongCount: 1,
+          status: LearningStatus.review,
+          nextReviewAt: DateTime.utc(2026, 7, 30),
+        ),
+      },
+      favoriteItemIds: {cafe.id},
+      criteria: const LibrarySearchCriteria(
+        query: 'tag:여행 type:word state:favorite state:due group:"파리 출장"',
+      ),
+      now: DateTime.utc(2026, 7, 31),
+    );
+
+    expect(result.map((item) => item.id), [cafe.id]);
+  });
+
   test('smart collection definition round-trips', () {
     final definition = SmartCollectionDefinition(
       id: 'smart-1',

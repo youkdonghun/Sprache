@@ -1,7 +1,9 @@
+import 'adaptive_study_session.dart';
 import 'study_preferences.dart';
 import 'study_limits.dart';
 
 const _keepParentSessionId = Object();
+const _keepInputCheckpoint = Object();
 
 enum ActiveStudySessionPhase { active, paused }
 
@@ -127,6 +129,9 @@ class ActiveStudySession {
     this.pauseCount = 0,
     this.resumeCount = 0,
     this.journey = const [],
+    this.runtimeOptions = const StudySessionRuntimeOptions(),
+    this.inputCheckpoint,
+    this.attemptMetrics = const [],
   });
 
   factory ActiveStudySession.started({
@@ -136,6 +141,8 @@ class ActiveStudySession {
     required int? unitIndex,
     required List<String> itemIds,
     required DateTime startedAt,
+    StudySessionRuntimeOptions runtimeOptions =
+        const StudySessionRuntimeOptions(),
   }) {
     if (itemIds.isEmpty ||
         itemIds.length > StudyLimits.maxSessionItems ||
@@ -159,6 +166,7 @@ class ActiveStudySession {
       earnedXp: 0,
       startedAt: at,
       updatedAt: at,
+      runtimeOptions: runtimeOptions,
       rootSessionId: sessionId,
       journey: [
         StudySessionJourneyEvent(
@@ -199,6 +207,9 @@ class ActiveStudySession {
   final int pauseCount;
   final int resumeCount;
   final List<StudySessionJourneyEvent> journey;
+  final StudySessionRuntimeOptions runtimeOptions;
+  final StudyInputCheckpoint? inputCheckpoint;
+  final List<StudyAttemptMetric> attemptMetrics;
 
   String get lineageRootId => rootSessionId ?? sessionId;
   List<String> get originalItemIds =>
@@ -233,6 +244,9 @@ class ActiveStudySession {
     int? pauseCount,
     int? resumeCount,
     List<StudySessionJourneyEvent>? journey,
+    StudySessionRuntimeOptions? runtimeOptions,
+    Object? inputCheckpoint = _keepInputCheckpoint,
+    List<StudyAttemptMetric>? attemptMetrics,
   }) {
     return ActiveStudySession(
       sessionId: sessionId ?? this.sessionId,
@@ -259,6 +273,11 @@ class ActiveStudySession {
       pauseCount: pauseCount ?? this.pauseCount,
       resumeCount: resumeCount ?? this.resumeCount,
       journey: journey ?? this.journey,
+      runtimeOptions: runtimeOptions ?? this.runtimeOptions,
+      inputCheckpoint: identical(inputCheckpoint, _keepInputCheckpoint)
+          ? this.inputCheckpoint
+          : inputCheckpoint as StudyInputCheckpoint?,
+      attemptMetrics: attemptMetrics ?? this.attemptMetrics,
     );
   }
 
@@ -365,6 +384,7 @@ class ActiveStudySession {
       pauseCount: pauseCount,
       resumeCount: resumeCount,
       journey: _appendEvent(event),
+      runtimeOptions: runtimeOptions,
     );
   }
 
@@ -398,6 +418,10 @@ class ActiveStudySession {
     'pauseCount': pauseCount,
     'resumeCount': resumeCount,
     'journey': [for (final event in journey) event.toJson()],
+    'runtimeOptions': runtimeOptions.toJson(),
+    if (inputCheckpoint != null) 'inputCheckpoint': inputCheckpoint!.toJson(),
+    if (attemptMetrics.isNotEmpty)
+      'attemptMetrics': [for (final metric in attemptMetrics) metric.toJson()],
   };
 
   factory ActiveStudySession.fromJson(Map<String, Object?> json) {
@@ -501,6 +525,38 @@ class ActiveStudySession {
       legacyStartedAt: startedAt,
       legacyItemCount: initialItemIds.length,
     );
+    final runtimeOptions = switch (json['runtimeOptions']) {
+      final Map value => StudySessionRuntimeOptions.fromJson(
+        Map<String, Object?>.from(value),
+      ),
+      null => const StudySessionRuntimeOptions(),
+      _ => throw const FormatException('Invalid study session options'),
+    };
+    final inputCheckpoint = switch (json['inputCheckpoint']) {
+      final Map value => StudyInputCheckpoint.fromJson(
+        Map<String, Object?>.from(value),
+      ),
+      null => null,
+      _ => throw const FormatException('Invalid study input checkpoint'),
+    };
+    final rawAttemptMetrics = json['attemptMetrics'];
+    if (rawAttemptMetrics != null &&
+        (rawAttemptMetrics is! List<Object?> ||
+            rawAttemptMetrics.length > StudyLimits.maxActiveQueueEntries)) {
+      throw const FormatException('Invalid active study attempt metrics');
+    }
+    final attemptMetrics = <StudyAttemptMetric>[
+      for (final value in (rawAttemptMetrics as List<Object?>? ?? const []))
+        if (value is Map)
+          StudyAttemptMetric.fromJson(Map<String, Object?>.from(value))
+        else
+          throw const FormatException('Invalid active study attempt metric'),
+    ];
+    if ((inputCheckpoint != null &&
+            !knownItemIds.contains(inputCheckpoint.itemId)) ||
+        attemptMetrics.any((metric) => !knownItemIds.contains(metric.itemId))) {
+      throw const FormatException('Unknown active study metric item');
+    }
     return ActiveStudySession(
       sessionId: sessionId,
       courseId: courseId,
@@ -524,6 +580,9 @@ class ActiveStudySession {
       pauseCount: pauseCount,
       resumeCount: resumeCount,
       journey: journey,
+      runtimeOptions: runtimeOptions,
+      inputCheckpoint: inputCheckpoint,
+      attemptMetrics: List.unmodifiable(attemptMetrics),
     );
   }
 }
