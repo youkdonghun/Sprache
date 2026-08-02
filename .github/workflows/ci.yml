@@ -154,6 +154,9 @@ jobs:
             echo "hw.gpu.mode=swiftshader_indirect"
             echo "showDeviceFrame=no"
           } >> "$ANDROID_AVD_HOME/SpracheCiApi35.avd/config.ini"
+          emulator="$sdk_root/emulator/emulator"
+          test -x "$emulator"
+          "$emulator" -list-avds | grep -Fxq SpracheCiApi35
       - name: Build production-configured REAL APK with debug signing
         working-directory: apps/client
         shell: bash
@@ -199,6 +202,7 @@ jobs:
           grep -Fq "CN=Android Debug" \
             "$artifact_dir/android-signing-certificate.txt"
       - name: Boot KVM emulator, install exact APK, and prove a rendered frame
+        timeout-minutes: 15
         shell: bash
         run: |
           set -euo pipefail
@@ -229,28 +233,50 @@ jobs:
             -no-window \
             -no-audio \
             -no-boot-anim \
+            -no-metrics \
             -no-snapshot \
             -wipe-data \
             -accel on \
             -gpu swiftshader_indirect \
+            -verbose \
             > "$artifact_dir/android-emulator.log" 2>&1 &
           emulator_pid=$!
           cleanup() {
-            adb -s "$serial" logcat -d \
+            timeout --kill-after=5s 30s adb -s "$serial" logcat -d \
               > "$artifact_dir/android-logcat.txt" 2>&1 || true
-            adb -s "$serial" emu kill >/dev/null 2>&1 || true
+            timeout --kill-after=5s 30s adb -s "$serial" emu kill \
+              >/dev/null 2>&1 || true
             kill "$emulator_pid" >/dev/null 2>&1 || true
             wait "$emulator_pid" >/dev/null 2>&1 || true
           }
           trap cleanup EXIT
 
-          timeout 180 adb wait-for-device
-          adb devices | grep -Eq "^${serial}[[:space:]]+device$"
+          timeout --kill-after=5s 30s adb start-server
+          device_ready=0
+          for _ in $(seq 1 180); do
+            if timeout --kill-after=2s 5s adb devices |
+              grep -Eq "^${serial}[[:space:]]+device$"; then
+              device_ready=1
+              break
+            fi
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              echo "::error::Android emulator exited before adb detected it."
+              tail -n 200 "$artifact_dir/android-emulator.log"
+              exit 1
+            fi
+            sleep 1
+          done
+          if (( device_ready != 1 )); then
+            echo "::error::adb did not detect the Android emulator within 180 seconds."
+            tail -n 200 "$artifact_dir/android-emulator.log"
+            exit 1
+          fi
           boot_completed=""
           for _ in $(seq 1 180); do
             boot_completed="$(
-              adb -s "$serial" shell getprop sys.boot_completed \
-                2>/dev/null | tr -d '\r'
+              timeout --kill-after=2s 10s \
+                adb -s "$serial" shell getprop sys.boot_completed \
+                2>/dev/null | tr -d '\r' || true
             )"
             if [[ "$boot_completed" == "1" ]]; then break; fi
             if ! kill -0 "$emulator_pid" 2>/dev/null; then
@@ -264,15 +290,24 @@ jobs:
             echo "::error::Android emulator did not finish booting within 180 seconds."
             exit 1
           fi
-          adb -s "$serial" shell input keyevent KEYCODE_WAKEUP
-          adb -s "$serial" shell wm dismiss-keyguard
-          adb -s "$serial" shell settings put global window_animation_scale 0
-          adb -s "$serial" shell settings put global transition_animation_scale 0
-          adb -s "$serial" shell settings put global animator_duration_scale 0
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell input keyevent KEYCODE_WAKEUP
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell wm dismiss-keyguard
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell settings put global window_animation_scale 0
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell settings put global transition_animation_scale 0
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell settings put global animator_duration_scale 0
 
-          adb -s "$serial" uninstall "$SPRACHE_PACKAGE" >/dev/null 2>&1 || true
-          adb -s "$serial" install --no-streaming -r "$apk"
-          adb -s "$serial" shell dumpsys package "$SPRACHE_PACKAGE" \
+          timeout --kill-after=5s 60s \
+            adb -s "$serial" uninstall "$SPRACHE_PACKAGE" \
+            >/dev/null 2>&1 || true
+          timeout --kill-after=10s 300s \
+            adb -s "$serial" install -r "$apk"
+          timeout --kill-after=5s 60s \
+            adb -s "$serial" shell dumpsys package "$SPRACHE_PACKAGE" \
             > "$artifact_dir/android-package.txt"
           version_pattern="${SPRACHE_VERSION//./\\.}"
           package_pattern="${SPRACHE_PACKAGE//./\\.}"
@@ -281,12 +316,15 @@ jobs:
           grep -Eq "versionName=$version_pattern([[:space:]]|$)" \
             "$artifact_dir/android-package.txt"
 
-          adb -s "$serial" shell am force-stop "$SPRACHE_PACKAGE"
-          adb -s "$serial" shell dumpsys gfxinfo "$SPRACHE_PACKAGE" reset \
-            >/dev/null
+          timeout --kill-after=2s 30s \
+            adb -s "$serial" shell am force-stop "$SPRACHE_PACKAGE"
+          timeout --kill-after=2s 30s \
+            adb -s "$serial" shell dumpsys gfxinfo "$SPRACHE_PACKAGE" reset \
+              >/dev/null
           start_ms="$(date +%s%3N)"
-          adb -s "$serial" shell am start -W -S \
-            -n "$SPRACHE_PACKAGE/.MainActivity" \
+          timeout --kill-after=5s 60s \
+            adb -s "$serial" shell am start -W -S \
+              -n "$SPRACHE_PACKAGE/.MainActivity" \
             | tee "$artifact_dir/android-launch.txt"
           grep -Fq "Status: ok" "$artifact_dir/android-launch.txt"
 
@@ -295,8 +333,9 @@ jobs:
           foreground=0
           for _ in $(seq 1 240); do
             activity_state="$(
-              adb -s "$serial" shell dumpsys activity activities \
-                2>/dev/null | tr -d '\r'
+              timeout --kill-after=2s 5s \
+                adb -s "$serial" shell dumpsys activity activities \
+                2>/dev/null | tr -d '\r' || true
             )"
             foreground=0
             if grep -Eq \
@@ -305,8 +344,9 @@ jobs:
               foreground=1
             fi
             gfx_info="$(
-              adb -s "$serial" shell dumpsys gfxinfo "$SPRACHE_PACKAGE" \
-                2>/dev/null | tr -d '\r'
+              timeout --kill-after=2s 5s \
+                adb -s "$serial" shell dumpsys gfxinfo "$SPRACHE_PACKAGE" \
+                2>/dev/null | tr -d '\r' || true
             )"
             frame_count="$(
               sed -n 's/.*Total frames rendered:[[:space:]]*\([0-9][0-9]*\).*/\1/p' \
@@ -326,7 +366,8 @@ jobs:
             exit 1
           fi
 
-          adb -s "$serial" exec-out screencap -p > "$screenshot"
+          timeout --kill-after=5s 30s \
+            adb -s "$serial" exec-out screencap -p > "$screenshot"
           python3 - "$screenshot" <<'PY'
           import pathlib
           import struct
