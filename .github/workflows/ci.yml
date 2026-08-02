@@ -134,8 +134,12 @@ jobs:
           test -x "$sdkmanager"
           test -x "$avdmanager"
           android_avd_home="$RUNNER_TEMP/sprache-android-avd"
-          mkdir -p "$android_avd_home"
+          gradle_user_home="$RUNNER_TEMP/sprache-gradle-cache"
+          pub_cache="$RUNNER_TEMP/sprache-pub-cache"
+          mkdir -p "$android_avd_home" "$gradle_user_home" "$pub_cache"
           echo "ANDROID_AVD_HOME=$android_avd_home" >> "$GITHUB_ENV"
+          echo "GRADLE_USER_HOME=$gradle_user_home" >> "$GITHUB_ENV"
+          echo "PUB_CACHE=$pub_cache" >> "$GITHUB_ENV"
           export ANDROID_AVD_HOME="$android_avd_home"
           "$sdkmanager" --install \
             "platform-tools" \
@@ -148,12 +152,23 @@ jobs:
             --name SpracheCiApi35 \
             --package "$ANDROID_SYSTEM_IMAGE" \
             --device pixel_6
+          avd_config="$ANDROID_AVD_HOME/SpracheCiApi35.avd/config.ini"
+          sed -i \
+            -e '/^disk\.dataPartition\.size=/d' \
+            -e '/^hw\.cpu\.ncore=/d' \
+            -e '/^hw\.ramSize=/d' \
+            -e '/^hw\.sdCard=/d' \
+            "$avd_config"
           {
+            echo "disk.dataPartition.size=2048M"
+            echo "hw.cpu.ncore=2"
             echo "hw.keyboard=yes"
             echo "hw.gpu.enabled=yes"
             echo "hw.gpu.mode=swiftshader_indirect"
+            echo "hw.ramSize=1536"
+            echo "hw.sdCard=no"
             echo "showDeviceFrame=no"
-          } >> "$ANDROID_AVD_HOME/SpracheCiApi35.avd/config.ini"
+          } >> "$avd_config"
           emulator="$sdk_root/emulator/emulator"
           test -x "$emulator"
           "$emulator" -list-avds | grep -Fxq SpracheCiApi35
@@ -201,6 +216,61 @@ jobs:
             | tee "$artifact_dir/android-signing-certificate.txt"
           grep -Fq "CN=Android Debug" \
             "$artifact_dir/android-signing-certificate.txt"
+      - name: Reclaim isolated build caches for the Android emulator
+        working-directory: apps/client
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact="$RUNNER_TEMP/sprache-android-real-runtime/Sprache-Android-$SPRACHE_VERSION-google-debug-signed.apk"
+          test -s "$artifact"
+          df -h "$RUNNER_TEMP"
+          du -sh \
+            "$GITHUB_WORKSPACE/apps/client/build" \
+            "$GITHUB_WORKSPACE/apps/client/android/.gradle" \
+            "$GRADLE_USER_HOME" \
+            "$PUB_CACHE" \
+            "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/ndk" \
+            "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmake" \
+            2>/dev/null || true
+          android/gradlew --stop || true
+          flutter clean
+          sdk_root="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          if [[ "$sdk_root" != /* || "$sdk_root" == "/" || ! -d "$sdk_root" ]]; then
+            echo "::error::Refusing to clean caches under an invalid Android SDK root: $sdk_root"
+            exit 1
+          fi
+          cache_roots=(
+            "$GITHUB_WORKSPACE/apps/client/android/.gradle"
+            "$GRADLE_USER_HOME"
+            "$PUB_CACHE"
+            "$sdk_root/ndk"
+            "$sdk_root/cmake"
+          )
+          expected_roots=(
+            "$GITHUB_WORKSPACE/apps/client/android/.gradle"
+            "$RUNNER_TEMP/sprache-gradle-cache"
+            "$RUNNER_TEMP/sprache-pub-cache"
+            "$sdk_root/ndk"
+            "$sdk_root/cmake"
+          )
+          for index in "${!cache_roots[@]}"; do
+            cache_root="${cache_roots[$index]}"
+            expected_root="${expected_roots[$index]}"
+            if [[ "$cache_root" != "$expected_root" ]]; then
+              echo "::error::Refusing to clean an unexpected cache path: $cache_root"
+              exit 1
+            fi
+            if [[ -d "$cache_root" ]]; then
+              rm -rf -- "$cache_root"
+            fi
+          done
+          test -s "$artifact"
+          df -h "$RUNNER_TEMP"
+          available_kib="$(df --output=avail -k "$RUNNER_TEMP" | tail -n 1 | tr -d ' ')"
+          if (( available_kib < 6 * 1024 * 1024 )); then
+            echo "::error::Android emulator requires at least 6 GiB of free runner disk; only $available_kib KiB is available."
+            exit 1
+          fi
       - name: Boot KVM emulator, install exact APK, and prove a rendered frame
         timeout-minutes: 15
         shell: bash
@@ -236,6 +306,9 @@ jobs:
             -no-metrics \
             -no-snapshot \
             -wipe-data \
+            -partition-size 2048 \
+            -memory 1536 \
+            -cores 2 \
             -accel on \
             -gpu swiftshader_indirect \
             -verbose \
