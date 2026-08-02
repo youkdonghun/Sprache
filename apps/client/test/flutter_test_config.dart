@@ -38,9 +38,10 @@ Future<void> testExecutable(FutureOr<void> Function() testMain) async {
 class _TolerantLocalFileComparator extends LocalFileComparator {
   _TolerantLocalFileComparator(super.testFile);
 
-  // Hosted Windows runners can differ by a handful of anti-aliased edge
-  // pixels. This still rejects any visual change larger than 0.02%.
-  static const double _maxDiffRate = 0.0002;
+  // Hosted Windows runners can differ slightly in anti-aliased text edges.
+  // Keep the allowance below 0.05%, so layout and component changes still
+  // fail while the observed 128-pixel renderer variance remains stable.
+  static const double _maxDiffRate = 0.0005;
 
   @override
   Future<bool> compare(Uint8List imageBytes, Uri golden) async {
