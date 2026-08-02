@@ -933,10 +933,16 @@ Map<String, Object?> _decodeManifest(List<int> bytes) {
 }
 
 String _safeFileName(String value) {
-  final baseName = path.basename(value.trim());
+  final segments = value.trim().split(RegExp(r'[/\\]+'));
+  final baseName = segments.reversed.firstWhere((segment) {
+    final candidate = segment.trim();
+    return candidate.isNotEmpty && candidate != '.' && candidate != '..';
+  }, orElse: () => 'import-file');
   final safe = baseName
       .replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1F]'), '_')
+      .replaceAll(RegExp(r'\.{2,}'), '_')
       .replaceAll(RegExp(r'\s+'), ' ')
+      .replaceAll(RegExp(r'^[. ]+|[. ]+$'), '')
       .trim();
   return safe.isEmpty ? 'import-file' : safe;
 }
