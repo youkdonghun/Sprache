@@ -665,20 +665,29 @@ jobs:
         run: |
           set -euo pipefail
           app_path="build/macos/Build/Products/Release/Sprache.app"
-          executable="$app_path/Contents/MacOS/Sprache"
           artifact_dir="$RUNNER_TEMP/sprache-ci-artifacts"
+          runtime_log="$RUNNER_TEMP/sprache-macos-runtime.log"
           mkdir -p "$artifact_dir"
-          "$executable" >"$RUNNER_TEMP/sprache-macos-runtime.log" 2>&1 &
-          app_pid=$!
+          /usr/bin/open -W -n "$app_path" >"$runtime_log" 2>&1 &
+          launcher_pid=$!
+          app_pid=""
           cleanup() {
-            kill "$app_pid" 2>/dev/null || true
-            wait "$app_pid" 2>/dev/null || true
+            if [[ -n "$app_pid" ]]; then
+              kill "$app_pid" 2>/dev/null || true
+              wait "$app_pid" 2>/dev/null || true
+            fi
+            kill "$launcher_pid" 2>/dev/null || true
+            wait "$launcher_pid" 2>/dev/null || true
           }
           trap cleanup EXIT
           marker=""
           # Keep the polling window aligned with the 60-second evidence budget.
           for _ in $(seq 1 120); do
-            kill -0 "$app_pid"
+            if ! kill -0 "$launcher_pid" 2>/dev/null; then
+              cat "$runtime_log" || true
+              exit 1
+            fi
+            app_pid="$(pgrep -x Sprache 2>/dev/null | tail -n 1 || true)"
             marker="$(
               find \
                 "$HOME/Library/Containers/com.youkdonghun.sprache/Data/Library/Application Support" \
@@ -689,6 +698,8 @@ jobs:
             if [[ -n "$marker" ]]; then break; fi
             sleep 0.5
           done
+          test -n "$app_pid"
+          kill -0 "$app_pid"
           test -n "$marker"
           python3 - "$marker" <<'PY'
           import json
