@@ -204,6 +204,7 @@ jobs:
           set -euo pipefail
           sdk_root="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
           emulator="$sdk_root/emulator/emulator"
+          platform_tools="$sdk_root/platform-tools"
           artifact_dir="$RUNNER_TEMP/sprache-android-real-runtime"
           artifact_name="Sprache-Android-$SPRACHE_VERSION-google-debug-signed.apk"
           apk="$artifact_dir/$artifact_name"
@@ -212,6 +213,8 @@ jobs:
           serial="emulator-5554"
           test -s "$apk"
           test -x "$emulator"
+          test -x "$platform_tools/adb"
+          export PATH="$platform_tools:$PATH"
           if [[ ! -c /dev/kvm ]]; then
             echo "::error::GitHub runner does not expose /dev/kvm."
             exit 1
@@ -643,9 +646,17 @@ jobs:
         shell: bash
         run: |
           app_path="build/macos/Build/Products/Release/Sprache.app"
+          ci_entitlements="$RUNNER_TEMP/sprache-macos-ci.entitlements"
           test -d "$app_path"
           test -x "$app_path/Contents/MacOS/Sprache"
           test -f "$app_path/Contents/Info.plist"
+          cp macos/Runner/Release.entitlements "$ci_entitlements"
+          /usr/libexec/PlistBuddy -c 'Delete :keychain-access-groups' \
+            "$ci_entitlements"
+          codesign --force --deep --sign - "$app_path"
+          codesign --force --sign - --entitlements "$ci_entitlements" \
+            "$app_path"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
           bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app_path/Contents/Info.plist")"
           bundle_name="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$app_path/Contents/Info.plist")"
           minimum_version="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$app_path/Contents/Info.plist")"
