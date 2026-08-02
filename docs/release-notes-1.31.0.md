@@ -294,9 +294,9 @@
 - Windows 코드 서명 인증서가 없으면 설치 EXE는 기능 검증용 무서명 산출물이다.
 - iOS는 Simulator용 `MOCK` ZIP이며 실제 기기용 IPA가 아니다.
 - macOS는 unsigned/ad-hoc `MOCK` ZIP이며 Developer ID 서명·공증 배포본이 아니다.
-- 실제 파일명, 크기, SHA-256, 실행·첫 프레임 결과와 CI 사실은 최종
-  `release-manifest-1.31.0.json`에만 기록한다. 이 문서에는 미실행 결과나 임의
-  해시를 기입하지 않는다.
+- 실제 파일명, 크기, SHA-256, 플랫폼별 runtime/build-only 검증 범위와 CI 사실은
+  최종 `release-manifest-1.31.0.json`에만 기록한다. 이 문서에는 미실행 결과나
+  임의 해시를 기입하지 않는다.
 
 ## 검증 자료
 

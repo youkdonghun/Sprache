@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -23,7 +24,7 @@ test('creates and verifies a checksummed four-platform manifest', async (t) => {
   const specPath = path.join(root, 'release-spec.json');
   const manifestPath = path.join(root, 'release-manifest-1.31.0.json');
   await writeJson(specPath, {
-    format: 'sprache-release-spec-v1',
+    format: 'sprache-release-spec-v2',
     version: '1.31.0',
     buildNumber: 55,
     releasePolicy: policy,
@@ -41,6 +42,12 @@ test('creates and verifies a checksummed four-platform manifest', async (t) => {
   assert.ok(
     verified.entries.every((entry) => /^[0-9a-f]{64}$/.test(entry.sha256)),
   );
+  const android = verified.entries.find((entry) => entry.platform === 'android');
+  assert.equal(android.mode, 'REAL');
+  assert.equal(android.verification, 'BUILD_ONLY');
+  assert.equal(android.launched, false);
+  assert.equal(android.firstFrameRendered, false);
+  assert.equal(android.firstFrameMillis, null);
 });
 
 test('detects artifact tampering after manifest creation', async (t) => {
@@ -50,7 +57,7 @@ test('detects artifact tampering after manifest creation', async (t) => {
   const specPath = path.join(root, 'release-spec.json');
   const manifestPath = path.join(root, 'release-manifest-1.31.0.json');
   await writeJson(specPath, {
-    format: 'sprache-release-spec-v1',
+    format: 'sprache-release-spec-v2',
     version: '1.31.0',
     buildNumber: 55,
     releasePolicy: policy,
@@ -72,7 +79,7 @@ test('rejects path traversal and dishonest runtime evidence', async (t) => {
   entries[0] = { ...entries[0], artifact: '../outside.apk' };
   const specPath = path.join(root, 'release-spec.json');
   await writeJson(specPath, {
-    format: 'sprache-release-spec-v1',
+    format: 'sprache-release-spec-v2',
     version: '1.31.0',
     buildNumber: 55,
     releasePolicy: policy,
@@ -85,12 +92,12 @@ test('rejects path traversal and dishonest runtime evidence', async (t) => {
 
   const safeEntries = await writeBundleInputs(root);
   const evidence = JSON.parse(
-    await readFile(path.join(root, safeEntries[1].runtimeEvidence), 'utf8'),
+    await readFile(path.join(root, safeEntries[0].evidence), 'utf8'),
   );
   evidence.firstFrameRendered = false;
-  await writeJson(path.join(root, safeEntries[1].runtimeEvidence), evidence);
+  await writeJson(path.join(root, safeEntries[0].evidence), evidence);
   await writeJson(specPath, {
-    format: 'sprache-release-spec-v1',
+    format: 'sprache-release-spec-v2',
     version: '1.31.0',
     buildNumber: 55,
     releasePolicy: policy,
@@ -102,30 +109,119 @@ test('rejects path traversal and dishonest runtime evidence', async (t) => {
   );
 });
 
+test('rejects dishonest or unbound Android BUILD_ONLY evidence', async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'sprache-release-build-only-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const entries = await writeBundleInputs(root);
+  const android = entries.find((entry) => entry.platform === 'android');
+  const specPath = path.join(root, 'release-spec.json');
+  const original = JSON.parse(
+    await readFile(path.join(root, android.evidence), 'utf8'),
+  );
+
+  for (const mutate of [
+    (value) => { value.launched = true; },
+    (value) => { value.signatureVerified = false; },
+    (value) => { value.artifactSha256 = '0'.repeat(64); },
+    (value) => { value.limitation = 'UNSPECIFIED'; },
+  ]) {
+    const evidence = structuredClone(original);
+    mutate(evidence);
+    await writeJson(path.join(root, android.evidence), evidence);
+    await writeJson(specPath, {
+      format: 'sprache-release-spec-v2',
+      version: '1.31.0',
+      buildNumber: 55,
+      releasePolicy: policy,
+      entries,
+    });
+    await assert.rejects(createReleaseManifest({ specPath }));
+  }
+});
+
+test('does not let another platform or a mismatched spec opt into BUILD_ONLY', async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'sprache-release-verification-scope-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const entries = await writeBundleInputs(root);
+  const specPath = path.join(root, 'release-spec.json');
+  const windows = entries.find((entry) => entry.platform === 'windows');
+  windows.verification = 'BUILD_ONLY';
+  await writeJson(specPath, {
+    format: 'sprache-release-spec-v2',
+    version: '1.31.0',
+    buildNumber: 55,
+    releasePolicy: policy,
+    entries,
+  });
+  await assert.rejects(
+    createReleaseManifest({ specPath }),
+    /windows\.verification must be RUNTIME/,
+  );
+
+  windows.verification = 'RUNTIME';
+  const android = entries.find((entry) => entry.platform === 'android');
+  android.verification = 'RUNTIME';
+  await writeJson(specPath, {
+    format: 'sprache-release-spec-v2',
+    version: '1.31.0',
+    buildNumber: 55,
+    releasePolicy: policy,
+    entries,
+  });
+  await assert.rejects(
+    createReleaseManifest({ specPath }),
+    /android\.verification must be BUILD_ONLY/,
+  );
+});
+
 async function writeBundleInputs(root) {
   const definitions = [
-    ['windows', 'REAL', 'Sprache-Windows-Setup-1.31.0.exe'],
-    ['android', 'REAL', 'Sprache-Android-1.31.0.apk'],
-    ['ios', 'MOCK', 'Sprache-iOS-Simulator-1.31.0-mock.zip'],
-    ['macos', 'MOCK', 'Sprache-macOS-1.31.0-mock.zip'],
+    ['windows', 'REAL', 'RUNTIME', 'Sprache-Windows-Setup-1.31.0.exe'],
+    ['android', 'REAL', 'BUILD_ONLY', 'Sprache-Android-1.31.0.apk'],
+    ['ios', 'MOCK', 'RUNTIME', 'Sprache-iOS-Simulator-1.31.0-mock.zip'],
+    ['macos', 'MOCK', 'RUNTIME', 'Sprache-macOS-1.31.0-mock.zip'],
   ];
   const entries = [];
-  for (const [platform, mode, artifact] of definitions) {
-    const runtimeEvidence = `runtime-${platform}.json`;
-    await writeFile(path.join(root, artifact), `${platform}-${mode}-artifact`);
-    await writeJson(path.join(root, runtimeEvidence), {
-      format: 'sprache-runtime-evidence-v1',
+  for (const [platform, mode, verification, artifact] of definitions) {
+    const evidence = `${verification === 'RUNTIME' ? 'runtime' : 'build'}-${platform}.json`;
+    const artifactContents = `${platform}-${mode}-artifact`;
+    await writeFile(path.join(root, artifact), artifactContents);
+    const common = {
       platform,
       mode,
       version: '1.31.0',
       buildNumber: 55,
-      launched: true,
-      firstFrameRendered: true,
-      firstFrameMillis: 731,
-      probe: platform === 'windows' ? 'native-runtime' : 'flutter-first-frame',
       checkedAt: '2026-08-03T06:00:00.000Z',
-    });
-    entries.push({ platform, mode, artifact, runtimeEvidence });
+    };
+    if (verification === 'RUNTIME') {
+      await writeJson(path.join(root, evidence), {
+        format: 'sprache-runtime-evidence-v1',
+        ...common,
+        launched: true,
+        firstFrameRendered: true,
+        firstFrameMillis: 731,
+        probe: platform === 'windows' ? 'native-runtime' : 'flutter-first-frame',
+      });
+    } else {
+      await writeJson(path.join(root, evidence), {
+        format: 'sprache-build-evidence-v1',
+        ...common,
+        verification: 'BUILD_ONLY',
+        launched: false,
+        firstFrameRendered: false,
+        firstFrameMillis: null,
+        probe: 'signed-release-build',
+        buildVerified: true,
+        signatureVerified: true,
+        packageVerified: true,
+        limitation: 'ANDROID_RUNTIME_UNAVAILABLE_CI_BILLING_AND_LOCAL_HYPERVISOR',
+        packageName: 'com.youkdonghun.sprache',
+        abis: ['arm64-v8a', 'armeabi-v7a', 'x86_64'],
+        artifactSha256: createHash('sha256').update(artifactContents).digest('hex'),
+        artifactByteLength: Buffer.byteLength(artifactContents),
+      });
+    }
+    entries.push({ platform, mode, verification, artifact, evidence });
   }
   return entries;
 }

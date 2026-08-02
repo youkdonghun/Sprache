@@ -160,7 +160,7 @@ jobs:
             -e '/^hw\.sdCard=/d' \
             "$avd_config"
           {
-            echo "disk.dataPartition.size=2048M"
+            echo "disk.dataPartition.size=2047M"
             echo "hw.cpu.ncore=2"
             echo "hw.keyboard=yes"
             echo "hw.gpu.enabled=yes"
@@ -306,7 +306,7 @@ jobs:
             -no-metrics \
             -no-snapshot \
             -wipe-data \
-            -partition-size 2048 \
+            -partition-size 2047 \
             -memory 1536 \
             -cores 2 \
             -accel on \

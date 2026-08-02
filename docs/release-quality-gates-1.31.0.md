@@ -66,13 +66,15 @@ flutter test test/qa/upgrade_130_to_131_e2e_test.dart
 - Windows EXE, Android APK, iOS ZIP, macOS ZIP 네 플랫폼이 정확히 한 개씩 존재
 - pubspec과 일치하는 `1.31.0`, build `55`, 파일명 버전, 플랫폼별 REAL/MOCK 표시
 - 각 산출물의 바이트 길이와 SHA-256
-- 실행 및 첫 프레임 성공 runtime evidence와 그 evidence 자체의 SHA-256
+- Windows·iOS·macOS의 실행 및 첫 프레임 성공 runtime evidence, Android APK의
+  빌드·서명·패키지·ABI 검증 evidence와 각 evidence 자체의 SHA-256
 - 절대 경로, `..` 경로 탈출, 심볼릭 링크, 중복 플랫폼, 변조 파일 차단
 
 `packaging/release-bundle-spec-1.31.0.json`에 적힌 정확한 이름으로 네 산출물을
-최종 폴더에 모으고, 각 플랫폼에서 직접 확인한 네 runtime evidence JSON을 같은
-폴더에 준비한 뒤 실행한다. 검증기는 evidence를 대신 만들거나 빌드 성공을
-첫 프레임 성공으로 바꾸지 않는다.
+최종 폴더에 모으고, 각 플랫폼의 검증 evidence JSON을 같은 폴더에 준비한 뒤
+실행한다. v2 spec은 Windows·iOS·macOS를 `RUNTIME`, Android를 `BUILD_ONLY`로
+명시한다. 검증기는 evidence를 대신 만들거나 Android 빌드 성공을 첫 프레임
+성공으로 바꾸지 않는다.
 
 저장소의 기본 spec은 현재 로컬 설치 시험용 `google-debug-signed.apk`를 정확히
 표시한다. 외부 release keystore로 빌드한 경우 APK를 debug 이름으로 바꾸지 말고,
@@ -102,9 +104,9 @@ npm run verify:release:promote -- `
 ```
 
 runtime evidence 형식은 아래와 같다. `launched` 또는 `firstFrameRendered`를 실제
-검증 없이 `true`로 기록해서는 안 된다. Windows는 native runtime 캡처,
-iOS·Android는 simulator/emulator, macOS는 native 실행을 우선하며, 환경상 불가능한
-경우 `flutter-first-frame`임을 숨기지 않고 명시한다.
+검증 없이 `true`로 기록해서는 안 된다. Windows는 native runtime 캡처, iOS는
+simulator, macOS는 native 실행을 우선하며, 환경상 불가능한 경우
+`flutter-first-frame`임을 숨기지 않고 명시한다.
 
 Apple CI 빌드는 `ENABLE_RELEASE_PROBE=true`일 때만 활성화되는 앱 내부 probe를
 사용한다. `main()`이 `WidgetsBinding.endOfFrame`을 통과한 뒤 앱 지원 폴더에
@@ -114,9 +116,14 @@ evidence를 atomic write하고, 워크플로가 iOS Simulator에 설치·실행�
 `runtime-macos.json`이 ZIP 및 SHA-256과 함께 포함된다.
 
 Windows `REAL` evidence는 최종 설치 EXE를 격리 폴더에 설치한 뒤 실제 창의
-응답·제목·비어 있지 않은 픽셀을 확인하고 생성한다. Android `REAL` evidence는
-최종 APK를 에뮬레이터에 업그레이드 설치한 뒤 foreground activity와 gfxinfo의
-렌더링 프레임, 화면 캡처를 함께 확인한다. 물리 Android 기기는 명시적인
+응답·제목·비어 있지 않은 픽셀을 확인하고 생성한다. 이번 Android `REAL` APK는
+사용자의 Windows EXE 실행 요청과 현재 검증 환경에 맞춰 `BUILD_ONLY`로 표시한다.
+전용 evidence는 `launched=false`, `firstFrameRendered=false`,
+`firstFrameMillis=null`을 유지하면서 빌드·v2 서명·패키지명/버전·3개 ABI 성공과
+APK의 실제 SHA-256·바이트 길이를 결속한다. 고정 limitation은
+`ANDROID_RUNTIME_UNAVAILABLE_CI_BILLING_AND_LOCAL_HYPERVISOR`이며 다른 플랫폼은
+이 예외를 사용할 수 없다. Android 에뮬레이터가 준비된 환경에서는 아래 명령으로
+별도 runtime evidence를 추가할 수 있다. 물리 Android 기기는 명시적인
 `-AllowPhysicalDevice` 없이는 건드리지 않는다.
 
 ```powershell

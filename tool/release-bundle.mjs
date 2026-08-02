@@ -9,9 +9,10 @@ import {
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const SPEC_FORMAT = 'sprache-release-spec-v1';
-const MANIFEST_FORMAT = 'sprache-release-manifest-v1';
-const EVIDENCE_FORMAT = 'sprache-runtime-evidence-v1';
+const SPEC_FORMAT = 'sprache-release-spec-v2';
+const MANIFEST_FORMAT = 'sprache-release-manifest-v2';
+const RUNTIME_EVIDENCE_FORMAT = 'sprache-runtime-evidence-v1';
+const BUILD_EVIDENCE_FORMAT = 'sprache-build-evidence-v1';
 const EXPECTED_POLICY = Object.freeze({
   windows: 'REAL',
   android: 'REAL',
@@ -24,11 +25,20 @@ const EXPECTED_EXTENSIONS = Object.freeze({
   ios: '.zip',
   macos: '.zip',
 });
-const ALLOWED_PROBES = new Set([
+const EXPECTED_VERIFICATION = Object.freeze({
+  windows: 'RUNTIME',
+  android: 'BUILD_ONLY',
+  ios: 'RUNTIME',
+  macos: 'RUNTIME',
+});
+const ALLOWED_RUNTIME_PROBES = new Set([
   'native-runtime',
   'simulator-runtime',
   'flutter-first-frame',
 ]);
+const BUILD_ONLY_PROBE = 'signed-release-build';
+const BUILD_ONLY_REASON =
+  'ANDROID_RUNTIME_UNAVAILABLE_CI_BILLING_AND_LOCAL_HYPERVISOR';
 
 export async function createReleaseManifest({ specPath, outputPath, root }) {
   const resolvedSpec = path.resolve(specPath);
@@ -52,29 +62,45 @@ export async function createReleaseManifest({ specPath, outputPath, root }) {
     );
     const evidencePath = await resolveRegularFile(
       releaseRoot,
-      entry.runtimeEvidence,
-      `${entry.platform} runtime evidence`,
+      entry.evidence,
+      `${entry.platform} verification evidence`,
     );
     const evidence = await readJson(
       evidencePath,
-      `${entry.platform} runtime evidence`,
+      `${entry.platform} verification evidence`,
     );
-    validateRuntimeEvidence(evidence, entry, common);
     const artifactInfo = await stat(artifactPath);
-    manifestEntries.push({
+    const artifactSha256 = await sha256File(artifactPath);
+    validateEvidence(evidence, entry, common, {
+      artifactByteLength: artifactInfo.size,
+      artifactSha256,
+    });
+    const manifestEntry = {
       platform: entry.platform,
       mode: entry.mode,
+      verification: entry.verification,
       artifact: normalizeRelative(entry.artifact),
       byteLength: artifactInfo.size,
-      sha256: await sha256File(artifactPath),
-      runtimeEvidence: normalizeRelative(entry.runtimeEvidence),
-      runtimeEvidenceSha256: await sha256File(evidencePath),
-      runtimeProbe: evidence.probe,
-      launched: true,
-      firstFrameRendered: true,
-      firstFrameMillis: evidence.firstFrameMillis,
+      sha256: artifactSha256,
+      evidence: normalizeRelative(entry.evidence),
+      evidenceSha256: await sha256File(evidencePath),
+      probe: evidence.probe,
+      launched: evidence.launched,
+      firstFrameRendered: evidence.firstFrameRendered,
       checkedAt: new Date(evidence.checkedAt).toISOString(),
-    });
+    };
+    if (entry.verification === 'RUNTIME') {
+      manifestEntry.firstFrameMillis = evidence.firstFrameMillis;
+    } else {
+      manifestEntry.firstFrameMillis = null;
+      manifestEntry.buildVerified = evidence.buildVerified;
+      manifestEntry.signatureVerified = evidence.signatureVerified;
+      manifestEntry.packageVerified = evidence.packageVerified;
+      manifestEntry.limitation = evidence.limitation;
+      manifestEntry.packageName = evidence.packageName;
+      manifestEntry.abis = evidence.abis;
+    }
+    manifestEntries.push(manifestEntry);
   }
   const manifest = {
     format: MANIFEST_FORMAT,
@@ -115,21 +141,7 @@ export async function verifyReleaseManifest({ manifestPath, root }) {
     version: common.version,
   });
   for (const entry of entries) {
-    assert(entry.launched === true, `${entry.platform} was not launched`);
-    assert(
-      entry.firstFrameRendered === true,
-      `${entry.platform} did not render a first frame`,
-    );
-    assert(
-      Number.isInteger(entry.firstFrameMillis) &&
-        entry.firstFrameMillis >= 0 &&
-        entry.firstFrameMillis <= 60000,
-      `${entry.platform}.firstFrameMillis must be within 0..60000`,
-    );
-    assert(
-      ALLOWED_PROBES.has(entry.runtimeProbe),
-      `${entry.platform}.runtimeProbe is unsupported`,
-    );
+    validateManifestVerification(entry);
     const artifactPath = await resolveRegularFile(
       releaseRoot,
       entry.artifact,
@@ -148,37 +160,37 @@ export async function verifyReleaseManifest({ manifestPath, root }) {
     );
     const evidencePath = await resolveRegularFile(
       releaseRoot,
-      entry.runtimeEvidence,
-      `${entry.platform} runtime evidence`,
+      entry.evidence,
+      `${entry.platform} verification evidence`,
     );
     assertSha(
-      entry.runtimeEvidenceSha256,
-      `${entry.platform}.runtimeEvidenceSha256`,
+      entry.evidenceSha256,
+      `${entry.platform}.evidenceSha256`,
     );
     assert(
-      (await sha256File(evidencePath)) === entry.runtimeEvidenceSha256,
-      `${entry.platform} runtime evidence SHA-256 mismatch`,
+      (await sha256File(evidencePath)) === entry.evidenceSha256,
+      `${entry.platform} verification evidence SHA-256 mismatch`,
     );
     const evidence = await readJson(
       evidencePath,
-      `${entry.platform} runtime evidence`,
+      `${entry.platform} verification evidence`,
     );
-    validateRuntimeEvidence(
+    validateEvidence(
       evidence,
       {
         platform: entry.platform,
         mode: entry.mode,
+        verification: entry.verification,
         artifact: entry.artifact,
-        runtimeEvidence: entry.runtimeEvidence,
+        evidence: entry.evidence,
       },
       common,
+      {
+        artifactByteLength: artifactInfo.size,
+        artifactSha256: entry.sha256,
+      },
     );
-    assert(
-      evidence.probe === entry.runtimeProbe &&
-        evidence.firstFrameMillis === entry.firstFrameMillis &&
-        new Date(evidence.checkedAt).toISOString() === entry.checkedAt,
-      `${entry.platform} runtime evidence metadata changed`,
-    );
+    validateManifestEvidenceMetadata(entry, evidence);
   }
   return manifest;
 }
@@ -223,11 +235,12 @@ function validateEntries(rawEntries, options = {}) {
       entry.mode === EXPECTED_POLICY[platform],
       `${platform}.mode must be ${EXPECTED_POLICY[platform]}`,
     );
-    validateRelativePath(entry.artifact, `${platform}.artifact`);
-    validateRelativePath(
-      entry.runtimeEvidence,
-      `${platform}.runtimeEvidence`,
+    assert(
+      entry.verification === EXPECTED_VERIFICATION[platform],
+      `${platform}.verification must be ${EXPECTED_VERIFICATION[platform]}`,
     );
+    validateRelativePath(entry.artifact, `${platform}.artifact`);
+    validateRelativePath(entry.evidence, `${platform}.evidence`);
     assert(
       path.extname(entry.artifact).toLowerCase() ===
         EXPECTED_EXTENSIONS[platform],
@@ -262,23 +275,39 @@ async function validateAgainstPubspec(common) {
   );
 }
 
-function validateRuntimeEvidence(evidence, entry, common) {
+function validateEvidence(evidence, entry, common, artifact) {
   assert(
-    evidence.format === EVIDENCE_FORMAT,
-    `${entry.platform} runtime evidence format is invalid`,
+    entry.verification === 'RUNTIME'
+      ? evidence.verification === undefined || evidence.verification === 'RUNTIME'
+      : evidence.verification === 'BUILD_ONLY',
+    `${entry.platform} verification evidence type mismatch`,
   );
   assert(
     evidence.platform === entry.platform,
-    `${entry.platform} runtime evidence platform mismatch`,
+    `${entry.platform} verification evidence platform mismatch`,
   );
   assert(
     evidence.mode === entry.mode,
-    `${entry.platform} runtime evidence mode mismatch`,
+    `${entry.platform} verification evidence mode mismatch`,
   );
   assert(
     evidence.version === common.version &&
       evidence.buildNumber === common.buildNumber,
-    `${entry.platform} runtime evidence version mismatch`,
+    `${entry.platform} verification evidence version mismatch`,
+  );
+  if (entry.verification === 'RUNTIME') {
+    validateRuntimeEvidence(evidence, entry);
+  } else {
+    validateBuildEvidence(evidence, entry, artifact);
+  }
+  const checkedAt = Date.parse(evidence.checkedAt);
+  assert(Number.isFinite(checkedAt), `${entry.platform}.checkedAt is invalid`);
+}
+
+function validateRuntimeEvidence(evidence, entry) {
+  assert(
+    evidence.format === RUNTIME_EVIDENCE_FORMAT,
+    `${entry.platform} runtime evidence format is invalid`,
   );
   assert(evidence.launched === true, `${entry.platform} launch probe failed`);
   assert(
@@ -286,7 +315,7 @@ function validateRuntimeEvidence(evidence, entry, common) {
     `${entry.platform} first-frame probe failed`,
   );
   assert(
-    ALLOWED_PROBES.has(evidence.probe),
+    ALLOWED_RUNTIME_PROBES.has(evidence.probe),
     `${entry.platform} runtime evidence probe is unsupported`,
   );
   assert(
@@ -295,8 +324,130 @@ function validateRuntimeEvidence(evidence, entry, common) {
       evidence.firstFrameMillis <= 60000,
     `${entry.platform} firstFrameMillis must be within 0..60000`,
   );
-  const checkedAt = Date.parse(evidence.checkedAt);
-  assert(Number.isFinite(checkedAt), `${entry.platform}.checkedAt is invalid`);
+}
+
+function validateBuildEvidence(evidence, entry, artifact) {
+  assert(
+    entry.platform === 'android' && entry.mode === 'REAL',
+    'BUILD_ONLY verification is restricted to the REAL Android artifact',
+  );
+  assert(
+    evidence.format === BUILD_EVIDENCE_FORMAT,
+    'android build evidence format is invalid',
+  );
+  assert(evidence.probe === BUILD_ONLY_PROBE, 'android build probe is invalid');
+  assert(evidence.launched === false, 'android BUILD_ONLY evidence must not claim launch');
+  assert(
+    evidence.firstFrameRendered === false,
+    'android BUILD_ONLY evidence must not claim a rendered frame',
+  );
+  assert(
+    evidence.firstFrameMillis === null,
+    'android BUILD_ONLY firstFrameMillis must be null',
+  );
+  assert(evidence.buildVerified === true, 'android build verification failed');
+  assert(evidence.signatureVerified === true, 'android signature verification failed');
+  assert(evidence.packageVerified === true, 'android package verification failed');
+  assert(
+    evidence.limitation === BUILD_ONLY_REASON,
+    `android BUILD_ONLY limitation must be ${BUILD_ONLY_REASON}`,
+  );
+  assert(
+    evidence.packageName === 'com.youkdonghun.sprache',
+    'android packageName is invalid',
+  );
+  assert(
+    Array.isArray(evidence.abis) &&
+      evidence.abis.length === 3 &&
+      ['arm64-v8a', 'armeabi-v7a', 'x86_64'].every((abi) =>
+        evidence.abis.includes(abi),
+      ),
+    'android ABI evidence is incomplete',
+  );
+  assertSha(evidence.artifactSha256, 'android evidence artifactSha256');
+  assert(
+    evidence.artifactSha256 === artifact.artifactSha256,
+    'android build evidence is bound to a different APK SHA-256',
+  );
+  assert(
+    evidence.artifactByteLength === artifact.artifactByteLength,
+    'android build evidence is bound to a different APK byte length',
+  );
+}
+
+function validateManifestVerification(entry) {
+  if (entry.verification === 'RUNTIME') {
+    assert(entry.launched === true, `${entry.platform} was not launched`);
+    assert(
+      entry.firstFrameRendered === true,
+      `${entry.platform} did not render a first frame`,
+    );
+    assert(
+      Number.isInteger(entry.firstFrameMillis) &&
+        entry.firstFrameMillis >= 0 &&
+        entry.firstFrameMillis <= 60000,
+      `${entry.platform}.firstFrameMillis must be within 0..60000`,
+    );
+    assert(
+      ALLOWED_RUNTIME_PROBES.has(entry.probe),
+      `${entry.platform}.probe is unsupported`,
+    );
+    for (const buildOnlyField of [
+      'buildVerified',
+      'signatureVerified',
+      'packageVerified',
+      'limitation',
+      'packageName',
+      'abis',
+    ]) {
+      assert(
+        entry[buildOnlyField] === undefined,
+        `${entry.platform}.${buildOnlyField} is BUILD_ONLY metadata`,
+      );
+    }
+    return;
+  }
+  assert(entry.probe === BUILD_ONLY_PROBE, 'android manifest build probe is invalid');
+  assert(entry.launched === false, 'android manifest must not claim launch');
+  assert(
+    entry.firstFrameRendered === false,
+    'android manifest must not claim a rendered frame',
+  );
+  assert(entry.firstFrameMillis === null, 'android manifest firstFrameMillis must be null');
+  assert(entry.buildVerified === true, 'android manifest build verification failed');
+  assert(entry.signatureVerified === true, 'android manifest signature verification failed');
+  assert(entry.packageVerified === true, 'android manifest package verification failed');
+  assert(
+    entry.limitation === BUILD_ONLY_REASON,
+    'android manifest limitation is invalid',
+  );
+}
+
+function validateManifestEvidenceMetadata(entry, evidence) {
+  assert(
+    evidence.probe === entry.probe &&
+      evidence.launched === entry.launched &&
+      evidence.firstFrameRendered === entry.firstFrameRendered &&
+      new Date(evidence.checkedAt).toISOString() === entry.checkedAt,
+    `${entry.platform} verification evidence metadata changed`,
+  );
+  if (entry.verification === 'RUNTIME') {
+    assert(
+      evidence.firstFrameMillis === entry.firstFrameMillis,
+      `${entry.platform} first-frame evidence metadata changed`,
+    );
+    return;
+  }
+  assert(
+    evidence.firstFrameMillis === entry.firstFrameMillis &&
+      evidence.buildVerified === entry.buildVerified &&
+      evidence.signatureVerified === entry.signatureVerified &&
+      evidence.packageVerified === entry.packageVerified &&
+      evidence.limitation === entry.limitation &&
+      evidence.packageName === entry.packageName &&
+      JSON.stringify(evidence.abis) === JSON.stringify(entry.abis),
+    'android build evidence metadata changed',
+  );
 }
 
 async function resolveRegularFile(root, relative, label) {

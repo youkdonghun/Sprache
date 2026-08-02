@@ -17,7 +17,8 @@
   alpha 없는 RGB 이미지이며 Windows ICO는 16·24·32·48·64·128·256px 32-bit
   프레임을 포함한다.
 - 최종 spec의 정책은 Windows·Android `REAL`, iOS Simulator·macOS
-  unsigned/ad-hoc `MOCK`이다. Apple Actions의 ZIP 이름과 spec 이름이 일치한다.
+  unsigned/ad-hoc `MOCK`이다. 검증 범위는 Windows·iOS·macOS `RUNTIME`, Android
+  `BUILD_ONLY`로 별도 표시하며 Apple Actions의 ZIP 이름과 spec 이름이 일치한다.
 - `release-bundle.mjs`의 생성·변조·경로 탈출·거짓 첫 프레임 차단 테스트가
   통과했다.
 - CI 전용 release probe는 일반 빌드에서 기본 비활성화되며, Apple Actions에서만
@@ -30,8 +31,10 @@
    `npm test`를 모두 통과시킨다.
 2. `npm run build:real`로 Windows 설치 EXE·포터블 ZIP과 Android APK를 만든다.
 3. `npm run verify:release`로 버전·ABI·운영 설정·서명 상태·SHA-256을 검증한다.
-4. Android 에뮬레이터 한 대를 켜고 `npm run capture:runtime:android -- ...`로
-   최종 APK의 설치·foreground·렌더 프레임·스크린샷 evidence를 만든다.
+4. Android APK의 SHA-256·바이트 길이를 `aapt` 패키지/버전/ABI와 `apksigner` v2
+   서명 결과에 결속한 `build-android.json`을 만든다. 현재 Actions 결제 차단과
+   로컬 하이퍼바이저 부재는 고정 limitation으로 기록하고 실행 성공으로 바꾸지
+   않는다. 에뮬레이터가 준비된 환경에서는 `capture:runtime:android`를 추가한다.
 5. 기존 1.30 실행본이 있으면 새 포터블과 해시를 먼저 확인한 뒤 프로세스를
    종료한다. 학습 DB·복구 백업은 유지하고 구 프로그램 파일만 정리한다.
 6. `npm run capture:runtime:windows -- ...`로 최종 설치 EXE를 격리 설치하고
