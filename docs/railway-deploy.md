@@ -41,9 +41,15 @@ Railway 서비스를 중단하기 전에 다음 조건을 모두 확인한다.
 
 ## GitHub Pages 배포
 
-GitHub 저장소의 **Settings → Pages**에서 Source를 **Deploy from a branch**로,
-branch는 공개할 기본 branch로, Folder는 **`/docs`**로 지정한다. 별도 GitHub
-Actions workflow를 만들지 않는다.
+Sprache 소스 저장소는 비공개로 유지한다. 무료 Pages를 위해 소스 저장소의
+visibility를 바꾸지 않고, 공개 문서만 담는 `youkdonghun/youkdonghun.github.io`
+저장소를 사용한다. 이 저장소의 `main` root가 Pages 원본이다.
+
+현재 저장소의 `docs/index.html`, `docs/privacy/index.html`,
+`docs/terms/index.html`과 `.nojekyll`을 공개 저장소의 `Sprache/` 아래에 같은
+구조로 복사한다. 공개 저장소 root에도 같은 문서를 두어 사용자 사이트의 루트
+주소가 404가 되지 않게 한다. 앱 소스, 빌드 로그, 토큰과 과거 Railway 문서는
+공개 저장소에 복사하지 않는다.
 
 배포 URL:
 
@@ -56,7 +62,8 @@ URL로 보내는 호환 페이지다. 새 링크와 OAuth 브랜딩에는 direct
 
 ## 정적 페이지 검증
 
-로컬에서 저장소 루트를 HTTP로 열고 `/docs/`를 Pages base로 간주해 검사한다.
+로컬에서는 저장소 루트를 HTTP로 열고 `/docs/`를 Pages base로 간주해 검사한다.
+게시 후에는 공개 저장소의 `Sprache/` 경로와 아래 canonical URL을 다시 검사한다.
 `file://`로만 열면 directory index와 project base 동작을 충분히 검증할 수 없다.
 
 확인 항목:
