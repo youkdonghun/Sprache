@@ -79,6 +79,42 @@ final _previousImport = ImportCommitRecord(
 );
 
 void main() {
+  testWidgets('mobile import source picker stays visually stable', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    try {
+      await _pumpSourcePicker(tester, dark: false);
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-import-source-picker.png'),
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    }
+  });
+
+  testWidgets('mobile dark import source picker stays visually stable', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    try {
+      await _pumpSourcePicker(tester, dark: true);
+      await expectLater(
+        find.byType(MaterialApp),
+        matchesGoldenFile('goldens/mobile-import-source-picker-dark.png'),
+      );
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    }
+  });
+
   testWidgets('mobile import review stays visually stable', (tester) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     tester.view.devicePixelRatio = 1;
@@ -132,6 +168,25 @@ void main() {
       tester.view.reset();
     }
   });
+}
+
+Future<void> _pumpSourcePicker(
+  WidgetTester tester, {
+  required bool dark,
+}) async {
+  await tester.pumpWidget(
+    ProviderScope(
+      overrides: [studyStoreProvider.overrideWithValue(MemoryStudyStore())],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.mobile,
+        darkTheme: AppTheme.mobileDark,
+        themeMode: dark ? ThemeMode.dark : ThemeMode.light,
+        home: const Scaffold(body: ImportScreen()),
+      ),
+    ),
+  );
+  await tester.pumpAndSettle();
 }
 
 Future<void> _pumpReview(WidgetTester tester, {required bool dark}) async {

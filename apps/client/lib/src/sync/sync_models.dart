@@ -33,6 +33,7 @@ class SyncManifest {
     required this.appRootFolderId,
     required this.files,
     required this.updatedAt,
+    this.layout,
   });
 
   final int schemaVersion;
@@ -40,6 +41,7 @@ class SyncManifest {
   final String appRootFolderId;
   final Map<String, ManifestFile> files;
   final DateTime updatedAt;
+  final String? layout;
 
   Set<String> changedFilesComparedTo(SyncManifest? local) {
     if (local == null) return files.keys.toSet();
@@ -55,6 +57,7 @@ class SyncManifest {
     'schemaVersion': schemaVersion,
     'datasetVersion': datasetVersion,
     'appRootFolderId': appRootFolderId,
+    if (layout != null) 'layout': layout,
     'files': {
       for (final entry in files.entries) entry.key: entry.value.toJson(),
     },
@@ -67,6 +70,7 @@ class SyncManifest {
       schemaVersion: json['schemaVersion']! as int,
       datasetVersion: json['datasetVersion']! as int,
       appRootFolderId: json['appRootFolderId']! as String,
+      layout: json['layout'] as String?,
       files: {
         for (final entry in filesJson.entries)
           entry.key: ManifestFile.fromJson(

@@ -1,6 +1,10 @@
+import 'adaptive_study_session.dart';
+import 'quiz_session_support.dart';
 import 'study_preferences.dart';
+import 'study_limits.dart';
 
 const _keepParentSessionId = Object();
+const _keepInputCheckpoint = Object();
 
 enum ActiveStudySessionPhase { active, paused }
 
@@ -88,7 +92,7 @@ class StudySessionJourneyEvent {
         occurredAt == null ||
         itemCount == null ||
         itemCount < 1 ||
-        itemCount > 100) {
+        itemCount > StudyLimits.maxSessionItems) {
       throw const FormatException('Invalid study session journey event');
     }
     return StudySessionJourneyEvent(
@@ -117,6 +121,7 @@ class ActiveStudySession {
     this.unitIndex,
     this.initialItemIds = const [],
     this.wrongItemIds = const {},
+    this.finalCorrectItemIds = const {},
     this.phase = ActiveStudySessionPhase.active,
     this.origin = StudySessionOrigin.fresh,
     this.rootSessionId,
@@ -125,6 +130,10 @@ class ActiveStudySession {
     this.pauseCount = 0,
     this.resumeCount = 0,
     this.journey = const [],
+    this.runtimeOptions = const StudySessionRuntimeOptions(),
+    this.inputCheckpoint,
+    this.attemptMetrics = const [],
+    this.attemptReviews = const [],
   });
 
   factory ActiveStudySession.started({
@@ -134,7 +143,16 @@ class ActiveStudySession {
     required int? unitIndex,
     required List<String> itemIds,
     required DateTime startedAt,
+    StudySessionRuntimeOptions runtimeOptions =
+        const StudySessionRuntimeOptions(),
   }) {
+    if (itemIds.isEmpty ||
+        itemIds.length > StudyLimits.maxSessionItems ||
+        itemIds.toSet().length != itemIds.length) {
+      throw ArgumentError(
+        'A session needs 1-${StudyLimits.maxSessionItems} unique items.',
+      );
+    }
     final immutableItems = List<String>.unmodifiable(itemIds);
     final at = startedAt.toUtc();
     return ActiveStudySession(
@@ -150,6 +168,7 @@ class ActiveStudySession {
       earnedXp: 0,
       startedAt: at,
       updatedAt: at,
+      runtimeOptions: runtimeOptions,
       rootSessionId: sessionId,
       journey: [
         StudySessionJourneyEvent(
@@ -175,6 +194,7 @@ class ActiveStudySession {
   final List<String> itemIds;
   final List<String> initialItemIds;
   final Set<String> wrongItemIds;
+  final Set<String> finalCorrectItemIds;
   final int currentIndex;
   final int correctCount;
   final int wrongCount;
@@ -189,6 +209,10 @@ class ActiveStudySession {
   final int pauseCount;
   final int resumeCount;
   final List<StudySessionJourneyEvent> journey;
+  final StudySessionRuntimeOptions runtimeOptions;
+  final StudyInputCheckpoint? inputCheckpoint;
+  final List<StudyAttemptMetric> attemptMetrics;
+  final List<QuizAttemptReview> attemptReviews;
 
   String get lineageRootId => rootSessionId ?? sessionId;
   List<String> get originalItemIds =>
@@ -200,12 +224,15 @@ class ActiveStudySession {
   int get attempts => correctCount + wrongCount;
   double get accuracy => attempts == 0 ? 0 : correctCount / attempts;
   bool get isDerived => origin != StudySessionOrigin.fresh || generation > 0;
+  Set<String> get unresolvedWrongItemIds =>
+      Set.unmodifiable(wrongItemIds.difference(finalCorrectItemIds));
 
   ActiveStudySession copyWith({
     String? sessionId,
     List<String>? itemIds,
     List<String>? initialItemIds,
     Set<String>? wrongItemIds,
+    Set<String>? finalCorrectItemIds,
     int? currentIndex,
     int? correctCount,
     int? wrongCount,
@@ -220,6 +247,10 @@ class ActiveStudySession {
     int? pauseCount,
     int? resumeCount,
     List<StudySessionJourneyEvent>? journey,
+    StudySessionRuntimeOptions? runtimeOptions,
+    Object? inputCheckpoint = _keepInputCheckpoint,
+    List<StudyAttemptMetric>? attemptMetrics,
+    List<QuizAttemptReview>? attemptReviews,
   }) {
     return ActiveStudySession(
       sessionId: sessionId ?? this.sessionId,
@@ -229,6 +260,7 @@ class ActiveStudySession {
       itemIds: itemIds ?? this.itemIds,
       initialItemIds: initialItemIds ?? this.initialItemIds,
       wrongItemIds: wrongItemIds ?? this.wrongItemIds,
+      finalCorrectItemIds: finalCorrectItemIds ?? this.finalCorrectItemIds,
       currentIndex: currentIndex ?? this.currentIndex,
       correctCount: correctCount ?? this.correctCount,
       wrongCount: wrongCount ?? this.wrongCount,
@@ -245,6 +277,12 @@ class ActiveStudySession {
       pauseCount: pauseCount ?? this.pauseCount,
       resumeCount: resumeCount ?? this.resumeCount,
       journey: journey ?? this.journey,
+      runtimeOptions: runtimeOptions ?? this.runtimeOptions,
+      inputCheckpoint: identical(inputCheckpoint, _keepInputCheckpoint)
+          ? this.inputCheckpoint
+          : inputCheckpoint as StudyInputCheckpoint?,
+      attemptMetrics: attemptMetrics ?? this.attemptMetrics,
+      attemptReviews: attemptReviews ?? this.attemptReviews,
     );
   }
 
@@ -266,7 +304,7 @@ class ActiveStudySession {
           action: StudySessionJourneyAction.paused,
           sessionId: sessionId,
           occurredAt: at,
-          itemCount: itemIds.length,
+          itemCount: originalItemIds.length,
         ),
       ),
     );
@@ -290,7 +328,7 @@ class ActiveStudySession {
           action: StudySessionJourneyAction.resumed,
           sessionId: sessionId,
           occurredAt: at,
-          itemCount: itemIds.length,
+          itemCount: originalItemIds.length,
         ),
       ),
     );
@@ -304,6 +342,13 @@ class ActiveStudySession {
   }) {
     if (nextOrigin == StudySessionOrigin.fresh || selectedItemIds.isEmpty) {
       throw ArgumentError('A derived session needs an origin and items.');
+    }
+    if (selectedItemIds.length > StudyLimits.maxSessionItems ||
+        selectedItemIds.toSet().length != selectedItemIds.length) {
+      throw ArgumentError(
+        'A derived session needs at most '
+        '${StudyLimits.maxSessionItems} unique items.',
+      );
     }
     final at = startedAt.toUtc();
     final immutableItems = List<String>.unmodifiable(selectedItemIds);
@@ -344,6 +389,7 @@ class ActiveStudySession {
       pauseCount: pauseCount,
       resumeCount: resumeCount,
       journey: _appendEvent(event),
+      runtimeOptions: runtimeOptions,
     );
   }
 
@@ -362,6 +408,7 @@ class ActiveStudySession {
     'itemIds': itemIds,
     'initialItemIds': originalItemIds,
     'wrongItemIds': wrongItemIds.toList()..sort(),
+    'finalCorrectItemIds': finalCorrectItemIds.toList()..sort(),
     'currentIndex': currentIndex,
     'correctCount': correctCount,
     'wrongCount': wrongCount,
@@ -376,6 +423,12 @@ class ActiveStudySession {
     'pauseCount': pauseCount,
     'resumeCount': resumeCount,
     'journey': [for (final event in journey) event.toJson()],
+    'runtimeOptions': runtimeOptions.toJson(),
+    if (inputCheckpoint != null) 'inputCheckpoint': inputCheckpoint!.toJson(),
+    if (attemptMetrics.isNotEmpty)
+      'attemptMetrics': [for (final metric in attemptMetrics) metric.toJson()],
+    if (attemptReviews.isNotEmpty)
+      'attemptReviews': [for (final review in attemptReviews) review.toJson()],
   };
 
   factory ActiveStudySession.fromJson(Map<String, Object?> json) {
@@ -383,7 +436,11 @@ class ActiveStudySession {
     final courseId = json['courseId'] as String?;
     final startedAt = DateTime.tryParse(json['startedAt'] as String? ?? '');
     final updatedAt = DateTime.tryParse(json['updatedAt'] as String? ?? '');
-    final itemIds = _stringList(json['itemIds'], field: 'itemIds');
+    final itemIds = _stringList(
+      json['itemIds'],
+      field: 'itemIds',
+      maximum: StudyLimits.maxActiveQueueEntries,
+    );
     if (sessionId == null ||
         sessionId.isEmpty ||
         courseId == null ||
@@ -394,11 +451,43 @@ class ActiveStudySession {
       throw const FormatException('Invalid active study session');
     }
     final initialItemIds = json.containsKey('initialItemIds')
-        ? _stringList(json['initialItemIds'], field: 'initialItemIds')
-        : itemIds;
+        ? _stringList(
+            json['initialItemIds'],
+            field: 'initialItemIds',
+            maximum: StudyLimits.maxSessionItems,
+            unique: true,
+          )
+        : _orderedUnique(itemIds);
+    if (initialItemIds.isEmpty ||
+        initialItemIds.length > StudyLimits.maxSessionItems) {
+      throw const FormatException('Invalid initial study session items');
+    }
     final wrongItemIds = json.containsKey('wrongItemIds')
-        ? _stringList(json['wrongItemIds'], field: 'wrongItemIds').toSet()
+        ? _stringList(
+            json['wrongItemIds'],
+            field: 'wrongItemIds',
+            maximum: StudyLimits.maxSessionItems,
+            unique: true,
+          ).toSet()
         : <String>{};
+    final currentIndex = (_integer(json['currentIndex']) ?? 0).clamp(
+      0,
+      itemIds.length,
+    );
+    final finalCorrectItemIds = json.containsKey('finalCorrectItemIds')
+        ? _stringList(
+            json['finalCorrectItemIds'],
+            field: 'finalCorrectItemIds',
+            maximum: StudyLimits.maxSessionItems,
+            unique: true,
+          ).toSet()
+        : itemIds.take(currentIndex).toSet().difference(wrongItemIds);
+    final knownItemIds = itemIds.toSet();
+    if (!knownItemIds.containsAll(initialItemIds) ||
+        !knownItemIds.containsAll(wrongItemIds) ||
+        !knownItemIds.containsAll(finalCorrectItemIds)) {
+      throw const FormatException('Invalid active study session outcome IDs');
+    }
     final modeName = json['mode'] as String?;
     final mode = StudyMode.values.firstWhere(
       (value) => value.name == modeName,
@@ -443,6 +532,58 @@ class ActiveStudySession {
       legacyStartedAt: startedAt,
       legacyItemCount: initialItemIds.length,
     );
+    final runtimeOptions = switch (json['runtimeOptions']) {
+      final Map value => StudySessionRuntimeOptions.fromJson(
+        Map<String, Object?>.from(value),
+      ),
+      null => const StudySessionRuntimeOptions(),
+      _ => throw const FormatException('Invalid study session options'),
+    };
+    final inputCheckpoint = switch (json['inputCheckpoint']) {
+      final Map value => StudyInputCheckpoint.fromJson(
+        Map<String, Object?>.from(value),
+      ),
+      null => null,
+      _ => throw const FormatException('Invalid study input checkpoint'),
+    };
+    final rawAttemptMetrics = json['attemptMetrics'];
+    if (rawAttemptMetrics != null &&
+        (rawAttemptMetrics is! List<Object?> ||
+            rawAttemptMetrics.length > StudyLimits.maxActiveQueueEntries)) {
+      throw const FormatException('Invalid active study attempt metrics');
+    }
+    final attemptMetrics = <StudyAttemptMetric>[
+      for (final value in (rawAttemptMetrics as List<Object?>? ?? const []))
+        if (value is Map)
+          StudyAttemptMetric.fromJson(Map<String, Object?>.from(value))
+        else
+          throw const FormatException('Invalid active study attempt metric'),
+    ];
+    final rawAttemptReviews = json['attemptReviews'];
+    if (rawAttemptReviews != null &&
+        (rawAttemptReviews is! List<Object?> ||
+            rawAttemptReviews.length > StudyLimits.maxActiveQueueEntries)) {
+      throw const FormatException('Invalid active study attempt reviews');
+    }
+    final attemptReviews = <QuizAttemptReview>[
+      for (final value in (rawAttemptReviews as List<Object?>? ?? const []))
+        if (value is Map)
+          QuizAttemptReview.fromJson(Map<String, Object?>.from(value))
+        else
+          throw const FormatException('Invalid active study attempt review'),
+    ];
+    if ((inputCheckpoint != null &&
+            !knownItemIds.contains(inputCheckpoint.itemId)) ||
+        attemptMetrics.any((metric) => !knownItemIds.contains(metric.itemId)) ||
+        attemptReviews.any((review) => !knownItemIds.contains(review.itemId))) {
+      throw const FormatException('Unknown active study metric item');
+    }
+    final reviewSequences = attemptReviews
+        .map((review) => review.sequence)
+        .toSet();
+    if (reviewSequences.length != attemptReviews.length) {
+      throw const FormatException('Duplicate active study attempt review');
+    }
     return ActiveStudySession(
       sessionId: sessionId,
       courseId: courseId,
@@ -451,10 +592,8 @@ class ActiveStudySession {
       itemIds: List.unmodifiable(itemIds),
       initialItemIds: List.unmodifiable(initialItemIds),
       wrongItemIds: Set.unmodifiable(wrongItemIds),
-      currentIndex: (_integer(json['currentIndex']) ?? 0).clamp(
-        0,
-        itemIds.length,
-      ),
+      finalCorrectItemIds: Set.unmodifiable(finalCorrectItemIds),
+      currentIndex: currentIndex,
       correctCount: (_integer(json['correctCount']) ?? 0).clamp(0, 1000000),
       wrongCount: (_integer(json['wrongCount']) ?? 0).clamp(0, 1000000),
       earnedXp: (_integer(json['earnedXp']) ?? 0).clamp(0, 10000000),
@@ -468,6 +607,10 @@ class ActiveStudySession {
       pauseCount: pauseCount,
       resumeCount: resumeCount,
       journey: journey,
+      runtimeOptions: runtimeOptions,
+      inputCheckpoint: inputCheckpoint,
+      attemptMetrics: List.unmodifiable(attemptMetrics),
+      attemptReviews: List.unmodifiable(attemptReviews),
     );
   }
 }
@@ -500,8 +643,14 @@ int _boundedInteger(
   return value;
 }
 
-List<String> _stringList(Object? raw, {required String field}) {
+List<String> _stringList(
+  Object? raw, {
+  required String field,
+  int? maximum,
+  bool unique = false,
+}) {
   if (raw is! List<Object?> ||
+      (maximum != null && raw.length > maximum) ||
       raw.any(
         (value) =>
             value is! String ||
@@ -510,7 +659,19 @@ List<String> _stringList(Object? raw, {required String field}) {
       )) {
     throw FormatException('Invalid $field');
   }
-  return raw.cast<String>().toList(growable: false);
+  final values = raw.cast<String>().toList(growable: false);
+  if (unique && values.toSet().length != values.length) {
+    throw FormatException('Duplicate $field');
+  }
+  return values;
+}
+
+List<String> _orderedUnique(Iterable<String> values) {
+  final seen = <String>{};
+  return [
+    for (final value in values)
+      if (seen.add(value)) value,
+  ];
 }
 
 T _enumValue<T extends Enum>(

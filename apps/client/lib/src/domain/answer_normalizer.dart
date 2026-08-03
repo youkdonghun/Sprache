@@ -27,11 +27,20 @@ class AnswerNormalizer {
       normalized = normalized.toLowerCase();
     }
     if (policy.ignorePunctuation) {
-      normalized = normalized.replaceAll(
-        RegExp(r'''[.,!?;:'"“”‘’。、！？；：]'''),
-        '',
-      );
+      normalized = normalized
+          .replaceAll(RegExp(r'''\s*['’‘]\s*'''), '')
+          .replaceAll(RegExp(r'''["“”«»]'''), '')
+          .replaceAll(RegExp(r'''[.,!?;:。、！？；：¿¡…]'''), ' ');
     }
+    normalized = switch (language) {
+      LanguageTag.german when !policy.caseSensitive => normalized.replaceAll(
+        'ß',
+        'ss',
+      ),
+      LanguageTag.japanese || LanguageTag.simplifiedChinese =>
+        normalized.replaceAll(RegExp(r'\s+'), ''),
+      _ => normalized.replaceAll(RegExp(r'\s+'), ' '),
+    };
     return normalized.trim();
   }
 

@@ -1,16 +1,46 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 
 import '../domain/content_validation.dart';
+import '../domain/device_preferences.dart';
+import '../domain/item_editor_draft.dart';
 import '../domain/language.dart';
 import '../domain/learning_item.dart';
 import '../domain/active_study_session.dart';
+import '../domain/local_storage.dart';
 import '../domain/progress.dart';
+import '../domain/quick_content_draft.dart';
+import '../domain/quick_content_preferences.dart';
+import '../domain/search_preferences.dart';
 import '../domain/study_history.dart';
 import '../domain/study_preferences.dart';
+import '../import/import_review_draft.dart';
 import '../sync/pending_sync.dart';
+import '../sync/sync_policy.dart';
 import 'database/app_database.dart';
+
+String _itemEditorDraftScope(String? itemId) => itemId ?? '__new_item__';
+
+String _itemEditorDraftStorageKey(String? itemId) {
+  final encoded = base64Url
+      .encode(utf8.encode(_itemEditorDraftScope(itemId)))
+      .replaceAll('=', '');
+  return 'item_editor_draft_v2:$encoded';
+}
+
+String _quickContentDraftStorageKey(String subjectId) {
+  final encoded = base64Url.encode(utf8.encode(subjectId)).replaceAll('=', '');
+  return 'quick_content_draft_v2:$encoded';
+}
+
+Map<String, QuickContentDraft> _initialQuickContentDrafts(
+  QuickContentDraft? draft,
+) => draft == null ? {} : {draft.subjectId: draft};
+
+Map<String, ItemEditorDraft> _initialItemEditorDrafts(ItemEditorDraft? draft) =>
+    draft == null ? {} : {_itemEditorDraftScope(draft.itemId): draft};
 
 class StoredProfile {
   const StoredProfile({
@@ -21,17 +51,25 @@ class StoredProfile {
     required this.badges,
     required this.driveConnected,
     required this.progress,
+    this.dailyXpByCourse = const {},
+    this.dailyXpByCourseAndReplica = const {},
+    this.replicaId = '',
+    this.xpByReplica = const {},
     this.lastStudyDate,
   });
 
-  factory StoredProfile.empty() => const StoredProfile(
+  factory StoredProfile.empty({String? replicaId}) => StoredProfile(
     selectedLanguage: LanguageTag.english,
     totalXp: 0,
     streakDays: 0,
     dailyXp: 0,
-    badges: {},
+    badges: const {},
     driveConnected: false,
-    progress: {},
+    progress: const {},
+    dailyXpByCourse: const {},
+    dailyXpByCourseAndReplica: const {},
+    replicaId: replicaId ?? _newReplicaId(),
+    xpByReplica: const {},
     lastStudyDate: null,
   );
 
@@ -39,6 +77,10 @@ class StoredProfile {
   final int totalXp;
   final int streakDays;
   final int dailyXp;
+  final Map<String, int> dailyXpByCourse;
+  final Map<String, Map<String, int>> dailyXpByCourseAndReplica;
+  final String replicaId;
+  final Map<String, int> xpByReplica;
   final Set<String> badges;
   final bool driveConnected;
   final Map<String, ProgressRecord> progress;
@@ -81,9 +123,56 @@ abstract interface class StudyStore {
 
   Future<void> savePreferences(StudyPreferences preferences);
 
+  Future<LocalStorageSettings> loadLocalStorageSettings();
+
+  Future<void> saveLocalStorageSettings(LocalStorageSettings settings);
+
+  Future<SyncDeviceSettings> loadSyncDeviceSettings();
+
+  Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings);
+
+  Future<QuickContentDraft?> loadQuickContentDraft({required String subjectId});
+
+  Future<void> saveQuickContentDraft(QuickContentDraft draft);
+
+  Future<void> clearQuickContentDraft({required String subjectId});
+
+  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId});
+
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft);
+
+  Future<void> clearItemEditorDraft({String? itemId});
+
+  Future<QuickContentLocalPreferences> loadQuickContentLocalPreferences();
+
+  Future<void> saveQuickContentLocalPreferences(
+    QuickContentLocalPreferences preferences,
+  );
+
+  Future<SearchLocalPreferences> loadSearchLocalPreferences();
+
+  Future<void> saveSearchLocalPreferences(SearchLocalPreferences preferences);
+
+  Future<DevicePreferences> loadDevicePreferences();
+
+  Future<void> saveDevicePreferences(DevicePreferences preferences);
+
+  Future<ImportReviewDraft?> loadImportReviewDraft();
+
+  Future<void> saveImportReviewDraft(ImportReviewDraft draft);
+
+  Future<void> clearImportReviewDraft();
+
   Future<List<LearningItem>> loadCustomItems();
 
   Future<void> saveCustomItems(Iterable<LearningItem> items);
+
+  Future<void> replaceCustomContent({
+    required Iterable<LearningItem> items,
+    required Map<String, DateTime> tombstones,
+  });
+
+  Future<void> replaceProgress(Map<String, ProgressRecord> progress);
 
   Future<void> commitCustomItemImport({
     required Iterable<LearningItem> items,
@@ -103,6 +192,8 @@ abstract interface class StudyStore {
 
   Future<void> saveStudySession(StudySessionSummary session);
 
+  Future<void> replaceStudySessions(Iterable<StudySessionSummary> sessions);
+
   Future<List<StudySessionSummary>> loadRecentSessions({int limit = 20});
 
   Future<StoredActiveStudyState> loadActiveStudyState();
@@ -110,6 +201,8 @@ abstract interface class StudyStore {
   Future<void> saveActiveStudySession(ActiveStudySession session);
 
   Future<void> clearActiveStudySession(DateTime clearedAt);
+
+  Future<void> replaceActiveStudyState(StoredActiveStudyState activeStudy);
 
   Future<PendingSyncOperation?> loadPendingSnapshotSync();
 
@@ -127,7 +220,16 @@ class MemoryStudyStore implements StudyStore {
     ActiveStudySession? activeStudySession,
     DateTime? activeStudySessionClearedAt,
     PendingSyncOperation? pendingSnapshotSync,
-  }) : _profile = profile ?? StoredProfile.empty(),
+    LocalStorageSettings? localStorageSettings,
+    SyncDeviceSettings? syncDeviceSettings,
+    QuickContentDraft? quickContentDraft,
+    ItemEditorDraft? itemEditorDraft,
+    QuickContentLocalPreferences? quickContentLocalPreferences,
+    SearchLocalPreferences? searchLocalPreferences,
+    DevicePreferences? devicePreferences,
+    ImportReviewDraft? importReviewDraft,
+    String? replicaId,
+  }) : _profile = _profileWithReplicaId(profile, replicaId),
        _preferences = preferences ?? const StudyPreferences(),
        // The public constructor name is intentionally clearer for tests/callers.
        // ignore: prefer_initializing_formals
@@ -138,7 +240,24 @@ class MemoryStudyStore implements StudyStore {
        ),
        // The public constructor name is intentionally clearer for tests/callers.
        // ignore: prefer_initializing_formals
-       _pendingSnapshotSync = pendingSnapshotSync;
+       _pendingSnapshotSync = pendingSnapshotSync,
+       _localStorageSettings =
+           localStorageSettings ?? const LocalStorageSettings(),
+       _syncDeviceSettings = syncDeviceSettings ?? const SyncDeviceSettings(),
+       // The public constructor name is intentionally clearer for tests/callers.
+       // ignore: prefer_initializing_formals
+       _quickContentDrafts = _initialQuickContentDrafts(quickContentDraft),
+       // The public constructor name is intentionally clearer for tests/callers.
+       // ignore: prefer_initializing_formals
+       _itemEditorDrafts = _initialItemEditorDrafts(itemEditorDraft),
+       _quickContentLocalPreferences =
+           quickContentLocalPreferences ?? const QuickContentLocalPreferences(),
+       _searchLocalPreferences =
+           searchLocalPreferences ?? const SearchLocalPreferences(),
+       _devicePreferences = devicePreferences ?? const DevicePreferences(),
+       // The public constructor name is intentionally clearer for tests/callers.
+       // ignore: prefer_initializing_formals
+       _importReviewDraft = importReviewDraft;
 
   StoredProfile _profile;
   StudyPreferences _preferences;
@@ -149,6 +268,16 @@ class MemoryStudyStore implements StudyStore {
   final _sessions = <String, StudySessionSummary>{};
   final _imports = <String, ImportCommitRecord>{};
   PendingSyncOperation? _pendingSnapshotSync;
+  LocalStorageSettings _localStorageSettings;
+  SyncDeviceSettings _syncDeviceSettings;
+  final Map<String, QuickContentDraft> _quickContentDrafts;
+  final Map<String, ItemEditorDraft> _itemEditorDrafts;
+  Future<void> _quickContentDraftWriteTail = Future<void>.value();
+  Future<void> _itemEditorDraftWriteTail = Future<void>.value();
+  QuickContentLocalPreferences _quickContentLocalPreferences;
+  SearchLocalPreferences _searchLocalPreferences;
+  DevicePreferences _devicePreferences;
+  ImportReviewDraft? _importReviewDraft;
 
   List<StudyEventEntry> get savedEvents => List.unmodifiable(_events.values);
 
@@ -188,6 +317,145 @@ class MemoryStudyStore implements StudyStore {
   }
 
   @override
+  Future<LocalStorageSettings> loadLocalStorageSettings() async =>
+      _localStorageSettings;
+
+  @override
+  Future<void> saveLocalStorageSettings(LocalStorageSettings settings) async {
+    _localStorageSettings = settings;
+  }
+
+  @override
+  Future<SyncDeviceSettings> loadSyncDeviceSettings() async =>
+      _syncDeviceSettings;
+
+  @override
+  Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings) async {
+    _syncDeviceSettings = settings;
+  }
+
+  @override
+  Future<QuickContentDraft?> loadQuickContentDraft({
+    required String subjectId,
+  }) async {
+    try {
+      await _quickContentDraftWriteTail;
+    } on Object {
+      // A later read must still be possible after a best-effort write fails.
+    }
+    return _quickContentDrafts[subjectId];
+  }
+
+  @override
+  Future<void> saveQuickContentDraft(QuickContentDraft draft) =>
+      _enqueueQuickContentDraftWrite(
+        () async => _quickContentDrafts[draft.subjectId] = draft,
+      );
+
+  @override
+  Future<void> clearQuickContentDraft({required String subjectId}) =>
+      _enqueueQuickContentDraftWrite(
+        () async => _quickContentDrafts.remove(subjectId),
+      );
+
+  @override
+  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId}) async {
+    try {
+      await _itemEditorDraftWriteTail;
+    } on Object {
+      // A later read must still be possible after a best-effort write fails.
+    }
+    return _itemEditorDrafts[_itemEditorDraftScope(itemId)];
+  }
+
+  @override
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft) =>
+      _enqueueItemEditorDraftWrite(
+        () async =>
+            _itemEditorDrafts[_itemEditorDraftScope(draft.itemId)] = draft,
+      );
+
+  @override
+  Future<void> clearItemEditorDraft({String? itemId}) =>
+      _enqueueItemEditorDraftWrite(
+        () async => _itemEditorDrafts.remove(_itemEditorDraftScope(itemId)),
+      );
+
+  Future<void> _enqueueQuickContentDraftWrite(
+    Future<void> Function() operation,
+  ) {
+    final previous = _quickContentDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _quickContentDraftWriteTail = next;
+    return next;
+  }
+
+  Future<void> _enqueueItemEditorDraftWrite(Future<void> Function() operation) {
+    final previous = _itemEditorDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _itemEditorDraftWriteTail = next;
+    return next;
+  }
+
+  @override
+  Future<QuickContentLocalPreferences>
+  loadQuickContentLocalPreferences() async => _quickContentLocalPreferences;
+
+  @override
+  Future<void> saveQuickContentLocalPreferences(
+    QuickContentLocalPreferences preferences,
+  ) async {
+    _quickContentLocalPreferences = preferences;
+  }
+
+  @override
+  Future<SearchLocalPreferences> loadSearchLocalPreferences() async =>
+      _searchLocalPreferences;
+
+  @override
+  Future<void> saveSearchLocalPreferences(
+    SearchLocalPreferences preferences,
+  ) async {
+    _searchLocalPreferences = preferences;
+  }
+
+  @override
+  Future<DevicePreferences> loadDevicePreferences() async => _devicePreferences;
+
+  @override
+  Future<void> saveDevicePreferences(DevicePreferences preferences) async {
+    _devicePreferences = preferences;
+  }
+
+  @override
+  Future<ImportReviewDraft?> loadImportReviewDraft() async =>
+      _importReviewDraft;
+
+  @override
+  Future<void> saveImportReviewDraft(ImportReviewDraft draft) async {
+    _importReviewDraft = draft;
+  }
+
+  @override
+  Future<void> clearImportReviewDraft() async {
+    _importReviewDraft = null;
+  }
+
+  @override
   Future<List<LearningItem>> loadCustomItems() async => _items.values.toList();
 
   @override
@@ -199,14 +467,64 @@ class MemoryStudyStore implements StudyStore {
   }
 
   @override
+  Future<void> replaceCustomContent({
+    required Iterable<LearningItem> items,
+    required Map<String, DateTime> tombstones,
+  }) async {
+    _items
+      ..clear()
+      ..addEntries(items.map((item) => MapEntry(item.id, item)));
+    _itemTombstones
+      ..clear()
+      ..addAll(tombstones);
+  }
+
+  @override
+  Future<void> replaceProgress(Map<String, ProgressRecord> progress) async {
+    _profile = StoredProfile(
+      selectedLanguage: _profile.selectedLanguage,
+      totalXp: _profile.totalXp,
+      streakDays: _profile.streakDays,
+      dailyXp: _profile.dailyXp,
+      badges: _profile.badges,
+      driveConnected: _profile.driveConnected,
+      progress: Map.unmodifiable(progress),
+      dailyXpByCourse: _profile.dailyXpByCourse,
+      dailyXpByCourseAndReplica: _profile.dailyXpByCourseAndReplica,
+      replicaId: _profile.replicaId,
+      xpByReplica: _profile.xpByReplica,
+      lastStudyDate: _profile.lastStudyDate,
+    );
+  }
+
+  @override
   Future<void> commitCustomItemImport({
     required Iterable<LearningItem> items,
     required Map<String, DateTime> tombstones,
     ImportCommitRecord? record,
   }) async {
-    await saveCustomItems(items);
-    await saveCustomItemTombstones(tombstones);
-    if (record != null) _imports[record.importId] = record;
+    final validatedItems = [
+      for (final item in items)
+        const LearningContentValidator().ensureValid(item),
+    ];
+    final nextItems = {..._items};
+    final nextTombstones = {...tombstones};
+    final nextImports = {..._imports};
+    for (final item in validatedItems) {
+      nextItems[item.id] = item;
+      nextTombstones.remove(item.id);
+    }
+    if (record != null) nextImports[record.importId] = record;
+
+    _items
+      ..clear()
+      ..addAll(nextItems);
+    _itemTombstones
+      ..clear()
+      ..addAll(nextTombstones);
+    _imports
+      ..clear()
+      ..addAll(nextImports);
   }
 
   @override
@@ -247,6 +565,17 @@ class MemoryStudyStore implements StudyStore {
   }
 
   @override
+  Future<void> replaceStudySessions(
+    Iterable<StudySessionSummary> sessions,
+  ) async {
+    _sessions
+      ..clear()
+      ..addEntries(
+        sessions.map((session) => MapEntry(session.sessionId, session)),
+      );
+  }
+
+  @override
   Future<List<StudySessionSummary>> loadRecentSessions({int limit = 20}) async {
     final values = _sessions.values.toList()
       ..sort((left, right) => right.startedAt.compareTo(left.startedAt));
@@ -268,6 +597,13 @@ class MemoryStudyStore implements StudyStore {
   @override
   Future<void> clearActiveStudySession(DateTime clearedAt) async {
     _activeStudyState = StoredActiveStudyState(changedAt: clearedAt);
+  }
+
+  @override
+  Future<void> replaceActiveStudyState(
+    StoredActiveStudyState activeStudy,
+  ) async {
+    _activeStudyState = activeStudy;
   }
 
   @override
@@ -296,10 +632,36 @@ class MemoryStudyStore implements StudyStore {
   }
 }
 
+StoredProfile _profileWithReplicaId(
+  StoredProfile? profile,
+  String? requestedReplicaId,
+) {
+  if (profile == null) {
+    return StoredProfile.empty(replicaId: requestedReplicaId);
+  }
+  if (_safeReplicaId(profile.replicaId) != null) return profile;
+  return StoredProfile(
+    selectedLanguage: profile.selectedLanguage,
+    totalXp: profile.totalXp,
+    streakDays: profile.streakDays,
+    dailyXp: profile.dailyXp,
+    badges: profile.badges,
+    driveConnected: profile.driveConnected,
+    progress: profile.progress,
+    dailyXpByCourse: profile.dailyXpByCourse,
+    dailyXpByCourseAndReplica: profile.dailyXpByCourseAndReplica,
+    replicaId: _safeReplicaId(requestedReplicaId) ?? _newReplicaId(),
+    xpByReplica: profile.xpByReplica,
+    lastStudyDate: profile.lastStudyDate,
+  );
+}
+
 class DriftStudyStore implements StudyStore {
   DriftStudyStore(this.database);
 
   final AppDatabase database;
+  Future<void> _quickContentDraftWriteTail = Future<void>.value();
+  Future<void> _itemEditorDraftWriteTail = Future<void>.value();
 
   @override
   Future<StoredProfile> loadProfile() async {
@@ -321,6 +683,12 @@ class DriftStudyStore implements StudyStore {
       totalXp: profileJson['totalXp'] as int? ?? 0,
       streakDays: profileJson['streakDays'] as int? ?? 0,
       dailyXp: profileJson['dailyXp'] as int? ?? 0,
+      dailyXpByCourse: _safeXpMap(profileJson['dailyXpByCourse']),
+      dailyXpByCourseAndReplica: _safeDailyXpLedger(
+        profileJson['dailyXpByCourseAndReplica'],
+      ),
+      replicaId: _safeReplicaId(profileJson['replicaId']) ?? _newReplicaId(),
+      xpByReplica: _safeXpLedger(profileJson['xpByReplica']),
       badges: ((profileJson['badges'] as List<Object?>?) ?? const [])
           .whereType<String>()
           .toSet(),
@@ -362,6 +730,31 @@ class DriftStudyStore implements StudyStore {
                 'totalXp': profile.totalXp,
                 'streakDays': profile.streakDays,
                 'dailyXp': profile.dailyXp,
+                'dailyXpByCourse': {
+                  for (final entry
+                      in (profile.dailyXpByCourse.entries.toList()
+                        ..sort((left, right) => left.key.compareTo(right.key))))
+                    entry.key: entry.value,
+                },
+                'dailyXpByCourseAndReplica': {
+                  for (final courseEntry
+                      in (profile.dailyXpByCourseAndReplica.entries.toList()
+                        ..sort((left, right) => left.key.compareTo(right.key))))
+                    courseEntry.key: {
+                      for (final replicaEntry
+                          in (courseEntry.value.entries.toList()..sort(
+                            (left, right) => left.key.compareTo(right.key),
+                          )))
+                        replicaEntry.key: replicaEntry.value,
+                    },
+                },
+                'replicaId': profile.replicaId,
+                'xpByReplica': {
+                  for (final entry
+                      in (profile.xpByReplica.entries.toList()
+                        ..sort((left, right) => left.key.compareTo(right.key))))
+                    entry.key: entry.value,
+                },
                 'badges': profile.badges.toList()..sort(),
                 'driveConnected': profile.driveConnected,
                 'lastStudyDate': profile.lastStudyDate?.toIso8601String(),
@@ -374,6 +767,35 @@ class DriftStudyStore implements StudyStore {
         await database
             .into(database.progressRows)
             .insertOnConflictUpdate(
+              ProgressRowsCompanion.insert(
+                courseId: profile.selectedLanguage.courseId,
+                itemId: record.itemId,
+                status: record.status.name,
+                correctCount: Value(record.correctCount),
+                wrongCount: Value(record.wrongCount),
+                lapseCount: Value(record.lapseCount),
+                currentIntervalDays: Value(record.currentIntervalDays),
+                nextReviewAt: Value(record.nextReviewAt),
+                lastStudiedAt: Value(record.lastStudiedAt),
+                lastResult: Value(record.lastResult?.name),
+                deviceId: 'local-device',
+                updatedAt: now,
+              ),
+            );
+      }
+    });
+  }
+
+  @override
+  Future<void> replaceProgress(Map<String, ProgressRecord> progress) async {
+    final profile = await loadProfile();
+    final now = DateTime.now().toUtc();
+    await database.transaction(() async {
+      await database.delete(database.progressRows).go();
+      for (final record in progress.values) {
+        await database
+            .into(database.progressRows)
+            .insert(
               ProgressRowsCompanion.insert(
                 courseId: profile.selectedLanguage.courseId,
                 itemId: record.itemId,
@@ -425,6 +847,353 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
+  Future<LocalStorageSettings> loadLocalStorageSettings() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('local_storage_settings')))
+            .getSingleOrNull();
+    if (setting == null) return const LocalStorageSettings();
+    try {
+      return LocalStorageSettings.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const LocalStorageSettings();
+    }
+  }
+
+  @override
+  Future<void> saveLocalStorageSettings(LocalStorageSettings settings) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'local_storage_settings',
+            valueJson: jsonEncode(settings.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<SyncDeviceSettings> loadSyncDeviceSettings() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('sync_device_settings')))
+            .getSingleOrNull();
+    if (setting == null) return const SyncDeviceSettings();
+    try {
+      return SyncDeviceSettings.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const SyncDeviceSettings();
+    }
+  }
+
+  @override
+  Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'sync_device_settings',
+            valueJson: jsonEncode(settings.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<QuickContentDraft?> loadQuickContentDraft({
+    required String subjectId,
+  }) async {
+    try {
+      await _quickContentDraftWriteTail;
+    } on Object {
+      // Recovery writes are best-effort; a failed write cannot poison reads.
+    }
+    final key = _quickContentDraftStorageKey(subjectId);
+    var setting = await (database.select(
+      database.appSettings,
+    )..where((table) => table.key.equals(key))).getSingleOrNull();
+    setting ??=
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('quick_content_draft')))
+            .getSingleOrNull();
+    if (setting == null) return null;
+    try {
+      final draft = QuickContentDraft.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+      if (draft.subjectId != subjectId) return null;
+      if (setting.key == 'quick_content_draft') {
+        await saveQuickContentDraft(draft);
+        await (database.delete(
+          database.appSettings,
+        )..where((table) => table.key.equals('quick_content_draft'))).go();
+      }
+      return draft;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveQuickContentDraft(QuickContentDraft draft) =>
+      _enqueueQuickContentDraftWrite(() async {
+        await database
+            .into(database.appSettings)
+            .insertOnConflictUpdate(
+              AppSettingsCompanion.insert(
+                key: _quickContentDraftStorageKey(draft.subjectId),
+                valueJson: jsonEncode(draft.toJson()),
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+      });
+
+  @override
+  Future<void> clearQuickContentDraft({required String subjectId}) =>
+      _enqueueQuickContentDraftWrite(() async {
+        await (database.delete(database.appSettings)..where(
+              (table) =>
+                  table.key.equals(_quickContentDraftStorageKey(subjectId)),
+            ))
+            .go();
+      });
+
+  @override
+  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId}) async {
+    try {
+      await _itemEditorDraftWriteTail;
+    } on Object {
+      // Recovery writes are best-effort; a failed write cannot poison reads.
+    }
+    final key = _itemEditorDraftStorageKey(itemId);
+    var setting = await (database.select(
+      database.appSettings,
+    )..where((table) => table.key.equals(key))).getSingleOrNull();
+    setting ??=
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('item_editor_draft')))
+            .getSingleOrNull();
+    if (setting == null) return null;
+    try {
+      final draft = ItemEditorDraft.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+      if (draft.itemId != itemId) return null;
+      if (setting.key == 'item_editor_draft') {
+        await saveItemEditorDraft(draft);
+        await (database.delete(
+          database.appSettings,
+        )..where((table) => table.key.equals('item_editor_draft'))).go();
+      }
+      return draft;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft) =>
+      _enqueueItemEditorDraftWrite(() async {
+        await database
+            .into(database.appSettings)
+            .insertOnConflictUpdate(
+              AppSettingsCompanion.insert(
+                key: _itemEditorDraftStorageKey(draft.itemId),
+                valueJson: jsonEncode(draft.toJson()),
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+      });
+
+  @override
+  Future<void> clearItemEditorDraft({String? itemId}) =>
+      _enqueueItemEditorDraftWrite(() async {
+        await (database.delete(database.appSettings)..where(
+              (table) => table.key.equals(_itemEditorDraftStorageKey(itemId)),
+            ))
+            .go();
+      });
+
+  Future<void> _enqueueQuickContentDraftWrite(
+    Future<void> Function() operation,
+  ) {
+    final previous = _quickContentDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _quickContentDraftWriteTail = next;
+    return next;
+  }
+
+  Future<void> _enqueueItemEditorDraftWrite(Future<void> Function() operation) {
+    final previous = _itemEditorDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _itemEditorDraftWriteTail = next;
+    return next;
+  }
+
+  @override
+  Future<QuickContentLocalPreferences>
+  loadQuickContentLocalPreferences() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('quick_content_preferences')))
+            .getSingleOrNull();
+    if (setting == null) return const QuickContentLocalPreferences();
+    try {
+      return QuickContentLocalPreferences.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const QuickContentLocalPreferences();
+    }
+  }
+
+  @override
+  Future<void> saveQuickContentLocalPreferences(
+    QuickContentLocalPreferences preferences,
+  ) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'quick_content_preferences',
+            valueJson: jsonEncode(preferences.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<SearchLocalPreferences> loadSearchLocalPreferences() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('search_local_preferences')))
+            .getSingleOrNull();
+    if (setting == null) return const SearchLocalPreferences();
+    try {
+      return SearchLocalPreferences.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const SearchLocalPreferences();
+    }
+  }
+
+  @override
+  Future<void> saveSearchLocalPreferences(
+    SearchLocalPreferences preferences,
+  ) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'search_local_preferences',
+            valueJson: jsonEncode(preferences.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<DevicePreferences> loadDevicePreferences() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('device_preferences')))
+            .getSingleOrNull();
+    if (setting == null) return const DevicePreferences();
+    try {
+      return DevicePreferences.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const DevicePreferences();
+    }
+  }
+
+  @override
+  Future<void> saveDevicePreferences(DevicePreferences preferences) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'device_preferences',
+            valueJson: jsonEncode(preferences.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<ImportReviewDraft?> loadImportReviewDraft() async {
+    final setting =
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('import_review_draft')))
+            .getSingleOrNull();
+    if (setting == null) return null;
+    try {
+      return ImportReviewDraft.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveImportReviewDraft(ImportReviewDraft draft) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'import_review_draft',
+            valueJson: jsonEncode(draft.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<void> clearImportReviewDraft() async {
+    await (database.delete(
+      database.appSettings,
+    )..where((table) => table.key.equals('import_review_draft'))).go();
+  }
+
+  @override
   Future<List<LearningItem>> loadCustomItems() async {
     final rows = await (database.select(
       database.contentItems,
@@ -458,6 +1227,7 @@ class DriftStudyStore implements StudyStore {
               acceptedAnswers:
                   (jsonDecode(row.acceptedAnswersJson) as List<Object?>)
                       .cast<String>(),
+              subjectId: sourceJson['subjectId'] as String?,
               readings: readingsJson
                   .cast<Map<String, Object?>>()
                   .map(
@@ -554,9 +1324,13 @@ class DriftStudyStore implements StudyStore {
 
   @override
   Future<void> saveCustomItems(Iterable<LearningItem> items) async {
+    final validatedItems = [
+      for (final item in items)
+        const LearningContentValidator().ensureValid(item),
+    ];
     final now = DateTime.now().toUtc();
     await database.batch((batch) {
-      for (final item in items) {
+      for (final item in validatedItems) {
         batch.insert(
           database.contentItems,
           ContentItemsCompanion.insert(
@@ -581,6 +1355,7 @@ class DriftStudyStore implements StudyStore {
               'partOfSpeech': item.partOfSpeech?.name,
               'example': item.example,
               'exampleTranslation': item.exampleTranslation,
+              'subjectId': item.effectiveSubjectId,
               'capabilities': item.capabilities
                   .map((value) => value.name)
                   .toList(),
@@ -594,13 +1369,29 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
+  Future<void> replaceCustomContent({
+    required Iterable<LearningItem> items,
+    required Map<String, DateTime> tombstones,
+  }) async {
+    await database.transaction(() async {
+      await database.delete(database.contentItems).go();
+      await saveCustomItems(items);
+      await saveCustomItemTombstones(tombstones);
+    });
+  }
+
+  @override
   Future<void> commitCustomItemImport({
     required Iterable<LearningItem> items,
     required Map<String, DateTime> tombstones,
     ImportCommitRecord? record,
   }) async {
+    final validatedItems = [
+      for (final item in items)
+        const LearningContentValidator().ensureValid(item),
+    ];
     await database.transaction(() async {
-      await saveCustomItems(items);
+      await saveCustomItems(validatedItems);
       await saveCustomItemTombstones(tombstones);
       if (record != null) {
         await database
@@ -683,6 +1474,18 @@ class DriftStudyStore implements StudyStore {
             metadataJson: Value(jsonEncode(session.toJson())),
           ),
         );
+  }
+
+  @override
+  Future<void> replaceStudySessions(
+    Iterable<StudySessionSummary> sessions,
+  ) async {
+    await database.transaction(() async {
+      await database.delete(database.studySessions).go();
+      for (final session in sessions) {
+        await saveStudySession(session);
+      }
+    });
   }
 
   @override
@@ -797,6 +1600,25 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
+  Future<void> replaceActiveStudyState(
+    StoredActiveStudyState activeStudy,
+  ) async {
+    final changedAt = activeStudy.changedAt;
+    if (changedAt == null) {
+      await (database.delete(
+        database.appSettings,
+      )..where((table) => table.key.equals('active_study_session'))).go();
+      return;
+    }
+    final session = activeStudy.session;
+    if (session == null) {
+      await clearActiveStudySession(changedAt);
+      return;
+    }
+    await saveActiveStudySession(session);
+  }
+
+  @override
   Future<PendingSyncOperation?> loadPendingSnapshotSync() async {
     final row =
         await (database.select(database.pendingSyncs)
@@ -867,4 +1689,78 @@ PendingSyncsCompanion _pendingSyncCompanion(PendingSyncOperation operation) {
     nextAttemptAt: operation.nextAttemptAt.toUtc(),
     createdAt: operation.createdAt.toUtc(),
   );
+}
+
+Map<String, int> _safeXpMap(Object? raw, {int maximumEntries = 200}) {
+  if (raw is! Map) return const {};
+  final values = <String, int>{};
+  for (final entry in raw.entries.take(maximumEntries)) {
+    final key = entry.key;
+    final value = entry.value;
+    if (key is! String ||
+        key.trim().isEmpty ||
+        key.runes.length > 160 ||
+        value is! num ||
+        !value.isFinite ||
+        value != value.round()) {
+      continue;
+    }
+    values[key] = value.toInt().clamp(0, 1000000000);
+  }
+  return Map.unmodifiable(values);
+}
+
+Map<String, int> _safeXpLedger(Object? raw) {
+  if (raw is! Map) return const {};
+  final values = <String, int>{};
+  for (final entry in raw.entries.take(500)) {
+    final key = _safeReplicaId(entry.key);
+    final value = entry.value;
+    if (key == null ||
+        value is! num ||
+        !value.isFinite ||
+        value != value.round()) {
+      continue;
+    }
+    values[key] = value.toInt().clamp(0, 1000000000);
+  }
+  return Map.unmodifiable(values);
+}
+
+Map<String, Map<String, int>> _safeDailyXpLedger(Object? raw) {
+  if (raw is! Map) return const {};
+  final values = <String, Map<String, int>>{};
+  for (final entry in raw.entries.take(200)) {
+    final courseId = entry.key;
+    if (courseId is! String ||
+        courseId.trim().isEmpty ||
+        courseId.runes.length > 160) {
+      continue;
+    }
+    final ledger = _safeXpLedger(entry.value);
+    if (ledger.isNotEmpty) values[courseId] = ledger;
+  }
+  return Map.unmodifiable(values);
+}
+
+String? _safeReplicaId(Object? raw) {
+  if (raw is! String) return null;
+  final value = raw.trim();
+  if (value.isEmpty || value.length > 80) return null;
+  final valid = value.codeUnits.every(
+    (code) =>
+        (code >= 48 && code <= 57) ||
+        (code >= 65 && code <= 90) ||
+        (code >= 97 && code <= 122) ||
+        code == 45 ||
+        code == 95,
+  );
+  return valid ? value : null;
+}
+
+String _newReplicaId() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  final encoded = base64UrlEncode(bytes).replaceAll('=', '');
+  return 'replica-$encoded';
 }

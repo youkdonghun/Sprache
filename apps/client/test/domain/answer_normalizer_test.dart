@@ -44,4 +44,72 @@ void main() {
       isFalse,
     );
   });
+
+  test('handles English and French apostrophe spacing', () {
+    expect(
+      normalizer.matches(
+        input: "don't",
+        acceptedAnswers: const ['dont'],
+        language: LanguageTag.english,
+      ),
+      isTrue,
+    );
+    expect(
+      normalizer.matches(
+        input: "l' ami",
+        acceptedAnswers: const ["l’ami"],
+        language: LanguageTag.french,
+      ),
+      isTrue,
+    );
+  });
+
+  test('treats German sharp s as its common ss spelling', () {
+    expect(
+      normalizer.matches(
+        input: 'STRASSE',
+        acceptedAnswers: const ['Straße'],
+        language: LanguageTag.german,
+      ),
+      isTrue,
+    );
+  });
+
+  test('normalizes Spanish inverted punctuation without dropping accents', () {
+    expect(
+      normalizer.matches(
+        input: '¿Cómo estás?',
+        acceptedAnswers: const ['cómo estás'],
+        language: LanguageTag.spanish,
+      ),
+      isTrue,
+    );
+    expect(
+      normalizer.matches(
+        input: 'como estas',
+        acceptedAnswers: const ['cómo estás'],
+        language: LanguageTag.spanish,
+      ),
+      isFalse,
+    );
+  });
+
+  test('removes optional spacing for Japanese and simplified Chinese', () {
+    expect(
+      normalizer.matches(
+        input: '日 本 語。',
+        acceptedAnswers: const ['日本語'],
+        language: LanguageTag.japanese,
+      ),
+      isTrue,
+    );
+    expect(
+      normalizer.matches(
+        input: '你 好！',
+        acceptedAnswers: const ['你好'],
+        language: LanguageTag.simplifiedChinese,
+      ),
+      isTrue,
+    );
+  });
 }

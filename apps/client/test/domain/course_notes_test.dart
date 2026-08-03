@@ -4,7 +4,9 @@ import 'package:sprache/src/domain/language.dart';
 
 void main() {
   test('every supported language has a complete six-unit note set', () {
-    for (final language in LanguageTag.values) {
+    for (final language in LanguageTag.values.where(
+      (language) => language.available,
+    )) {
       for (var unitIndex = 0; unitIndex < 6; unitIndex++) {
         final note = courseNoteFor(language, unitIndex);
 

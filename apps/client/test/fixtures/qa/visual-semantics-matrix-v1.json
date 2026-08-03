@@ -1,0 +1,13 @@
+{
+  "format": "sprache-visual-semantics-matrix-v1",
+  "cases": [
+    {"id": "android-light-standard", "platform": "android", "theme": "light", "width": 390, "height": 844, "textScale": 1.0},
+    {"id": "android-dark-compact-large", "platform": "android", "theme": "dark", "width": 320, "height": 640, "textScale": 1.3},
+    {"id": "ios-light-standard", "platform": "ios", "theme": "light", "width": 390, "height": 844, "textScale": 1.0},
+    {"id": "ios-dark-large", "platform": "ios", "theme": "dark", "width": 430, "height": 932, "textScale": 1.3},
+    {"id": "windows-light-wide", "platform": "windows", "theme": "light", "width": 1040, "height": 760, "textScale": 1.0},
+    {"id": "windows-dark-focus-large", "platform": "windows", "theme": "dark", "width": 420, "height": 640, "textScale": 1.3},
+    {"id": "macos-light-wide", "platform": "macos", "theme": "light", "width": 1040, "height": 760, "textScale": 1.0},
+    {"id": "macos-dark-narrow-large", "platform": "macos", "theme": "dark", "width": 720, "height": 800, "textScale": 1.3}
+  ]
+}

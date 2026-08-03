@@ -4,6 +4,7 @@ import 'package:sprache/src/domain/daily_queue.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/progress.dart';
+import 'package:sprache/src/domain/study_preferences.dart';
 
 void main() {
   const builder = DailyQueueBuilder();
@@ -45,6 +46,26 @@ void main() {
     );
 
     expect(queue.first.id, dueItem.id);
+  });
+
+  test('can place new items before overdue reviews', () {
+    final dueItem = englishItems.last;
+    final queue = builder.build(
+      courseId: 'ko-en',
+      localDate: date,
+      items: englishItems,
+      progress: {
+        dueItem.id: ProgressRecord(
+          itemId: dueItem.id,
+          status: LearningStatus.review,
+          nextReviewAt: date.subtract(const Duration(days: 1)),
+        ),
+      },
+      queuePriority: StudyQueuePriority.newFirst,
+    );
+
+    expect(queue.first.id, isNot(dueItem.id));
+    expect(queue.map((item) => item.id), contains(dueItem.id));
   });
 
   test('honors the configured sentence ratio when enough items exist', () {

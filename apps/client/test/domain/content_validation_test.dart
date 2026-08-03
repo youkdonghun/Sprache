@@ -46,6 +46,91 @@ void main() {
     );
   });
 
+  test('accepts standard kana, romaji, pinyin, and Hangul formats', () {
+    expect(inspectReadingFormat(ReadingScheme.kana, 'コーヒーを おねがいします。'), isNull);
+    expect(inspectReadingFormat(ReadingScheme.kana, 'べんきょう?'), isNull);
+    expect(
+      inspectReadingFormat(ReadingScheme.romaji, "Tōkyō e ikimasu."),
+      isNull,
+    );
+    expect(
+      inspectReadingFormat(ReadingScheme.pinyin, "Xi'an hěn hǎo."),
+      isNull,
+    );
+    expect(
+      inspectReadingFormat(ReadingScheme.pinyin, 'xi1 an1 hen3 hao3'),
+      isNull,
+    );
+    expect(inspectReadingFormat(ReadingScheme.hangul, '니 하오 · 헬로우'), isNull);
+  });
+
+  test('rejects scripts and malformed tones in reading helpers', () {
+    expect(
+      inspectReadingFormat(ReadingScheme.kana, '水 みず')?.code,
+      'kana_format',
+    );
+    expect(
+      inspectReadingFormat(ReadingScheme.romaji, 'みず')?.code,
+      'romaji_format',
+    );
+    expect(
+      inspectReadingFormat(ReadingScheme.pinyin, '水 shuǐ')?.code,
+      'pinyin_format',
+    );
+    expect(
+      inspectReadingFormat(ReadingScheme.pinyin, 'shuǐ3')?.code,
+      'pinyin_mixed_tone',
+    );
+    expect(
+      inspectReadingFormat(ReadingScheme.pinyin, 'ni3hao3')?.code,
+      'pinyin_tone_number',
+    );
+    expect(inspectReadingFormat(ReadingScheme.pinyin, 'lu:4')?.code, isNull);
+    expect(
+      inspectReadingFormat(ReadingScheme.hangul, 'hello 헬로우')?.code,
+      'hangul_reading_format',
+    );
+  });
+
+  test('supports Korean pronunciation readings for every target language', () {
+    for (final language in LanguageTag.values.where(
+      (value) => value.available,
+    )) {
+      final result = validator.inspect(
+        LearningItem(
+          id: '${language.code}-hangul-reading',
+          kind: LearningItemKind.word,
+          learningLanguage: language,
+          text: 'sample',
+          translations: const ['예시'],
+          acceptedAnswers: const ['예시'],
+          readings: const [Reading(scheme: ReadingScheme.hangul, value: '샘플')],
+        ),
+      );
+
+      expect(result.isValid, isTrue, reason: language.code);
+    }
+  });
+
+  test('reading format errors block invalid learning items', () {
+    const item = LearningItem(
+      id: 'ja-invalid-kana',
+      kind: LearningItemKind.word,
+      learningLanguage: LanguageTag.japanese,
+      text: '水',
+      translations: ['물'],
+      acceptedAnswers: ['물'],
+      readings: [
+        Reading(scheme: ReadingScheme.kana, value: 'mizu'),
+        Reading(scheme: ReadingScheme.romaji, value: 'みず'),
+      ],
+    );
+
+    final errors = validator.inspect(item).errors.map((issue) => issue.code);
+
+    expect(errors, containsAll(['kana_format', 'romaji_format']));
+  });
+
   test(
     'rejects sentence-order tokens that do not reconstruct the sentence',
     () {
@@ -73,6 +158,33 @@ void main() {
     },
   );
 
+  test(
+    'rejects incomplete explicit tokens even without token capabilities',
+    () {
+      const item = LearningItem(
+        id: 'en-incomplete-explicit-tokens',
+        kind: LearningItemKind.sentence,
+        learningLanguage: LanguageTag.english,
+        text: 'How are you?',
+        translations: ['잘 지내세요?'],
+        acceptedAnswers: ['잘 지내세요?'],
+        sentenceTokens: ['How are you?'],
+        capabilities: {
+          ExerciseCapability.recognition,
+          ExerciseCapability.production,
+        },
+      );
+
+      final result = validator.inspect(item);
+
+      expect(result.isValid, isFalse);
+      expect(
+        result.errors.map((issue) => issue.code),
+        contains('sentence_tokens_required'),
+      );
+    },
+  );
+
   test('all bundled items pass structural content validation', () {
     final invalid = [
       for (final item in sampleContent)
@@ -80,7 +192,7 @@ void main() {
           '${item.id}: ${validator.inspect(item).errors.map((issue) => issue.code).join(',')}',
     ];
 
-    expect(sampleContent, hasLength(600));
+    expect(sampleContent, hasLength(720));
     expect(invalid, isEmpty, reason: invalid.take(20).join('\n'));
   });
 
@@ -130,13 +242,44 @@ void main() {
     expect(issues, contains('content_version_range'));
   });
 
+  test('normalizes optional attribution and rejects unsafe source URLs', () {
+    const item = LearningItem(
+      id: 'web-source',
+      kind: LearningItemKind.word,
+      learningLanguage: LanguageTag.english,
+      text: 'source',
+      translations: ['출처'],
+      acceptedAnswers: ['출처'],
+      partOfSpeech: PartOfSpeech.noun,
+      source: ContentSource(
+        name: 'Web corpus',
+        license: 'CC BY 2.0 FR',
+        sourceVersion: '2026-07-28',
+        contentVersion: 1,
+        sourceId: '  sentence-1  ',
+        sourceUrl: 'javascript:alert(1)',
+        author: '  Example   Author ',
+      ),
+    );
+
+    final result = validator.inspect(item);
+
+    expect(
+      result.errors.map((issue) => issue.code),
+      contains('source_url_format'),
+    );
+    expect(result.item.source.sourceId, 'sentence-1');
+    expect(result.item.source.author, 'Example Author');
+  });
+
   test('bundled catalog has explicit provenance and word classifications', () {
     expect(
       sampleContent.every(
         (item) =>
             item.source.name == ContentSource.starterCatalog.name &&
             item.source.license == 'project-internal' &&
-            item.source.contentVersion == 1,
+            item.source.sourceVersion == '2026.08' &&
+            item.source.contentVersion == 3,
       ),
       isTrue,
     );

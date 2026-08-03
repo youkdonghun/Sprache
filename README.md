@@ -1,20 +1,376 @@
 # Sprache
 
-Sprache는 한국어 사용자를 위한 Android·Windows 공용 다국어 반복학습 앱입니다. 영어, 일본어, 독일어, 프랑스어, 스페인어, 중국어 간체를 지원합니다.
+## 현재 연결 구조
+
+Sprache는 별도 API나 중앙 데이터베이스 없이 동작하는 Local-First 앱이다.
+학습 자료와 상세 진도의 작업 원본은 기기 SQLite다. Google 연결을 선택하면
+사용자가 고른 Drive 위치에 `WordStudyData` 폴더를 만들고, 그 폴더에서 기기 간
+동기화 자료를 읽고 쓴다.
+
+- Windows는 시스템 브라우저·loopback·PKCE로 받은 인증 코드를 Google 토큰
+  엔드포인트에 직접 교환한다. client secret을 EXE나 서버에 두지 않는다.
+- Android는 같은 Google Cloud 프로젝트의 네이티브 OAuth 클라이언트를 쓴다.
+- OAuth 토큰은 OS 보안 저장소에만 보관하고 중앙 계정–폴더 매핑을 만들지 않는다.
+- Drive의 숨겨진 `appDataFolder`에는 `WordStudyData`의 폴더 ID와 이름만 담은
+  작은 연결 포인터를 둔다. 학습 데이터 자체는 숨김 공간에 저장하지 않는다.
+- 로컬 백업 폴더와 Google Drive 저장 위치는 설정에서 각각 확인하고 변경한다.
+- 앱 소개, [개인정보처리방침](https://youkdonghun.github.io/Sprache/privacy/)과
+  [서비스 이용약관](https://youkdonghun.github.io/Sprache/terms/)은 GitHub Pages의
+  정적 문서다.
+
+아래 버전별 기록의 Railway 언급은 당시 릴리스의 검증 이력이다. 현행 설정은
+[아키텍처](docs/architecture.md)와
+[Google Cloud 연결 설정](docs/google-setup.md)을 기준으로 한다.
+
+## 1.32.0 컴팩트 작업 공간과 빠른 학습
+
+- 백그라운드 복귀 때 화면을 덮던 보호 커튼과 지연 설정을 제거하고, 알림 내용
+  표시·개인정보 가림·Drive 동기화 중지의 역할을 서로 다른 기능으로 명확히 했다.
+- 공통 화면 밀도 토큰으로 Windows 사이드바, 상단 주제 바, 카드·섹션 간격을
+  줄이면서 모든 주요 조작 영역은 최소 44px을 유지한다.
+- 홈은 이어하기를 먼저 보여 주고 오늘 지표와 주간 목표를 압축한다. 빠른 등록은
+  표현·뜻을 가장 먼저 배치하고 선택 입력, 그룹 도구, 등록 작업대는 필요할 때
+  펼친다.
+- 자료실은 검색·그룹 필터와 결과를 가깝게 모으고 자료 흐름 안내를 요약한다.
+  연습 허브는 최근·즐겨찾기 모드, 3·5·10·15분 프리셋과 예상 문제 수를 한눈에
+  비교할 수 있다.
+- `컴팩트 작업 공간` 프리셋은 화면 밀도, 탐색 레이블, 홈 모듈을 한 번에 정리하며
+  기존 프리셋으로 언제든 되돌릴 수 있다.
+- [컴팩트 UX 80개 목표](docs/compact-ux-80-upgrade-plan-1.32.0.md),
+  [80개 최종 검증](docs/compact-ux-80-verification-1.32.0.md),
+  [1.32.0 릴리스 노트](docs/release-notes-1.32.0.md),
+  [품질·릴리스 게이트](docs/release-quality-gates-1.32.0.md),
+  [릴리스 준비 감사](docs/release-readiness-1.32.0.md)에 범위와 검증 순서를 기록한다.
+
+## 1.31.0 개인화 스튜디오와 다시 하기 쉬운 학습
+
+- `Sprache 기본`·`집중`·`종이`·`OLED 밤` 원터치 프리셋과 10개 강조색,
+  표면·모서리·카드·글자·행간·본문 폭·애니메이션·축하 효과를 실시간으로
+  미리 보고 바꿀 수 있다.
+- 홈을 집중·균형·인사이트형으로 전환하고 헤더·연속 학습·XP·오늘 계획과
+  고정·최근 자료·데이터 흐름·예약 섹션의 표시 여부 및 순서를 직접 정한다.
+- 빠른 자료 등록은 단어/문장, 상세 필드, 즐겨찾기, 우선순위, 중복 처리,
+  정규화, 계속 추가, 최근 태그, 초안 저장 간격을 사용자 기본값으로 기억한다.
+- 학습 화면은 읽기 폭·진도 표시·문제 번호·남은 시간·단축키·왼손 조작·
+  피드백 밀도·격려 말투·축하 효과를 조정하며 집중 모드로 부가 정보를 줄인다.
+- 게임은 안정적인 ID로 즐겨찾기를 보존하고 최근 게임, 즐겨찾기 순서,
+  저장 설정 바로 시작, 날짜·주제별 오늘의 도전과 추천 근거를 제공한다.
+- Android APK와 Windows EXE를 로컬에서 검증하고, GitHub macOS 러너에서
+  iOS Simulator 앱과 unsigned/ad-hoc macOS 앱을 별도 `MOCK` 산출물로 만든다.
+- [200개 개선 목표](docs/personalization-200-upgrade-plan-1.31.0.md)와
+  [1.31.0 릴리스 노트](docs/release-notes-1.31.0.md),
+  [200개 목표 검증 보고서](docs/personalization-200-verification-1.31.0.md)에 전체
+  변경과 근거를 기록한다. 네 플랫폼 산출물 검증 규칙은
+  [품질·릴리스 게이트](docs/release-quality-gates-1.31.0.md), 실제 실행 순서는
+  [릴리스 준비 감사](docs/release-readiness-1.31.0.md)에 고정한다.
+
+## 1.30.0 빠른 단어 등록과 자율형 게임
+
+- 어느 화면에서든 빠른 추가를 열고, 클립보드·여러 뜻·읽기·그룹·태그를
+  한 번에 정리하며 초안 복구, 중복 처리, 저장 직후 학습과 실행 취소를 지원한다.
+- 탭·쉼표·세미콜론·콜론·파이프·대시 대량 입력을 자동 감지하고, 행별 오류와
+  미리보기·NFKC 중복 제거·100개 제한을 저장 전에 확인한다.
+- 게임을 검색·즐겨찾기·숨김·무작위 추천할 수 있고, 문제 수·시간·난이도·
+  출제 방향·채점·선택지·힌트·자동 진행·효과음·큰 버튼을 게임별로 기억한다.
+- 자유 연습, 무감점 문제 미루기, 매치 스프린트, 결과 즉시 재도전과 다음 추천을
+  더해 강제 목숨 없이 사용자가 학습 흐름을 결정한다.
+- 공통 Flutter 코드의 Android·Windows·iOS 플랫폼 분기와 iOS 프로젝트,
+  200% 글자·키보드·라이브 영역·Reduce Motion 릴리스 게이트를 갖췄다.
+
+## 1.23.0 직관적인 자료실과 독립 학습 그룹
+
+- 내비게이션과 화면 용어를 `자료실 → 학습 그룹 → 자료`로 통일하고,
+  `자료 추가 → 그룹 정리 → 암기·퀴즈` 단계를 실제 이동 버튼으로 연결했다.
+- 그룹을 자료 태그에서 독립된 저장 모델로 승격해 빈 그룹, 설명, 색상, 고정,
+  사용자 순서, 검색·정렬을 로컬과 Drive snapshot에 함께 보존한다.
+- Windows는 700px 폭에서도 좌우 드래그앤드롭 작업판을 유지하며
+  `Ctrl+A`, `Shift+클릭`, `Esc`, 숨겨진 선택 수를 지원한다.
+- 모바일은 가로 그룹 칩을 드롭다운과 그룹 관리 시트로 바꾸고, 선택 후 하단
+  한 줄 작업 바에서 그룹 지정·주제 이동·선택 해제를 실행한다.
+- 대량 이동과 그룹 연결 해제 전에 영향 범위를 미리 보여주며, 변경 뒤 8초간
+  실행 취소할 수 있다. 다른 주제로 옮겨도 현재 화면은 유지하고 대상 열기를
+  사용자가 선택한다.
+- Flutter 전체 테스트 379개, API 테스트 14개, 시각 회귀 31개, 정적 분석,
+  Windows 엔진 E2E, Android·Windows 실연동 릴리스와 무결성 검사를 통과했다.
+
+## 1.22.7 직관적인 자료 흐름과 그룹 작업판
+
+- 단어장 상단에 `추가·가져오기 → 그룹 정리 → 암기·퀴즈` 흐름과
+  로컬·Google Drive·Railway의 데이터 보관 범위를 바로 확인하는 안내를 추가했다.
+- Windows는 왼쪽 자료를 오른쪽 그룹으로 끌어 놓아 정리하고, 모바일은
+  자료 선택 후 그룹을 고르는 터치 친화적 흐름을 사용한다.
+- 그룹 추가는 기존 분류를 유지하고, 그룹 이동은 기존 그룹을 교체하며,
+  `그룹 없음`은 그룹 태그만 지워 원본 자료와 학습 진도를 보존한다.
+- 320~430px 모바일 라이트·다크, 1280px Windows 화면과 Flutter 전체
+  테스트 372개, 시각 회귀 30개, 정적 분석, Android·Windows 릴리스
+  빌드 및 릴리스 무결성 검사를 통과했다.
+
+## 1.22.6 날짜형 업로드 템플릿 이름
+
+- 간편 Excel 템플릿의 내부 자산명은 유지하면서 저장 창의 제안 파일명을
+  `Sprache 업로드 템플릿_YYYYMMDD.xlsx` 형식으로 변경했다.
+- 날짜는 저장 시점의 로컬 날짜를 사용한다. 2026년 7월 30일에는
+  `Sprache 업로드 템플릿_20260730.xlsx`로 표시된다.
+- Flutter 전체 테스트 361개와 정적 분석, Android·Windows 실연동 릴리스
+  빌드 및 릴리스 무결성 검사를 통과했다.
+
+## 1.22.5 컴팩트 정답 피드백 팝업
+
+- 채점 결과가 데스크톱 하단 영역 전체 높이로 늘어나던 레이아웃을 제거했다.
+- 정답·오답, 콤보, XP와 `다음 문제`를 현재 문제 위의 최대 420px 모달
+  팝업으로 표시하고 별도 화면으로 이동하지 않는다.
+- 모바일·Windows, 라이트·다크 팝업 골든을 추가하고 Flutter 전체 테스트
+  360개와 정적 분석을 통과했다.
+
+## 1.22.4 발음 표시 간소화
+
+- 카드·퀴즈·암기·발음·단어 상세 화면에서 한국어 읽기 앞의 중복
+  `한국어 발음` 접두어를 제거하고 발음 내용만 표시한다.
+- 편집 화면과 Excel 열 이름에는 입력 항목을 구분하기 위한 이름을 유지한다.
+- 320~430px 반응형 화면, 라이트·다크 골든 19개, Flutter 전체 테스트
+  359개와 정적 분석을 통과했다.
+
+## 1.22.3 기본 콘텐츠 한국어 발음 전수 보강
+
+- 내장 단어 480개와 문장 240개 모두에 한국어 발음 보조표기를 제공한다.
+- 직접 검수한 기초 표현을 우선 사용하고, 나머지는 언어별 오프라인 변환기로
+  보완한다. 일본어 가나·로마자와 중국어 병음도 함께 보존한다.
+- 사용자가 직접 입력하거나 Excel로 가져온 발음은 자동 표기보다 우선하며,
+  실제 소리는 언어별 TTS로 확인하도록 화면에서 구분해 안내한다.
+- Flutter 테스트 358개, API 테스트 14개와 정적 분석을 통과했고 Android
+  1.22.2 위에 1.22.3을 설치해 기존 자료·XP·중단 세션이 유지되는 것을 확인했다.
+- Windows 1.22.3 release 앱을 실제 실행해 크기 조절과 응답 상태를 확인했다.
+
+## 1.22.2 공개 개인정보처리방침 연결
+
+- Railway API가 로그인 없이 읽을 수 있는 앱 홈페이지, 개인정보처리방침, 이용약관을 제공합니다.
+- Android와 Windows 설정에서 공개 개인정보처리방침을 바로 열 수 있습니다.
+- 앱 내부 개인정보 고지의 시행일과 버전은 현재 빌드 `1.22.2`에 맞게 표시됩니다.
+- Google Auth Platform은 최소 범위 네 개와 테스트 사용자 한 명이 정상이며,
+  운영 게시에는 소유권을 확인할 custom domain만 추가로 필요합니다.
+
+## 1.22.1 진행 중 학습 보호
+
+- 진행 중인 학습이 있을 때 다른 퀴즈나 암기 세션을 열어도 기존 세션을 조용히 덮어쓰지 않습니다.
+- `돌아가기`, `기존 학습 이어가기`, `기존 종료 후 새로 시작` 중 하나를 명시적으로 선택합니다.
+- Android 1.21.0에서 1.22.0으로 덮어쓰기 설치하여 사용자 주제, 50 XP, 2/10 중단 세션과 Drive 연결 상태가 유지되는 것을 확인했습니다.
+- Android 설치본에서 영어 문장과 `한국어 발음 나이스 투 미트 유.`가 함께 표시되는 것을 확인했습니다.
+
+Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 앱입니다. 영어, 일본어, 독일어, 프랑스어, 스페인어, 중국어 간체뿐 아니라 야구 용어·아이돌 팬덤처럼 사용자가 만든 어떤 주제도 학습할 수 있습니다.
 
 초기 명세를 기준으로 유지하는 장기 제품 목표와 다음 우선순위는 [`docs/product-goals.md`](docs/product-goals.md)에 정리되어 있습니다.
 
 ## 구현된 핵심 경험
 
-- 로그인 없이 여섯 언어의 내장 단어 480개·문장 120개를 바로 학습
+- 로그인 없이 여섯 언어의 내장 단어 480개·문장 240개를 바로 학습
 - 단어·문장 카드 학습, 뜻 고르기, 직접 쓰기, 빈칸, 문장 순서, 듣고 쓰기
 - 목표 발음 TTS와 마이크 음성 인식을 결합한 발음 따라하기
 - 간격 반복, 오답 재출제, XP·레벨·연속 학습·배지
-- 일본어 가나·로마자와 중국어 병음 읽기 보조
+- 여섯 언어 한국어 발음 표기, 일본어 가나·로마자와 중국어 병음 읽기 보조
 - Android 게임형 UI와 Windows 크기 조절형 업무 도구 UI
-- SQLite 기반 Local-First 저장과 CSV·JSON·JSONL 가져오기
-- Google Drive 폴더를 원본 저장소로 사용하는 기기 간 동기화
-- Railway API에는 HMAC 처리된 계정과 Drive 폴더 연결만 저장
+- SQLite 기반 Local-First 저장과 Excel·CSV·JSON·JSONL 가져오기
+- 사용자 주제 생성, 주제별 자료함·학습 그룹·암기·퀴즈·일정 구성
+- 사용자가 고른 Google Drive `WordStudyData` 폴더를 이용한 기기 간 동기화
+- Drive `appDataFolder`에는 폴더 재연결용 포인터만 저장
+- PKCE 직접 토큰 교환과 OS 보안 저장소를 사용하며 중앙 연결 DB는 두지 않음
+
+## 1.22.0 한국어 발음 표기와 Excel 업로드
+
+- 영어·일본어·독일어·프랑스어·스페인어·중국어의 단어와 문장에
+  `한국어 발음`을 입력하고 카드·학습·발음·단어장 화면에서 먼저 확인할 수 있다.
+- 일본어는 한국어 발음과 가나·로마자를, 중국어는 한국어 발음과 병음을 함께
+  보존한다. 내장 콘텐츠에도 언어별 대표 입문 표현의 한국어 발음 예시를 넣었다.
+- 간편·전체 Excel 템플릿에 단어·문장의 `korean_pronunciation`과 예문의
+  `example_pronunciation` 열을 추가했다. CSV·JSON·JSONL에서도 같은 읽기
+  스킴을 사용할 수 있다.
+- 같은 표현을 여러 행에 적으면 기존 뜻·허용 정답·그룹뿐 아니라 서로 다른
+  한국어 발음 표기도 합치며, 예문 발음은 생성된 독립 문장에 연결한다.
+- 개인 콘텐츠 Excel·CSV 내보내기는 한국어 발음을 포함한 27열로 왕복한다.
+
+## 1.21.0 컴팩트 학습 구조와 퀴즈 콤보
+
+- 전역 내비게이션을 `오늘`·`학습`·`단어장`·`기록`·`설정`의 고정된 다섯
+  항목으로 정리하고 코스·노트·미션·발음을 `학습` 안으로 통합했다.
+- 홈의 반복 학습 바로가기와 요약 카드를 제거하고 다음 레슨, 오늘 계획,
+  저장 일정과 진행 중 세션에 집중하도록 축약했다.
+- 학습 방식을 `퀴즈`·`암기`·`실전` 세 범주로 묶고 모바일 2열·Windows
+  3열 카드로 제공한다.
+- 퀴즈에 연속 정답 콤보, 3문제 미니 목표, 실제 XP 추적, 오답 재출제 안내와
+  최고 콤보 결과를 추가했다.
+- Android 1.21.0 덮어 설치 뒤 사용자 주제·XP·2/10 중단 세션을 보존했고,
+  Flutter 테스트 347개, API 테스트 12개, 정적 분석과 릴리스 검증을 통과했다.
+
+## 1.20.2 편집 가능한 Excel 내보내기
+
+- Android와 Windows 설정에서 개인 단어·문장을 실제 `.xlsx` 파일로 내보낸다.
+  내보낸 파일은 Excel에서 수정한 뒤 가져오기 화면으로 다시 불러올 수 있다.
+- 언어·유형·표현·여러 뜻·그룹·품사·허용 정답·다국어 읽기·예문·
+  문장 토큰·태그·레벨·우선순위·출처·고정 ID·`subject_id`까지 27열로 보존한다.
+- 첫 행 고정, 자동 필터, 열 너비와 줄바꿈을 적용해 데스크톱 Excel에서도 바로
+  검토할 수 있게 했으며, 수식으로 해석될 수 있는 사용자 값은 안전한 문자열로 쓴다.
+- 실제 Android 저장 선택기로 `.xlsx`를 저장하고, 다시 파싱했을 때 뜻·그룹·
+  읽기·예문·주제 ID가 유지되는 것을 검증했다.
+- Google Drive 통신 중 네트워크가 끊겨도 API URL이나 원시 예외를 노출하지 않고
+  로컬 자료와 업로드 대기 작업을 유지하는 한국어 재시도 안내를 표시한다.
+
+## 1.20.1 간편 Excel과 실제 파일 기반 이어하기
+
+- Android·Windows 가져오기 화면에서 `간편 템플릿`과 `전체 템플릿`을 따로
+  내려받는다. 처음 쓰는 사용자는 필수 4열과 핵심 선택 필드 11개만 보이는
+  간편 템플릿으로 시작할 수 있다.
+- 간편 템플릿에 여섯 언어, 일반 공부용 `ko`, 독립 문장, 예문 토큰,
+  동일 표현의 여러 뜻·그룹, 야구 주제 예시와 작성 안내를 포함했다.
+- 실제 간편 `.xlsx`를 읽어 중복 뜻 병합 → 예문 문장 생성 → 그룹 복사 →
+  직접 선택 일정 → 정오답·XP·최근 세션 저장 → 두 번째 기기 병합까지 한 번의
+  자동 흐름으로 검증한다.
+- 모바일 업로드 카드는 375·390·412·430px에서 파일 선택과 두 템플릿 버튼이
+  겹치지 않도록 줄을 재배치하고, Windows에서는 밀도 높은 가로형을 유지한다.
+- 1.20.1 APK·Windows ZIP·설치 EXE의 빌드, 자산 포함, 해시,
+  설치·실행·제거를 검증했다.
+
+## 1.20.0 자동 연결 복구와 컴팩트 모바일 설정
+
+- 앱 시작 뒤 저장된 Google·Drive 연결을 자동으로 복구한다. Android는 네이티브
+  경량 인증과 Railway 폴더 바인딩을, Windows는 OS 보안 저장소의 토큰과
+  Railway 무저장 중계를 사용한다.
+- 저장된 인증을 복구할 수 없거나 네트워크가 끊기면 정상 로컬 자료와 업로드
+  대기 작업을 유지하고 사용자가 직접 다시 연결할 수 있게 한다.
+- Android 설정의 Drive 상태·마지막 병합·동기화 버튼을 요약형으로 바꾸고,
+  충돌 상세는 접힌 상태에서 필요할 때만 펼치도록 했다.
+- 하루 목표와 세션 문제 수를 모바일에서도 같은 행에 배치하고 카드 여백과
+  구분 간격을 줄여 불필요한 줄바꿈과 긴 세로 스크롤을 줄였다.
+- 375·390·412·430px, 라이트·다크 모드, 1.3배 글자 크기와 실제
+  412×915 Android 연결 화면을 검증했다.
+- 1.20.0 APK·Windows ZIP·설치 EXE의 빌드, 해시, 설치·실행·제거를 검증했다.
+
+## 1.19.9 Android·Windows 실계정 교차 기기 이어하기
+
+- Android가 Google 로그인 뒤 Railway의 계정별 Drive 폴더 연결을 조회하고,
+  실제 `WordStudyData` 폴더인지 Drive API로 검증한 뒤 안전하게 재사용한다.
+- Windows에서 올린 사용자 콘텐츠 마커를 Android 에뮬레이터에서 실제
+  Google·Railway·Drive 경로로 내려받아 기기 간 이어하기를 확인했다.
+- 저장된 연결이 없거나 유효하지 않을 때만 Android 네이티브 Picker로
+  폴더 선택을 요청한다.
+- 모바일 연결 카드 제목과 상태 배치를 압축해 좁은 화면의 어색한 줄바꿈을
+  제거했다.
+- 1.19.9 APK·Windows ZIP·설치 EXE의 빌드, 해시, 설치와 기동을 검증했다.
+
+## 1.19.8 Google·Drive 실연동 안정화
+
+- Railway Desktop OAuth broker를 실제 sealed secret으로 `ready` 전환했다.
+- Windows 실계정 Google 동의·loopback·토큰 교환·Drive 폴더 선택·동기화
+  업로드 E2E를 통과했다.
+- 중국어 내부 주제 ID `language:zh-hans`와 BCP 47 표시 `zh-Hans`를
+  일관되게 매핑한다.
+- Google Drive revision이 metadata-only 변경으로 증가해도 SHA-256이 같으면
+  정상 파일로 처리하고, 실제 내용이 달라진 경우에만 격리·충돌 처리한다.
+- 1.19.8 Windows 설치본과 Android APK의 빌드·해시·설치·기동을 검증했다.
+
+## 1.19.7 기기 알림 관리
+
+- 설정 화면에서 현재 미래 학습 일정 수와 이 기기의 알림 대상 수를 확인한다.
+- `알림 연결`과 `알림 다시 맞추기`로 Android 권한 요청과 Windows·Android
+  예약 재조정을 사용자가 직접 실행할 수 있다.
+- 권한 거부, 플랫폼 미지원, 예약 실패, 정상 연결을 구분해 다음 행동을 안내한다.
+- 412px Android 설정 화면과 실제 저장 일정 재연결 흐름을 위젯 테스트한다.
+
+## 1.19.6 Android·Windows 학습 일정 알림
+
+- 이름과 시간을 저장한 학습 일정은 Android 알림과 Windows Toast로 예약한다.
+- 일정 저장 버튼을 누를 때만 Android 알림 권한을 요청하고, 거부해도 일정과
+  로컬 학습 데이터는 그대로 보존한다.
+- 앱 시작, 일정 수정·삭제·시작, Drive 병합 뒤 미래 일정 최대 20개를 다시 맞춰
+  오래된 알림이나 다른 기기에서 삭제한 일정을 남기지 않는다.
+- Android는 재부팅 뒤 예약을 복원하고 정확 알람 권한이 필요 없는
+  `inexactAllowWhileIdle` 방식을 사용한다.
+- Windows와 Android 네이티브 통합 테스트에서 예약 ID 등록과 취소를 확인했다.
+
+## 1.19.5 직접 선택 발음 세션
+
+- 세션 빌더의 학습 방식에 `발음 따라하기`를 추가했다.
+- 코스 전체뿐 아니라 그룹·태그·레벨·취약 단계·직접 고른 단어와 문장만으로
+  발음 큐를 만들 수 있다.
+- 발음 세션도 이름과 예정 시간을 저장하고 홈 일정에서 불러오며,
+  Android와 Windows가 같은 Drive 설정을 사용한다.
+- 발음 연습 종료·완료 후 일반 학습실이 아니라 세션 설계 화면으로 돌아가
+  같은 선택을 수정하거나 다시 사용할 수 있다.
+
+## 1.19.4 언어별 학습 일정과 홈 재시작
+
+- 저장한 학습 일정에 학습 주제 ID를 함께 기록해 영어·일본어·사용자 주제
+  일정이 서로 섞이지 않게 했다.
+- 이전 버전 일정은 현재 선택된 주제에 안전하게 귀속해 기존 데이터를
+  버리지 않고 새 형식으로 자동 이전한다.
+- 홈에서 현재 주제의 예약 일정을 시간순으로 확인하고 세션 빌더에 바로
+  불러올 수 있다.
+- 예약된 학습을 시작하면 예약 시간만 완료 처리하고 문제 방식·항목·개수
+  설정은 재사용 가능한 템플릿으로 남긴다.
+- Android 390px와 Windows 520·1280px에서 일정 카드와 전체 흐름을
+  회귀 테스트한다.
+
+## 1.19.3 개인정보 안내와 설치형 Windows 배포
+
+- 설정에서 Google Drive·Railway·로그인 토큰·음성 인식의 실제 처리 범위를
+  한 화면에서 확인하고 상세 개인정보 안내를 열 수 있다.
+- Google OAuth 게시 심사용 반응형 앱 홈페이지와 개인정보처리방침 HTML 초안을
+  실제 코드·Prisma 스키마·동기화 구현에 맞춰 작성했다.
+- 공개 개인정보처리방침 URL은 `PRIVACY_POLICY_URL`로 Android와 Windows에
+  동일하게 주입하며, HTTPS가 아니면 실제 연결 빌드를 거부한다.
+- Windows 포터블 ZIP과 함께 사용자 범위 Inno Setup 설치 EXE를 만들고,
+  설치→실행→제거와 레지스트리 정리를 자동 검증한다.
+- 외부 Android keystore와 Windows 인증서 저장소가 있을 때만 정식 서명하고,
+  `verify:release`가 체크섬·서명·바이너리 설정·설치 수명주기를 한 번에 검사한다.
+- Android는 1.19.2 위에 업그레이드 설치해 기존 사용자 주제·진행 중 세션·XP가
+  유지되는지 확인했다.
+
+## 1.19.2 Google 연결 사전 진단과 Railway 무저장 토큰 중계
+
+- Windows Google 연결을 Railway 준비 확인 → 계정 동의 → Drive 폴더 선택 →
+  저장 폴더 확인 → 계정 연결 → 다운로드·병합·업로드 단계로 나눠 현재 진행 위치를 표시한다.
+- Windows의 `127.0.0.1:<임의 포트>`는 Google 공식 데스크톱 loopback이며,
+  공용 API는 Railway HTTPS이고 Cloudflare Tunnel이 필요 없음을 설정 화면에 안내한다.
+- Google 데스크톱 Client Secret을 EXE·저장소에 넣지 않고 Railway sealed variable에만
+  두는 토큰 중계 route를 추가했다. Railway는 토큰을 PostgreSQL·파일·로그에 저장하지 않는다.
+- 앱은 Google 브라우저를 열기 전에 Railway `/health`의 중계 준비 상태를 확인하고,
+  구버전·미설정·네트워크 장애를 한국어 해결 안내와 복사 가능한 진단 코드로 표시한다.
+- Google Cloud `Sprache` 프로젝트의 Desktop·Android·Web audience 클라이언트와
+  Drive API·Picker API 활성화를 읽기 전용으로 재확인했다.
+- 운영 Railway에 새 API를 배포했고 기존 Drive 매핑 API는 유지한 채,
+  당시 `desktopOAuthBroker=not_configured` 상태를 명시했다. 1.19.8에서 sealed secret 등록 후 `ready`로 전환했다.
+
+## 1.19.1 무엇이든 외우는 학습 주제와 세션 연속성
+
+- 여섯 언어 코스와 별개로 야구 용어, 아이돌 팬덤 등 사용자가 원하는 학습 주제를 만든다.
+- 단어·개념·사실·문장·예문을 주제별 자료함에 저장하고 다른 주제로 여러 항목을 한 번에 이동한다.
+- 학습 그룹별 카드 암기, 직접 선택 퀴즈, 복습 일정과 최근 세션 재사용을 Android·Windows에서 함께 제공한다.
+- Excel·CSV·JSON·JSONL의 `subject_id`를 지원하며, 현재 주제에 파일을 가져오거나 행마다 주제를 지정할 수 있다.
+- 같은 주제의 동일 표현은 기존 뜻을 지우지 않고 뜻·허용 정답·예문·학습 그룹을 병합한다.
+- 범용 Excel 템플릿과 출처가 기록된 야구 용어·아이돌 팬덤 샘플 팩을 제공한다.
+- 사용자 주제와 해당 학습 기록을 Local-First snapshot에 포함하고 Google Drive 기기 간 병합 시 안전하게 합친다.
+- 완료한 최근 세션과 오답 항목도 Drive snapshot으로 병합해 다른 기기에서 전체 또는 오답만 다시 학습한다.
+- Railway는 OAuth 계정과 Drive 폴더 연결 정보만 보관하며 실제 학습 자료는 저장하지 않는다.
+
+## 1.18.1 검증된 웹 예문·출처 보존·OAuth 강화
+
+- 첫 실행에서 6개 언어와 하루 XP를 고르고 바로 샘플 학습을 시작한다.
+- Excel·CSV·JSON·JSONL 가져오기, 복수 예문 독립 문장화, 중복 뜻 병합을 지원한다.
+- 단어·문장 그룹 이름 변경/삭제, 그룹별 진도·정확도, 직접 선택 퀴즈를 제공한다.
+- 여러 학습 계획, 취약 표현, 최근 오답, 최근 세션 다시 풀기를 지원한다.
+- 검증된 JSON 백업·복원, CSV 내보내기, Drive 병합 변경·충돌 내역을 제공한다.
+- 체크인·교통·결제·응급·업무·학습 실용 문장을 포함해 6개 언어 720개 표현을 내장한다.
+- Tatoeba의 CC BY 2.0 FR 문장 24개를 기초·출퇴근/학습 팩으로 나눠 앱에서 검토한 뒤 가져올 수 있고, 원문·번역 ID와 작성자·출처 URL·표시 문구를 항목별로 보존한다.
+- Excel 템플릿에도 `source_id`, `source_url`, `author`, `attribution` 열을 제공하며 CSV·JSON·JSONL과 동일하게 출처 메타데이터를 가져온다.
+- Windows OAuth의 동적 loopback, PKCE, `state` 검증, 코드 수신, 토큰 교환·저장 흐름을 실제 로컬 소켓 종단 테스트로 검증한다.
+
+## 1.16.0 Excel·학습 그룹·직접 선택 일정
+
+- 앱에서 바로 저장할 수 있는 다국어 Excel 템플릿과 `.xlsx` 단어·문장 가져오기
+- 같은 표현·품사는 기존 뜻을 지우지 않고 새 뜻·허용 정답·학습 그룹만 안전하게 병합
+- 단어 행의 대표 예문·예문 번역과 별도 문장 행의 문장 배열 토큰 지원
+- 단어와 예문을 학습 그룹으로 묶고 여러 항목을 다른 그룹에 복사하거나 이동
+- 그룹별 카드 암기·퀴즈 바로 시작과 정확한 단어·문장 직접 선택 세션
+- 퀴즈 이름과 다음 학습 날짜·시간을 로컬 및 Drive snapshot에 저장
+- Windows OAuth 루프백을 경로 없는 Google 공식 형식으로 수정하고 400 상세 오류 표시
 
 ## 1.15.1 Google·Railway 실제 연결
 
@@ -170,19 +526,25 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 다국어 반�
 - 단어·문장 직접 추가·수정·삭제와 CSV·JSON·JSONL 일괄 가져오기
 - 코스 범위·정확도·학습 단계·최근 세션을 보여주는 학습 리포트
 - 설정·진도·사용자 표현·최근 세션을 포함한 JSON 백업 내보내기
-- Drive 저장 범위와 Railway 개인정보 경계를 설명하는 설정 화면
+- 로컬 백업 경로와 Drive 앱 전용 저장 범위를 구분해 설명하는 설정 화면
 
 ## 바로 실행하기
 
-로컬 `artifacts` 폴더에 실제 Google·Railway 연결 빌드와 기능 확인용 Mock 빌드가 있다.
+`npm run build:real`을 실행하면 현재 `pubspec.yaml` 버전에 맞춘 실제
+Google 직접 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.32.0의 표준
+파일명은 다음과 같다.
 
-- 실제 연결 Windows: `Sprache-Windows-1.15.1-google-x64.zip`
-- 실제 연결 Android: `Sprache-Android-1.15.1-google-debug-signed.apk`
-- 실제 연결 무결성: `SHA256SUMS-1.15.1-google.txt`
+- Windows 설치본: `Sprache-Windows-Setup-1.32.0-google-x64.exe`
+- Windows 포터블: `Sprache-Windows-1.32.0-google-x64.zip`
+- Android: `Sprache-Android-1.32.0-google-debug-signed.apk`
+- 무결성: `SHA256SUMS-1.32.0-google.txt`
 
-- Windows: `Sprache-Windows-1.15.0-mock-x64.zip`을 풀고 폴더 안의 `sprache.exe`를 실행한다. DLL과 `data` 폴더를 EXE와 함께 유지해야 한다.
-- Android: `Sprache-Android-1.15.0-mock-debug-signed.apk`를 테스트 기기에 직접 설치한다. 현재 APK는 Play Store 배포용 서명이 아니다.
-- 무결성: `artifacts/SHA256SUMS.txt`의 SHA-256과 비교한다.
+Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`
+폴더를 함께 유지한다. Android APK는 테스트 기기 또는 에뮬레이터에 직접
+설치한다. 파일명이 `debug-signed`이면 Play Store 배포용 서명이라고 표시하지
+않는다. Apple `MOCK` ZIP은 Xcode가 있는 macOS 실행 환경에서 별도로 생성한다.
+기본 대체 경로는 Codemagic의 `apple-preview` 워크플로이며 자세한 절차는
+[`docs/apple-build-without-github-actions.md`](docs/apple-build-without-github-actions.md)에 있다.
 
 Mock 빌드는 Google 자격증명 없이 전체 학습 흐름을 시험하기 위한 것이다. 실제 Google 로그인·Drive 동기화를 사용하려면 `ENABLE_MOCK_MODE=false`와 플랫폼별 OAuth 설정이 필요하다.
 
@@ -192,30 +554,61 @@ Flutter 3.44.8, Node.js 22 이상, JDK 17을 기준으로 검증했다. Windows 
 
 ```powershell
 npm install
-npm run dev:api
 npm run run:client -- --dart-define=ENABLE_MOCK_MODE=true
 ```
 
 ```powershell
-npm run lint:api
-npm run test:api
-npm run build:api
 npm run analyze:client
 npm run test:client
 ```
 
 ## 문서
 
+- [1.32.0 릴리스 노트와 컴팩트 UX 80개 변경](docs/release-notes-1.32.0.md)
+- [1.32.0 컴팩트 UX 80개 목표](docs/compact-ux-80-upgrade-plan-1.32.0.md)
+- [1.32.0 컴팩트 UX 80개 최종 검증](docs/compact-ux-80-verification-1.32.0.md)
+- [1.32.0 품질·릴리스 게이트](docs/release-quality-gates-1.32.0.md)
+- [1.32.0 릴리스 준비 감사](docs/release-readiness-1.32.0.md)
+- [1.31.0 릴리스 노트와 200개 변경](docs/release-notes-1.31.0.md)
+- [1.31.0 개인화 200개 목표 검증 보고서](docs/personalization-200-verification-1.31.0.md)
+- [1.31.0 품질·릴리스 게이트](docs/release-quality-gates-1.31.0.md)
+- [1.31.0 릴리스 준비 감사](docs/release-readiness-1.31.0.md)
 - [100단계 구현 계획](docs/implementation-plan.md)
 - [제품 방향과 학습 원칙](docs/product-direction.md)
 - [아키텍처](docs/architecture.md)
 - [데이터 모델](docs/data-model.md)
+- [학습 콘텐츠 가져오기와 안전 한도](docs/content-import.md)
+- [로컬 데이터베이스 읽기 전용 복구](docs/database-recovery.md)
+- [저장 공간 보존과 사용자 정리](docs/storage-retention.md)
+- [장기 오프라인 충돌 검증](docs/offline-conflict-testing.md)
 - [동기화 프로토콜](docs/sync-protocol.md)
 - [Google 설정](docs/google-setup.md)
-- [Railway 배포](docs/railway-deploy.md)
-- [Google·Railway 입력 정보](docs/integration-inputs.md)
+- [Railway 제거와 GitHub Pages 배포](docs/railway-deploy.md)
+- [공개 앱 홈페이지](docs/index.html)
+- [개인정보처리방침](docs/privacy/index.html)
+- [서비스 이용약관](docs/terms/index.html)
 - [빌드와 릴리스](docs/build-and-release.md)
-- [최종 검증 보고서](docs/verification-report.md)
+- [1.18.1 검증 보고서](docs/verification-report-1.18.1.md)
+- [1.19.0 검증 보고서](docs/verification-report-1.19.0.md)
+- [1.19.1 검증 보고서](docs/verification-report-1.19.1.md)
+- [1.19.2 검증 보고서](docs/verification-report-1.19.2.md)
+- [1.19.3 검증 보고서](docs/verification-report-1.19.3.md)
+- [1.19.4 검증 보고서](docs/verification-report-1.19.4.md)
+- [1.19.5 검증 보고서](docs/verification-report-1.19.5.md)
+- [1.19.6 검증 보고서](docs/verification-report-1.19.6.md)
+- [1.19.7 검증 보고서](docs/verification-report-1.19.7.md)
+- [1.19.8 검증 보고서](docs/verification-report-1.19.8.md)
+- [1.19.9 검증 보고서](docs/verification-report-1.19.9.md)
+- [1.20.0 검증 보고서](docs/verification-report-1.20.0.md)
+- [1.20.1 검증 보고서](docs/verification-report-1.20.1.md)
+- [1.20.2 검증 보고서](docs/verification-report-1.20.2.md)
+- [1.20.3 검증 보고서](docs/verification-report-1.20.3.md)
+- [1.20.4 검증 보고서](docs/verification-report-1.20.4.md)
+- [1.21.0 검증 보고서](docs/verification-report-1.21.0.md)
 - [콘텐츠 출처와 이용 조건](ATTRIBUTIONS.md)
 
-실제 Google Cloud·Railway 연결과 원격 GitHub Actions 실행은 소유자 계정의 자격증명 및 푸시가 필요하다. 관련 설정 경로와 절차는 구현·문서화되어 있으며, 현재 배포 파일은 Mock Mode로 검증됐다.
+플랫폼별 Google OAuth 설정은 공개 클라이언트와 `drive.file`·`drive.appdata`
+범위를 사용한다. Windows PKCE 직접 교환, Android 네이티브 인증, Drive 폴더
+선택과 숨김 연결 포인터 복원은 실제 연결 릴리스 전에 두 플랫폼에서 반복
+검증해야 한다.
+Android 물리 기기에서는 마이크·TTS·권한도 함께 확인한다.

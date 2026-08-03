@@ -1,20 +1,41 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../backup/study_summary_exporter.dart';
 import '../domain/active_study_session.dart';
+import '../domain/learning_insights.dart';
 import '../domain/progress.dart';
 import '../domain/study_history.dart';
+import '../domain/study_limits.dart';
+import '../domain/study_preferences.dart';
+import '../services/app_clock.dart';
 import '../state/app_state.dart';
+import '../state/app_state_view.dart';
 import '../theme/app_theme.dart';
 
-class StatsScreen extends ConsumerWidget {
+class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends ConsumerState<StatsScreen> {
+  var _range = LearningInsightRange.thirtyDays;
+
+  @override
+  Widget build(BuildContext context) {
+    final narrow = MediaQuery.sizeOf(context).width < 360;
     final state = ref.watch(appControllerProvider);
-    final items = ref.read(appControllerProvider.notifier).selectedItems;
+    final calendarDay = ref.watch(calendarDayProvider);
+    final controller = ref.read(appControllerProvider.notifier);
+    final activeSubject = controller.activeSubject;
+    final items = controller.selectedItems;
     final itemIds = items.map((item) => item.id).toSet();
     final courseProgress = state.progress.values
         .where((progress) => itemIds.contains(progress.itemId))
@@ -42,16 +63,36 @@ class StatsScreen extends ConsumerWidget {
         .length;
     final newItems = items.length - learned;
     final sessions = state.recentSessions
-        .where((session) => session.courseId == state.selectedLanguage.courseId)
+        .where((session) => session.courseId == state.activeCourseId)
         .take(8)
         .toList(growable: false);
+    final insights = LearningInsights.build(
+      sessions: state.recentSessions,
+      items: items,
+      progress: state.progress,
+      now: ref.read(appClockProvider)(),
+      range: _range,
+      courseId: state.activeCourseId,
+    );
+    final allSubjectInsights = LearningInsights.build(
+      sessions: state.recentSessions,
+      items: const [],
+      progress: const {},
+      now: ref.read(appClockProvider)(),
+      range: _range,
+    );
     final forecast = ref
         .read(appControllerProvider.notifier)
         .reviewForecast(DateTime.now());
 
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+        padding: EdgeInsets.fromLTRB(
+          narrow ? 12 : 20,
+          narrow ? 12 : 24,
+          narrow ? 12 : 20,
+          narrow ? 20 : 28,
+        ),
         children: [
           Center(
             child: ConstrainedBox(
@@ -71,27 +112,105 @@ class StatsScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '${state.selectedLanguage.koreanName} 코스 · 기억이 쌓이는 흐름을 확인하세요.',
+                              activeSubject.isLanguage
+                                  ? '${activeSubject.name} 코스의 학습 기록을 확인하세요.'
+                                  : '${activeSubject.symbol} ${activeSubject.name} 학습 기록을 확인하세요.',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
                         ),
                       ),
-                      IconButton.filledTonal(
-                        key: const Key('report-settings'),
-                        onPressed: () => context.go('/settings'),
-                        tooltip: '환경설정',
-                        icon: const Icon(Icons.tune_rounded),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton.filledTonal(
+                            key: const Key('export-private-summary'),
+                            onPressed: () => _exportSummary(insights),
+                            tooltip: '개인정보 제외 CSV 저장',
+                            icon: const Icon(Icons.download_outlined),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton.filledTonal(
+                            key: const Key('report-settings'),
+                            onPressed: () => context.go('/settings'),
+                            tooltip: '설정',
+                            icon: const Icon(Icons.tune_rounded),
+                          ),
+                        ],
                       ),
                     ],
                   ),
+                  const SizedBox(height: 12),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: SegmentedButton<LearningInsightRange>(
+                      key: const Key('stats-range-filter'),
+                      segments: [
+                        for (final range in LearningInsightRange.values)
+                          ButtonSegment(value: range, label: Text(range.label)),
+                      ],
+                      selected: {_range},
+                      onSelectionChanged: (value) =>
+                          setState(() => _range = value.single),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  _LearningTrendCard(
+                    insights: insights,
+                    dailyGoal: state.dailyGoal,
+                    weeklyTargetDays: state.preferences.weeklyTargetDays,
+                    weeklyTargetMinutes: state.preferences.weeklyTargetMinutes,
+                    onWeeklyTargetDaysChanged: (value) =>
+                        controller.updateWeeklyLearningTarget(
+                          studyDays: value,
+                          studyMinutes: ref
+                              .read(appControllerProvider)
+                              .preferences
+                              .weeklyTargetMinutes,
+                        ),
+                    onWeeklyTargetMinutesChanged: (value) =>
+                        controller.updateWeeklyLearningTarget(
+                          studyDays: ref
+                              .read(appControllerProvider)
+                              .preferences
+                              .weeklyTargetDays,
+                          studyMinutes: value,
+                        ),
+                  ),
+                  if (insights.skills.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    _SkillInsightsCard(skills: insights.skills),
+                  ],
+                  if (allSubjectInsights.subjects.length > 1) ...[
+                    const SizedBox(height: 14),
+                    _SubjectInsightsCard(subjects: allSubjectInsights.subjects),
+                  ],
+                  if (insights.hardestItems.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    _HardestItemsCard(
+                      items: insights.hardestItems,
+                      onReview: (item) => _reviewHardItem(item.itemId),
+                    ),
+                  ],
                   const SizedBox(height: 18),
+                  _ReviewForecastCard(
+                    dueNow: forecast.dueNow,
+                    laterToday: forecast.laterToday,
+                    tomorrow: forecast.tomorrow,
+                    nextSevenDays: forecast.nextSevenDays,
+                    nextReviewAt: forecast.nextReviewAt,
+                    onReview: forecast.dueNow == 0
+                        ? null
+                        : () => context.push('/study?mode=review'),
+                  ),
+                  const SizedBox(height: 16),
                   _LevelHero(
+                    subjectName: activeSubject.name,
                     level: state.level,
                     levelXp: state.levelXp,
                     totalXp: state.totalXp,
                     streakDays: state.streakDays,
-                    dailyXp: state.dailyXp,
+                    dailyXp: state.activeCourseDailyXpAt(calendarDay),
                     dailyGoal: state.dailyGoal,
                   ),
                   const SizedBox(height: 16),
@@ -109,21 +228,21 @@ class StatsScreen extends ConsumerWidget {
                         (
                           '정확도',
                           '$accuracy%',
-                          '$attempts회 응답',
+                          '$attempts회 풀이',
                           Icons.track_changes_rounded,
                           AppTheme.desktopAccent,
                         ),
                         (
                           '정답',
                           '$correct',
-                          '기억한 횟수',
+                          '맞힌 횟수',
                           Icons.check_circle_rounded,
                           AppTheme.success,
                         ),
                         (
                           '오답',
                           '$wrong',
-                          '다시 만날 횟수',
+                          '틀린 횟수',
                           Icons.replay_rounded,
                           AppTheme.warning,
                         ),
@@ -136,6 +255,8 @@ class StatsScreen extends ConsumerWidget {
                         crossAxisSpacing: 12,
                         childAspectRatio: columns == 4
                             ? 1.85
+                            : constraints.maxWidth < 336
+                            ? 1
                             : constraints.maxWidth < 500
                             ? 1.15
                             : 1.6,
@@ -151,17 +272,6 @@ class StatsScreen extends ConsumerWidget {
                         ],
                       );
                     },
-                  ),
-                  const SizedBox(height: 18),
-                  _ReviewForecastCard(
-                    dueNow: forecast.dueNow,
-                    laterToday: forecast.laterToday,
-                    tomorrow: forecast.tomorrow,
-                    nextSevenDays: forecast.nextSevenDays,
-                    nextReviewAt: forecast.nextReviewAt,
-                    onReview: forecast.dueNow == 0
-                        ? null
-                        : () => context.push('/study?mode=review'),
                   ),
                   const SizedBox(height: 18),
                   LayoutBuilder(
@@ -195,7 +305,28 @@ class StatsScreen extends ConsumerWidget {
                     },
                   ),
                   const SizedBox(height: 18),
-                  _RecentSessionsCard(sessions: sessions),
+                  _RecentSessionsCard(
+                    sessions: sessions,
+                    onRepeat: (session) => _reuseSession(context, ref, session),
+                    onExcludeCorrect: (session) => _reuseSession(
+                      context,
+                      ref,
+                      session,
+                      historyFilter: StudyHistoryFilter.excludeCorrect,
+                    ),
+                    onWrongAnswers: (session) => _reuseSession(
+                      context,
+                      ref,
+                      session,
+                      historyFilter: StudyHistoryFilter.wrongOnly,
+                    ),
+                    onNewFirst: (session) => _reuseSession(
+                      context,
+                      ref,
+                      session,
+                      queuePriority: StudyQueuePriority.newFirst,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -203,6 +334,548 @@ class StatsScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _reuseSession(
+    BuildContext context,
+    WidgetRef ref,
+    StudySessionSummary session, {
+    StudyHistoryFilter historyFilter = StudyHistoryFilter.all,
+    StudyQueuePriority queuePriority = StudyQueuePriority.dueFirst,
+  }) {
+    final controller = ref.read(appControllerProvider.notifier);
+    final availableIds = controller.courseItems.map((item) => item.id).toSet();
+    final sourceIds = switch (historyFilter) {
+      StudyHistoryFilter.all => session.itemIds.toSet(),
+      StudyHistoryFilter.excludeCorrect => session.notCorrectItemIds,
+      StudyHistoryFilter.wrongOnly => session.unresolvedWrongItemIds,
+    };
+    final selectedIds = sourceIds.intersection(availableIds);
+    if (selectedIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            historyFilter == StudyHistoryFilter.wrongOnly
+                ? '이 세션에는 아직 다시 풀 오답이 없습니다.'
+                : historyFilter == StudyHistoryFilter.excludeCorrect
+                ? '이 세션에는 맞히지 못한 항목이 없습니다.'
+                : '이전 세션의 항목 정보가 없거나 현재 코스에서 사용할 수 없습니다.',
+          ),
+        ),
+      );
+      return;
+    }
+    final local = session.startedAt.toLocal();
+    final current = ref.read(appControllerProvider).preferences.sessionPlan;
+    controller.updateSessionPlan(
+      current.copyWith(
+        planId: '',
+        title: historyFilter == StudyHistoryFilter.wrongOnly
+            ? '${local.month}/${local.day} 오답 다시 풀기'
+            : historyFilter == StudyHistoryFilter.excludeCorrect
+            ? '${local.month}/${local.day} 맞힌 항목 제외'
+            : queuePriority == StudyQueuePriority.newFirst
+            ? '${local.month}/${local.day} 새 자료 우선'
+            : '${local.month}/${local.day} 세션 다시 학습',
+        mode: StudyMode.mixed,
+        deck: StudyDeckScope.selected,
+        difficulty: StudyDifficulty.all,
+        queuePriority: queuePriority,
+        historyFilter: StudyHistoryFilter.all,
+        tags: {},
+        levels: {},
+        selectedItemIds: selectedIds,
+        includeWords: true,
+        includeSentences: true,
+        itemLimit: selectedIds.length.clamp(
+          StudyLimits.minSessionItems,
+          StudyLimits.maxSessionItems,
+        ),
+        scheduledAt: null,
+      ),
+    );
+    context.push('/session-builder');
+  }
+
+  void _reviewHardItem(String itemId) {
+    final controller = ref.read(appControllerProvider.notifier);
+    controller.updateSessionPlan(
+      controller.activeSessionPlan.copyWith(
+        planId: '',
+        title: '어려운 항목 바로 복습',
+        mode: StudyMode.mixed,
+        deck: StudyDeckScope.selected,
+        difficulty: StudyDifficulty.all,
+        historyFilter: StudyHistoryFilter.all,
+        selectedItemIds: {itemId},
+        groupIds: {},
+        tags: {},
+        levels: {},
+        includeWords: true,
+        includeSentences: true,
+        itemLimit: 1,
+        scheduledAt: null,
+      ),
+    );
+    context.push('/study?mode=mixed&limit=1&custom=true');
+  }
+
+  Future<void> _exportSummary(LearningInsights insights) async {
+    try {
+      final csv = const StudySummaryExporter().exportCsv(insights);
+      final now = ref.read(appClockProvider)().toLocal();
+      final stamp =
+          '${now.year}${now.month.toString().padLeft(2, '0')}'
+          '${now.day.toString().padLeft(2, '0')}';
+      final path = await FilePicker.platform.saveFile(
+        dialogTitle: '개인정보 제외 학습 요약 저장',
+        fileName: 'sprache-learning-summary-$stamp.csv',
+        type: FileType.custom,
+        allowedExtensions: const ['csv'],
+        bytes: Uint8List.fromList(utf8.encode(csv)),
+        lockParentWindow: true,
+      );
+      if (!mounted || path == null) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('학습 원문을 뺀 요약을 저장했어요: $path')));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('요약 CSV를 저장하지 못했습니다. 학습 데이터는 그대로 유지됩니다.')),
+      );
+    }
+  }
+}
+
+class _LearningTrendCard extends StatelessWidget {
+  const _LearningTrendCard({
+    required this.insights,
+    required this.dailyGoal,
+    required this.weeklyTargetDays,
+    required this.weeklyTargetMinutes,
+    required this.onWeeklyTargetDaysChanged,
+    required this.onWeeklyTargetMinutesChanged,
+  });
+
+  final LearningInsights insights;
+  final int dailyGoal;
+  final int weeklyTargetDays;
+  final int weeklyTargetMinutes;
+  final ValueChanged<int> onWeeklyTargetDaysChanged;
+  final ValueChanged<int> onWeeklyTargetMinutesChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final recent = insights.days.reversed.take(35).toList().reversed.toList();
+    final accuracy = insights.accuracy;
+    final weeklyDayProgress = insights.weeklySessionGoalProgress(
+      weeklyTargetDays,
+    );
+    final weeklyMinuteProgress = insights.weeklyDurationGoalProgress(
+      weeklyTargetMinutes,
+    );
+    final weeklyProgress = insights.weeklyCombinedGoalProgress(
+      targetDays: weeklyTargetDays,
+      targetMinutes: weeklyTargetMinutes,
+    );
+    return Card(
+      key: const Key('learning-trend-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.insights_rounded),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${insights.range.label} 학습 흐름',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                Text('${insights.sessionCount}세션'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _InsightMetric(label: 'XP', value: '${insights.earnedXp}'),
+                _InsightMetric(
+                  label: '정확도',
+                  value: accuracy == null
+                      ? '-'
+                      : '${(accuracy * 100).round()}%',
+                  caption: '${insights.attempts}문제',
+                ),
+                _InsightMetric(
+                  label: '학습 시간',
+                  value: '${insights.duration.inMinutes}분',
+                  caption: '시작부터 종료까지',
+                ),
+                _InsightMetric(
+                  label: '최근 7일',
+                  value: '${insights.studiedDaysInLastSeven()}일',
+                  caption: '목표 $weeklyTargetDays일 · $weeklyTargetMinutes분',
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text('학습 캘린더', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 7),
+            Wrap(
+              key: const Key('accessible-study-calendar'),
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                for (final day in recent)
+                  Semantics(
+                    label:
+                        '${day.date.month}월 ${day.date.day}일, '
+                        '${day.sessionCount}세션, ${day.earnedXp} XP, '
+                        '${day.attempts}문제',
+                    child: Tooltip(
+                      message:
+                          '${day.date.month}/${day.date.day} · '
+                          '${day.earnedXp} XP · ${day.attempts}문제',
+                      child: Container(
+                        key: Key(
+                          'study-calendar-${day.date.year}-'
+                          '${day.date.month}-${day.date.day}',
+                        ),
+                        width: 18,
+                        height: 18,
+                        decoration: BoxDecoration(
+                          color: _calendarColor(
+                            colors,
+                            day.intensityFor(dailyGoal: dailyGoal),
+                          ),
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: colors.outlineVariant),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text('주간 학습 목표', style: Theme.of(context).textTheme.labelLarge),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                for (final value in const [3, 5, 7])
+                  ChoiceChip(
+                    key: Key('weekly-target-$value'),
+                    label: Text('주 $value일'),
+                    selected: weeklyTargetDays == value,
+                    onSelected: (_) => onWeeklyTargetDaysChanged(value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                for (final value in const [30, 60, 90, 150])
+                  ChoiceChip(
+                    key: Key('weekly-minute-target-$value'),
+                    label: Text('$value분'),
+                    selected: weeklyTargetMinutes == value,
+                    onSelected: (_) => onWeeklyTargetMinutesChanged(value),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _WeeklyProgressRow(
+              label: '학습일',
+              progress: weeklyDayProgress,
+              detail: '${insights.studiedDaysInLastSeven()}/$weeklyTargetDays일',
+            ),
+            const SizedBox(height: 7),
+            _WeeklyProgressRow(
+              label: '학습 분량',
+              progress: weeklyMinuteProgress,
+              detail:
+                  '${insights.durationInLastSeven().inMinutes}/$weeklyTargetMinutes분',
+            ),
+            const SizedBox(height: 7),
+            _WeeklyProgressRow(
+              key: const Key('weekly-combined-progress'),
+              label: '종합 달성',
+              progress: weeklyProgress,
+              detail: '${(weeklyProgress * 100).round()}%',
+            ),
+            if (insights.days.where((day) => day.studied).isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text('최근 추세', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 6),
+              for (final day
+                  in insights.days.reversed.where((day) => day.studied).take(5))
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 52,
+                        child: Text('${day.date.month}/${day.date.day}'),
+                      ),
+                      Expanded(
+                        child: LinearProgressIndicator(
+                          value: dailyGoal <= 0
+                              ? null
+                              : (day.earnedXp / dailyGoal).clamp(0, 1),
+                          minHeight: 7,
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${day.earnedXp} XP · '
+                        '${day.accuracy == null ? '-' : '${(day.accuracy! * 100).round()}%'} '
+                        '(${day.attempts})',
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _calendarColor(ColorScheme colors, int level) => switch (level) {
+    0 => colors.surfaceContainerHighest,
+    1 => colors.primaryContainer.withValues(alpha: 0.45),
+    2 => colors.primaryContainer,
+    3 => colors.primary.withValues(alpha: 0.75),
+    _ => colors.primary,
+  };
+}
+
+class _WeeklyProgressRow extends StatelessWidget {
+  const _WeeklyProgressRow({
+    required this.label,
+    required this.progress,
+    required this.detail,
+    super.key,
+  });
+
+  final String label;
+  final double progress;
+  final String detail;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      SizedBox(width: 70, child: Text(label)),
+      Expanded(
+        child: LinearProgressIndicator(
+          semanticsLabel: '$label 목표 달성률',
+          semanticsValue: '${(progress * 100).round()}%',
+          value: progress,
+          minHeight: 8,
+          borderRadius: BorderRadius.circular(99),
+        ),
+      ),
+      const SizedBox(width: 8),
+      SizedBox(width: 78, child: Text(detail, textAlign: TextAlign.end)),
+    ],
+  );
+}
+
+class _InsightMetric extends StatelessWidget {
+  const _InsightMetric({
+    required this.label,
+    required this.value,
+    this.caption,
+  });
+
+  final String label;
+  final String value;
+  final String? caption;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minWidth: 126),
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: Theme.of(context).textTheme.labelMedium),
+        Text(
+          value,
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+        ),
+        if (caption != null)
+          Text(caption!, style: Theme.of(context).textTheme.bodySmall),
+      ],
+    ),
+  );
+}
+
+class _SkillInsightsCard extends StatelessWidget {
+  const _SkillInsightsCard({required this.skills});
+
+  final List<SkillLearningInsight> skills;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    key: const Key('skill-insights-card'),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '문제 유형별 숙련도',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 10),
+          for (final skill in skills)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.school_outlined),
+              title: Text(skill.skill),
+              subtitle: Text(
+                '${skill.sessionCount}세션 · ${skill.attempts}문제 · '
+                '최근 변화 ${_accuracyChangeLabel(skill.recentAccuracyChange)}',
+              ),
+              trailing: Text(
+                skill.accuracy == null
+                    ? '-'
+                    : '${(skill.accuracy! * 100).round()}%',
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _SubjectInsightsCard extends StatelessWidget {
+  const _SubjectInsightsCard({required this.subjects});
+
+  final List<SubjectLearningInsight> subjects;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    key: const Key('subject-insights-card'),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '주제 비교',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          for (final subject in subjects)
+            ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text(subject.courseId),
+              subtitle: Text(
+                '${subject.sessionCount}세션 · ${subject.duration.inMinutes}분 · '
+                '${subject.attempts}문제 · 복습 ${subject.reviewSessionCount}회',
+              ),
+              trailing: Text(
+                '${subject.earnedXp} XP\n'
+                '${subject.accuracy == null ? '-' : '${(subject.accuracy! * 100).round()}%'}',
+                textAlign: TextAlign.end,
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+String _accuracyChangeLabel(double? change) {
+  if (change == null) return '측정 중';
+  final points = (change * 100).round();
+  if (points == 0) return '0%p';
+  return '${points > 0 ? '+' : ''}$points%p';
+}
+
+class _HardestItemsCard extends StatelessWidget {
+  const _HardestItemsCard({required this.items, required this.onReview});
+
+  final List<HardestLearningItem> items;
+  final ValueChanged<HardestLearningItem> onReview;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    key: const Key('hardest-items-card'),
+    child: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '어려운 항목',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '틀린 이유와 마지막 학습일을 보고 바로 복습하세요.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          for (final item in items.take(6))
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.priority_high_rounded),
+              title: Text(
+                item.text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              subtitle: Text(
+                '${item.reason} · 정확도 ${(item.accuracy * 100).round()}% · '
+                '${_shortDate(item.lastStudiedAt)}',
+              ),
+              trailing: TextButton(
+                key: Key('review-hard-item-${item.itemId}'),
+                onPressed: () => onReview(item),
+                child: const Text('복습'),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+
+  static String _shortDate(DateTime? value) {
+    if (value == null) return '학습일 없음';
+    final local = value.toLocal();
+    return '${local.month}/${local.day} 학습';
   }
 }
 
@@ -345,7 +1018,7 @@ class _ReviewForecastCard extends StatelessWidget {
 
 String _nextReviewLabel(DateTime? reviewAt, DateTime now) {
   if (reviewAt == null) return '카드를 학습하면 다음 복습 시점이 여기에 표시됩니다.';
-  if (!reviewAt.isAfter(now)) return '지금 복습할 카드가 준비되어 있습니다.';
+  if (!reviewAt.isAfter(now)) return '지금 복습할 카드가 있어요.';
   final local = reviewAt.toLocal();
   final difference = reviewAt.difference(now);
   if (difference.inHours < 24) {
@@ -355,9 +1028,19 @@ String _nextReviewLabel(DateTime? reviewAt, DateTime now) {
 }
 
 class _RecentSessionsCard extends StatelessWidget {
-  const _RecentSessionsCard({required this.sessions});
+  const _RecentSessionsCard({
+    required this.sessions,
+    required this.onRepeat,
+    required this.onExcludeCorrect,
+    required this.onWrongAnswers,
+    required this.onNewFirst,
+  });
 
   final List<StudySessionSummary> sessions;
+  final ValueChanged<StudySessionSummary> onRepeat;
+  final ValueChanged<StudySessionSummary> onExcludeCorrect;
+  final ValueChanged<StudySessionSummary> onWrongAnswers;
+  final ValueChanged<StudySessionSummary> onNewFirst;
 
   @override
   Widget build(BuildContext context) {
@@ -380,7 +1063,7 @@ class _RecentSessionsCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '완료한 세션을 기록합니다. 중단한 퀴즈는 홈에서 이어갈 수 있어요.',
+                        '완료한 세션만 표시해요. 중단한 퀴즈는 홈에서 이어갈 수 있어요.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -411,7 +1094,21 @@ class _RecentSessionsCard extends StatelessWidget {
             else
               for (final (index, session) in sessions.indexed) ...[
                 if (index > 0) const Divider(height: 1),
-                _SessionRow(session: session),
+                _SessionRow(
+                  session: session,
+                  onRepeat: session.itemIds.isEmpty
+                      ? null
+                      : () => onRepeat(session),
+                  onExcludeCorrect: session.notCorrectItemIds.isEmpty
+                      ? null
+                      : () => onExcludeCorrect(session),
+                  onWrongAnswers: session.unresolvedWrongItemIds.isEmpty
+                      ? null
+                      : () => onWrongAnswers(session),
+                  onNewFirst: session.itemIds.isEmpty
+                      ? null
+                      : () => onNewFirst(session),
+                ),
               ],
           ],
         ),
@@ -420,10 +1117,22 @@ class _RecentSessionsCard extends StatelessWidget {
   }
 }
 
+enum _RecentSessionAction { repeat, excludeCorrect, wrongAnswers, newFirst }
+
 class _SessionRow extends StatelessWidget {
-  const _SessionRow({required this.session});
+  const _SessionRow({
+    required this.session,
+    required this.onRepeat,
+    required this.onExcludeCorrect,
+    required this.onWrongAnswers,
+    required this.onNewFirst,
+  });
 
   final StudySessionSummary session;
+  final VoidCallback? onRepeat;
+  final VoidCallback? onExcludeCorrect;
+  final VoidCallback? onWrongAnswers;
+  final VoidCallback? onNewFirst;
 
   @override
   Widget build(BuildContext context) {
@@ -490,6 +1199,60 @@ class _SessionRow extends StatelessWidget {
               ),
             ],
           ),
+          PopupMenuButton<_RecentSessionAction>(
+            key: Key('recent-session-actions-${session.sessionId}'),
+            tooltip: '이 세션 다시 시작',
+            onSelected: (action) {
+              switch (action) {
+                case _RecentSessionAction.repeat:
+                  onRepeat?.call();
+                case _RecentSessionAction.excludeCorrect:
+                  onExcludeCorrect?.call();
+                case _RecentSessionAction.wrongAnswers:
+                  onWrongAnswers?.call();
+                case _RecentSessionAction.newFirst:
+                  onNewFirst?.call();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _RecentSessionAction.repeat,
+                enabled: onRepeat != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.restart_alt_rounded),
+                  title: Text('같은 문제 다시 풀기'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _RecentSessionAction.excludeCorrect,
+                enabled: onExcludeCorrect != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.filter_alt_off_rounded),
+                  title: Text('맞힌 항목 빼고 풀기'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _RecentSessionAction.wrongAnswers,
+                enabled: onWrongAnswers != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.replay_rounded),
+                  title: Text('틀린 문제만 다시 풀기'),
+                ),
+              ),
+              PopupMenuItem(
+                value: _RecentSessionAction.newFirst,
+                enabled: onNewFirst != null,
+                child: const ListTile(
+                  dense: true,
+                  leading: Icon(Icons.fiber_new_rounded),
+                  title: Text('새 자료부터 풀기'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -500,6 +1263,7 @@ String _twoDigits(int value) => value.toString().padLeft(2, '0');
 
 class _LevelHero extends StatelessWidget {
   const _LevelHero({
+    required this.subjectName,
     required this.level,
     required this.levelXp,
     required this.totalXp,
@@ -508,6 +1272,7 @@ class _LevelHero extends StatelessWidget {
     required this.dailyGoal,
   });
 
+  final String subjectName;
   final int level;
   final int levelXp;
   final int totalXp;
@@ -521,13 +1286,9 @@ class _LevelHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colors.primary,
-            Color.lerp(colors.primary, colors.secondary, 0.62)!,
-          ],
-        ),
+        color: colors.primaryContainer,
         borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.32)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -536,53 +1297,62 @@ class _LevelHero extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'LEVEL $level',
+                'ACCOUNT LEVEL $level',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.72),
+                  color: colors.onPrimaryContainer,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                '지금까지 $totalXp XP를 쌓았어요',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(color: Colors.white),
+                '계정 전체에서 지금까지 $totalXp XP를 쌓았어요',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: colors.onPrimaryContainer,
+                ),
               ),
               const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: levelXp / 500,
-                  minHeight: 8,
-                  backgroundColor: Colors.white.withValues(alpha: 0.22),
-                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+              Semantics(
+                label: '계정 레벨 $level 진행률',
+                value: '${(levelXp / 5).round()}퍼센트',
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: levelXp / 500,
+                    minHeight: 8,
+                    backgroundColor: colors.onPrimaryContainer.withValues(
+                      alpha: 0.18,
+                    ),
+                    valueColor: AlwaysStoppedAnimation(
+                      colors.onPrimaryContainer,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 6),
               Text(
                 '다음 레벨까지 ${500 - levelXp} XP',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: colors.onPrimaryContainer,
                   fontSize: 12,
                 ),
               ),
             ],
           );
-          final summary = Row(
-            mainAxisSize: MainAxisSize.min,
+          final summary = Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
             children: [
               _HeroMetric(
                 icon: Icons.local_fire_department_rounded,
                 value: '$streakDays일',
                 label: '연속 학습',
               ),
-              const SizedBox(width: 10),
               _HeroMetric(
                 icon: Icons.bolt_rounded,
                 value: '$dailyXp/$dailyGoal',
-                label: '오늘 XP',
+                label: '$subjectName 오늘 XP',
               ),
             ],
           );
@@ -618,31 +1388,31 @@ class _HeroMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Container(
       width: 112,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+        border: Border.all(color: colors.outlineVariant),
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.white, size: 20),
+          Icon(icon, color: colors.primary, size: 20),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.onSurface,
               fontWeight: FontWeight.w900,
             ),
           ),
           Text(
             label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
-              fontSize: 11,
-            ),
+            maxLines: 2,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colors.onSurface, fontSize: 11),
           ),
         ],
       ),
@@ -726,7 +1496,7 @@ class _DistributionCard extends StatelessWidget {
             Text('학습 단계', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              '현재 코스의 표현이 어디까지 왔는지 보여줍니다.',
+              '표현별 학습 상태를 확인하세요.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 18),
@@ -831,7 +1601,7 @@ class _BadgeCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               badges.isEmpty
-                  ? '첫 학습을 완료하면 배지가 열려요.'
+                  ? '첫 학습을 마치면 배지를 받을 수 있어요.'
                   : '${badges.length}개를 획득했어요.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),

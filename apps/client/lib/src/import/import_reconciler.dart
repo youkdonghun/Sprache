@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import '../domain/content_validation.dart';
+import '../domain/import_distribution.dart';
 import '../domain/learning_item.dart';
 import 'content_import_parser.dart';
 
@@ -43,6 +44,7 @@ class ImportReviewEntry {
     this.matchKind,
     this.blockReason,
     this.expectedExistingSignature,
+    this.mergeOnly = false,
   });
 
   final int row;
@@ -53,6 +55,7 @@ class ImportReviewEntry {
   final ImportMatchKind? matchKind;
   final String? blockReason;
   final String? expectedExistingSignature;
+  final bool mergeOnly;
 
   String get reviewKey => '$row:${incoming.id}';
 
@@ -60,6 +63,7 @@ class ImportReviewEntry {
 
   ImportReviewAction get defaultAction => switch (status) {
     ImportReviewStatus.newItem => ImportReviewAction.add,
+    ImportReviewStatus.changed when mergeOnly => ImportReviewAction.replace,
     ImportReviewStatus.unchanged ||
     ImportReviewStatus.changed ||
     ImportReviewStatus.blocked => ImportReviewAction.skip,
@@ -126,17 +130,17 @@ class ImportReconciler {
     required Set<String> replaceableItemIds,
   }) {
     final byId = <String, LearningItem>{};
-    final byContentKey = <String, LearningItem>{};
+    final byIdentityKey = <String, LearningItem>{};
     for (final item in existingItems) {
       byId.putIfAbsent(item.id, () => item);
-      byContentKey.putIfAbsent(validator.duplicateKey(item), () => item);
+      byIdentityKey.putIfAbsent(validator.identityKey(item), () => item);
     }
 
     final entries = <ImportReviewEntry>[];
     for (final parsed in preview.entries) {
       final incoming = parsed.item;
       final idMatch = byId[incoming.id];
-      final semanticMatch = byContentKey[validator.duplicateKey(incoming)];
+      final semanticMatch = byIdentityKey[validator.identityKey(incoming)];
       if (idMatch != null &&
           semanticMatch != null &&
           idMatch.id != semanticMatch.id) {
@@ -169,7 +173,11 @@ class ImportReconciler {
         continue;
       }
 
-      final fieldDifferences = differences(existing, incoming);
+      final mergeOnly = semanticMatch != null;
+      final candidate = mergeOnly
+          ? mergeAdditions(existing, incoming)
+          : incoming;
+      final fieldDifferences = differences(existing, candidate);
       final matchKind = idMatch != null
           ? ImportMatchKind.id
           : ImportMatchKind.semantic;
@@ -177,7 +185,7 @@ class ImportReconciler {
         entries.add(
           ImportReviewEntry(
             row: parsed.row,
-            incoming: incoming,
+            incoming: candidate,
             existing: existing,
             status: ImportReviewStatus.unchanged,
             differences: const [],
@@ -187,7 +195,7 @@ class ImportReconciler {
         );
         continue;
       }
-      if (!replaceableItemIds.contains(existing.id)) {
+      if (!replaceableItemIds.contains(existing.id) && !mergeOnly) {
         entries.add(
           ImportReviewEntry(
             row: parsed.row,
@@ -206,12 +214,13 @@ class ImportReconciler {
       entries.add(
         ImportReviewEntry(
           row: parsed.row,
-          incoming: incoming,
+          incoming: candidate,
           existing: existing,
           status: ImportReviewStatus.changed,
           differences: fieldDifferences,
           matchKind: matchKind,
           expectedExistingSignature: signature(existing),
+          mergeOnly: mergeOnly,
         ),
       );
     }
@@ -244,6 +253,48 @@ class ImportReconciler {
 
   String signature(LearningItem item) => jsonEncode(_comparableFields(item));
 
+  LearningItem mergeAdditions(LearningItem existing, LearningItem incoming) {
+    final translations = <String>{
+      ...existing.translations,
+      ...incoming.translations,
+    }.toList();
+    final acceptedAnswers = <String>{
+      ...existing.acceptedAnswers,
+      ...incoming.acceptedAnswers,
+      ...translations,
+    }.toList();
+    final readings = {
+      for (final reading in [...existing.readings, ...incoming.readings])
+        '${reading.scheme.name}:${reading.value}': reading,
+    }.values.toList();
+    final distributionKey =
+        importDistributionKeyOf(existing) ?? importDistributionKeyOf(incoming);
+    final mergedTags = tagsWithoutImportDistributionKeys([
+      ...existing.tags,
+      ...incoming.tags,
+    ]);
+    return validator.ensureValid(
+      existing.copyWith(
+        translations: translations,
+        acceptedAnswers: acceptedAnswers,
+        readings: readings,
+        sentenceTokens: existing.sentenceTokens.isNotEmpty
+            ? existing.sentenceTokens
+            : incoming.sentenceTokens,
+        example: existing.example ?? incoming.example,
+        exampleTranslation:
+            existing.exampleTranslation ?? incoming.exampleTranslation,
+        tags: distributionKey == null
+            ? mergedTags
+            : tagsWithImportDistributionKey(mergedTags, distributionKey),
+        capabilities: {...existing.capabilities, ...incoming.capabilities},
+        priority: existing.priority >= incoming.priority
+            ? existing.priority
+            : incoming.priority,
+      ),
+    );
+  }
+
   Map<String, Object?> _comparableFields(LearningItem item) => {
     'kind': item.kind.name,
     'language': item.learningLanguage.code,
@@ -266,6 +317,10 @@ class ImportReconciler {
     'sourceName': item.source.name,
     'license': item.source.license,
     'sourceVersion': item.source.sourceVersion,
+    'sourceId': item.source.sourceId ?? '',
+    'sourceUrl': item.source.sourceUrl ?? '',
+    'author': item.source.author ?? '',
+    'attribution': item.source.attribution ?? '',
   };
 
   String _display(Object? value) {
@@ -305,4 +360,8 @@ const _fieldLabels = <String, String>{
   'sourceName': '출처',
   'license': '라이선스',
   'sourceVersion': '원본 버전',
+  'sourceId': '원문 ID',
+  'sourceUrl': '원문 URL',
+  'author': '작성자',
+  'attribution': '출처 표시문',
 };

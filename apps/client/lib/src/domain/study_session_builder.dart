@@ -1,4 +1,5 @@
 import 'learning_item.dart';
+import 'learning_group.dart';
 import 'progress.dart';
 import 'study_preferences.dart';
 
@@ -32,8 +33,10 @@ class StudySessionBuilder {
     required List<LearningItem> items,
     required Map<String, ProgressRecord> progress,
     required StudySessionPlan plan,
+    double averageSecondsPerItem = 30,
     Set<String> favoriteItemIds = const {},
     Set<String> personalItemIds = const {},
+    int recoveryItemsStudiedToday = 0,
   }) {
     final matching = items
         .where((item) {
@@ -49,6 +52,13 @@ class StudySessionBuilder {
               !item.tags.any((tag) => plan.tags.contains(tag))) {
             return false;
           }
+          if (plan.groupIds.isNotEmpty) {
+            final itemGroupIds = {
+              for (final name in learningGroupsOf(item))
+                learningGroupDefinitionId(plan.subjectId, name),
+            };
+            if (itemGroupIds.intersection(plan.groupIds).isEmpty) return false;
+          }
           if (plan.levels.isNotEmpty && !plan.levels.contains(item.level)) {
             return false;
           }
@@ -57,6 +67,9 @@ class StudySessionBuilder {
           }
           if (item.kind == LearningItemKind.sentence &&
               !plan.includeSentences) {
+            return false;
+          }
+          if (!_matchesHistory(progress[item.id], plan.historyFilter)) {
             return false;
           }
           if (!_matchesDifficulty(progress[item.id], plan.difficulty)) {
@@ -74,11 +87,22 @@ class StudySessionBuilder {
           progress: progress,
           courseId: courseId,
           localDate: localDate,
+          queuePriority: plan.queuePriority,
+          backlogRecovery: plan.backlogRecovery.enabled,
         ),
       );
+    final requestedLimit = plan.effectiveItemLimit(
+      averageSecondsPerItem: averageSecondsPerItem,
+    );
+    final remainingRecoveryLimit = plan.backlogRecovery.enabled
+        ? (plan.backlogRecovery.dailyLimit - recoveryItemsStudiedToday).clamp(
+            0,
+            plan.backlogRecovery.dailyLimit,
+          )
+        : requestedLimit;
     final selected = _applyKindRatio(
       ranked,
-      itemLimit: plan.itemLimit,
+      itemLimit: requestedLimit.clamp(0, remainingRecoveryLimit),
       sentenceRatio: plan.sentenceRatio,
       includeWords: plan.includeWords,
       includeSentences: plan.includeSentences,
@@ -107,6 +131,7 @@ class StudySessionBuilder {
       StudyDeckScope.unit => item.tags.contains('unit-${plan.unitIndex ?? 0}'),
       StudyDeckScope.favorites => favoriteItemIds.contains(item.id),
       StudyDeckScope.personal => personalItemIds.contains(item.id),
+      StudyDeckScope.selected => plan.selectedItemIds.contains(item.id),
     };
   }
 
@@ -120,6 +145,15 @@ class StudySessionBuilder {
       StudyDifficulty.weak =>
         record != null && record.attempts > 0 && record.accuracy < 0.7,
       StudyDifficulty.mastered => record?.status == LearningStatus.mastered,
+    };
+  }
+
+  bool _matchesHistory(ProgressRecord? record, StudyHistoryFilter filter) {
+    return switch (filter) {
+      StudyHistoryFilter.all => true,
+      StudyHistoryFilter.excludeCorrect =>
+        record == null || record.correctCount == 0,
+      StudyHistoryFilter.wrongOnly => record?.lastResult == ReviewRating.again,
     };
   }
 
@@ -149,6 +183,9 @@ class StudySessionBuilder {
       StudyMode.listening => item.capabilities.contains(
         ExerciseCapability.listening,
       ),
+      StudyMode.pronunciation => item.capabilities.contains(
+        ExerciseCapability.listening,
+      ),
     };
   }
 
@@ -158,13 +195,23 @@ class StudySessionBuilder {
     required Map<String, ProgressRecord> progress,
     required String courseId,
     required DateTime localDate,
+    required StudyQueuePriority queuePriority,
+    required bool backlogRecovery,
   }) {
     final leftProgress = progress[left.id];
     final rightProgress = progress[right.id];
+    if (backlogRecovery) {
+      final recoveryOrder = _recoveryScore(
+        rightProgress,
+        localDate,
+      ).compareTo(_recoveryScore(leftProgress, localDate));
+      if (recoveryOrder != 0) return recoveryOrder;
+    }
     final rankOrder = _learningRank(
       leftProgress,
       localDate,
-    ).compareTo(_learningRank(rightProgress, localDate));
+      queuePriority,
+    ).compareTo(_learningRank(rightProgress, localDate, queuePriority));
     if (rankOrder != 0) return rankOrder;
 
     final leftDue = leftProgress?.nextReviewAt;
@@ -193,14 +240,36 @@ class StudySessionBuilder {
     ).compareTo(_stableKey('$courseId:${date.toIso8601String()}:${right.id}'));
   }
 
-  int _learningRank(ProgressRecord? record, DateTime now) {
+  int _learningRank(
+    ProgressRecord? record,
+    DateTime now,
+    StudyQueuePriority queuePriority,
+  ) {
     final dueAt = record?.nextReviewAt;
-    if (dueAt != null && !dueAt.isAfter(now)) return 0;
-    if (record != null && record.attempts > 0 && record.accuracy < 0.7) {
-      return 1;
+    final due = dueAt != null && !dueAt.isAfter(now);
+    final weak = record != null && record.attempts > 0 && record.accuracy < 0.7;
+    final fresh = record == null || record.status == LearningStatus.newItem;
+    if (queuePriority == StudyQueuePriority.newFirst) {
+      if (fresh) return 0;
+      if (due) return 1;
+      if (weak) return 2;
+      return 3;
     }
-    if (record == null || record.status == LearningStatus.newItem) return 2;
+    if (due) return 0;
+    if (weak) return 1;
+    if (fresh) return 2;
     return 3;
+  }
+
+  int _recoveryScore(ProgressRecord? record, DateTime now) {
+    if (record == null || record.attempts == 0) return 0;
+    final dueAt = record.nextReviewAt;
+    final overdueDays = dueAt == null || dueAt.isAfter(now)
+        ? 0
+        : now.difference(dueAt).inDays.clamp(0, 365);
+    final weakness = ((1 - record.accuracy.clamp(0, 1)) * 100).round();
+    final unresolvedWrong = record.lastResult == ReviewRating.again ? 40 : 0;
+    return overdueDays * 10 + weakness + unresolvedWrong;
   }
 
   List<LearningItem> _applyKindRatio(
@@ -210,7 +279,7 @@ class StudySessionBuilder {
     required bool includeWords,
     required bool includeSentences,
   }) {
-    if (ranked.isEmpty) return const [];
+    if (ranked.isEmpty || itemLimit <= 0) return const [];
     final limit = itemLimit.clamp(1, ranked.length);
     if (!includeWords || !includeSentences) {
       return ranked.take(limit).toList(growable: false);

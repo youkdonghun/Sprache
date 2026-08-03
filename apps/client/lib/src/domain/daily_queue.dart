@@ -1,5 +1,6 @@
 import 'learning_item.dart';
 import 'progress.dart';
+import 'study_preferences.dart';
 
 class DailyQueueBuilder {
   const DailyQueueBuilder();
@@ -12,6 +13,7 @@ class DailyQueueBuilder {
     int newItemLimit = 10,
     int reviewLimit = 30,
     double sentenceRatio = 0.3,
+    StudyQueuePriority queuePriority = StudyQueuePriority.dueFirst,
   }) {
     final today = DateTime(localDate.year, localDate.month, localDate.day);
     final due = <LearningItem>[];
@@ -53,7 +55,9 @@ class DailyQueueBuilder {
       );
     });
 
-    final candidates = [...due.take(reviewLimit), ...fresh.take(newItemLimit)];
+    final candidates = queuePriority == StudyQueuePriority.newFirst
+        ? [...fresh.take(newItemLimit), ...due.take(reviewLimit)]
+        : [...due.take(reviewLimit), ...fresh.take(newItemLimit)];
     return _applySentenceRatio(candidates, sentenceRatio.clamp(0, 1));
   }
 

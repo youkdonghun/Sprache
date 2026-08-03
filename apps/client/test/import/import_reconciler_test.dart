@@ -7,7 +7,7 @@ import 'package:sprache/src/import/import_reconciler.dart';
 void main() {
   const reconciler = ImportReconciler();
 
-  test('classifies new, unchanged, changed, and blocked entries', () {
+  test('classifies new, unchanged, changed, and bundled meaning merges', () {
     const custom = LearningItem(
       id: 'custom-water',
       kind: LearningItemKind.word,
@@ -98,13 +98,15 @@ void main() {
       ImportReviewStatus.newItem,
       ImportReviewStatus.unchanged,
       ImportReviewStatus.changed,
-      ImportReviewStatus.blocked,
+      ImportReviewStatus.changed,
     ]);
     expect(review.entries[2].differences.map((value) => value.field), [
       'translations',
       'acceptedAnswers',
     ]);
-    expect(review.entries[3].blockReason, contains('기본 콘텐츠'));
+    expect(review.entries[3].mergeOnly, isTrue);
+    expect(review.entries[3].defaultAction, ImportReviewAction.replace);
+    expect(review.entries[3].incoming.acceptedAnswers, contains('커피 한 잔'));
   });
 
   test('blocks an ID match that points at another semantic item', () {

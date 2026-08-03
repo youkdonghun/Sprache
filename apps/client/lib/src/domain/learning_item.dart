@@ -1,4 +1,5 @@
 import 'language.dart';
+import 'study_subject.dart';
 
 enum LearningItemKind { word, sentence }
 
@@ -78,6 +79,10 @@ class ContentSource {
     required this.license,
     required this.sourceVersion,
     required this.contentVersion,
+    this.sourceId,
+    this.sourceUrl,
+    this.author,
+    this.attribution,
   });
 
   static const userCreated = ContentSource(
@@ -90,26 +95,38 @@ class ContentSource {
   static const starterCatalog = ContentSource(
     name: 'Sprache starter catalog',
     license: 'project-internal',
-    sourceVersion: '2026.07',
-    contentVersion: 1,
+    sourceVersion: '2026.08',
+    contentVersion: 3,
   );
 
   final String name;
   final String license;
   final String sourceVersion;
   final int contentVersion;
+  final String? sourceId;
+  final String? sourceUrl;
+  final String? author;
+  final String? attribution;
 
   ContentSource copyWith({
     String? name,
     String? license,
     String? sourceVersion,
     int? contentVersion,
+    String? sourceId,
+    String? sourceUrl,
+    String? author,
+    String? attribution,
   }) {
     return ContentSource(
       name: name ?? this.name,
       license: license ?? this.license,
       sourceVersion: sourceVersion ?? this.sourceVersion,
       contentVersion: contentVersion ?? this.contentVersion,
+      sourceId: sourceId ?? this.sourceId,
+      sourceUrl: sourceUrl ?? this.sourceUrl,
+      author: author ?? this.author,
+      attribution: attribution ?? this.attribution,
     );
   }
 
@@ -118,12 +135,20 @@ class ContentSource {
     'license': license,
     'sourceVersion': sourceVersion,
     'contentVersion': contentVersion,
+    if (sourceId != null) 'sourceId': sourceId,
+    if (sourceUrl != null) 'sourceUrl': sourceUrl,
+    if (author != null) 'author': author,
+    if (attribution != null) 'attribution': attribution,
   };
 
   factory ContentSource.fromJson(Map<String, Object?> json) {
     final name = json['name'];
     final license = json['license'];
     final sourceVersion = json['sourceVersion'] ?? json['version'] ?? '1';
+    final sourceId = json['sourceId'] ?? json['source_id'];
+    final sourceUrl = json['sourceUrl'] ?? json['source_url'] ?? json['url'];
+    final author = json['author'] ?? json['creator'];
+    final attribution = json['attribution'];
     final rawContentVersion = json['contentVersion'] ?? 1;
     final contentVersion = switch (rawContentVersion) {
       final int value => value,
@@ -144,11 +169,25 @@ class ContentSource {
     if (contentVersion == null) {
       throw const FormatException('source.contentVersion 값은 정수여야 합니다.');
     }
+    for (final entry in {
+      'source.sourceId': sourceId,
+      'source.sourceUrl': sourceUrl,
+      'source.author': author,
+      'source.attribution': attribution,
+    }.entries) {
+      if (entry.value != null && entry.value is! String) {
+        throw FormatException('${entry.key} 값은 문자열이어야 합니다.');
+      }
+    }
     return ContentSource(
       name: name,
       license: license,
       sourceVersion: sourceVersion.toString(),
       contentVersion: contentVersion,
+      sourceId: sourceId as String?,
+      sourceUrl: sourceUrl as String?,
+      author: author as String?,
+      attribution: attribution as String?,
     );
   }
 }
@@ -169,6 +208,7 @@ class LearningItem {
     required this.text,
     required this.translations,
     required this.acceptedAnswers,
+    this.subjectId,
     this.readings = const [],
     this.sentenceTokens = const [],
     this.example,
@@ -191,6 +231,7 @@ class LearningItem {
   final String text;
   final List<String> translations;
   final List<String> acceptedAnswers;
+  final String? subjectId;
   final List<Reading> readings;
   final List<String> sentenceTokens;
   final String? example;
@@ -204,6 +245,9 @@ class LearningItem {
   final DateTime? updatedAt;
 
   String get primaryTranslation => translations.first;
+  String get effectiveSubjectId =>
+      subjectId ?? languageSubjectId(learningLanguage);
+  String get courseId => courseIdForSubject(effectiveSubjectId);
 
   String? reading(ReadingScheme scheme) {
     for (final item in readings) {
@@ -214,6 +258,54 @@ class LearningItem {
     return null;
   }
 
+  String? get koreanPronunciation => reading(ReadingScheme.hangul);
+
+  List<Reading> get orderedReadingAids {
+    final result = [...readings];
+    result.sort((left, right) {
+      final leftOrder = left.scheme == ReadingScheme.hangul ? 0 : 1;
+      final rightOrder = right.scheme == ReadingScheme.hangul ? 0 : 1;
+      return leftOrder.compareTo(rightOrder);
+    });
+    return result;
+  }
+
+  List<String> get readingAidLabels => orderedReadingAids
+      .map((reading) {
+        if (reading.scheme == ReadingScheme.hangul) {
+          return reading.value;
+        }
+        return '${reading.scheme.koreanLabel} ${reading.value}';
+      })
+      .toList(growable: false);
+
+  String get readingAidsLabel => readingAidLabels.join('\n');
+
+  List<String> readingAidLabelsFor({
+    required bool showKoreanReading,
+    required bool showNativeReading,
+  }) => orderedReadingAids
+      .where(
+        (reading) => reading.scheme == ReadingScheme.hangul
+            ? showKoreanReading
+            : showNativeReading,
+      )
+      .map((reading) {
+        if (reading.scheme == ReadingScheme.hangul) {
+          return reading.value;
+        }
+        return '${reading.scheme.koreanLabel} ${reading.value}';
+      })
+      .toList(growable: false);
+
+  String readingAidsLabelFor({
+    required bool showKoreanReading,
+    required bool showNativeReading,
+  }) => readingAidLabelsFor(
+    showKoreanReading: showKoreanReading,
+    showNativeReading: showNativeReading,
+  ).join('\n');
+
   LearningItem copyWith({
     String? id,
     LearningItemKind? kind,
@@ -221,6 +313,7 @@ class LearningItem {
     String? text,
     List<String>? translations,
     List<String>? acceptedAnswers,
+    String? subjectId,
     List<Reading>? readings,
     List<String>? sentenceTokens,
     String? example,
@@ -241,6 +334,7 @@ class LearningItem {
       text: text ?? this.text,
       translations: translations ?? this.translations,
       acceptedAnswers: acceptedAnswers ?? this.acceptedAnswers,
+      subjectId: subjectId ?? this.subjectId,
       readings: readings ?? this.readings,
       sentenceTokens: sentenceTokens ?? this.sentenceTokens,
       example: example ?? this.example,

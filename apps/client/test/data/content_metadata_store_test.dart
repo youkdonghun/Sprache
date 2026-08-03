@@ -22,6 +22,10 @@ void main() {
         license: 'private',
         sourceVersion: '2026-07',
         contentVersion: 4,
+        sourceId: 'chapter-2-entry-7',
+        sourceUrl: 'https://example.com/chapter-2/entry-7',
+        author: 'Study Team',
+        attribution: 'Study Team · My vocabulary book',
       ),
     );
 
@@ -34,6 +38,13 @@ void main() {
       expect(restored.source.license, 'private');
       expect(restored.source.sourceVersion, '2026-07');
       expect(restored.source.contentVersion, 4);
+      expect(restored.source.sourceId, 'chapter-2-entry-7');
+      expect(
+        restored.source.sourceUrl,
+        'https://example.com/chapter-2/entry-7',
+      );
+      expect(restored.source.author, 'Study Team');
+      expect(restored.source.attribution, 'Study Team · My vocabulary book');
     } finally {
       await database.close();
     }

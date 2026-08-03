@@ -1,3 +1,4 @@
-type,language,term,meaning,part_of_speech,accepted_answers,example_en,example_ko,tags,level,priority,source,license,source_version,content_version
-word,en,record,기록,noun,기록|기록물,I keep a record.,저는 기록을 남겨요.,업무|기초,초급,2,사용자 직접 정리,private,2026.1,1
-word,en,record,기록하다,verb,기록하다,Please record the result.,결과를 기록해 주세요.,업무|동사,초급,2,사용자 직접 정리,private,2026.1,1
+type,language,subject_id,term,meaning,part_of_speech,accepted_answers,korean_pronunciation,example_en,example_ko,tags,level,priority,source,license,source_version,source_id,source_url,author,attribution,content_version,distribution_key,id
+word,en,,record,기록,noun,기록|기록물,레코드,I keep a record.,저는 기록을 남겨요.,업무|기초,초급,2,사용자 직접 정리,private,2026.1,,,,,1,lang:en,
+word,en,,record,기록하다,verb,기록하다,리코드,Please record the result.,결과를 기록해 주세요.,업무|동사,초급,2,사용자 직접 정리,private,2026.1,,,,,1,lang:en,
+word,ko,general:baseball,WHIP,투수가 한 이닝당 허용한 볼넷과 안타의 합,other,이닝당 출루 허용률|이닝당 볼넷과 안타 허용 수,,WHIP는 허용한 볼넷과 안타의 합을 투구 이닝으로 나누어 계산한다.,허용 볼넷과 안타를 합한 뒤 투구 이닝으로 나눈 값이다.,야구|투수 기록,입문,3,사용자 직접 정리,private,2026.1,,,,,2,baseball-core,f64d5def-2065-5768-aeb0-8374e6a201ed

@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/language.dart';
+import 'package:sprache/src/domain/learning_group.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/progress.dart';
+import 'package:sprache/src/domain/session_enhancements.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/domain/study_session_builder.dart';
 
@@ -139,6 +141,244 @@ void main() {
     expect(result.items.map((item) => item.id), ['due', 'weak', 'fresh']);
   });
 
+  test('can place unseen expressions before review and weak items', () {
+    final due = _word('due');
+    final weak = _word('weak');
+    final fresh = _word('fresh');
+    final result = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [due, weak, fresh],
+      progress: {
+        due.id: ProgressRecord(
+          itemId: due.id,
+          status: LearningStatus.review,
+          nextReviewAt: now.subtract(const Duration(days: 1)),
+        ),
+        weak.id: ProgressRecord(
+          itemId: weak.id,
+          status: LearningStatus.learning,
+          correctCount: 1,
+          wrongCount: 2,
+        ),
+      },
+      plan: const StudySessionPlan(
+        itemLimit: 5,
+        queuePriority: StudyQueuePriority.newFirst,
+      ),
+    );
+
+    expect(result.items.map((item) => item.id), ['fresh', 'due', 'weak']);
+  });
+
+  test('filters cumulative correct history and unresolved recent mistakes', () {
+    final fresh = _word('fresh');
+    final correct = _word('correct');
+    final wrong = _word('wrong');
+    final recovered = _word('recovered');
+    final progress = {
+      correct.id: ProgressRecord(
+        itemId: correct.id,
+        status: LearningStatus.learning,
+        correctCount: 1,
+        lastResult: ReviewRating.good,
+      ),
+      wrong.id: ProgressRecord(
+        itemId: wrong.id,
+        status: LearningStatus.learning,
+        wrongCount: 1,
+        lastResult: ReviewRating.again,
+      ),
+      recovered.id: ProgressRecord(
+        itemId: recovered.id,
+        status: LearningStatus.learning,
+        correctCount: 1,
+        wrongCount: 1,
+        lastResult: ReviewRating.good,
+      ),
+    };
+
+    final withoutCorrect = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [fresh, correct, wrong, recovered],
+      progress: progress,
+      plan: const StudySessionPlan(
+        historyFilter: StudyHistoryFilter.excludeCorrect,
+      ),
+    );
+    final wrongOnly = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [fresh, correct, wrong, recovered],
+      progress: progress,
+      plan: const StudySessionPlan(historyFilter: StudyHistoryFilter.wrongOnly),
+    );
+
+    expect(withoutCorrect.items.map((item) => item.id).toSet(), {
+      'fresh',
+      'wrong',
+    });
+    expect(wrongOnly.items.single.id, 'wrong');
+  });
+
+  test('supports a one-to-one-hundred item session boundary', () {
+    final items = [for (var index = 0; index < 120; index++) _word('w-$index')];
+
+    final one = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: items,
+      progress: const {},
+      plan: const StudySessionPlan(itemLimit: 1),
+    );
+    final hundred = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: items,
+      progress: const {},
+      plan: const StudySessionPlan(itemLimit: 100),
+    );
+
+    expect(one.items, hasLength(1));
+    expect(hundred.items, hasLength(100));
+  });
+
+  test(
+    'combines multiple groups from the same subject without duplication',
+    () {
+      const subjectId = 'language:en';
+      final travel = _word(
+        'travel',
+      ).copyWith(tags: ['unit-0', learningGroupTag('여행')]);
+      final work = _word(
+        'work',
+      ).copyWith(tags: ['unit-0', learningGroupTag('업무')]);
+      final both = _word('both').copyWith(
+        tags: ['unit-0', learningGroupTag('여행'), learningGroupTag('업무')],
+      );
+      final other = _word('other');
+
+      final result = builder.build(
+        courseId: 'ko-en',
+        localDate: now,
+        items: [travel, work, both, other],
+        progress: const {},
+        plan: StudySessionPlan(
+          subjectId: subjectId,
+          groupIds: {
+            learningGroupDefinitionId(subjectId, '여행'),
+            learningGroupDefinitionId(subjectId, '업무'),
+          },
+          itemLimit: 10,
+        ),
+      );
+
+      expect(result.items.map((item) => item.id).toSet(), {
+        'travel',
+        'work',
+        'both',
+      });
+      expect(result.items.map((item) => item.id), hasLength(3));
+    },
+  );
+
+  test('uses recent speed for timed sessions and never exceeds 100 items', () {
+    final items = [for (var index = 0; index < 150; index++) _word('w-$index')];
+
+    final fiveMinutes = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: items,
+      progress: const {},
+      plan: const StudySessionPlan(
+        lengthMode: StudySessionLengthMode.timeBudget,
+        timeBudgetMinutes: 5,
+      ),
+      averageSecondsPerItem: 30,
+    );
+    final fastFifteenMinutes = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: items,
+      progress: const {},
+      plan: const StudySessionPlan(
+        lengthMode: StudySessionLengthMode.timeBudget,
+        timeBudgetMinutes: 15,
+      ),
+      averageSecondsPerItem: 5,
+    );
+
+    expect(fiveMinutes.items, hasLength(10));
+    expect(fastFifteenMinutes.items, hasLength(100));
+  });
+
+  test('recovery mode caps the queue and ranks overdue weak items first', () {
+    final oldWeak = _word('old-weak');
+    final recentStrong = _word('recent-strong');
+    final fresh = _word('fresh');
+    final result = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [fresh, recentStrong, oldWeak],
+      progress: {
+        oldWeak.id: ProgressRecord(
+          itemId: oldWeak.id,
+          status: LearningStatus.review,
+          correctCount: 1,
+          wrongCount: 4,
+          lastResult: ReviewRating.again,
+          nextReviewAt: now.subtract(const Duration(days: 20)),
+        ),
+        recentStrong.id: ProgressRecord(
+          itemId: recentStrong.id,
+          status: LearningStatus.review,
+          correctCount: 9,
+          wrongCount: 1,
+          lastResult: ReviewRating.good,
+          nextReviewAt: now.subtract(const Duration(days: 1)),
+        ),
+      },
+      plan: const StudySessionPlan(
+        itemLimit: 100,
+        backlogRecovery: BacklogRecoverySettings(enabled: true, dailyLimit: 2),
+      ),
+    );
+
+    expect(result.items, hasLength(2));
+    expect(result.items.first.id, 'old-weak');
+    expect(result.items.last.id, 'recent-strong');
+  });
+
+  test('recovery mode enforces the remaining cumulative daily allowance', () {
+    final result = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [_word('one'), _word('two'), _word('three')],
+      progress: const {},
+      plan: const StudySessionPlan(
+        itemLimit: 100,
+        backlogRecovery: BacklogRecoverySettings(enabled: true, dailyLimit: 3),
+      ),
+      recoveryItemsStudiedToday: 2,
+    );
+    final exhausted = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [_word('one'), _word('two'), _word('three')],
+      progress: const {},
+      plan: const StudySessionPlan(
+        itemLimit: 100,
+        backlogRecovery: BacklogRecoverySettings(enabled: true, dailyLimit: 3),
+      ),
+      recoveryItemsStudiedToday: 3,
+    );
+
+    expect(result.items, hasLength(1));
+    expect(exhausted.items, isEmpty);
+    expect(exhausted.matchingCount, 3);
+  });
+
   test('exercise mode removes items that cannot produce that problem', () {
     final word = _word('word');
     final sentence = _sentence('sentence');
@@ -151,6 +391,46 @@ void main() {
     );
 
     expect(result.items.single.id, sentence.id);
+  });
+
+  test('pronunciation mode keeps only items that can be spoken', () {
+    final speakable = _word('speakable').copyWith(
+      capabilities: const {
+        ExerciseCapability.recognition,
+        ExerciseCapability.listening,
+      },
+    );
+    final silent = _word(
+      'silent',
+    ).copyWith(capabilities: const {ExerciseCapability.recognition});
+    final result = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [silent, speakable],
+      progress: const {},
+      plan: const StudySessionPlan(mode: StudyMode.pronunciation),
+    );
+
+    expect(result.items.single.id, speakable.id);
+  });
+
+  test('builds a session from exactly selected item IDs', () {
+    final first = _word('first');
+    final second = _word('second');
+    final third = _sentence('third');
+    final result = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: [first, second, third],
+      progress: const {},
+      plan: const StudySessionPlan(
+        deck: StudyDeckScope.selected,
+        selectedItemIds: {'first', 'third'},
+        itemLimit: 10,
+      ),
+    );
+
+    expect(result.items.map((item) => item.id).toSet(), {'first', 'third'});
   });
 }
 

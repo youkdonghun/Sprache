@@ -28,7 +28,7 @@
 - [x] 019. 프로젝트 개요 README를 작성한다.
 - [x] 020. 100단계 실행 체크리스트를 저장소에 기록한다.
 
-## 3. API와 Railway 기반
+## 3. API와 Railway 기반 (과거 구현, 1.34에서 제거)
 
 - [x] 021. Fastify TypeScript API 패키지를 생성한다.
 - [x] 022. 환경변수 스키마와 안전한 설정 로더를 구현한다.
@@ -125,6 +125,6 @@
 - [x] 095. 전체 API lint·단위·통합 테스트를 통과한다.
 - [x] 096. Mock Mode Android APK를 빌드하고 실행 검증한다.
 - [x] 097. Mock Mode Windows EXE를 빌드하고 크기 조절을 검증한다.
-- [x] 098. 실제 Google·Drive·Railway 설정 문서를 완성한다.
+- [x] 098. 당시 실제 Google·Drive·Railway 설정 문서를 완성한다.
 - [x] 099. GitHub Actions에서 API·Flutter 검증을 자동화한다.
 - [x] 100. 산출물, 실행 명령, 알려진 외부 자격증명 제약을 최종 보고한다.

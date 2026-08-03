@@ -2,28 +2,44 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/course_notes.dart';
 import '../domain/course_path.dart';
 import '../domain/learning_item.dart';
+import '../services/media_lifecycle_coordinator.dart';
+import '../services/tts_service.dart';
 import '../state/app_state.dart';
+import '../state/device_preferences_state.dart';
 
 class UnitGuideScreen extends ConsumerStatefulWidget {
-  const UnitGuideScreen({required this.unitIndex, super.key});
+  const UnitGuideScreen({required this.unitIndex, this.ttsService, super.key});
 
   final int unitIndex;
+  final TtsService? ttsService;
 
   @override
   ConsumerState<UnitGuideScreen> createState() => _UnitGuideScreenState();
 }
 
 class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
-  final _tts = FlutterTts();
+  late final MediaLifecycleRegistry _mediaLifecycleRegistry;
+  late final TtsService _tts;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = widget.ttsService ?? TtsService.device();
+    _mediaLifecycleRegistry = ref.read(mediaLifecycleRegistryProvider);
+    _mediaLifecycleRegistry.register(
+      this,
+      MediaLifecycleRegistration(stopTextToSpeech: _stopTts),
+    );
+  }
 
   @override
   void dispose() {
+    _mediaLifecycleRegistry.unregister(this);
     unawaited(_stopTts());
     super.dispose();
   }
@@ -37,11 +53,24 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
   }
 
   Future<void> _speak(LearningItem item) async {
-    await _tts.setLanguage(item.learningLanguage.ttsLocale);
-    await _tts.setSpeechRate(
-      ref.read(appControllerProvider).preferences.ttsRate,
-    );
-    await _tts.speak(item.text);
+    final preferences = ref.read(appControllerProvider).preferences;
+    final voice = ref
+        .read(devicePreferencesControllerProvider)
+        .preferences
+        .voice;
+    try {
+      await _tts.speak(
+        language: item.learningLanguage,
+        text: item.text,
+        rate: preferences.ttsRate,
+        preferOfflineVoice: preferences.interaction.preferOfflineVoice,
+        repeatCount: preferences.interaction.audioRepeatCount,
+        preferredVoiceId: voice.voiceIdByLanguage[item.learningLanguage.code],
+        pitch: voice.pitch,
+      );
+    } catch (_) {
+      // Unit browsing remains available when the device has no matching voice.
+    }
   }
 
   @override
@@ -52,12 +81,13 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
       return Center(
         child: FilledButton(
           onPressed: () => context.go('/path'),
-          child: const Text('코스 여정으로 돌아가기'),
+          child: const Text('코스로 돌아가기'),
         ),
       );
     }
     final unit = path.units[widget.unitIndex];
     final note = courseNoteFor(state.selectedLanguage, widget.unitIndex);
+    final interaction = state.preferences.interaction;
     final lessons = [
       CourseLessonKind.cards,
       CourseLessonKind.meaning,
@@ -88,7 +118,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                             children: [
                               IconButton(
                                 onPressed: () => context.go('/path'),
-                                tooltip: '코스 여정으로',
+                                tooltip: '코스로 돌아가기',
                                 icon: const Icon(Icons.arrow_back_rounded),
                               ),
                               const SizedBox(width: 6),
@@ -124,24 +154,26 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                           const SizedBox(height: 24),
                           _SectionHeader(
                             title: '핵심 단어',
-                            caption: '먼저 눈으로 익히고 발음을 들어 보세요.',
+                            caption: '단어를 보고 발음을 들어 보세요.',
                             count: unit.words.length,
                           ),
                           const SizedBox(height: 10),
                           _WordPreviewGrid(
                             items: unit.words.take(8).toList(growable: false),
+                            showKoreanReading: interaction.showKoreanReading,
+                            showNativeReading: interaction.showNativeReading,
                             onSpeak: _speak,
                           ),
                           const SizedBox(height: 24),
                           _SectionHeader(
                             title: '핵심 문장',
-                            caption: '뜻을 확인한 뒤 문장 전체를 소리 내어 읽어 보세요.',
+                            caption: '뜻을 확인하고 문장을 소리 내어 읽어 보세요.',
                             count: unit.sentences.length,
                           ),
                           const SizedBox(height: 10),
                           if (unit.sentences.isEmpty)
                             const _EmptyUnitSection(
-                              message: '이 단원은 핵심 단어 연습에 집중합니다.',
+                              message: '이 단원은 핵심 단어를 집중해서 익혀요.',
                             )
                           else
                             for (final sentence in unit.sentences.take(4))
@@ -149,13 +181,17 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                                 padding: const EdgeInsets.only(bottom: 10),
                                 child: _SentencePreview(
                                   item: sentence,
+                                  showKoreanReading:
+                                      interaction.showKoreanReading,
+                                  showNativeReading:
+                                      interaction.showNativeReading,
                                   onSpeak: () => _speak(sentence),
                                 ),
                               ),
                           const SizedBox(height: 14),
                           _SectionHeader(
                             title: '추천 학습 순서',
-                            caption: '쉬운 인식에서 시작해 듣기와 말하기까지 이어갑니다.',
+                            caption: '보고 익힌 뒤 듣기와 말하기로 이어가세요.',
                             count: lessons.length,
                           ),
                           const SizedBox(height: 10),
@@ -209,7 +245,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                               minimumSize: const Size.fromHeight(50),
                             ),
                             icon: const Icon(Icons.forum_rounded),
-                            label: const Text('이 표현을 실전 상황에서 써 보기'),
+                            label: const Text('실전 미션에서 써 보기'),
                           ),
                         ],
                       ),
@@ -288,7 +324,7 @@ class _PatternPreview extends StatelessWidget {
               onPressed: onOpen,
               style: OutlinedButton.styleFrom(minimumSize: const Size(146, 48)),
               icon: const Icon(Icons.arrow_forward_rounded),
-              label: const Text('노트 전체 보기'),
+              label: const Text('표현 노트 열기'),
             );
             if (constraints.maxWidth < 620) {
               return Column(
@@ -340,7 +376,7 @@ class _GoalCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '이 단원의 의사소통 목표',
+                    '이 단원에서 할 수 있는 말',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: colors.onPrimaryContainer,
                     ),
@@ -370,9 +406,16 @@ class _GoalCard extends StatelessWidget {
 }
 
 class _WordPreviewGrid extends StatelessWidget {
-  const _WordPreviewGrid({required this.items, required this.onSpeak});
+  const _WordPreviewGrid({
+    required this.items,
+    required this.showKoreanReading,
+    required this.showNativeReading,
+    required this.onSpeak,
+  });
 
   final List<LearningItem> items;
+  final bool showKoreanReading;
+  final bool showNativeReading;
   final ValueChanged<LearningItem> onSpeak;
 
   @override
@@ -407,6 +450,27 @@ class _WordPreviewGrid extends StatelessWidget {
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
+                              if (item
+                                  .readingAidsLabelFor(
+                                    showKoreanReading: showKoreanReading,
+                                    showNativeReading: showNativeReading,
+                                  )
+                                  .isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  item.readingAidsLabelFor(
+                                    showKoreanReading: showKoreanReading,
+                                    showNativeReading: showNativeReading,
+                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        height: 1.4,
+                                      ),
+                                ),
+                              ],
                               Text(
                                 item.primaryTranslation,
                                 style: Theme.of(context).textTheme.bodySmall,
@@ -432,13 +496,24 @@ class _WordPreviewGrid extends StatelessWidget {
 }
 
 class _SentencePreview extends StatelessWidget {
-  const _SentencePreview({required this.item, required this.onSpeak});
+  const _SentencePreview({
+    required this.item,
+    required this.showKoreanReading,
+    required this.showNativeReading,
+    required this.onSpeak,
+  });
 
   final LearningItem item;
+  final bool showKoreanReading;
+  final bool showNativeReading;
   final VoidCallback onSpeak;
 
   @override
   Widget build(BuildContext context) {
+    final readingAidsLabel = item.readingAidsLabelFor(
+      showKoreanReading: showKoreanReading,
+      showNativeReading: showNativeReading,
+    );
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
@@ -453,12 +528,13 @@ class _SentencePreview extends StatelessWidget {
                     item.text,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  if (item.readings.isNotEmpty) ...[
+                  if (readingAidsLabel.isNotEmpty) ...[
                     const SizedBox(height: 3),
                     Text(
-                      item.readings.map((reading) => reading.value).join(' · '),
+                      readingAidsLabel,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.primary,
+                        height: 1.4,
                       ),
                     ),
                   ],

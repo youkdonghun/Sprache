@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sprache 개인정보처리방침과 Google 사용자 데이터 처리 안내">
+  <link rel="canonical" href="https://youkdonghun.github.io/Sprache/privacy/">
+  <title>Sprache 개인정보처리방침</title>
+  <style>
+    :root { color-scheme:light dark; --ink:#18201a; --muted:#556058; --line:#dce5dd; --paper:#fbfdf9; --panel:#fff; --brand:#317c40; --soft:#e8f5e8; }
+    * { box-sizing:border-box; } html { scroll-behavior:smooth; }
+    body { margin:0; color:var(--ink); background:var(--paper); font-family:system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif; line-height:1.7; }
+    main { width:min(820px,calc(100% - 32px)); margin:0 auto; padding:52px 0 72px; }
+    nav { display:flex; flex-wrap:wrap; gap:12px 20px; margin-bottom:28px; }
+    nav a { color:var(--brand); font-weight:750; }
+    header,section { padding:26px; border:1px solid var(--line); border-radius:18px; background:var(--panel); }
+    section { margin-top:16px; } h1 { margin:0 0 8px; font-size:clamp(2rem,7vw,3.2rem); line-height:1.15; } h2 { margin:0 0 10px; font-size:1.3rem; }
+    p { margin:8px 0 0; } ul { margin:10px 0 0; padding-left:22px; } .meta { color:var(--muted); } .notice { margin-top:18px; padding:16px; border-radius:12px; background:var(--soft); }
+    a { color:#246b34; } code { padding:2px 5px; border-radius:5px; background:var(--soft); } .english { margin-top:44px; }
+    @media (prefers-color-scheme:dark) { :root { --ink:#e8eee8; --muted:#b7c1b8; --line:#354238; --paper:#111612; --panel:#18201a; --brand:#72cb83; --soft:#233a29; } }
+    @media (max-width:640px) { main { padding:24px 0 48px; } header,section { padding:20px; border-radius:14px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <nav aria-label="문서 이동">
+      <a href="../">Sprache 소개</a>
+      <a href="../terms/">서비스 이용약관</a>
+      <a href="#english">English summary</a>
+      <a href="https://github.com/youkdonghun/Sprache/issues">문의</a>
+    </nav>
+
+    <header>
+      <h1>Sprache 개인정보처리방침</h1>
+      <div class="meta">시행일: 2026년 8월 3일</div>
+      <p>Sprache는 Android와 Windows에서 동작하는 Local-First 학습 앱입니다. Google 연결은 선택 사항이며, 연결하지 않아도 로컬 학습을 사용할 수 있습니다.</p>
+      <div class="notice">Sprache는 광고나 데이터 판매를 하지 않습니다. 별도 Sprache 서버는 학습 자료, 상세 진도, Google 계정 연결 정보 또는 OAuth 토큰을 수집·보관하지 않습니다.</div>
+    </header>
+
+    <section>
+      <h2>1. 처리하는 정보</h2>
+      <ul>
+        <li><strong>기기 로컬 데이터:</strong> 사용자가 만든 단어·문장·예문, 뜻, 읽기, 그룹, 일정, 가져오기 이력, 진도, XP, 오답, 최근 세션과 앱 설정</li>
+        <li><strong>Google 계정 정보:</strong> 사용자가 연결을 선택할 때 Google이 앱에 제공하는 계정 식별자, 이메일과 기본 프로필 정보. 이 정보는 연결 계정을 표시하고 구분하는 데 사용되며 별도 Sprache 서버로 전송하지 않습니다.</li>
+        <li><strong>Google Drive 학습 데이터:</strong> 사용자가 선택한 위치의 <code>WordStudyData</code>에 저장되는 동기화 snapshot, manifest, 파일 ID, revision과 checksum</li>
+        <li><strong>Google Drive 숨김 연결 설정:</strong> <code>appDataFolder</code>에 저장되는 <code>WordStudyData</code> 폴더 ID·이름 포인터. 단어·문장·진도와 토큰은 이 파일에 넣지 않습니다.</li>
+        <li><strong>로컬 연결 정보:</strong> Drive 파일 ID, 마지막 동기화 시각과 충돌 상태. OAuth 토큰은 운영체제 보안 저장소에 보관합니다.</li>
+        <li><strong>공개 문서 접속 정보:</strong> 이 정적 사이트의 호스팅 제공자인 GitHub가 보안과 운영을 위해 일반 웹 접속 로그를 처리할 수 있습니다. Sprache 페이지 자체는 분석 도구, 광고 추적기, 입력 폼 또는 쿠키를 사용하지 않습니다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. Google 사용자 데이터 사용 목적과 범위</h2>
+      <p>Sprache는 사용자가 Google 연결을 선택했을 때 다음 범위를 요청합니다.</p>
+      <ul>
+        <li><code>openid</code>, <code>email</code>, <code>profile</code>: 연결할 Google 계정 확인과 앱 안의 계정 표시</li>
+        <li><code>https://www.googleapis.com/auth/drive.file</code>: 사용자가 선택했거나 Sprache가 만든 Drive 학습 파일을 생성·조회·갱신·삭제</li>
+        <li><code>https://www.googleapis.com/auth/drive.appdata</code>: 숨겨진 <code>appDataFolder</code>에서 Drive 학습 폴더 연결 포인터를 생성·조회·갱신·삭제</li>
+      </ul>
+      <p><code>drive.file</code>은 사용자가 선택했거나 Sprache가 만든 파일로 접근을 제한합니다. <code>appDataFolder</code>는 일반 Drive 파일 목록에 표시되지 않으며, Sprache는 여기에 폴더 연결 포인터만 둡니다. Google 데이터는 기기 간 학습 연속성, 백업과 복원에만 사용합니다.</p>
+      <p>Sprache의 Google API 데이터 사용은 <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>와 Limited Use 요구사항을 준수합니다.</p>
+    </section>
+
+    <section>
+      <h2>3. 저장 위치와 보존</h2>
+      <ul>
+        <li>학습 데이터의 작업 원본은 기기의 SQLite 데이터베이스입니다.</li>
+        <li>Google 연결을 켜면 검증된 동기화 자료를 사용자가 고른 Drive 위치의 <code>WordStudyData</code>에 저장하고, 숨김 앱 설정에는 폴더 연결 포인터만 저장합니다.</li>
+        <li>Windows는 시스템 브라우저, loopback callback과 PKCE를 사용해 Google 토큰 엔드포인트에 직접 인증 코드를 교환합니다. 앱에 client secret을 포함하지 않습니다.</li>
+        <li>Windows OAuth 토큰은 운영체제 보안 저장소에 보관합니다. Android 인증 정보는 Google Identity 계층과 플랫폼 보안 저장소를 사용합니다.</li>
+        <li>연결 해제만으로 로컬 자료, Drive 학습 폴더나 숨김 연결 포인터를 자동 삭제하지 않습니다. 삭제 기능마다 대상과 영향을 따로 확인합니다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4. 공유·이전·판매</h2>
+      <p>Sprache는 Google 사용자 데이터와 학습 데이터를 광고, 판매, 신용 판단, 사용자 프로파일링 또는 AI 모델 학습에 사용하지 않습니다. 다음 제공자는 사용자가 요청한 기능의 범위에서만 데이터를 처리합니다.</p>
+      <ul>
+        <li><strong>Google Identity·Drive:</strong> 계정 연결, 사용자가 선택한 앱 폴더 동기화와 폴더 포인터 보관</li>
+        <li><strong>운영체제 음성 서비스:</strong> 사용자가 시작한 발음 연습의 마이크 입력 처리. 처리 방식은 운영체제와 사용자의 음성 서비스 설정을 따릅니다.</li>
+        <li><strong>GitHub Pages:</strong> 이 개인정보처리방침, 앱 소개와 약관의 정적 호스팅</li>
+      </ul>
+      <p>법률상 의무가 있는 경우를 제외하고 위 목적 밖의 제3자에게 데이터를 공개하지 않습니다.</p>
+    </section>
+
+    <section>
+      <h2>5. 발음 연습과 마이크</h2>
+      <p>마이크는 사용자가 발음 연습을 시작할 때만 사용합니다. Sprache는 원본 오디오 파일이나 전체 인식 문장을 Drive에 동기화하지 않으며, 학습에 필요한 성공·재연습 결과만 일반 진도로 기록합니다.</p>
+    </section>
+
+    <section>
+      <h2>6. 보호 조치</h2>
+      <ul>
+        <li>Google과의 통신에 HTTPS 사용</li>
+        <li>Windows OAuth의 PKCE, 무작위 state와 로컬 loopback callback 검증</li>
+        <li>OAuth 토큰의 운영체제 보안 저장소 사용과 인증 코드·PKCE verifier의 로그 제거</li>
+        <li>Drive revision·SHA-256·schema 검증 뒤에만 원격 자료 병합</li>
+        <li>손상되거나 지원하지 않는 원격 자료가 정상 로컬 자료를 덮어쓰지 못하도록 격리</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7. 사용자의 선택과 삭제</h2>
+      <ul>
+        <li>Google 연결 없이 로컬 모드로 계속 학습할 수 있습니다.</li>
+        <li><strong>이 기기에서 연결 해제</strong>하면 이 기기의 Google 인증 정보만 제거하고 로컬 자료는 유지합니다.</li>
+        <li><strong>Drive 연결 기록 삭제</strong>는 숨김 폴더 포인터를 지우며, <code>WordStudyData</code>의 학습 파일은 지우지 않습니다. Drive 학습 자료 삭제는 별도 기능에서 대상을 다시 확인합니다.</li>
+        <li>Google 계정의 연결된 앱 관리에서 Sprache 접근 권한을 철회하고 숨겨진 앱 설정을 삭제할 수 있습니다.</li>
+        <li>사용자가 만든 학습 항목과 로컬 백업은 앱 또는 운영체제에서 직접 삭제할 수 있습니다.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>8. 정책 변경과 문의</h2>
+      <p>데이터 처리 방식이 달라지면 이 문서의 시행일과 내용을 갱신하고, 중요한 변경은 앱 또는 공개 프로젝트 페이지에서 알립니다.</p>
+      <p>개인정보 및 데이터 처리 문의: <a href="https://github.com/youkdonghun/Sprache/issues">Sprache 프로젝트 문의 페이지</a></p>
+    </section>
+
+    <div id="english" class="english">
+      <section>
+        <h2>English summary</h2>
+        <p>Sprache is a local-first study app. Google connection is optional. When enabled, <code>drive.file</code> limits access to files the user selected or Sprache created in <code>WordStudyData</code>. The hidden <code>appDataFolder</code> stores only a pointer to that folder, not study content or progress.</p>
+        <p>Study content and detailed progress remain local unless Drive synchronization is enabled. Sprache does not operate a backend that stores account bindings, study data, authorization codes, or OAuth tokens. Windows exchanges authorization codes directly with Google using PKCE, and tokens are kept in OS-protected storage.</p>
+        <p>Sprache does not sell data, serve ads, profile users, or use Google user data to train AI models. Users can disconnect Google, revoke access in their Google Account, remove the hidden folder pointer, and separately delete Drive or local study data.</p>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

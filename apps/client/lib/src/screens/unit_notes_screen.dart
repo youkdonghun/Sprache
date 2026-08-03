@@ -2,28 +2,44 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/course_notes.dart';
 import '../domain/course_path.dart';
 import '../domain/language.dart';
+import '../services/media_lifecycle_coordinator.dart';
+import '../services/tts_service.dart';
 import '../state/app_state.dart';
+import '../state/device_preferences_state.dart';
 
 class UnitNotesScreen extends ConsumerStatefulWidget {
-  const UnitNotesScreen({required this.unitIndex, super.key});
+  const UnitNotesScreen({required this.unitIndex, this.ttsService, super.key});
 
   final int unitIndex;
+  final TtsService? ttsService;
 
   @override
   ConsumerState<UnitNotesScreen> createState() => _UnitNotesScreenState();
 }
 
 class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
-  final _tts = FlutterTts();
+  late final MediaLifecycleRegistry _mediaLifecycleRegistry;
+  late final TtsService _tts;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = widget.ttsService ?? TtsService.device();
+    _mediaLifecycleRegistry = ref.read(mediaLifecycleRegistryProvider);
+    _mediaLifecycleRegistry.register(
+      this,
+      MediaLifecycleRegistration(stopTextToSpeech: _stopTts),
+    );
+  }
 
   @override
   void dispose() {
+    _mediaLifecycleRegistry.unregister(this);
     unawaited(_stopTts());
     super.dispose();
   }
@@ -37,11 +53,24 @@ class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
   }
 
   Future<void> _speak(String text, LanguageTag language) async {
-    await _tts.setLanguage(language.ttsLocale);
-    await _tts.setSpeechRate(
-      ref.read(appControllerProvider).preferences.ttsRate,
-    );
-    await _tts.speak(text);
+    final preferences = ref.read(appControllerProvider).preferences;
+    final voice = ref
+        .read(devicePreferencesControllerProvider)
+        .preferences
+        .voice;
+    try {
+      await _tts.speak(
+        language: language,
+        text: text,
+        rate: preferences.ttsRate,
+        preferOfflineVoice: preferences.interaction.preferOfflineVoice,
+        repeatCount: preferences.interaction.audioRepeatCount,
+        preferredVoiceId: voice.voiceIdByLanguage[language.code],
+        pitch: voice.pitch,
+      );
+    } catch (_) {
+      // Reading notes remains usable when TTS is unavailable.
+    }
   }
 
   void _close(BuildContext context) {
@@ -60,7 +89,7 @@ class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
       return Center(
         child: FilledButton(
           onPressed: () => context.go('/path'),
-          child: const Text('코스 여정으로 돌아가기'),
+          child: const Text('코스로 돌아가기'),
         ),
       );
     }
@@ -92,7 +121,7 @@ class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
                             children: [
                               IconButton(
                                 onPressed: () => _close(context),
-                                tooltip: '단원 가이드로',
+                                tooltip: '단원 가이드 열기',
                                 icon: const Icon(Icons.arrow_back_rounded),
                               ),
                               const SizedBox(width: 6),
@@ -134,7 +163,7 @@ class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '한국어 뜻을 가리고 먼저 읽은 뒤 발음을 들어 보세요.',
+                            '뜻을 가린 채 먼저 읽고, 발음을 들어 보세요.',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 10),
@@ -173,7 +202,7 @@ class _UnitNotesScreenState extends ConsumerState<UnitNotesScreen> {
                                     width: width,
                                     child: _TipCard(
                                       icon: Icons.graphic_eq_rounded,
-                                      title: '소리 포인트',
+                                      title: '발음 포인트',
                                       body: note.soundTip,
                                     ),
                                   ),
@@ -447,12 +476,12 @@ class _PracticeActions extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '이해했으면 바로 써 보기',
+              '이제 직접 써 볼까요?',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             Text(
-              '노트를 읽는 데서 끝내지 말고 같은 단원의 표현을 꺼내 보세요.',
+              '같은 단원의 표현을 바로 떠올려 보세요.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 14),
@@ -465,18 +494,18 @@ class _PracticeActions extends StatelessWidget {
                   onPressed: () =>
                       context.push('/cards?kind=mixed&unit=${unit.index}'),
                   icon: const Icon(Icons.style_rounded),
-                  label: const Text('카드로 익히기'),
+                  label: const Text('카드 시작'),
                 ),
                 OutlinedButton.icon(
                   onPressed: () =>
                       context.push('/study?mode=cloze&unit=${unit.index}'),
                   icon: const Icon(Icons.space_bar_rounded),
-                  label: const Text('문장 빈칸'),
+                  label: const Text('빈칸 문제 풀기'),
                 ),
                 TextButton.icon(
                   onPressed: () => context.push('/mission/${unit.index}'),
                   icon: const Icon(Icons.forum_rounded),
-                  label: const Text('실전 미션'),
+                  label: const Text('미션 시작'),
                 ),
               ],
             ),

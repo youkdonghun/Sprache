@@ -2,26 +2,13 @@ name: CI
 
 on:
   push:
-    branches: ["main", "codex/**"]
+    branches: ["main", "codex/**", "agent/**"]
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  api:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          cache: npm
-      - run: npm ci
-      - run: npm run lint:api
-      - run: npm run test:api
-      - run: npm run build:api
-
   flutter-checks:
     runs-on: ubuntu-latest
     steps:
@@ -43,14 +30,486 @@ jobs:
         shell: bash
         run: |
           mapfile -t test_files < <(
-            find test -type f -name '*_test.dart' ! -path 'test/visual/*' -print
+            find test -type f -name '*_test.dart' \
+              ! -path 'test/visual/*' \
+              ! -path 'test/qa/release_visual_semantics_matrix_test.dart' \
+              ! -path 'test/qa/performance_budget_test.dart' \
+              -print
           )
           flutter test "${test_files[@]}"
+      - name: Verify large-dataset performance budgets in isolation
+        working-directory: apps/client
+        run: >-
+          flutter test --concurrency=1
+          test/qa/performance_budget_test.dart
       - working-directory: apps/client
-        run: flutter build apk --release --dart-define=ENABLE_MOCK_MODE=true
+        run: >-
+          flutter build apk --release
+          --build-name=1.34.0
+          --build-number=58
+          --dart-define=ENABLE_MOCK_MODE=true
+          --dart-define=APP_VERSION=1.34.0
       - name: Verify Android release output
         working-directory: apps/client
         run: test -s build/app/outputs/flutter-apk/app-release.apk
+      - name: Package Android CI artifact
+        working-directory: apps/client
+        shell: bash
+        run: |
+          artifact_dir="$RUNNER_TEMP/sprache-ci-artifacts"
+          artifact_name="Sprache-1.34.0-ci-android-mock.apk"
+          mkdir -p "$artifact_dir"
+          cp build/app/outputs/flutter-apk/app-release.apk "$artifact_dir/$artifact_name"
+          (
+            cd "$artifact_dir"
+            sha256sum "$artifact_name" > "$artifact_name.sha256"
+          )
+      - name: Upload Android CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sprache-1.34.0-ci-android-mock
+          path: |
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.34.0-ci-android-mock.apk
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.34.0-ci-android-mock.apk.sha256
+          if-no-files-found: error
+          retention-days: 14
+  android-real-runtime:
+    name: Android REAL build and emulator runtime
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      ANDROID_BUILD_TOOLS: "36.0.0"
+      ANDROID_SYSTEM_IMAGE: "system-images;android-35;google_apis;x86_64"
+      SPRACHE_VERSION: "1.34.0"
+      SPRACHE_BUILD_NUMBER: "58"
+      SPRACHE_PACKAGE: com.youkdonghun.sprache
+      SPRACHE_PRIVACY_POLICY_URL: https://youkdonghun.github.io/Sprache/privacy/
+      SPRACHE_GOOGLE_ANDROID_CLIENT_ID: 1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com
+      SPRACHE_GOOGLE_SERVER_CLIENT_ID: 1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com
+    steps:
+      - name: Check out the exact source revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Java 17
+        uses: actions/setup-java@d7793b545071e98d581d3bf084a51c3213318a07 # v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Set up Flutter 3.44.8
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: "3.44.8"
+          channel: stable
+          cache: true
+      - name: Install pinned Android build and emulator packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          if [[ -z "$sdk_root" || ! -d "$sdk_root" ]]; then
+            echo "::error::ANDROID_SDK_ROOT/ANDROID_HOME does not identify an Android SDK."
+            exit 1
+          fi
+          sdkmanager="$({
+            find "$sdk_root/cmdline-tools" -type f -path '*/bin/sdkmanager' -print
+          } | sort -V | tail -n 1)"
+          avdmanager="$({
+            find "$sdk_root/cmdline-tools" -type f -path '*/bin/avdmanager' -print
+          } | sort -V | tail -n 1)"
+          test -x "$sdkmanager"
+          test -x "$avdmanager"
+          android_avd_home="$RUNNER_TEMP/sprache-android-avd"
+          gradle_user_home="$RUNNER_TEMP/sprache-gradle-cache"
+          pub_cache="$RUNNER_TEMP/sprache-pub-cache"
+          mkdir -p "$android_avd_home" "$gradle_user_home" "$pub_cache"
+          echo "ANDROID_AVD_HOME=$android_avd_home" >> "$GITHUB_ENV"
+          echo "GRADLE_USER_HOME=$gradle_user_home" >> "$GITHUB_ENV"
+          echo "PUB_CACHE=$pub_cache" >> "$GITHUB_ENV"
+          export ANDROID_AVD_HOME="$android_avd_home"
+          "$sdkmanager" --install \
+            "platform-tools" \
+            "emulator" \
+            "platforms;android-36" \
+            "build-tools;$ANDROID_BUILD_TOOLS" \
+            "$ANDROID_SYSTEM_IMAGE"
+          echo "no" | "$avdmanager" create avd \
+            --force \
+            --name SpracheCiApi35 \
+            --package "$ANDROID_SYSTEM_IMAGE" \
+            --device pixel_6
+          avd_config="$ANDROID_AVD_HOME/SpracheCiApi35.avd/config.ini"
+          sed -i \
+            -e '/^disk\.dataPartition\.size=/d' \
+            -e '/^hw\.cpu\.ncore=/d' \
+            -e '/^hw\.ramSize=/d' \
+            -e '/^hw\.sdCard=/d' \
+            "$avd_config"
+          {
+            echo "disk.dataPartition.size=2047M"
+            echo "hw.cpu.ncore=2"
+            echo "hw.keyboard=yes"
+            echo "hw.gpu.enabled=yes"
+            echo "hw.gpu.mode=swiftshader_indirect"
+            echo "hw.ramSize=1536"
+            echo "hw.sdCard=no"
+            echo "showDeviceFrame=no"
+          } >> "$avd_config"
+          emulator="$sdk_root/emulator/emulator"
+          test -x "$emulator"
+          "$emulator" -list-avds | grep -Fxq SpracheCiApi35
+      - name: Build production-configured REAL APK with debug signing
+        working-directory: apps/client
+        shell: bash
+        run: |
+          set -euo pipefail
+          signing_variables=(
+            SPRACHE_ANDROID_KEYSTORE_PATH
+            SPRACHE_ANDROID_KEYSTORE_PASSWORD
+            SPRACHE_ANDROID_KEY_ALIAS
+            SPRACHE_ANDROID_KEY_PASSWORD
+          )
+          for variable in "${signing_variables[@]}"; do
+            if [[ -n "${!variable:-}" ]]; then
+              echo "::error::$variable is set, so the debug-signed artifact label would be dishonest."
+              exit 1
+            fi
+          done
+          flutter pub get
+          flutter build apk --release \
+            --build-name="$SPRACHE_VERSION" \
+            --build-number="$SPRACHE_BUILD_NUMBER" \
+            --dart-define=APP_ENV=production \
+            --dart-define=ENABLE_MOCK_MODE=false \
+            --dart-define="APP_VERSION=$SPRACHE_VERSION" \
+            --dart-define="PRIVACY_POLICY_URL=$SPRACHE_PRIVACY_POLICY_URL" \
+            --dart-define="GOOGLE_ANDROID_CLIENT_ID=$SPRACHE_GOOGLE_ANDROID_CLIENT_ID" \
+            --dart-define="GOOGLE_SERVER_CLIENT_ID=$SPRACHE_GOOGLE_SERVER_CLIENT_ID"
+          source_apk="build/app/outputs/flutter-apk/app-release.apk"
+          artifact_dir="$RUNNER_TEMP/sprache-android-real-runtime"
+          artifact_name="Sprache-Android-$SPRACHE_VERSION-google-debug-signed.apk"
+          test -s "$source_apk"
+          mkdir -p "$artifact_dir"
+          cp "$source_apk" "$artifact_dir/$artifact_name"
+          apksigner="$({
+            find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" \
+              -type f -name apksigner -print
+          } | sort -V | tail -n 1)"
+          test -x "$apksigner"
+          "$apksigner" verify --verbose --print-certs \
+            "$artifact_dir/$artifact_name" \
+            | tee "$artifact_dir/android-signing-certificate.txt"
+          grep -Fq "CN=Android Debug" \
+            "$artifact_dir/android-signing-certificate.txt"
+      - name: Reclaim isolated build caches for the Android emulator
+        working-directory: apps/client
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact="$RUNNER_TEMP/sprache-android-real-runtime/Sprache-Android-$SPRACHE_VERSION-google-debug-signed.apk"
+          test -s "$artifact"
+          df -h "$RUNNER_TEMP"
+          du -sh \
+            "$GITHUB_WORKSPACE/apps/client/build" \
+            "$GITHUB_WORKSPACE/apps/client/android/.gradle" \
+            "$GRADLE_USER_HOME" \
+            "$PUB_CACHE" \
+            "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/ndk" \
+            "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmake" \
+            2>/dev/null || true
+          android/gradlew --stop || true
+          flutter clean
+          sdk_root="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          if [[ "$sdk_root" != /* || "$sdk_root" == "/" || ! -d "$sdk_root" ]]; then
+            echo "::error::Refusing to clean caches under an invalid Android SDK root: $sdk_root"
+            exit 1
+          fi
+          cache_roots=(
+            "$GITHUB_WORKSPACE/apps/client/android/.gradle"
+            "$GRADLE_USER_HOME"
+            "$PUB_CACHE"
+            "$sdk_root/ndk"
+            "$sdk_root/cmake"
+          )
+          expected_roots=(
+            "$GITHUB_WORKSPACE/apps/client/android/.gradle"
+            "$RUNNER_TEMP/sprache-gradle-cache"
+            "$RUNNER_TEMP/sprache-pub-cache"
+            "$sdk_root/ndk"
+            "$sdk_root/cmake"
+          )
+          for index in "${!cache_roots[@]}"; do
+            cache_root="${cache_roots[$index]}"
+            expected_root="${expected_roots[$index]}"
+            if [[ "$cache_root" != "$expected_root" ]]; then
+              echo "::error::Refusing to clean an unexpected cache path: $cache_root"
+              exit 1
+            fi
+            if [[ -d "$cache_root" ]]; then
+              rm -rf -- "$cache_root"
+            fi
+          done
+          test -s "$artifact"
+          df -h "$RUNNER_TEMP"
+          available_kib="$(df --output=avail -k "$RUNNER_TEMP" | tail -n 1 | tr -d ' ')"
+          if (( available_kib < 6 * 1024 * 1024 )); then
+            echo "::error::Android emulator requires at least 6 GiB of free runner disk; only $available_kib KiB is available."
+            exit 1
+          fi
+      - name: Boot KVM emulator, install exact APK, and prove a rendered frame
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          sdk_root="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          emulator="$sdk_root/emulator/emulator"
+          platform_tools="$sdk_root/platform-tools"
+          artifact_dir="$RUNNER_TEMP/sprache-android-real-runtime"
+          artifact_name="Sprache-Android-$SPRACHE_VERSION-google-debug-signed.apk"
+          apk="$artifact_dir/$artifact_name"
+          screenshot="$artifact_dir/runtime-android-first-frame.png"
+          evidence="$artifact_dir/runtime-android.json"
+          serial="emulator-5554"
+          test -s "$apk"
+          test -x "$emulator"
+          test -x "$platform_tools/adb"
+          export PATH="$platform_tools:$PATH"
+          if [[ ! -c /dev/kvm ]]; then
+            echo "::error::GitHub runner does not expose /dev/kvm."
+            exit 1
+          fi
+          sudo chmod 0666 /dev/kvm
+          test -r /dev/kvm
+          test -w /dev/kvm
+
+          "$emulator" \
+            -avd SpracheCiApi35 \
+            -port 5554 \
+            -no-window \
+            -no-audio \
+            -no-boot-anim \
+            -no-metrics \
+            -no-snapshot \
+            -wipe-data \
+            -partition-size 2047 \
+            -memory 1536 \
+            -cores 2 \
+            -accel on \
+            -gpu swiftshader_indirect \
+            -verbose \
+            > "$artifact_dir/android-emulator.log" 2>&1 &
+          emulator_pid=$!
+          cleanup() {
+            timeout --kill-after=5s 30s adb -s "$serial" logcat -d \
+              > "$artifact_dir/android-logcat.txt" 2>&1 || true
+            timeout --kill-after=5s 30s adb -s "$serial" emu kill \
+              >/dev/null 2>&1 || true
+            kill "$emulator_pid" >/dev/null 2>&1 || true
+            wait "$emulator_pid" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          timeout --kill-after=5s 30s adb start-server
+          device_ready=0
+          for _ in $(seq 1 180); do
+            if timeout --kill-after=2s 5s adb devices |
+              grep -Eq "^${serial}[[:space:]]+device$"; then
+              device_ready=1
+              break
+            fi
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              echo "::error::Android emulator exited before adb detected it."
+              tail -n 200 "$artifact_dir/android-emulator.log"
+              exit 1
+            fi
+            sleep 1
+          done
+          if (( device_ready != 1 )); then
+            echo "::error::adb did not detect the Android emulator within 180 seconds."
+            tail -n 200 "$artifact_dir/android-emulator.log"
+            exit 1
+          fi
+          boot_completed=""
+          for _ in $(seq 1 180); do
+            boot_completed="$(
+              timeout --kill-after=2s 10s \
+                adb -s "$serial" shell getprop sys.boot_completed \
+                2>/dev/null | tr -d '\r' || true
+            )"
+            if [[ "$boot_completed" == "1" ]]; then break; fi
+            if ! kill -0 "$emulator_pid" 2>/dev/null; then
+              echo "::error::Android emulator exited before boot completed."
+              tail -n 200 "$artifact_dir/android-emulator.log"
+              exit 1
+            fi
+            sleep 1
+          done
+          if [[ "$boot_completed" != "1" ]]; then
+            echo "::error::Android emulator did not finish booting within 180 seconds."
+            exit 1
+          fi
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell input keyevent KEYCODE_WAKEUP
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell wm dismiss-keyguard
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell settings put global window_animation_scale 0
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell settings put global transition_animation_scale 0
+          timeout --kill-after=2s 20s \
+            adb -s "$serial" shell settings put global animator_duration_scale 0
+
+          timeout --kill-after=5s 60s \
+            adb -s "$serial" uninstall "$SPRACHE_PACKAGE" \
+            >/dev/null 2>&1 || true
+          timeout --kill-after=10s 300s \
+            adb -s "$serial" install -r "$apk"
+          timeout --kill-after=5s 60s \
+            adb -s "$serial" shell dumpsys package "$SPRACHE_PACKAGE" \
+            > "$artifact_dir/android-package.txt"
+          version_pattern="${SPRACHE_VERSION//./\\.}"
+          package_pattern="${SPRACHE_PACKAGE//./\\.}"
+          grep -Eq "versionCode=$SPRACHE_BUILD_NUMBER([[:space:]]|$)" \
+            "$artifact_dir/android-package.txt"
+          grep -Eq "versionName=$version_pattern([[:space:]]|$)" \
+            "$artifact_dir/android-package.txt"
+
+          timeout --kill-after=2s 30s \
+            adb -s "$serial" shell am force-stop "$SPRACHE_PACKAGE"
+          timeout --kill-after=2s 30s \
+            adb -s "$serial" shell dumpsys gfxinfo "$SPRACHE_PACKAGE" reset \
+              >/dev/null
+          start_ms="$(date +%s%3N)"
+          timeout --kill-after=5s 60s \
+            adb -s "$serial" shell am start -W -S \
+              -n "$SPRACHE_PACKAGE/.MainActivity" \
+            | tee "$artifact_dir/android-launch.txt"
+          grep -Fq "Status: ok" "$artifact_dir/android-launch.txt"
+
+          first_frame_ms=""
+          last_frame_count=0
+          foreground=0
+          for _ in $(seq 1 240); do
+            activity_state="$(
+              timeout --kill-after=2s 5s \
+                adb -s "$serial" shell dumpsys activity activities \
+                2>/dev/null | tr -d '\r' || true
+            )"
+            foreground=0
+            if grep -Eq \
+              "(mResumedActivity|topResumedActivity).*${package_pattern}" \
+              <<< "$activity_state"; then
+              foreground=1
+            fi
+            gfx_info="$(
+              timeout --kill-after=2s 5s \
+                adb -s "$serial" shell dumpsys gfxinfo "$SPRACHE_PACKAGE" \
+                2>/dev/null | tr -d '\r' || true
+            )"
+            frame_count="$(
+              sed -n 's/.*Total frames rendered:[[:space:]]*\([0-9][0-9]*\).*/\1/p' \
+                <<< "$gfx_info" | head -n 1
+            )"
+            if [[ "$frame_count" =~ ^[0-9]+$ ]]; then
+              last_frame_count="$frame_count"
+            fi
+            if (( foreground == 1 && last_frame_count > 0 )); then
+              first_frame_ms="$(( $(date +%s%3N) - start_ms ))"
+              break
+            fi
+            sleep 0.25
+          done
+          if [[ -z "$first_frame_ms" || "$first_frame_ms" -gt 60000 ]]; then
+            echo "::error::No foreground rendered frame was proven; foreground=$foreground frames=$last_frame_count."
+            exit 1
+          fi
+
+          timeout --kill-after=5s 30s \
+            adb -s "$serial" exec-out screencap -p > "$screenshot"
+          python3 - "$screenshot" <<'PY'
+          import pathlib
+          import struct
+          import sys
+
+          screenshot = pathlib.Path(sys.argv[1]).read_bytes()
+          assert len(screenshot) >= 4096, "Android screenshot is unexpectedly small"
+          assert screenshot.startswith(b"\x89PNG\r\n\x1a\n"), "Screenshot is not a PNG"
+          width, height = struct.unpack(">II", screenshot[16:24])
+          assert width > 0 and height > 0, "Screenshot dimensions are invalid"
+          PY
+          python3 - "$evidence" "$first_frame_ms" <<'PY'
+          import datetime
+          import json
+          import pathlib
+          import sys
+
+          output = pathlib.Path(sys.argv[1])
+          first_frame_ms = int(sys.argv[2])
+          value = {
+              "format": "sprache-runtime-evidence-v1",
+              "platform": "android",
+              "mode": "REAL",
+              "version": "1.34.0",
+              "buildNumber": 58,
+              "launched": True,
+              "firstFrameRendered": True,
+              "firstFrameMillis": first_frame_ms,
+              "probe": "native-runtime",
+              "checkedAt": datetime.datetime.now(
+                  datetime.timezone.utc
+              ).isoformat(timespec="milliseconds").replace("+00:00", "Z"),
+          }
+          assert 0 <= value["firstFrameMillis"] <= 60000
+          output.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+          PY
+          python3 - "$evidence" <<'PY'
+          import datetime
+          import json
+          import pathlib
+          import sys
+
+          value = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+          assert value["format"] == "sprache-runtime-evidence-v1"
+          assert value["platform"] == "android"
+          assert value["mode"] == "REAL"
+          assert value["version"] == "1.34.0"
+          assert value["buildNumber"] == 58
+          assert value["launched"] is True
+          assert value["firstFrameRendered"] is True
+          assert 0 <= value["firstFrameMillis"] <= 60000
+          assert value["probe"] == "native-runtime"
+          datetime.datetime.fromisoformat(value["checkedAt"].replace("Z", "+00:00"))
+          PY
+          (
+            cd "$artifact_dir"
+            sha256sum "$artifact_name" > "$artifact_name.sha256"
+            sha256sum --check "$artifact_name.sha256"
+          )
+      - name: Upload exact Android REAL runtime artifact set
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Sprache-Android-1.34.0-real-runtime
+          path: |
+            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.34.0-google-debug-signed.apk
+            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.34.0-google-debug-signed.apk.sha256
+            ${{ runner.temp }}/sprache-android-real-runtime/runtime-android.json
+            ${{ runner.temp }}/sprache-android-real-runtime/runtime-android-first-frame.png
+            ${{ runner.temp }}/sprache-android-real-runtime/android-signing-certificate.txt
+            ${{ runner.temp }}/sprache-android-real-runtime/android-package.txt
+            ${{ runner.temp }}/sprache-android-real-runtime/android-launch.txt
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Android emulator diagnostics after failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Sprache-Android-1.34.0-real-runtime-diagnostics
+          path: |
+            ${{ runner.temp }}/sprache-android-real-runtime/android-emulator.log
+            ${{ runner.temp }}/sprache-android-real-runtime/android-logcat.txt
+            ${{ runner.temp }}/sprache-android-real-runtime/android-signing-certificate.txt
+            ${{ runner.temp }}/sprache-android-real-runtime/android-package.txt
+            ${{ runner.temp }}/sprache-android-real-runtime/android-launch.txt
+          if-no-files-found: warn
+          retention-days: 7
 
   windows-release:
     runs-on: windows-latest
@@ -65,9 +524,17 @@ jobs:
       - working-directory: apps/client
         run: flutter pub get
       - working-directory: apps/client
-        run: flutter test test/visual
+        run: >-
+          flutter test
+          test/visual
+          test/qa/release_visual_semantics_matrix_test.dart
       - working-directory: apps/client
-        run: flutter build windows --release --dart-define=ENABLE_MOCK_MODE=true
+        run: >-
+          flutter build windows --release
+          --build-name=1.34.0
+          --build-number=58
+          --dart-define=ENABLE_MOCK_MODE=true
+          --dart-define=APP_VERSION=1.34.0
       - name: Verify Windows release output
         working-directory: apps/client
         shell: pwsh
@@ -82,3 +549,27 @@ jobs:
               throw "Missing Windows release file: $path"
             }
           }
+      - name: Package Windows CI artifact
+        working-directory: apps/client
+        shell: pwsh
+        run: |
+          $artifactDirectory = Join-Path $env:RUNNER_TEMP 'sprache-ci-artifacts'
+          $artifactName = 'Sprache-1.34.0-ci-windows-x64-mock.zip'
+          $artifactPath = Join-Path $artifactDirectory $artifactName
+          New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
+          Compress-Archive `
+            -Path 'build\windows\x64\runner\Release\*' `
+            -DestinationPath $artifactPath `
+            -CompressionLevel Optimal `
+            -Force
+          $hash = (Get-FileHash -LiteralPath $artifactPath -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $artifactName" | Set-Content -LiteralPath "$artifactPath.sha256" -Encoding utf8NoBOM
+      - name: Upload Windows CI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sprache-1.34.0-ci-windows-x64-mock
+          path: |
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.34.0-ci-windows-x64-mock.zip
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.34.0-ci-windows-x64-mock.zip.sha256
+          if-no-files-found: error
+          retention-days: 14

@@ -1,19 +1,40 @@
 import '../domain/language.dart';
 import '../domain/learning_item.dart';
+import '../domain/korean_pronunciation.dart';
+
+part 'sample_content_practical.dart';
 
 final sampleContent = <LearningItem>[
   ..._buildWords(LanguageTag.english, _englishWords),
-  ..._buildSentences(LanguageTag.english, _englishSentences),
+  ..._buildSentences(LanguageTag.english, [
+    ..._englishSentences,
+    ..._englishPracticalSentences,
+  ]),
   ..._buildWords(LanguageTag.japanese, _japaneseWords),
-  ..._buildSentences(LanguageTag.japanese, _japaneseSentences),
+  ..._buildSentences(LanguageTag.japanese, [
+    ..._japaneseSentences,
+    ..._japanesePracticalSentences,
+  ]),
   ..._buildWords(LanguageTag.german, _germanWords),
-  ..._buildSentences(LanguageTag.german, _germanSentences),
+  ..._buildSentences(LanguageTag.german, [
+    ..._germanSentences,
+    ..._germanPracticalSentences,
+  ]),
   ..._buildWords(LanguageTag.french, _frenchWords),
-  ..._buildSentences(LanguageTag.french, _frenchSentences),
+  ..._buildSentences(LanguageTag.french, [
+    ..._frenchSentences,
+    ..._frenchPracticalSentences,
+  ]),
   ..._buildWords(LanguageTag.spanish, _spanishWords),
-  ..._buildSentences(LanguageTag.spanish, _spanishSentences),
+  ..._buildSentences(LanguageTag.spanish, [
+    ..._spanishSentences,
+    ..._spanishPracticalSentences,
+  ]),
   ..._buildWords(LanguageTag.simplifiedChinese, _chineseWords),
-  ..._buildSentences(LanguageTag.simplifiedChinese, _chineseSentences),
+  ..._buildSentences(LanguageTag.simplifiedChinese, [
+    ..._chineseSentences,
+    ..._chinesePracticalSentences,
+  ]),
 ];
 
 List<LearningItem> _buildWords(LanguageTag language, List<_WordSeed> seeds) {
@@ -27,6 +48,17 @@ List<LearningItem> _buildWords(LanguageTag language, List<_WordSeed> seeds) {
         translations: [seed.korean],
         acceptedAnswers: [seed.korean],
         readings: [
+          Reading(
+            scheme: ReadingScheme.hangul,
+            value:
+                seed.koreanPronunciation ??
+                deriveKoreanPronunciation(
+                  language: language,
+                  text: seed.text,
+                  reading: seed.reading,
+                  romanization: seed.romanization,
+                ),
+          ),
           if (seed.reading != null)
             Reading(
               scheme: language == LanguageTag.simplifiedChinese
@@ -64,6 +96,17 @@ List<LearningItem> _buildSentences(
         translations: [seed.korean],
         acceptedAnswers: [seed.korean],
         readings: [
+          Reading(
+            scheme: ReadingScheme.hangul,
+            value:
+                seed.koreanPronunciation ??
+                deriveKoreanPronunciation(
+                  language: language,
+                  text: seed.text,
+                  reading: seed.reading,
+                  romanization: seed.romanization,
+                ),
+          ),
           if (seed.reading != null)
             Reading(
               scheme: language == LanguageTag.simplifiedChinese
@@ -90,12 +133,19 @@ List<LearningItem> _buildSentences(
 }
 
 class _WordSeed {
-  const _WordSeed(this.text, this.korean, {this.reading, this.romanization});
+  const _WordSeed(
+    this.text,
+    this.korean, {
+    this.reading,
+    this.romanization,
+    this.koreanPronunciation,
+  });
 
   final String text;
   final String korean;
   final String? reading;
   final String? romanization;
+  final String? koreanPronunciation;
 }
 
 class _SentenceSeed {
@@ -105,6 +155,7 @@ class _SentenceSeed {
     this.tokens, {
     this.reading,
     this.romanization,
+    this.koreanPronunciation,
   });
 
   final String text;
@@ -112,6 +163,7 @@ class _SentenceSeed {
   final List<String> tokens;
   final String? reading;
   final String? romanization;
+  final String? koreanPronunciation;
 }
 
 PartOfSpeech _partOfSpeechFor(String korean) => switch (korean) {
@@ -245,12 +297,12 @@ int _sentenceUnit(String korean) => switch (korean) {
 };
 
 const _englishWords = <_WordSeed>[
-  _WordSeed('hello', '안녕하세요'),
-  _WordSeed('goodbye', '안녕히 가세요'),
-  _WordSeed('please', '부탁합니다'),
-  _WordSeed('thank you', '감사합니다'),
-  _WordSeed('yes', '네'),
-  _WordSeed('no', '아니요'),
+  _WordSeed('hello', '안녕하세요', koreanPronunciation: '헬로우'),
+  _WordSeed('goodbye', '안녕히 가세요', koreanPronunciation: '굿바이'),
+  _WordSeed('please', '부탁합니다', koreanPronunciation: '플리즈'),
+  _WordSeed('thank you', '감사합니다', koreanPronunciation: '땡큐'),
+  _WordSeed('yes', '네', koreanPronunciation: '예스'),
+  _WordSeed('no', '아니요', koreanPronunciation: '노우'),
   _WordSeed('person', '사람'),
   _WordSeed('name', '이름'),
   _WordSeed('friend', '친구'),
@@ -328,19 +380,23 @@ const _englishWords = <_WordSeed>[
 ];
 
 const _englishSentences = <_SentenceSeed>[
-  _SentenceSeed('How are you?', '어떻게 지내세요?', ['How', 'are', 'you?']),
+  _SentenceSeed('How are you?', '어떻게 지내세요?', [
+    'How',
+    'are',
+    'you?',
+  ], koreanPronunciation: '하우 아 유?'),
   _SentenceSeed('My name is Mina.', '제 이름은 미나예요.', [
     'My',
     'name',
     'is',
     'Mina.',
-  ]),
+  ], koreanPronunciation: '마이 네임 이즈 미나.'),
   _SentenceSeed('Nice to meet you.', '만나서 반가워요.', [
     'Nice',
     'to',
     'meet',
     'you.',
-  ]),
+  ], koreanPronunciation: '나이스 투 미트 유.'),
   _SentenceSeed('Where is the station?', '역이 어디에 있나요?', [
     'Where',
     'is',
@@ -431,17 +487,48 @@ const _englishSentences = <_SentenceSeed>[
 ];
 
 const _japaneseWords = <_WordSeed>[
-  _WordSeed('こんにちは', '안녕하세요', reading: 'こんにちは', romanization: 'konnichiwa'),
-  _WordSeed('さようなら', '안녕히 가세요', reading: 'さようなら', romanization: 'sayounara'),
+  _WordSeed(
+    'こんにちは',
+    '안녕하세요',
+    reading: 'こんにちは',
+    romanization: 'konnichiwa',
+    koreanPronunciation: '곤니치와',
+  ),
+  _WordSeed(
+    'さようなら',
+    '안녕히 가세요',
+    reading: 'さようなら',
+    romanization: 'sayounara',
+    koreanPronunciation: '사요나라',
+  ),
   _WordSeed(
     'お願いします',
     '부탁합니다',
     reading: 'おねがいします',
     romanization: 'onegaishimasu',
+    koreanPronunciation: '오네가이시마스',
   ),
-  _WordSeed('ありがとう', '감사합니다', reading: 'ありがとう', romanization: 'arigatou'),
-  _WordSeed('はい', '네', reading: 'はい', romanization: 'hai'),
-  _WordSeed('いいえ', '아니요', reading: 'いいえ', romanization: 'iie'),
+  _WordSeed(
+    'ありがとう',
+    '감사합니다',
+    reading: 'ありがとう',
+    romanization: 'arigatou',
+    koreanPronunciation: '아리가토',
+  ),
+  _WordSeed(
+    'はい',
+    '네',
+    reading: 'はい',
+    romanization: 'hai',
+    koreanPronunciation: '하이',
+  ),
+  _WordSeed(
+    'いいえ',
+    '아니요',
+    reading: 'いいえ',
+    romanization: 'iie',
+    koreanPronunciation: '이이에',
+  ),
   _WordSeed('人', '사람', reading: 'ひと', romanization: 'hito'),
   _WordSeed('名前', '이름', reading: 'なまえ', romanization: 'namae'),
   _WordSeed('友達', '친구', reading: 'ともだち', romanization: 'tomodachi'),
@@ -525,6 +612,7 @@ const _japaneseSentences = <_SentenceSeed>[
     ['お元気', 'ですか。'],
     reading: 'おげんきですか',
     romanization: 'ogenki desu ka',
+    koreanPronunciation: '오겐키 데스까',
   ),
   _SentenceSeed(
     '私の名前はミナです。',
@@ -532,6 +620,7 @@ const _japaneseSentences = <_SentenceSeed>[
     ['私の名前は', 'ミナです。'],
     reading: 'わたしのなまえはミナです',
     romanization: 'watashi no namae wa Mina desu',
+    koreanPronunciation: '와타시노 나마에와 미나 데스',
   ),
   _SentenceSeed(
     'はじめまして。',
@@ -539,6 +628,7 @@ const _japaneseSentences = <_SentenceSeed>[
     ['はじめ', 'まして。'],
     reading: 'はじめまして',
     romanization: 'hajimemashite',
+    koreanPronunciation: '하지메마시테',
   ),
   _SentenceSeed(
     '駅はどこですか。',
@@ -640,7 +730,7 @@ const _japaneseSentences = <_SentenceSeed>[
   ),
   _SentenceSeed(
     'バスが遅れています。',
-    '버스가 늦고 있어요.',
+    '버스가 늦어요.',
     ['バスが', '遅れて', 'います。'],
     reading: 'バスがおくれています',
     romanization: 'basu ga okureteimasu',
@@ -662,12 +752,12 @@ const _japaneseSentences = <_SentenceSeed>[
 ];
 
 const _germanWords = <_WordSeed>[
-  _WordSeed('Hallo', '안녕하세요'),
-  _WordSeed('Auf Wiedersehen', '안녕히 가세요'),
-  _WordSeed('Bitte', '부탁합니다'),
-  _WordSeed('Danke', '감사합니다'),
-  _WordSeed('Ja', '네'),
-  _WordSeed('Nein', '아니요'),
+  _WordSeed('Hallo', '안녕하세요', koreanPronunciation: '할로'),
+  _WordSeed('Auf Wiedersehen', '안녕히 가세요', koreanPronunciation: '아우프 비더제엔'),
+  _WordSeed('Bitte', '부탁합니다', koreanPronunciation: '비테'),
+  _WordSeed('Danke', '감사합니다', koreanPronunciation: '당케'),
+  _WordSeed('Ja', '네', koreanPronunciation: '야'),
+  _WordSeed('Nein', '아니요', koreanPronunciation: '나인'),
   _WordSeed('Person', '사람'),
   _WordSeed('Name', '이름'),
   _WordSeed('Freund', '친구'),
@@ -749,14 +839,18 @@ const _germanSentences = <_SentenceSeed>[
     'geht',
     'es',
     'Ihnen?',
-  ]),
-  _SentenceSeed('Ich heiße Mina.', '제 이름은 미나예요.', ['Ich', 'heiße', 'Mina.']),
-  _SentenceSeed('Freut mich, Sie kennenzulernen.', '만나서 반가워요.', [
-    'Freut',
-    'mich,',
-    'Sie',
-    'kennenzulernen.',
-  ]),
+  ], koreanPronunciation: '비 게이트 에스 이넨?'),
+  _SentenceSeed('Ich heiße Mina.', '제 이름은 미나예요.', [
+    'Ich',
+    'heiße',
+    'Mina.',
+  ], koreanPronunciation: '이히 하이세 미나.'),
+  _SentenceSeed(
+    'Freut mich, Sie kennenzulernen.',
+    '만나서 반가워요.',
+    ['Freut', 'mich,', 'Sie', 'kennenzulernen.'],
+    koreanPronunciation: '프로이트 미히, 지 케넨출레르넨.',
+  ),
   _SentenceSeed('Wo ist der Bahnhof?', '역은 어디예요?', [
     'Wo',
     'ist',
@@ -854,12 +948,12 @@ const _germanSentences = <_SentenceSeed>[
 ];
 
 const _frenchWords = <_WordSeed>[
-  _WordSeed('bonjour', '안녕하세요'),
-  _WordSeed('au revoir', '안녕히 가세요'),
-  _WordSeed("s'il vous plaît", '부탁합니다'),
-  _WordSeed('merci', '감사합니다'),
-  _WordSeed('oui', '네'),
-  _WordSeed('non', '아니요'),
+  _WordSeed('bonjour', '안녕하세요', koreanPronunciation: '봉주르'),
+  _WordSeed('au revoir', '안녕히 가세요', koreanPronunciation: '오 르부아르'),
+  _WordSeed("s'il vous plaît", '부탁합니다', koreanPronunciation: '실 부 플레'),
+  _WordSeed('merci', '감사합니다', koreanPronunciation: '메르시'),
+  _WordSeed('oui', '네', koreanPronunciation: '위'),
+  _WordSeed('non', '아니요', koreanPronunciation: '농'),
   _WordSeed('personne', '사람'),
   _WordSeed('nom', '이름'),
   _WordSeed('ami', '친구'),
@@ -940,18 +1034,18 @@ const _frenchSentences = <_SentenceSeed>[
     'Comment',
     'allez-vous',
     '?',
-  ]),
+  ], koreanPronunciation: '코망 탈레 부?'),
   _SentenceSeed("Je m'appelle Mina.", '제 이름은 미나예요.', [
     'Je',
     "m'appelle",
     'Mina.',
-  ]),
-  _SentenceSeed('Enchanté de vous rencontrer.', '만나서 반가워요.', [
-    'Enchanté',
-    'de',
-    'vous',
-    'rencontrer.',
-  ]),
+  ], koreanPronunciation: '즈 마펠 미나.'),
+  _SentenceSeed(
+    'Enchanté de vous rencontrer.',
+    '만나서 반가워요.',
+    ['Enchanté', 'de', 'vous', 'rencontrer.'],
+    koreanPronunciation: '앙샹테 드 부 랑콩트레.',
+  ),
   _SentenceSeed('Où est la gare ?', '역은 어디예요?', [
     'Où',
     'est',
@@ -1047,12 +1141,12 @@ const _frenchSentences = <_SentenceSeed>[
 ];
 
 const _spanishWords = <_WordSeed>[
-  _WordSeed('hola', '안녕하세요'),
-  _WordSeed('adiós', '안녕히 가세요'),
-  _WordSeed('por favor', '부탁합니다'),
-  _WordSeed('gracias', '감사합니다'),
-  _WordSeed('sí', '네'),
-  _WordSeed('no', '아니요'),
+  _WordSeed('hola', '안녕하세요', koreanPronunciation: '올라'),
+  _WordSeed('adiós', '안녕히 가세요', koreanPronunciation: '아디오스'),
+  _WordSeed('por favor', '부탁합니다', koreanPronunciation: '포르 파보르'),
+  _WordSeed('gracias', '감사합니다', koreanPronunciation: '그라시아스'),
+  _WordSeed('sí', '네', koreanPronunciation: '시'),
+  _WordSeed('no', '아니요', koreanPronunciation: '노'),
   _WordSeed('persona', '사람'),
   _WordSeed('nombre', '이름'),
   _WordSeed('amigo', '친구'),
@@ -1129,9 +1223,20 @@ const _spanishWords = <_WordSeed>[
   _WordSeed('ayudar', '돕다'),
 ];
 const _spanishSentences = <_SentenceSeed>[
-  _SentenceSeed('¿Cómo está usted?', '어떻게 지내세요?', ['¿Cómo', 'está', 'usted?']),
-  _SentenceSeed('Me llamo Mina.', '제 이름은 미나예요.', ['Me', 'llamo', 'Mina.']),
-  _SentenceSeed('Mucho gusto.', '만나서 반가워요.', ['Mucho', 'gusto.']),
+  _SentenceSeed('¿Cómo está usted?', '어떻게 지내세요?', [
+    '¿Cómo',
+    'está',
+    'usted?',
+  ], koreanPronunciation: '코모 에스타 우스테드?'),
+  _SentenceSeed('Me llamo Mina.', '제 이름은 미나예요.', [
+    'Me',
+    'llamo',
+    'Mina.',
+  ], koreanPronunciation: '메 야모 미나.'),
+  _SentenceSeed('Mucho gusto.', '만나서 반가워요.', [
+    'Mucho',
+    'gusto.',
+  ], koreanPronunciation: '무초 구스토.'),
   _SentenceSeed('¿Dónde está la estación?', '역은 어디예요?', [
     '¿Dónde',
     'está',
@@ -1202,12 +1307,12 @@ const _spanishSentences = <_SentenceSeed>[
 ];
 
 const _chineseWords = <_WordSeed>[
-  _WordSeed('你好', '안녕하세요', reading: 'nǐ hǎo'),
-  _WordSeed('再见', '안녕히 가세요', reading: 'zài jiàn'),
-  _WordSeed('请', '부탁합니다', reading: 'qǐng'),
-  _WordSeed('谢谢', '감사합니다', reading: 'xiè xie'),
-  _WordSeed('是', '네', reading: 'shì'),
-  _WordSeed('不是', '아니요', reading: 'bú shì'),
+  _WordSeed('你好', '안녕하세요', reading: 'nǐ hǎo', koreanPronunciation: '니 하오'),
+  _WordSeed('再见', '안녕히 가세요', reading: 'zài jiàn', koreanPronunciation: '짜이 지앤'),
+  _WordSeed('请', '부탁합니다', reading: 'qǐng', koreanPronunciation: '칭'),
+  _WordSeed('谢谢', '감사합니다', reading: 'xiè xie', koreanPronunciation: '시에시에'),
+  _WordSeed('是', '네', reading: 'shì', koreanPronunciation: '스'),
+  _WordSeed('不是', '아니요', reading: 'bú shì', koreanPronunciation: '부 스'),
   _WordSeed('人', '사람', reading: 'rén'),
   _WordSeed('名字', '이름', reading: 'míng zi'),
   _WordSeed('朋友', '친구', reading: 'péng you'),
@@ -1284,12 +1389,27 @@ const _chineseWords = <_WordSeed>[
   _WordSeed('帮助', '돕다', reading: 'bāng zhù'),
 ];
 const _chineseSentences = <_SentenceSeed>[
-  _SentenceSeed('你好吗？', '어떻게 지내세요?', ['你', '好吗？'], reading: 'nǐ hǎo ma'),
-  _SentenceSeed('我叫米娜。', '제 이름은 미나예요.', ['我叫', '米娜。'], reading: 'wǒ jiào Mǐnà'),
-  _SentenceSeed('很高兴认识你。', '만나서 반가워요.', [
-    '很高兴',
-    '认识你。',
-  ], reading: 'hěn gāo xìng rèn shi nǐ'),
+  _SentenceSeed(
+    '你好吗？',
+    '어떻게 지내세요?',
+    ['你', '好吗？'],
+    reading: 'nǐ hǎo ma',
+    koreanPronunciation: '니 하오 마?',
+  ),
+  _SentenceSeed(
+    '我叫米娜。',
+    '제 이름은 미나예요.',
+    ['我叫', '米娜。'],
+    reading: 'wǒ jiào Mǐnà',
+    koreanPronunciation: '워 지아오 미나.',
+  ),
+  _SentenceSeed(
+    '很高兴认识你。',
+    '만나서 반가워요.',
+    ['很高兴', '认识你。'],
+    reading: 'hěn gāo xìng rèn shi nǐ',
+    koreanPronunciation: '헌 가오싱 런스 니.',
+  ),
   _SentenceSeed('车站在哪里？', '역은 어디예요?', [
     '车站',
     '在哪里？',
