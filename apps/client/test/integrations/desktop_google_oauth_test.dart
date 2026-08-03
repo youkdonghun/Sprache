@@ -32,13 +32,13 @@ void main() {
     expect(error.toString(), contains('Bad Request'));
   });
 
-  test('desktop silent restore requires identity and Drive tokens', () async {
+  test('desktop silent restore only requires a Drive token', () async {
     final vault = MemoryTokenVault();
     final oauth = DesktopGoogleOAuth(
       clientId: 'desktop-client-id',
       tokenVault: vault,
-      tokenBroker: RailwayDesktopGoogleTokenBroker(
-        apiBaseUrl: 'https://sprache-api.example',
+      tokenBroker: DirectDesktopGoogleTokenBroker(
+        clientId: 'desktop-client-id',
         httpClient: MockClient((_) async => http.Response('{}', 500)),
       ),
     );
@@ -62,28 +62,26 @@ void main() {
       final vault = MemoryTokenVault();
       Uri? authorizationUri;
       Future<_LoopbackResponse>? callbackResponse;
-      final tokenBroker = RailwayDesktopGoogleTokenBroker(
-        apiBaseUrl: 'https://sprache-api.example',
+      final tokenBroker = DirectDesktopGoogleTokenBroker(
+        clientId: 'desktop-client-id',
         httpClient: MockClient((request) async {
-          expect(
-            request.url.toString(),
-            'https://sprache-api.example/v1/oauth/google/desktop/token',
-          );
+          expect(request.url.toString(), 'https://oauth2.googleapis.com/token');
           expect(request, isA<http.Request>());
-          final fields = jsonDecode(request.body) as Map<String, Object?>;
-          expect(fields['grantType'], 'authorization_code');
-          expect(fields['authorizationCode'], 'test-authorization-code');
-          expect(fields['codeVerifier'], isNotEmpty);
+          final fields = request.bodyFields;
+          expect(fields['grant_type'], 'authorization_code');
+          expect(fields['client_id'], 'desktop-client-id');
+          expect(fields['code'], 'test-authorization-code');
+          expect(fields['code_verifier'], isNotEmpty);
           expect(
-            fields['redirectUri'],
+            fields['redirect_uri'],
             authorizationUri!.queryParameters['redirect_uri'],
           );
           return http.Response(
             jsonEncode({
-              'accessToken': 'test-access-token',
-              'refreshToken': 'test-refresh-token',
-              'idToken': 'test-id-token',
-              'expiresIn': 3600,
+              'access_token': 'test-access-token',
+              'refresh_token': 'test-refresh-token',
+              'id_token': 'test-id-token',
+              'expires_in': 3600,
             }),
             200,
             headers: {'content-type': 'application/json'},
@@ -99,7 +97,8 @@ void main() {
           authorizationUri = uri;
           expect(uri.host, 'accounts.google.com');
           expect(uri.queryParameters['code_challenge_method'], 'S256');
-          expect(uri.queryParameters['scope'], contains('openid'));
+          expect(uri.queryParameters['scope'], contains('drive.file'));
+          expect(uri.queryParameters['scope'], contains('drive.appdata'));
 
           final redirectUri = Uri.parse(uri.queryParameters['redirect_uri']!);
           expect(redirectUri.host, '127.0.0.1');
@@ -120,13 +119,13 @@ void main() {
         },
       );
 
-      final result = await oauth.signIn();
+      final result = await oauth.authorizeDriveAccess();
       final browserResponse = await callbackResponse!;
-      final stored = await vault.read(GoogleTokenKind.identity);
+      final stored = await vault.read(GoogleTokenKind.drive);
 
       expect(browserResponse.statusCode, 200);
-      expect(browserResponse.body, contains('Google 계정 확인을 마쳤습니다'));
-      expect(browserResponse.body, contains('Drive 폴더 선택 화면'));
+      expect(browserResponse.body, contains('Drive 권한을 확인했습니다'));
+      expect(browserResponse.body, contains('Sprache로 돌아가면 됩니다'));
       expect(result.tokens.accessToken, 'test-access-token');
       expect(result.tokens.refreshToken, 'test-refresh-token');
       expect(result.tokens.idToken, 'test-id-token');
@@ -139,8 +138,8 @@ void main() {
     () async {
       Future<_LoopbackResponse>? callbackResponse;
       var tokenExchangeCalled = false;
-      final tokenBroker = RailwayDesktopGoogleTokenBroker(
-        apiBaseUrl: 'https://sprache-api.example',
+      final tokenBroker = DirectDesktopGoogleTokenBroker(
+        clientId: 'desktop-client-id',
         httpClient: MockClient((request) async {
           tokenExchangeCalled = true;
           return http.Response('{}', 500);
@@ -167,7 +166,7 @@ void main() {
       );
 
       await expectLater(
-        oauth.signIn(),
+        oauth.authorizeDriveAccess(),
         throwsA(
           isA<StateError>().having(
             (error) => error.message,
@@ -179,7 +178,7 @@ void main() {
       final browserResponse = await callbackResponse!;
 
       expect(browserResponse.statusCode, 400);
-      expect(browserResponse.body, contains('연결을 완료하지 못했습니다'));
+      expect(browserResponse.body, contains('Google 연결을 마치지 못했어요'));
       expect(tokenExchangeCalled, isFalse);
     },
   );

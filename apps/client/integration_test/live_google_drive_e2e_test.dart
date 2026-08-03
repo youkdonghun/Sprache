@@ -146,8 +146,8 @@ Future<bool> _launchChrome(Uri authorizationUri) async {
 void _expectLiveWindowsConfig(AppConfig config) {
   expect(config.mockMode, isFalse);
   expect(config.appEnvironment, 'production');
-  expect(config.apiBaseUrl, startsWith('https://'));
   expect(config.googleDesktopClientId, isNotEmpty);
+  expect(config.privacyPolicyUrl, startsWith('https://'));
 }
 
 LearningItem _crossDeviceMarker() {

@@ -1,15 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as path;
 import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/app_experience_preferences.dart';
+import 'package:sprache/src/domain/local_storage.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/integrations/google/google_connection_service.dart';
 import 'package:sprache/src/screens/settings_screen.dart';
+import 'package:sprache/src/services/local_storage_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 import 'package:sprache/src/state/connection_state.dart';
+import 'package:sprache/src/state/local_storage_state.dart';
 
 void main() {
   testWidgets('storage deep link opens the Drive and local location category', (
@@ -81,6 +86,112 @@ void main() {
     expect(find.textContaining('mock_word_study_data'), findsOneWidget);
     expect(find.byKey(const Key('open-drive-folder')), findsOneWidget);
     expect(find.byKey(const Key('copy-drive-folder-id')), findsOneWidget);
+  });
+
+  testWidgets('configured local path supports open copy and change actions', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    const launcherChannel = MethodChannel('plugins.flutter.io/url_launcher');
+    String? launchedUrl;
+    String? clipboardText;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      launcherChannel,
+      (call) async {
+        if (call.method == 'launch' || call.method == 'launchUrl') {
+          final arguments = call.arguments;
+          launchedUrl = arguments is Map
+              ? arguments['url'] as String?
+              : arguments as String?;
+          return true;
+        }
+        return true;
+      },
+    );
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          clipboardText = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    final store = MemoryStudyStore(
+      preferences: const StudyPreferences(onboardingCompleted: true),
+      localStorageSettings: const LocalStorageSettings(
+        locationId: r'C:\Study',
+        displayName: 'Study',
+        locationKind: LocalStorageLocationKind.fileSystemPath,
+      ),
+    );
+    final backend = _SettingsLocalStorageBackend(
+      selectedLocation: const LocalStorageLocation(
+        locationId: r'C:\Next',
+        displayName: 'Next',
+        kind: LocalStorageLocationKind.fileSystemPath,
+      ),
+    );
+    final container = ProviderContainer(
+      overrides: [
+        studyStoreProvider.overrideWithValue(store),
+        localStorageBackendProvider.overrideWithValue(backend),
+        importArchiveStagingProvider.overrideWithValue(
+          const _EmptyImportStaging(),
+        ),
+      ],
+    );
+    final initialLocation = path.join(r'C:\Study', 'Sprache');
+    final changedLocation = path.join(r'C:\Next', 'Sprache');
+    addTearDown(container.dispose);
+    try {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(
+            home: Scaffold(body: SettingsScreen(initialFocus: 'storage')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(localStorageControllerProvider).settings.locationId,
+        r'C:\Study',
+      );
+      final open = find.byKey(const Key('open-local-folder'));
+      await tester.ensureVisible(open);
+      await tester.tap(open);
+      await tester.pump();
+      expect(launchedUrl, contains('C:/Study/Sprache'));
+
+      final copy = find.byKey(const Key('copy-local-folder-path'));
+      await tester.ensureVisible(copy);
+      await tester.tap(copy);
+      await tester.pump();
+      expect(clipboardText, initialLocation);
+
+      final change = find.byKey(const Key('change-local-folder'));
+      await tester.ensureVisible(change);
+      await tester.tap(change);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(localStorageControllerProvider).settings.locationId,
+        r'C:\Next',
+      );
+      expect(find.text(changedLocation), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    } finally {
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        launcherChannel,
+        null,
+      );
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      );
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('settings search filters sections and exposes a clear action', (
@@ -227,4 +338,71 @@ void main() {
     expect(preferences.favoriteItemIds, favoritesBefore);
     expect(tester.takeException(), isNull);
   });
+}
+
+class _SettingsLocalStorageBackend implements LocalStorageBackend {
+  const _SettingsLocalStorageBackend({required this.selectedLocation});
+
+  final LocalStorageLocation selectedLocation;
+
+  @override
+  Future<LocalStorageLocation?> pickLocation({
+    LocalStorageSettings? current,
+  }) async => selectedLocation;
+
+  @override
+  Future<LocalStorageLocation> verifyLocation(
+    LocalStorageLocation location,
+  ) async => location;
+
+  @override
+  Future<bool> hasLatestArchive(LocalStorageLocation location) async => false;
+
+  @override
+  Future<LocalStorageWriteResult> writeBundle({
+    required LocalStorageLocation location,
+    required LocalStorageBundle bundle,
+  }) async => LocalStorageWriteResult(
+    savedAt: DateTime.utc(2026, 8, 3, 12),
+    sha256Hex: bundle.archiveSha256,
+    byteLength: bundle.archiveBytes,
+  );
+
+  @override
+  Future<Uint8List?> readLatestArchive(LocalStorageLocation location) async =>
+      null;
+
+  @override
+  Future<LocalImportArchiveResult> archiveImport({
+    required LocalStorageLocation location,
+    required String originalFileName,
+    required Uint8List bytes,
+    required String sha256Hex,
+  }) async => const LocalImportArchiveResult(
+    created: true,
+    relativePath: 'imports/test.bin',
+  );
+
+  @override
+  Future<void> releaseLocation(LocalStorageLocation location) async {}
+}
+
+class _EmptyImportStaging implements ImportArchiveStagingService {
+  const _EmptyImportStaging();
+
+  @override
+  Future<List<StagedImportArchive>> list() async => const [];
+
+  @override
+  Future<void> remove(String id) async {}
+
+  @override
+  Future<StagedImportArchive> stage({
+    required String originalFileName,
+    required Uint8List bytes,
+    required String sha256Hex,
+    String? distributionKey,
+  }) {
+    throw UnimplementedError();
+  }
 }

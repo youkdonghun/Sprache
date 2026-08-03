@@ -39,7 +39,7 @@ class AdvancedPreferencesPanel extends StatelessWidget {
             '글자 크기 모션 움직임 진동 햅틱 효과음',
           ),
           icon: Icons.palette_outlined,
-          title: '외형',
+          title: '화면',
           summary:
               '${_colorModeLabel(experiencePreferences.colorMode)} · '
               '${_paletteLabel(experiencePreferences.accentPalette)} · '
@@ -95,8 +95,8 @@ class AdvancedPreferencesPanel extends StatelessWidget {
               ),
             ),
             _OptionGroup<AppDensity>(
-              label: '화면 밀도',
-              semanticLabel: '화면 밀도',
+              label: '화면 간격',
+              semanticLabel: '화면 간격',
               keyPrefix: 'appearance-density',
               value: experiencePreferences.density,
               options: const [
@@ -226,7 +226,7 @@ class AdvancedPreferencesPanel extends StatelessWidget {
               controlKey: const Key('audio-offline-voice'),
               semanticLabel: '오프라인 음성 우선 설정',
               title: '오프라인 음성 우선',
-              subtitle: '기기에 설치된 음성을 먼저 사용합니다.',
+              subtitle: '인터넷 없이 쓸 수 있는 기기 음성을 먼저 재생합니다.',
               value: interactionPreferences.preferOfflineVoice,
               onChanged: (value) => onInteractionPreferencesChanged(
                 interactionPreferences.copyWith(preferOfflineVoice: value),
@@ -285,15 +285,15 @@ class AdvancedPreferencesPanel extends StatelessWidget {
             '퀴즈 문제 정답 방향 선택지 배치 섞기 자동 넘김 대기 채점',
           ),
           icon: Icons.quiz_outlined,
-          title: '퀴즈 편의',
+          title: '퀴즈 방식',
           summary:
               '${_directionLabel(interactionPreferences.answerDirection)} · '
               '${_choiceLayoutLabel(interactionPreferences.choiceLayout)} · '
               '${interactionPreferences.autoAdvanceCorrect ? '자동 넘김' : '직접 넘김'}',
           children: [
             _OptionGroup<StudyAnswerDirection>(
-              label: '문제 방향',
-              semanticLabel: '문제와 정답 방향',
+              label: '출제 방향',
+              semanticLabel: '문제 출제 방향',
               keyPrefix: 'quiz-answer-direction',
               value: interactionPreferences.answerDirection,
               options: const [
@@ -318,8 +318,8 @@ class AdvancedPreferencesPanel extends StatelessWidget {
               ),
             ),
             _OptionGroup<StudyChoiceLayout>(
-              label: '선택지 배치',
-              semanticLabel: '선택지 배치',
+              label: '선택지 모양',
+              semanticLabel: '선택지 모양',
               keyPrefix: 'quiz-choice-layout',
               value: interactionPreferences.choiceLayout,
               options: const [
@@ -345,8 +345,8 @@ class AdvancedPreferencesPanel extends StatelessWidget {
             ),
             _CompactSwitch(
               controlKey: const Key('quiz-shuffle-choices'),
-              semanticLabel: '선택지 순서 섞기 설정',
-              title: '선택지 순서 섞기',
+              semanticLabel: '선택지 섞기 설정',
+              title: '선택지 섞기',
               value: interactionPreferences.shuffleChoices,
               onChanged: (value) => onInteractionPreferencesChanged(
                 interactionPreferences.copyWith(shuffleChoices: value),
@@ -354,8 +354,8 @@ class AdvancedPreferencesPanel extends StatelessWidget {
             ),
             _CompactSwitch(
               controlKey: const Key('quiz-auto-next'),
-              semanticLabel: '정답 후 자동 넘김 설정',
-              title: '정답 후 자동 넘김',
+              semanticLabel: '정답이면 다음 문제로 자동 이동 설정',
+              title: '정답이면 자동으로 다음 문제',
               value: interactionPreferences.autoAdvanceCorrect,
               onChanged: (value) => onInteractionPreferencesChanged(
                 interactionPreferences.copyWith(autoAdvanceCorrect: value),
@@ -364,7 +364,7 @@ class AdvancedPreferencesPanel extends StatelessWidget {
             _CompactSlider(
               controlKey: const Key('quiz-auto-next-delay'),
               semanticLabel: '자동 넘김 대기 시간',
-              title: '자동 넘김 대기',
+              title: '다음 문제까지 기다리기',
               valueLabel: _delayLabel(
                 interactionPreferences.autoAdvanceDelayMs,
               ),

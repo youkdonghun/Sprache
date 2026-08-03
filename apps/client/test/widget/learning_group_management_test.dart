@@ -409,7 +409,7 @@ void main() {
           find.byKey(const Key('library-item-subject-state-japanese')),
           findsOneWidget,
         );
-        expect(find.text('학습 주제가 바뀌어 검색·필터·선택을 초기화했습니다.'), findsOneWidget);
+        expect(find.text('학습 주제가 바뀌어 검색과 선택을 지웠어요.'), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
         debugDefaultTargetPlatformOverride = null;

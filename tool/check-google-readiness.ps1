@@ -1,50 +1,44 @@
 param(
-    [string]$ApiBaseUrl = 'https://sprache-api-production.up.railway.app',
+    [string]$DesktopClientId = '1054343487948-791d7jh7m90rt4cs1ncgkf6l5eecehut.apps.googleusercontent.com',
+    [string]$AndroidClientId = '1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com',
+    [string]$ServerClientId = '1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com',
+    [string]$PrivacyPolicyUrl = $(if ([string]::IsNullOrWhiteSpace($env:SPRACHE_PRIVACY_POLICY_URL)) {
+        'https://youkdonghun.github.io/Sprache/privacy/'
+    } else {
+        $env:SPRACHE_PRIVACY_POLICY_URL
+    }),
     [switch]$RequireReady
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-if (-not $ApiBaseUrl.StartsWith('https://', [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'API_BASE_URL must use HTTPS for the production Google readiness check'
+function Test-GoogleClientId {
+    param([string]$Value)
+    return -not [string]::IsNullOrWhiteSpace($Value) -and
+        $Value -match '^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$'
 }
 
-$healthUrl = "$($ApiBaseUrl.TrimEnd('/'))/health"
-try {
-    $health = Invoke-RestMethod -Uri $healthUrl -Method Get -TimeoutSec 15
-}
-catch {
-    throw "Railway health check failed at $healthUrl. Local study remains available; verify the Railway deployment and network before Google login."
-}
+$desktopReady = Test-GoogleClientId -Value $DesktopClientId
+$androidReady = Test-GoogleClientId -Value $AndroidClientId
+$serverReady = Test-GoogleClientId -Value $ServerClientId
+$privacyReady = -not [string]::IsNullOrWhiteSpace($PrivacyPolicyUrl) -and
+    $PrivacyPolicyUrl.StartsWith('https://', [StringComparison]::OrdinalIgnoreCase)
+$ready = $desktopReady -and $androidReady -and $serverReady -and $privacyReady
 
-if ($health.status -ne 'ok' -or $health.service -ne 'sprache-api') {
-    throw "Railway returned an unexpected health response at $healthUrl."
+[pscustomobject]@{
+    DesktopOAuthMode = 'direct-pkce'
+    DriveBindingStore = 'google-drive-appdata-pointer'
+    DesktopClientIdConfigured = $desktopReady
+    AndroidClientIdConfigured = $androidReady
+    ServerClientIdConfigured = $serverReady
+    PrivacyPolicyUrl = $PrivacyPolicyUrl
+    WindowsGoogleLoginReady = $desktopReady
+    ReleaseGoogleReady = $ready
 }
-
-$brokerState = if ($null -eq $health.desktopOAuthBroker) {
-    'api_update_required'
-}
-else {
-    [string]$health.desktopOAuthBroker
-}
-$ready = $brokerState -eq 'ready'
-
-$result = [pscustomobject]@{
-    ApiBaseUrl = $ApiBaseUrl.TrimEnd('/')
-    ApiHealthy = $true
-    DesktopOAuthBroker = $brokerState
-    WindowsGoogleLoginReady = $ready
-}
-$result
 
 if (-not $ready) {
-    $message = if ($brokerState -eq 'api_update_required') {
-        'Railway API is reachable but does not expose desktopOAuthBroker. Deploy the current API before Windows Google login.'
-    }
-    else {
-        'Railway API is healthy, but Windows Google login is not ready. Register GOOGLE_DESKTOP_CLIENT_ID and GOOGLE_DESKTOP_CLIENT_SECRET together as Railway sealed variables, then wait for the redeployment.'
-    }
+    $message = 'Google 연결에 필요한 공개 Client ID와 HTTPS 개인정보처리방침 URL을 확인해 주세요.'
     if ($RequireReady) {
         throw $message
     }

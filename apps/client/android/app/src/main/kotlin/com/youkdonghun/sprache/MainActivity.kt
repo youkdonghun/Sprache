@@ -1266,7 +1266,12 @@ class MainActivity : FlutterFragmentActivity() {
         val request =
             AuthorizationRequest.builder()
                 .setAccount(Account(email, GOOGLE_ACCOUNT_TYPE))
-                .setRequestedScopes(listOf(Scope(Scopes.DRIVE_FILE)))
+                .setRequestedScopes(
+                    listOf(
+                        Scope(Scopes.DRIVE_FILE),
+                        Scope("https://www.googleapis.com/auth/drive.appdata"),
+                    ),
+                )
                 .setOptOutIncludingGrantedScopes(true)
                 .setPrompt(AuthorizationRequest.Prompt.CONSENT)
                 .addResourceParameter(

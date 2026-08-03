@@ -62,7 +62,7 @@ void main() {
 
     await tester.enterText(search, '존재하지 않는 게임');
     await tester.pump();
-    expect(find.text('검색 조건에 맞는 게임이 없습니다.'), findsOneWidget);
+    expect(find.text('조건에 맞는 게임이 없어요.'), findsOneWidget);
 
     await tester.tap(find.byTooltip('검색 지우기'));
     await tester.pump();

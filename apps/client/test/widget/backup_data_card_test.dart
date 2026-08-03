@@ -39,7 +39,7 @@ void main() {
   });
 
   testWidgets(
-    'settings explains Google, Railway, speech, and deletion privacy',
+    'settings explains Google, local-only storage, speech, and deletion privacy',
     (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
@@ -51,7 +51,6 @@ void main() {
             studyStoreProvider.overrideWithValue(MemoryStudyStore()),
             appConfigProvider.overrideWithValue(
               const AppConfig(
-                apiBaseUrl: 'https://sprache-api-production.up.railway.app',
                 googleAndroidClientId: 'android-client-id',
                 googleDesktopClientId: 'desktop-client-id',
                 googleServerClientId: 'server-client-id',
@@ -59,7 +58,7 @@ void main() {
                 mockMode: false,
                 appVersion: '1.22.7',
                 privacyPolicyUrl:
-                    'https://sprache-api-production.up.railway.app/privacy',
+                    'https://youkdonghun.github.io/Sprache/privacy/',
               ),
             ),
           ],
@@ -78,7 +77,7 @@ void main() {
 
       expect(find.byKey(const Key('privacy-details-dialog')), findsOneWidget);
       expect(find.text('Google 계정과 Drive 사용'), findsOneWidget);
-      expect(find.text('Railway에 저장하는 정보'), findsOneWidget);
+      expect(find.text('운영자 서버를 쓰지 않습니다'), findsOneWidget);
       expect(find.text('발음 연습'), findsOneWidget);
       expect(find.text('삭제와 연결 해제'), findsOneWidget);
       expect(find.textContaining('앱 버전 1.22.7'), findsOneWidget);

@@ -232,6 +232,54 @@ void main() {
     expect(find.byKey(const Key('live-difficulty-indicator')), findsNothing);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'resumed practice restores adaptive difficulty from saved attempts',
+    (tester) async {
+      final now = DateTime.utc(2026, 8, 3, 9);
+      final metrics = [
+        for (var index = 0; index < 3; index++)
+          StudyAttemptMetric(
+            itemId: _examItems[index].id,
+            skill: StudySkill.meaning,
+            errorType: StudyErrorType.meaningRecall,
+            correct: false,
+            responseTimeMs: 12000,
+            recordedAt: now.subtract(Duration(seconds: 20 - index)),
+          ),
+      ];
+      final active =
+          ActiveStudySession.started(
+            sessionId: 'adaptive-resume',
+            courseId: LanguageTag.english.courseId,
+            mode: StudyMode.mixed,
+            unitIndex: null,
+            itemIds: _examItems.map((item) => item.id).toList(),
+            startedAt: now.subtract(const Duration(minutes: 2)),
+          ).copyWith(
+            currentIndex: 1,
+            wrongCount: 3,
+            wrongItemIds: _examItems.map((item) => item.id).toSet(),
+            attemptMetrics: metrics,
+            updatedAt: now,
+          );
+
+      await _pumpDirectStudy(
+        tester,
+        now: () => now,
+        active: active,
+        items: _examItems,
+        screen: const StudyScreen(mode: StudyMode.mixed, resume: true),
+      );
+
+      expect(
+        find.byKey(const Key('live-difficulty-indicator')),
+        findsOneWidget,
+      );
+      expect(find.text('난이도 자동 · 도움'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 const _profile = StoredProfile(

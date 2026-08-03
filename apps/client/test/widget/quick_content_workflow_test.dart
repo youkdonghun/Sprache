@@ -85,7 +85,7 @@ void main() {
       expect(find.byKey(const Key('learning-data-flow-card')), findsOneWidget);
       await tester.tap(find.byKey(const Key('library-add-button')));
       await tester.pumpAndSettle();
-      expect(find.text('어떻게 추가할까요?'), findsOneWidget);
+      expect(find.text('무엇을 추가할까요?'), findsOneWidget);
 
       await tester.tap(find.byKey(const Key('add-quick-word')));
       await tester.pumpAndSettle();

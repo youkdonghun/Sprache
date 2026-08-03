@@ -87,6 +87,39 @@ void main() {
     expect(restored.readings[ReadingScheme.kana], 'みずをのむ');
   });
 
+  test('selection-only quick drafts remain recoverable content', () {
+    QuickContentDraft draft({
+      LearningItemKind kind = LearningItemKind.word,
+      PartOfSpeech partOfSpeech = PartOfSpeech.noun,
+      String? group,
+      bool favorite = false,
+      int priority = 0,
+    }) => QuickContentDraft(
+      subjectId: 'language:en',
+      kind: kind,
+      text: '',
+      meanings: const [],
+      acceptedAnswers: const [],
+      readings: const {},
+      sentenceTokens: const [],
+      example: '',
+      exampleMeaning: '',
+      partOfSpeech: partOfSpeech,
+      group: group,
+      tags: const [],
+      favorite: favorite,
+      priority: priority,
+      updatedAt: DateTime.utc(2026, 8, 3),
+    );
+
+    expect(draft().hasContent, isFalse);
+    expect(draft(kind: LearningItemKind.sentence).hasContent, isTrue);
+    expect(draft(partOfSpeech: PartOfSpeech.verb).hasContent, isTrue);
+    expect(draft(group: '업무').hasContent, isTrue);
+    expect(draft(favorite: true).hasContent, isTrue);
+    expect(draft(priority: 3).hasContent, isTrue);
+  });
+
   test('quick draft round-trips the registration basket', () {
     const item = LearningItem(
       id: 'basket-word',

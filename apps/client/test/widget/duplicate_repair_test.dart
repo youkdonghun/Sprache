@@ -76,7 +76,7 @@ void main() {
         await tester.ensureVisible(open);
         await tester.tap(open);
         await tester.pumpAndSettle();
-        expect(find.text('중복 자료 수선'), findsOneWidget);
+        expect(find.text('중복 자료 합치기'), findsOneWidget);
         expect(find.text('같은 표현·언어·주제로 묶였습니다.'), findsOneWidget);
 
         await tester.tap(

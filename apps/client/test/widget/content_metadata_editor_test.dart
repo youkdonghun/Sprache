@@ -99,8 +99,8 @@ void main() {
         const Offset(0, 1000),
       );
       await tester.pumpAndSettle();
-      expect(find.text('추가하기'), findsOneWidget);
-      await tester.tap(find.text('추가하기'));
+      expect(find.text('표현 저장'), findsOneWidget);
+      await tester.tap(find.text('표현 저장'));
       await tester.pumpAndSettle();
 
       final saved = store.savedItems.single;

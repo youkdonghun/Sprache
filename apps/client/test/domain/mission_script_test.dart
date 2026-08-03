@@ -43,8 +43,51 @@ void main() {
     expect(scene.choose(goal.id).branch, MissionBranch.fluent);
     expect(scene.choose(alternative.id).branch, MissionBranch.coached);
     expect(scene.requestCoaching().usedCoaching, isTrue);
+    expect(first.mainSceneCount, greaterThanOrEqualTo(3));
+    expect(first.scenes, hasLength(first.mainSceneCount * 2));
+    expect(first.scenes[1].coachedFollowUp, isTrue);
+    expect(first.scenes[1].target.id, scene.target.id);
+    expect(
+      first.nextSceneIndex(currentIndex: 0, branch: MissionBranch.fluent),
+      2,
+    );
+    expect(
+      first.nextSceneIndex(currentIndex: 0, branch: MissionBranch.coached),
+      1,
+    );
+    expect(
+      first.nextSceneIndex(currentIndex: 1, branch: MissionBranch.coached),
+      2,
+    );
     expect(first.endingFor(coachedTurns: 0).title, contains('막힘없이'));
     expect(first.endingFor(coachedTurns: 1).title, contains('도움'));
+  });
+
+  test('mission checkpoint round-trips the selected branch', () {
+    final unit = firstEnglishUnit();
+    final script = scriptBuilder.build(
+      unit: unit,
+      setting: '첫 만남',
+      goal: '인사하기',
+    );
+    final scene = script.scenes.first;
+    final goal = scene.options.singleWhere((option) => option.isGoal);
+    final checkpoint = MissionProgressCheckpoint(
+      courseId: 'ko-en',
+      unitIndex: unit.index,
+      phraseIndex: 0,
+      sceneId: scene.id,
+      coachedTurns: 0,
+      decision: MissionCheckpointDecision.fluentChoice,
+      selectedOptionId: goal.id,
+      updatedAt: DateTime.utc(2026, 8, 3, 10),
+    );
+
+    final restored = MissionProgressCheckpoint.fromJson(checkpoint.toJson());
+
+    expect(restored.storageKey, 'ko-en:${unit.index}');
+    expect(restored.restoreDecision(scene)?.branch, MissionBranch.fluent);
+    expect(restored.updatedAt, DateTime.utc(2026, 8, 3, 10));
   });
 
   test('prioritizes a weak local phrase in the first mission scene', () {

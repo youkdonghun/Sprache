@@ -118,7 +118,7 @@ class ContentSelectionActionBar extends StatelessWidget {
                         child: ListTile(
                           dense: true,
                           leading: Icon(Icons.star_outline_rounded),
-                          title: Text('저장 표시 전환'),
+                          title: Text('즐겨찾기 바꾸기'),
                         ),
                       ),
                     if (onEditTags != null)
@@ -127,7 +127,7 @@ class ContentSelectionActionBar extends StatelessWidget {
                         child: ListTile(
                           dense: true,
                           leading: Icon(Icons.sell_outlined),
-                          title: Text('태그 일괄 변경'),
+                          title: Text('선택한 자료의 태그 바꾸기'),
                         ),
                       ),
                     if (onToggleVisibility != null)
@@ -136,7 +136,7 @@ class ContentSelectionActionBar extends StatelessWidget {
                         child: ListTile(
                           dense: true,
                           leading: Icon(Icons.visibility_off_outlined),
-                          title: Text('학습 포함·제외 전환'),
+                          title: Text('학습에 넣거나 빼기'),
                         ),
                       ),
                     if (onExport != null)
@@ -155,7 +155,7 @@ class ContentSelectionActionBar extends StatelessWidget {
                         child: ListTile(
                           dense: true,
                           leading: Icon(Icons.delete_outline_rounded),
-                          title: Text('사용자 자료 삭제'),
+                          title: Text('내가 추가한 자료 삭제'),
                         ),
                       ),
                     ],

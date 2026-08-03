@@ -625,7 +625,7 @@ void main() {
         .widget<Text>(find.byKey(const Key('study-question-prompt')))
         .data!;
     expect(promptAfter, isNot(promptBefore));
-    expect(find.text('이 문제를 감점 없이 세션 뒤로 미뤘습니다.'), findsOneWidget);
+    expect(find.text('이 문제는 감점 없이 뒤로 미뤘어요.'), findsOneWidget);
     expect(harness.store.savedEvents, isEmpty);
     expect(harness.controller.state.progress, isEmpty);
     expect(harness.controller.state.totalXp, 0);

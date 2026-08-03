@@ -111,7 +111,7 @@ void main() {
 
         await tester.tap(find.byKey(const Key('open-session-keyboard-help')));
         await tester.pumpAndSettle();
-        expect(find.text('퀴즈 키보드 도움말'), findsOneWidget);
+        expect(find.text('퀴즈 단축키'), findsOneWidget);
         expect(find.text('Ctrl+/'), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {

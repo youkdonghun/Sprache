@@ -40,7 +40,7 @@ enum _LibraryFilter { all, favorites, word, sentence, weak, wrong }
 
 String _libraryFilterLabel(_LibraryFilter filter) => switch (filter) {
   _LibraryFilter.all => '전체',
-  _LibraryFilter.favorites => '저장됨',
+  _LibraryFilter.favorites => '즐겨찾기',
   _LibraryFilter.word => '단어',
   _LibraryFilter.sentence => '문장',
   _LibraryFilter.weak => '취약',
@@ -64,7 +64,7 @@ String _librarySyncLabel(AppState state, ConnectionState connection) {
   if (connection.phase == ConnectionPhase.failed) {
     return '로컬 저장됨 · Drive 재시도 필요';
   }
-  if (state.pendingSync != null) return '로컬 저장됨 · Drive 반영 대기';
+  if (state.pendingSync != null) return '이 기기에 저장됨 · Drive 저장 대기';
   final syncedAt = connection.lastSyncedAt?.toLocal();
   if (syncedAt == null) return 'Drive 첫 동기화 대기';
   final hour = syncedAt.hour.toString().padLeft(2, '0');
@@ -400,7 +400,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       messenger.removeCurrentSnackBar();
       messenger.showSnackBar(
         const SnackBar(
-          content: Text('학습 주제가 바뀌어 검색·필터·선택을 초기화했습니다.'),
+          content: Text('학습 주제가 바뀌어 검색과 선택을 지웠어요.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -567,9 +567,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               onSubmitted: _rememberSubjectSearch,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                hintText: mobile
-                    ? '단어, 뜻, 읽기, 품사 검색'
-                    : '검색 · tag: type: state: group: · Ctrl+F',
+                hintText: mobile ? '단어·뜻·읽는 법·품사 검색' : '단어·뜻·예문 검색 · Ctrl+F',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffix: _query.isEmpty
                     ? null
@@ -669,7 +667,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               ),
               const SizedBox(width: 7),
               _FilterChip(
-                label: '저장됨',
+                label: '즐겨찾기',
                 count: favoriteCount,
                 selected: _filter == _LibraryFilter.favorites,
                 onSelected: () => setState(() {
@@ -978,7 +976,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 ),
               ),
               child: const Text(
-                '목록에서 정리하거나 학습할 자료를 선택하세요.',
+                '정리하거나 학습할 자료를 목록에서 골라 주세요.',
                 textAlign: TextAlign.center,
               ),
             )
@@ -1316,8 +1314,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     messenger.showSnackBar(
       SnackBar(
         content: Text(
-          '“${result.canonicalItem.text}” 자료를 하나로 정리하고 '
-          '학습 기록 ${result.removedItemIds.length}건을 대표 자료에 연결했습니다.',
+          '“${result.canonicalItem.text}”의 중복 자료를 하나로 합치고 '
+          '학습 기록 ${result.removedItemIds.length}건도 함께 옮겼어요.',
         ),
         duration: const Duration(seconds: 10),
         action: SnackBarAction(
@@ -1336,10 +1334,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final result = await controller.undoDuplicateRepair(token);
     if (!mounted) return;
     _showLibraryMessage(switch (result.status) {
-      DuplicateRepairUndoStatus.restored => '중복 자료와 학습 기록을 모두 복원했습니다.',
+      DuplicateRepairUndoStatus.restored => '중복 자료와 학습 기록을 모두 되돌렸어요.',
       DuplicateRepairUndoStatus.conflict =>
-        '합친 뒤 자료나 학습 기록이 변경되어 자동으로 되돌릴 수 없습니다.',
-      DuplicateRepairUndoStatus.alreadyUndone => '이미 되돌린 중복 수선입니다.',
+        '합친 뒤 자료나 학습 기록이 바뀌어 자동으로 되돌릴 수 없어요.',
+      DuplicateRepairUndoStatus.alreadyUndone => '이미 되돌린 내용이에요.',
     });
   }
 
@@ -1405,7 +1403,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       subjectId: controller.activeSubject.id,
     );
     if (entries.isEmpty) {
-      _showLibraryMessage('이 주제의 휴지통이 비어 있습니다.');
+      _showLibraryMessage('이 주제의 휴지통은 비어 있어요.');
       return;
     }
     final action = await showModalBottomSheet<_TrashSheetAction>(
@@ -1628,7 +1626,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         .where((item) => customIds.contains(item.id))
         .toList(growable: false);
     if (items.isEmpty) {
-      _showLibraryMessage('태그는 내가 추가한 자료에서만 일괄 변경할 수 있습니다.');
+      _showLibraryMessage('태그는 내가 추가한 자료에서만 한꺼번에 바꿀 수 있어요.');
       return;
     }
     final edit = await showDialog<_BulkTagEdit>(
@@ -1724,7 +1722,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             const ListTile(
               leading: Icon(Icons.task_alt_rounded),
               title: Text('내보내기 완료'),
-              subtitle: Text('이 기기에 맞는 다음 행동을 선택하세요.'),
+              subtitle: Text('파일을 열거나 저장된 폴더로 바로 이동할 수 있어요.'),
             ),
             for (final candidate in actions)
               ListTile(
@@ -1773,7 +1771,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           if (mounted) _showLibraryMessage('파일 경로를 복사했습니다.');
       }
     } on Object {
-      if (mounted) _showLibraryMessage('완료 행동을 열지 못했습니다. 파일은 저장되어 있어요.');
+      if (mounted) _showLibraryMessage('선택한 작업을 열지 못했지만 파일은 저장되어 있어요.');
     }
   }
 
@@ -1792,8 +1790,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       builder: (context) => AlertDialog(
         title: const Text('선택한 사용자 자료 삭제'),
         content: Text(
-          '${customIds.length}개 자료를 휴지통으로 이동합니다.\n'
-          '기본 언어팩과 학습 통계는 삭제하지 않습니다.',
+          '${customIds.length}개를 휴지통으로 옮겨요.\n'
+          '기본 언어팩과 학습 기록은 그대로 남습니다.',
         ),
         actions: [
           TextButton(
@@ -1819,7 +1817,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       batch = await controller.trashCustomItems(customIds);
     } catch (_) {
       if (mounted) {
-        _showLibraryMessage('안전 지점을 만들지 못해 삭제를 시작하지 않았습니다. 저장 공간을 확인해 주세요.');
+        _showLibraryMessage('되돌리기용 사본을 만들지 못해 삭제하지 않았어요. 저장 공간을 확인해 주세요.');
       }
       return;
     }
@@ -1888,11 +1886,11 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
     if (result == null || !mounted) return;
     final mergedMessage = result.addedMeaningCount > 0
-        ? '기존 표현에 새 뜻 ${result.addedMeaningCount}개를 추가했습니다.'
-        : '같은 표현과 뜻이 이미 있어 중복 저장하지 않았습니다.';
+        ? '기존 표현에 새 뜻 ${result.addedMeaningCount}개를 추가했어요.'
+        : '같은 표현과 뜻이 이미 있어 한 번만 저장했어요.';
     final message = result.mergedWithExisting
         ? mergedMessage
-        : '“${result.item.text}” 자료를 저장했습니다.';
+        : '“${result.item.text}”을 저장했어요.';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -1907,7 +1905,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       final current = ref.read(appControllerProvider).preferences.sessionPlan;
       controller.updateSessionPlan(
         current.copyWith(
-          title: '방금 등록한 자료 학습',
+          title: '방금 저장한 자료 학습',
           mode: StudyMode.mixed,
           deck: StudyDeckScope.selected,
           difficulty: StudyDifficulty.all,
@@ -1955,9 +1953,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       controller.toggleFavorite(result.item.id);
     }
     final message = switch (status) {
-      QuickContentUndoStatus.restored => '마지막 저장을 되돌렸습니다.',
-      QuickContentUndoStatus.conflict => '이후 수정된 자료라 안전하게 되돌리지 않았습니다.',
-      QuickContentUndoStatus.alreadyUndone => '이미 되돌린 저장입니다.',
+      QuickContentUndoStatus.restored => '마지막 저장을 되돌렸어요.',
+      QuickContentUndoStatus.conflict => '저장한 뒤 수정된 자료라 자동으로 되돌리지 않았어요.',
+      QuickContentUndoStatus.alreadyUndone => '이미 되돌린 내용이에요.',
     };
     ScaffoldMessenger.of(
       context,
@@ -3060,20 +3058,20 @@ class _AddContentMenu extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '어떻게 추가할까요?',
+                '무엇을 추가할까요?',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 4),
               Text(
-                '한두 개는 빠른 추가, 여러 개는 파일 가져오기가 편합니다.',
+                '한두 개는 바로 입력하고, 여러 개는 파일로 한 번에 가져오세요.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 14),
               _AddContentChoice(
                 key: const Key('add-quick-word'),
                 icon: Icons.text_fields_rounded,
-                title: '단어 빠른 추가',
-                description: '단어와 뜻만 입력하고 바로 저장',
+                title: '단어 추가',
+                description: '단어와 뜻만 입력해 바로 저장',
                 onTap: () =>
                     Navigator.pop(context, _AddContentAction.quickWord),
               ),
@@ -3081,8 +3079,8 @@ class _AddContentMenu extends StatelessWidget {
               _AddContentChoice(
                 key: const Key('add-quick-sentence'),
                 icon: Icons.notes_rounded,
-                title: '문장 빠른 추가',
-                description: '문장과 뜻, 예문 단서를 간단히 저장',
+                title: '문장 추가',
+                description: '문장과 뜻을 간단히 입력해 저장',
                 onTap: () =>
                     Navigator.pop(context, _AddContentAction.quickSentence),
               ),
@@ -3091,7 +3089,7 @@ class _AddContentMenu extends StatelessWidget {
                 key: const Key('add-import-file'),
                 icon: Icons.upload_file_rounded,
                 title: 'Excel·CSV 파일 가져오기',
-                description: '템플릿으로 단어, 문장, 그룹을 한 번에 추가',
+                description: '단어·문장·그룹을 한 번에 가져오기',
                 onTap: () =>
                     Navigator.pop(context, _AddContentAction.importFile),
               ),
@@ -3209,7 +3207,7 @@ class _SavedContentActions extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              '다음에 할 일을 바로 선택할 수 있습니다.',
+              '이어서 할 일을 골라 보세요.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 14),
@@ -3266,7 +3264,7 @@ class _ActiveLibraryFilters extends StatelessWidget {
       if (query.isNotEmpty) '검색 “$query”',
       if (filter != _LibraryFilter.all)
         switch (filter) {
-          _LibraryFilter.favorites => '저장됨',
+          _LibraryFilter.favorites => '즐겨찾기',
           _LibraryFilter.word => '단어',
           _LibraryFilter.sentence => '문장',
           _LibraryFilter.weak => '취약',
@@ -3347,7 +3345,7 @@ class _LibraryWorkspace extends StatelessWidget {
         ? 16.0
         : 20.0;
     final footer = Text(
-      'Excel · CSV · JSON · JSONL로 단어, 예문, 학습 그룹을 추가할 수 있습니다.',
+      'Excel, CSV, JSON, JSONL 파일에서 단어·예문·그룹을 한 번에 가져올 수 있어요.',
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.bodySmall,
     );
@@ -3825,7 +3823,7 @@ class _SavedSmartCollectionsBar extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: collections.isEmpty
-                ? const Text('현재 조건을 저장하면 자료가 늘어도 자동으로 갱신됩니다.', maxLines: 2)
+                ? const Text('지금 조건을 저장하면 새 자료도 자동으로 모여요.', maxLines: 2)
                 : SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -3965,11 +3963,11 @@ class _DuplicateRepairSheet extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('중복 자료 수선', style: Theme.of(context).textTheme.titleLarge),
+            Text('중복 자료 합치기', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              '남길 대표 자료와 합칠 필드를 직접 고르세요. 진도와 세션 기록은 '
-              '대표 자료에 합쳐지며, 유사 후보는 확인 없이 합쳐지지 않습니다.',
+              '남길 자료와 합칠 정보를 직접 골라 주세요. 학습 기록은 '
+              '남긴 자료로 옮겨지고, 비슷하기만 한 자료는 자동으로 합치지 않아요.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 12),
@@ -4150,7 +4148,7 @@ class _DuplicateGroupEditorState extends State<_DuplicateGroupEditor> {
               ),
             ),
             const SizedBox(height: 5),
-            Text('합칠 필드', style: Theme.of(context).textTheme.labelLarge),
+            Text('합칠 정보', style: Theme.of(context).textTheme.labelLarge),
             const SizedBox(height: 6),
             Wrap(
               spacing: 7,
@@ -4165,7 +4163,7 @@ class _DuplicateGroupEditorState extends State<_DuplicateGroupEditor> {
             if (_fields.isEmpty) ...[
               const SizedBox(height: 7),
               Text(
-                '최소 한 필드를 선택해야 자료 손실 없이 합칠 수 있습니다.',
+                '합칠 정보를 하나 이상 골라 주세요.',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             ],
@@ -4410,7 +4408,7 @@ class _GroupToolbar extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Tooltip(
-                            message: '그룹 작업판',
+                            message: '그룹 정리',
                             child: OutlinedButton(
                               key: const Key('library-group-selection'),
                               onPressed: onOpenOrganizer,
@@ -4514,7 +4512,7 @@ class _GroupToolbar extends StatelessWidget {
                       key: const Key('library-group-selection'),
                       onPressed: onOpenOrganizer,
                       icon: const Icon(Icons.view_week_outlined),
-                      tooltip: '그룹 작업판',
+                      tooltip: '그룹 정리',
                     ),
                   ],
                 );
@@ -4673,9 +4671,9 @@ class _LibraryHeader extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           veryNarrow
-              ? '전체 $totalCount · 학습 $studiedCount · 저장 $favoriteCount'
-              : '학습 주제 > 그룹 > 자료 · 전체 $totalCount개 · '
-                    '학습 $studiedCount개 · 저장 $favoriteCount개',
+              ? '전체 $totalCount · 학습 $studiedCount · 즐겨찾기 $favoriteCount'
+              : '전체 $totalCount개 · 학습 $studiedCount개 · '
+                    '즐겨찾기 $favoriteCount개',
           maxLines: veryNarrow ? 1 : null,
           overflow: veryNarrow ? TextOverflow.ellipsis : null,
           style: Theme.of(context).textTheme.bodyMedium,
@@ -4949,7 +4947,7 @@ class _LibraryRow extends ConsumerWidget {
                       IconButton(
                         key: Key('favorite-${item.id}'),
                         onPressed: onFavorite,
-                        tooltip: favorite ? '저장 해제' : '표현 저장',
+                        tooltip: favorite ? '즐겨찾기 해제' : '즐겨찾기에 추가',
                         icon: Icon(
                           favorite
                               ? Icons.star_rounded
@@ -5112,7 +5110,7 @@ class _LibraryGridCard extends StatelessWidget {
                     IconButton(
                       key: Key('favorite-${item.id}'),
                       visualDensity: VisualDensity.compact,
-                      tooltip: favorite ? '저장 해제' : '표현 저장',
+                      tooltip: favorite ? '즐겨찾기 해제' : '즐겨찾기에 추가',
                       onPressed: onFavorite,
                       icon: Icon(
                         favorite
@@ -5275,22 +5273,22 @@ class _EmptyLibrary extends StatelessWidget {
                 SizedBox(height: compact ? 8 : 12),
                 Text(
                   query.isEmpty && filter == _LibraryFilter.weak
-                      ? '집중이 필요한 항목이 없어요'
+                      ? '집중해서 볼 자료가 없어요'
                       : query.isEmpty && filter == _LibraryFilter.wrong
                       ? '최근에 틀린 항목이 없어요'
                       : query.isEmpty && filter == _LibraryFilter.favorites
-                      ? '아직 저장한 표현이 없어요'
+                      ? '아직 즐겨찾기한 표현이 없어요'
                       : '조건에 맞는 표현이 없어요',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 5),
                 Text(
                   query.isEmpty && filter == _LibraryFilter.weak
-                      ? '정확도가 낮아지면 이곳에 자동으로 모아드려요.'
+                      ? '정확도가 낮아지면 여기에 자동으로 모여요.'
                       : query.isEmpty && filter == _LibraryFilter.wrong
-                      ? '마지막 답이 오답인 표현은 이곳에 자동으로 모아드려요.'
+                      ? '최근에 틀린 표현이 여기에 자동으로 모여요.'
                       : query.isEmpty && filter == _LibraryFilter.favorites
-                      ? '외우고 싶은 표현의 별표를 눌러 따로 모아 보세요.'
+                      ? '외우고 싶은 표현의 별표를 눌러 모아 보세요.'
                       : '검색어나 필터를 바꿔 다시 찾아보세요.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,

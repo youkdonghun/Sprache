@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/data/study_store.dart';
+import 'package:sprache/src/domain/mission_script.dart';
+import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/screens/course_path_screen.dart';
 import 'package:sprache/src/screens/mission_screen.dart';
 import 'package:sprache/src/state/app_state.dart';
@@ -40,7 +42,7 @@ void main() {
         await tester.ensureVisible(coach);
         await tester.tap(coach);
         await tester.pumpAndSettle();
-        expect(find.text('도움 경로'), findsOneWidget);
+        expect(find.text('힌트를 사용했어요'), findsOneWidget);
 
         final next = find.byKey(const Key('mission-next-phrase'));
         await tester.ensureVisible(next);
@@ -57,12 +59,89 @@ void main() {
       tester.view.reset();
     }
   });
+
+  testWidgets('mission restores its exact scene and branch after recreation', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    final checkpoint = MissionProgressCheckpoint(
+      courseId: 'ko-en',
+      unitIndex: 0,
+      phraseIndex: 1,
+      sceneId: 'unit-0-scene-0-coached',
+      coachedTurns: 1,
+      decision: MissionCheckpointDecision.coachedHelp,
+      updatedAt: DateTime.utc(2026, 8, 3, 11),
+    );
+    final store = MemoryStudyStore(
+      preferences: StudyPreferences(
+        missionProgressCheckpoints: {checkpoint.storageKey: checkpoint},
+      ),
+    );
+    try {
+      await _pumpScreenWithStore(
+        tester,
+        const MissionPracticeScreen(unitIndex: 0),
+        store,
+      );
+
+      expect(find.text('보강 · 표현 1 / 3'), findsOneWidget);
+      expect(find.byKey(const Key('mission-branch-feedback')), findsOneWidget);
+      final next = find.byKey(const Key('mission-next-phrase'));
+      await tester.ensureVisible(next);
+      await tester.tap(next);
+      await tester.pumpAndSettle();
+      expect(
+        store.savedPreferences.missionCheckpointFor('ko-en', 0)?.phraseIndex,
+        2,
+      );
+
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      await _pumpScreenWithStore(
+        tester,
+        const MissionPracticeScreen(unitIndex: 0),
+        store,
+      );
+
+      expect(find.text('표현 2 / 3'), findsOneWidget);
+      expect(find.byKey(const Key('mission-branch-feedback')), findsNothing);
+      var turns = 0;
+      while (find.byKey(const Key('mission-reveal')).evaluate().isNotEmpty) {
+        expect(turns++, lessThan(10));
+        final coach = find.byKey(const Key('mission-reveal'));
+        await tester.ensureVisible(coach);
+        await tester.tap(coach);
+        await tester.pumpAndSettle();
+        final advance = find.byKey(const Key('mission-next-phrase'));
+        await tester.ensureVisible(advance);
+        await tester.tap(advance);
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.text('실전 미션 완료'), findsOneWidget);
+      expect(store.savedPreferences.missionCheckpointFor('ko-en', 0), isNull);
+      expect(store.savedPreferences.hasCompletedMission('ko-en', 0), isTrue);
+      expect(tester.takeException(), isNull);
+    } finally {
+      tester.view.reset();
+    }
+  });
 }
 
 Future<void> _pumpScreen(WidgetTester tester, Widget screen) async {
+  await _pumpScreenWithStore(tester, screen, MemoryStudyStore());
+}
+
+Future<void> _pumpScreenWithStore(
+  WidgetTester tester,
+  Widget screen,
+  MemoryStudyStore store,
+) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [studyStoreProvider.overrideWithValue(MemoryStudyStore())],
+      overrides: [studyStoreProvider.overrideWithValue(store)],
       child: MaterialApp(home: screen),
     ),
   );

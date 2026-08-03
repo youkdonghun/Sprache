@@ -197,7 +197,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
   final _liveDifficultyAttempts = <LiveDifficultyAttempt>[];
   LiveDifficultyLevel _liveDifficulty = LiveDifficultyLevel.standard;
   LiveDifficultyLevel? _liveDifficultyLock;
-  String _liveDifficultyReason = '초기 문항은 균형 난이도로 시작합니다.';
+  String _liveDifficultyReason = '첫 문제는 기본 난이도로 시작해요.';
   var _showListeningTextFallback = false;
 
   LearningItem get _item => _queue[_index];
@@ -727,7 +727,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
         title: const Text('진행 중인 학습이 있어요'),
         content: Text(
           '${subject?.name ?? existing.courseId} · ${existing.mode.label} · $progress\n'
-          '새 학습을 시작하기 전에 기존 학습을 이어갈지 종료할지 선택해 주세요.',
+          '기존 학습을 이어갈까요, 끝내고 새로 시작할까요?',
         ),
         actions: [
           TextButton(
@@ -741,13 +741,13 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
             key: const Key('resume-existing-session'),
             onPressed: () =>
                 Navigator.of(dialogContext).pop(_ExistingSessionAction.resume),
-            child: const Text('기존 학습 이어가기'),
+            child: const Text('이어하기'),
           ),
           FilledButton(
             key: const Key('replace-active-session'),
             onPressed: () =>
                 Navigator.of(dialogContext).pop(_ExistingSessionAction.replace),
-            child: const Text('기존 종료 후 새로 시작'),
+            child: const Text('끝내고 새로 시작'),
           ),
         ],
       ),
@@ -913,7 +913,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
     _completeExam(timedOut: true);
     SemanticsService.sendAnnouncement(
       View.of(context),
-      '시간이 끝나 시험을 자동 제출했습니다.',
+      '시간이 끝나 답안을 자동으로 제출했어요.',
       Directionality.of(context),
     );
   }
@@ -928,7 +928,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
         .read(appControllerProvider.notifier)
         .clearActiveStudySession(expectedSessionId: _sessionId);
     if (_sessionCorrect + _sessionWrong == 0) {
-      _saveAnnouncement = '응답한 문항이 없어 진도는 변경하지 않았습니다.';
+      _saveAnnouncement = '푼 문제가 없어 진도는 바뀌지 않았어요.';
     } else {
       unawaited(_saveSession());
     }
@@ -946,7 +946,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
       builder: (dialogContext) => AlertDialog(
         title: const Text('시험을 지금 제출할까요?'),
         content: Text(
-          '응답 ${_sessionCorrect + _sessionWrong}/${_examConfiguration.questionCount}문항을 기준으로 채점하며, 미응답은 오답으로 계산합니다.',
+          '${_examConfiguration.questionCount}문제 중 ${_sessionCorrect + _sessionWrong}문제를 풀었어요. 빈 답은 오답으로 채점해요.',
         ),
         actions: [
           TextButton(
@@ -1186,7 +1186,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
             key: const Key('restore-study-draft'),
             autofocus: true,
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('입력 복원'),
+            child: const Text('답안 불러오기'),
           ),
         ],
       ),
@@ -1289,10 +1289,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
       builder: (dialogContext) => AlertDialog(
         key: const Key('study-break-reminder-dialog'),
         icon: const Icon(Icons.self_improvement_rounded),
-        title: const Text('잠깐 눈과 어깨를 쉬어 주세요'),
+        title: const Text('잠깐 쉬어 갈까요?'),
         content: Text(
-          '${_runtimeOptions.breakReminderMinutes}분 동안 집중했습니다. '
-          '현재 답안은 체크포인트에 저장되므로 안심하고 쉴 수 있어요.',
+          '${_runtimeOptions.breakReminderMinutes}분 동안 집중했어요. '
+          '현재 답안은 저장되어 있으니 편하게 쉬어도 돼요.',
         ),
         actions: [
           TextButton(
@@ -1305,7 +1305,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
             key: const Key('pause-after-break-reminder'),
             onPressed: () => Navigator.pop(dialogContext, true),
             icon: const Icon(Icons.pause_rounded),
-            label: const Text('안전하게 일시정지'),
+            label: const Text('저장하고 쉬기'),
           ),
         ],
       ),
@@ -1871,7 +1871,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         duration: Duration(seconds: 2),
-        content: Text('이 문제를 감점 없이 세션 뒤로 미뤘습니다.'),
+        content: Text('이 문제는 감점 없이 뒤로 미뤘어요.'),
       ),
     );
   }
@@ -1932,7 +1932,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
     _commitPendingResponse();
     if (_sessionSaved || _sessionCorrect + _sessionWrong == 0) return;
     _sessionSaved = true;
-    _saveAnnouncement = '학습 결과를 기기에 저장하고 있습니다.';
+    _saveAnnouncement = '학습 결과를 저장하고 있어요.';
     await ref
         .read(appControllerProvider.notifier)
         .finishSession(
@@ -1968,7 +1968,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
     if (!mounted) return;
     setState(() {
       _sessionSavedAt = _now.toUtc();
-      _saveAnnouncement = '학습 결과를 기기에 저장했습니다.';
+      _saveAnnouncement = '학습 결과를 저장했어요.';
     });
     SemanticsService.sendAnnouncement(
       View.of(context),
@@ -2298,9 +2298,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
     );
     if (preserveDraftDirection) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('작성 중인 답안을 보호하기 위해 출제 방향은 현재 문제에서 유지했습니다.'),
-        ),
+        const SnackBar(content: Text('작성 중인 답안이 있어 출제 방향은 다음 문제부터 바뀌어요.')),
       );
     }
   }
@@ -2437,7 +2435,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
     });
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('자료를 수정했고 현재 세션을 그대로 이어갑니다.')));
+    ).showSnackBar(const SnackBar(content: Text('자료를 수정했어요. 지금 문제부터 이어갑니다.')));
   }
 
   Future<void> _editBaseContentCorrection(LearningItem item) async {
@@ -2462,9 +2460,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
         );
     if (!mounted) return;
     setState(() {});
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('기본 언어팩 원본 대신 내 교정 메모에 저장했습니다.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('원본은 그대로 두고 내 교정 메모에 저장했어요.')));
   }
 
   Future<void> _editMemoryHint(LearningItem item) async {
@@ -2646,7 +2644,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
       fallbackFocus: _isTextInputMode ? _answerFocus : _questionFocus,
       builder: (dialogContext) => AlertDialog(
         title: const Text('학습을 잠시 멈출까요?'),
-        content: const Text('현재 문제와 세션 위치는 기기에 보관되어 홈에서 이어할 수 있어요.'),
+        content: const Text('현재 문제와 위치를 저장해 둘게요. 홈에서 다시 이어갈 수 있어요.'),
         actions: [
           TextButton(
             autofocus: true,
@@ -2656,7 +2654,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
           FilledButton.tonal(
             key: const Key('confirm-system-back-study'),
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('나가기'),
+            child: const Text('저장하고 나가기'),
           ),
         ],
       ),
@@ -2732,14 +2730,14 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                   const SizedBox(height: 6),
                   Text(
                     _isListeningDiscrimination
-                        ? '현재 학습 조건 안에 듣기 가능한 표현과 서로 구별되는 후보가 최소 3개 필요해요. 그전에는 받아쓰기를 이용할 수 있어요.'
+                        ? '소리를 구별할 표현이 3개 이상 필요해요. 대신 받아쓰기를 시작할 수 있어요.'
                         : widget.customPlan
                         ? _isPlaylist
                               ? '플레이리스트로 돌아가 다른 게임을 이어서 선택해 주세요.'
-                              : '세션 빌더에서 덱·난이도·태그 조건을 조금 넓혀 보세요.'
+                              : '세션 설정에서 자료 범위나 난이도 조건을 넓혀 보세요.'
                         : widget.mode == StudyMode.favorites
-                        ? '자료실에서 외우고 싶은 표현의 별표를 누르면 이곳에 모입니다.'
-                        : '새 콘텐츠를 가져오거나 다른 언어 코스를 선택해 보세요.',
+                        ? '자료실에서 외우고 싶은 표현에 별표를 눌러 주세요.'
+                        : '새 자료를 가져오거나 다른 언어 코스를 선택해 보세요.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
@@ -2767,10 +2765,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                           : widget.customPlan
                           ? _isPlaylist
                                 ? '플레이리스트로 돌아가기'
-                                : '세션 빌더로 돌아가기'
+                                : '세션 설정으로 돌아가기'
                           : widget.unitIndex == null
                           ? '학습실로 돌아가기'
-                          : '코스 여정으로',
+                          : '코스로 돌아가기',
                     ),
                   ),
                 ],
@@ -2843,7 +2841,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
           challengeScore: _challengeScore,
           examReport: examReport,
           saveStatus: _saveAnnouncement.isEmpty
-              ? '학습 결과를 기기에 저장하고 있습니다.'
+              ? '학습 결과를 저장하고 있어요.'
               : _saveAnnouncement,
           receipt: receipt,
           recordProgress: _recordProgress,
@@ -2863,8 +2861,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                     SnackBar(
                       content: Text(
                         changed == 0
-                            ? '적용할 저장 루틴이 없습니다. 먼저 다음 예약에서 루틴을 만들어 주세요.'
-                            : '${timeRecommendation.label}을 저장 루틴 $changed개에 적용했습니다.',
+                            ? '적용할 루틴이 없어요. 먼저 다음 예약에서 루틴을 만들어 주세요.'
+                            : '${timeRecommendation.label}을 루틴 $changed개에 적용했어요.',
                       ),
                     ),
                   );
@@ -2889,10 +2887,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
           returnLabel: widget.customPlan
               ? _isPlaylist
                     ? '플레이리스트로 돌아가기'
-                    : '세션 빌더로 돌아가기'
+                    : '세션 설정으로 돌아가기'
               : widget.unitIndex == null
               ? '학습실로 돌아가기'
-              : '코스 여정으로',
+              : '코스로 돌아가기',
           returnIcon: widget.customPlan
               ? _isPlaylist
                     ? Icons.playlist_play_rounded
@@ -3002,7 +3000,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                 ),
                 tooltip: widget.examMode
                     ? '시험 제출'
-                    : '일시정지하고 홈으로 '
+                    : '저장하고 홈으로'
                           '(${accessibilityProfile.shortcutFor(StudyShortcutAction.pause).displayLabel})',
               ),
               titleSpacing: 4,
@@ -3115,7 +3113,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                                   if (_adaptiveReasonByItemId[_item.id]
                                       case final reason?) ...[
                                     Semantics(
-                                      label: '이 문제 추천 이유: $reason',
+                                      label: '이 문제가 나온 이유: $reason',
                                       child: Align(
                                         alignment: Alignment.centerLeft,
                                         child: Chip(
@@ -3306,7 +3304,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                                                         label: Text(
                                                           _showListeningTextFallback
                                                               ? '소리 문제로 돌아가기'
-                                                              : '텍스트 대체 단서',
+                                                              : '글자 힌트 보기',
                                                         ),
                                                       ),
                                                   ],
@@ -3317,7 +3315,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                                                   const SizedBox(height: 8),
                                                   Text(
                                                     '${_listeningDiscriminationQuestion().selectionBasisLabel} · '
-                                                    '정답 포함 서로 다른 선택지 3개 이상',
+                                                    '정답을 포함해 선택지 3개 이상',
                                                     key: const Key(
                                                       'listening-choice-basis',
                                                     ),
@@ -3445,7 +3443,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                             ? () => _replacePendingOutcome(
                                 correct: true,
                                 rating: ReviewRating.hard,
-                                correctionLabel: '오타였음',
+                                correctionLabel: '오타였어요',
                               )
                             : null,
                         onMarkHard:
@@ -3455,7 +3453,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
                             ? () => _replacePendingOutcome(
                                 correct: true,
                                 rating: ReviewRating.hard,
-                                correctionLabel: '맞았지만 어려웠음',
+                                correctionLabel: '맞았지만 어려웠어요',
                               )
                             : null,
                         onRestore:
@@ -3494,7 +3492,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
   String get _instruction => switch (_mode) {
     _ExerciseMode.recognition when _recognitionIsReversed => '알맞은 학습어를 고르세요',
     _ExerciseMode.recognition => '알맞은 뜻을 고르세요',
-    _ExerciseMode.production => '외국어로 입력하세요',
+    _ExerciseMode.production => '학습할 언어로 써 보세요',
     _ExerciseMode.cloze => '빈칸에 들어갈 표현을 고르세요',
     _ExerciseMode.sentenceOrder => '단어를 순서대로 배열하세요',
     _ExerciseMode.listening => '소리를 듣고 받아쓰세요',
@@ -3685,7 +3683,7 @@ class _SessionManagementSheet extends StatelessWidget {
                 _SessionManagementTile(
                   key: const Key('study-session-options'),
                   icon: Icons.tune_rounded,
-                  title: '이번 세션 출제·입력 설정',
+                  title: '이번 세션 설정',
                   subtitle:
                       '${_answerDirectionLabel(answerDirection)} · '
                       '${gradingStrength.koreanLabel} 채점 · '
@@ -3701,8 +3699,8 @@ class _SessionManagementSheet extends StatelessWidget {
                 _SessionManagementTile(
                   key: const Key('preview-adaptive-study-queue'),
                   icon: Icons.view_list_rounded,
-                  title: '정답 비노출 큐 미리보기',
-                  subtitle: '${strategy.koreanLabel} · 문제 유형과 단어/문장 비율만 표시',
+                  title: '남은 문제 미리보기',
+                  subtitle: '${strategy.koreanLabel} · 문제 유형과 자료 비율만 보여요',
                   onTap: () =>
                       Navigator.pop(context, _SessionManagementAction.preview),
                 ),
@@ -3712,7 +3710,7 @@ class _SessionManagementSheet extends StatelessWidget {
                     key: const Key('open-session-keyboard-help'),
                     icon: Icons.keyboard_alt_outlined,
                     title: '현재 화면 단축키',
-                    subtitle: '이 퀴즈에서 쓸 수 있는 키를 확인합니다 · $keyboardHelpShortcut',
+                    subtitle: '이 퀴즈에서 쓸 수 있는 키를 확인하세요 · $keyboardHelpShortcut',
                     onTap: () => Navigator.pop(
                       context,
                       _SessionManagementAction.keyboardHelp,
@@ -3725,8 +3723,8 @@ class _SessionManagementSheet extends StatelessWidget {
                   icon: Icons.grid_view_rounded,
                   title: '매치 스프린트',
                   subtitle: inputProfile.allowsTimedChallenge
-                      ? '60초 또는 10쌍으로 표현과 뜻을 빠르게 연결합니다.'
-                      : '시간 제한 없이 표현과 뜻을 편하게 연결합니다.',
+                      ? '60초 안에 표현과 뜻 10쌍을 연결해요.'
+                      : '시간 제한 없이 표현과 뜻을 연결해요.',
                   onTap: canStartMatch
                       ? () => Navigator.pop(
                           context,
@@ -3738,9 +3736,9 @@ class _SessionManagementSheet extends StatelessWidget {
                 _SessionManagementTile(
                   key: const Key('restart-study-session'),
                   icon: Icons.restart_alt_rounded,
-                  title: '처음 문제 묶음으로 다시 시작',
+                  title: '처음 문제로 다시 시작',
                   subtitle: canDeriveSession
-                      ? '현재 시도는 기록하고 최초 문제 순서로 새 세션을 만듭니다.'
+                      ? '현재 결과를 저장하고 처음 문제 순서로 다시 시작해요.'
                       : '시험 중에는 문제 묶음과 점수 기준을 바꿀 수 없습니다.',
                   onTap: canDeriveSession
                       ? () => Navigator.pop(
@@ -3753,10 +3751,10 @@ class _SessionManagementSheet extends StatelessWidget {
                 _SessionManagementTile(
                   key: const Key('branch-wrong-session'),
                   icon: Icons.error_outline_rounded,
-                  title: '오답 $wrongCount개만 집중',
+                  title: '틀린 문제 $wrongCount개만 풀기',
                   subtitle: wrongCount == 0
                       ? '아직 틀린 문제가 없습니다.'
-                      : '지금까지 틀린 표현만 모아 짧은 분기 세션을 만듭니다.',
+                      : '지금까지 틀린 표현만 모아 다시 풀어요.',
                   onTap: !canDeriveSession || wrongCount == 0
                       ? null
                       : () => Navigator.pop(
@@ -3768,10 +3766,10 @@ class _SessionManagementSheet extends StatelessWidget {
                 _SessionManagementTile(
                   key: const Key('branch-remaining-session'),
                   icon: Icons.call_split_rounded,
-                  title: '남은 문제 $remainingCount개로 분기',
+                  title: '남은 문제 $remainingCount개만 풀기',
                   subtitle: remainingCount == 0
                       ? '남은 문제가 없습니다.'
-                      : '이미 푼 문제는 빼고 남은 표현으로 새 세션을 만듭니다.',
+                      : '이미 푼 문제는 빼고 남은 문제만 이어서 풀어요.',
                   onTap: !canDeriveSession || remainingCount == 0
                       ? null
                       : () => Navigator.pop(
@@ -3784,14 +3782,14 @@ class _SessionManagementSheet extends StatelessWidget {
                   key: const Key('finish-study-session'),
                   icon: Icons.stop_circle_outlined,
                   title: '현재 세션 종료',
-                  subtitle: '푼 문제는 최근 기록에 남기고 이어하기 목록에서 제거합니다.',
+                  subtitle: '푼 문제는 기록에 남기고 이어하기 목록에서 지워요.',
                   color: colors.error,
                   onTap: () =>
                       Navigator.pop(context, _SessionManagementAction.finish),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  '그냥 쉬려면 이 창을 닫고 왼쪽 위 일시정지를 누르세요. 현재 위치는 로컬에 즉시 저장됩니다.',
+                  '잠시 쉴 때는 이 창을 닫고 왼쪽 위 일시정지를 누르세요. 현재 위치는 바로 저장돼요.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
@@ -4205,7 +4203,7 @@ class _StudyActionBar extends StatelessWidget {
                     key: const Key('defer-study-question'),
                     onPressed: canDefer ? onDefer : null,
                     icon: const Icon(Icons.low_priority_rounded, size: 19),
-                    label: const Text('뒤로 미루기'),
+                    label: const Text('나중에 풀기'),
                     style: TextButton.styleFrom(
                       minimumSize: Size(0, effectiveControlHeight),
                     ),
@@ -4455,7 +4453,7 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                         Icons.spellcheck_rounded,
                                         size: 18,
                                       ),
-                                      label: const Text('오타였음'),
+                                      label: const Text('오타였어요'),
                                     ),
                                   if (onMarkHard case final action?)
                                     OutlinedButton.icon(
@@ -4466,7 +4464,7 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                         Icons.psychology_alt_rounded,
                                         size: 18,
                                       ),
-                                      label: const Text('맞았지만 어려웠음'),
+                                      label: const Text('맞았지만 어려웠어요'),
                                     ),
                                   if (onRestore case final action?)
                                     TextButton.icon(
@@ -4477,7 +4475,7 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                         Icons.undo_rounded,
                                         size: 18,
                                       ),
-                                      label: const Text('판정 복원'),
+                                      label: const Text('결과 되돌리기'),
                                     ),
                                   if (showRepair)
                                     TextButton.icon(
@@ -4488,7 +4486,7 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                         Icons.build_circle_outlined,
                                         size: 18,
                                       ),
-                                      label: const Text('이 문제 수선'),
+                                      label: const Text('문제 확인하기'),
                                     ),
                                   PopupMenuButton<_FeedbackSecondaryAction>(
                                     key: const Key('feedback-more-actions'),
@@ -4511,7 +4509,7 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                           leading: Icon(
                                             Icons.add_circle_outline_rounded,
                                           ),
-                                          title: Text('빠른 추가로 복사'),
+                                          title: Text('새 자료로 복사'),
                                         ),
                                       ),
                                       const PopupMenuItem(
@@ -4671,7 +4669,7 @@ class _ExamSetupDialogState extends State<_ExamSetupDialog> {
     }.where((value) => value > 0).toList()..sort();
     return AlertDialog(
       key: const Key('exam-setup-dialog'),
-      title: const Text('시험 모드 설정'),
+      title: const Text('시험 설정'),
       content: SizedBox(
         width: 520,
         child: SingleChildScrollView(
@@ -4680,7 +4678,7 @@ class _ExamSetupDialogState extends State<_ExamSetupDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Text(
-                '시험 중에는 정답을 바로 보여주지 않고, 제출 후 문항별 결과를 공개합니다. 복습 일정과 XP는 바뀌지 않습니다.',
+                '시험 중에는 정답을 보여 주지 않아요. 제출한 뒤 문제별 결과를 확인할 수 있고, XP와 복습 일정은 바뀌지 않아요.',
               ),
               const SizedBox(height: 18),
               Text('문항 수', style: Theme.of(context).textTheme.titleSmall),
@@ -4791,7 +4789,7 @@ class _ExamReportCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      report.passed ? '통과했어요' : '통과 기준을 다시 도전해 보세요',
+                      report.passed ? '통과했어요' : '한 번 더 도전해 보세요',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
@@ -4888,12 +4886,12 @@ class _CompletionScreen extends StatelessWidget {
         : const Color(0xFFD97706);
     final standardTitle = switch (encouragementTone) {
       AppEncouragementTone.calm =>
-        excellent ? '오늘 학습, 멋지게 완료!' : '한 걸음 더 기억했어요',
+        excellent ? '오늘 학습을 아주 잘 마쳤어요!' : '오늘도 한 걸음 익혔어요',
       AppEncouragementTone.playful
           when celebrationLevel == AppCelebrationLevel.off =>
         excellent ? '학습을 잘 마쳤어요!' : '오늘 학습을 마쳤어요',
       AppEncouragementTone.playful =>
-        excellent ? '🎉 완벽한 학습 흐름이에요!' : '🚀 오늘도 기억력이 자랐어요!',
+        excellent ? '🎉 오늘 학습을 모두 마쳤어요!' : '🚀 오늘도 꾸준히 해냈어요!',
       AppEncouragementTone.minimal => '학습 완료',
     };
     final title = examReport == null
@@ -4981,10 +4979,10 @@ class _CompletionScreen extends StatelessWidget {
                       const SizedBox(height: 7),
                       Text(
                         examReport == null
-                            ? '$plannedCount개로 시작한 세션의 결과예요. '
+                            ? '$plannedCount문제로 시작한 학습 결과예요. '
                                   '최고 $bestCombo콤보 · $minutes분. '
                                   '${recordProgress ? '' : '진도 비기록 연습 · '}'
-                                  '${hasMistakes ? '틀린 표현은 바로 다시 다질 수 있어요.' : '모든 표현을 정확히 기억했어요.'}'
+                                  '${hasMistakes ? '틀린 표현은 바로 다시 풀어 보세요.' : '모든 표현을 맞혔어요.'}'
                             : '정답은 시험 중에 공개하지 않았습니다. '
                                   '${examReport!.configuration.questionCount}문항 기준 · '
                                   '통과 ${examReport!.configuration.passScore}점 · '
@@ -5084,7 +5082,7 @@ class _CompletionScreen extends StatelessWidget {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        '선택 도전 점수 ${score.total}점',
+                                        '도전 점수 ${score.total}점',
                                         style: Theme.of(
                                           context,
                                         ).textTheme.titleMedium,
@@ -5127,7 +5125,7 @@ class _CompletionScreen extends StatelessWidget {
                                       CrossAxisAlignment.stretch,
                                   children: [
                                     Text(
-                                      '이번 세션 기술 숙련도',
+                                      '이번 세션 유형별 결과',
                                       style: Theme.of(
                                         context,
                                       ).textTheme.titleMedium,
@@ -5157,7 +5155,7 @@ class _CompletionScreen extends StatelessWidget {
                       if (wrong > 0 && examReport == null) ...[
                         const SizedBox(height: 12),
                         Text(
-                          '오답 $wrong회는 복습 일정에 자동 반영됐습니다.',
+                          '틀린 문제 $wrong개는 복습 일정에 반영했어요.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -5181,7 +5179,7 @@ class _CompletionScreen extends StatelessWidget {
                                   Icons.replay_rounded,
                                   size: 18,
                                 ),
-                                label: const Text('오답 복습'),
+                                label: const Text('틀린 문제 복습'),
                                 onPressed: onRetryMistakes,
                               ),
                             ],
@@ -5227,7 +5225,7 @@ class _CompletionScreen extends StatelessWidget {
                                   ),
                                 ),
                           icon: const Icon(Icons.fact_check_outlined),
-                          label: Text('문항별 결과 ${attempts.length}개 보기'),
+                          label: Text('문제별 결과 ${attempts.length}개 보기'),
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -5371,7 +5369,7 @@ class _CompletionReceiptCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        '로컬 저장 영수증',
+                        '기기 저장 내역',
                         style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
@@ -5677,10 +5675,10 @@ class _FeedbackCard extends StatelessWidget {
           }
         : 0;
     final calmTitle = correctionLabel != null
-        ? '$correctionLabel · 최종 판정을 반영해요'
+        ? '$correctionLabel · 바꾼 결과를 반영할게요'
         : correct
         ? usedHint
-              ? '힌트와 함께 기억했어요'
+              ? '힌트를 보고 맞혔어요'
               : combo >= 3
               ? '$combo콤보! 흐름이 좋아요'
               : combo == 2
@@ -5692,7 +5690,7 @@ class _FeedbackCard extends StatelessWidget {
     final title = switch (encouragementTone) {
       AppEncouragementTone.calm => calmTitle,
       AppEncouragementTone.playful when correctionLabel != null =>
-        '$correctionLabel! 판정을 바꿨어요',
+        '$correctionLabel! 결과를 바꿨어요',
       AppEncouragementTone.playful
           when correct && celebrationLevel == AppCelebrationLevel.off =>
         combo >= 3 ? '$combo콤보! 계속 이어가요' : '좋아요, 정답!',
@@ -5816,13 +5814,13 @@ class _FeedbackCard extends StatelessWidget {
                   child: Text(
                     correct
                         ? correctionLabel != null
-                              ? '다음 문제로 이동할 때 수정한 최종 판정만 한 번 기록합니다.'
+                              ? '다음 문제로 갈 때 바꾼 결과만 한 번 기록해요.'
                               : usedHint
-                              ? '힌트를 사용해 “어려움”으로 기록했습니다. 너무 늦지 않게 다시 복습합니다.'
-                              : '기억에 성공해 다음 복습 간격이 늘어났습니다.'
+                              ? '힌트를 사용해 “어려움”으로 기록했어요. 곧 다시 복습해요.'
+                              : '잘 기억해서 다음 복습까지 간격이 늘어났어요.'
                         : recordProgress
-                        ? '이 표현은 세션 뒤쪽에 다시 나옵니다. 최대 세 번 안에 회상할 수 있게 돕습니다.'
-                        : '연습 결과는 이번 완료 검토에만 표시하고 XP·복습 일정은 바꾸지 않습니다.',
+                        ? '이 표현은 뒤에서 다시 나와요. 세 번 안에 떠올릴 수 있도록 도와드릴게요.'
+                        : '이번 결과만 보여 주고 XP와 복습 일정은 바꾸지 않아요.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -5882,11 +5880,11 @@ class _FeedbackCoachTip extends StatelessWidget {
     ).reduceTransparency;
     final message = correct
         ? usedHint
-              ? '코치 팁 · 다음 복습에서는 힌트를 보기 전에 3초만 더 떠올려 보세요.'
-              : '코치 팁 · 소리 내어 한 번 말하면 회상 단서가 더 단단해져요.'
+              ? '다음에는 힌트를 보기 전에 3초만 더 떠올려 보세요.'
+              : '소리 내어 한 번 말하면 더 오래 기억할 수 있어요.'
         : hasExample
-        ? '코치 팁 · 예문 속 장면과 정답을 함께 묶어 기억해 보세요.'
-        : '코치 팁 · 정답을 보고 가린 뒤 바로 한 번 다시 말해 보세요.';
+        ? '예문 속 장면과 정답을 함께 떠올려 보세요.'
+        : '정답을 본 뒤 가리고 바로 한 번 말해 보세요.';
     return Container(
       key: const Key('study-feedback-coach-tip'),
       padding: const EdgeInsets.all(10),
@@ -6032,7 +6030,7 @@ class _SessionQuizOptionsSheetState extends State<_SessionQuizOptionsSheet> {
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 4),
-                const Text('전역 설정은 바꾸지 않고 현재 세션에만 적용합니다.'),
+                const Text('앱 전체 설정은 그대로 두고 이번 세션에만 적용해요.'),
                 const SizedBox(height: 20),
                 _OptionSection(
                   title: '다음 문제 선택',
@@ -6124,9 +6122,9 @@ class _SessionQuizOptionsSheetState extends State<_SessionQuizOptionsSheet> {
                 ),
                 const SizedBox(height: 16),
                 _OptionSection(
-                  title: '실시간 난이도',
+                  title: '난이도 자동 조절',
                   description: _options.liveDifficultyLock == null
-                      ? '최근 5문항의 정확도·속도·힌트 사용을 반영해 다음 문제를 조절합니다.'
+                      ? '최근 5문제의 정답률, 속도, 힌트 사용에 맞춰 다음 문제를 조절해요.'
                       : '${_options.liveDifficultyLock!.koreanLabel} 난이도를 이 세션에 고정합니다.',
                   children: [
                     ChoiceChip(
@@ -6183,7 +6181,7 @@ class _SessionQuizOptionsSheetState extends State<_SessionQuizOptionsSheet> {
                 _OptionSection(
                   title: 'TTS 속도',
                   description:
-                      '현재 세션 ${_options.ttsRate.toStringAsFixed(2)}배 · 전역 음성 설정은 유지됩니다.',
+                      '이번 세션 ${_options.ttsRate.toStringAsFixed(2)}배 · 앱 음성 설정은 그대로예요.',
                   children: [
                     SizedBox(
                       width: 560,
@@ -6260,7 +6258,7 @@ class _StudyQueuePreviewSheet extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '정답 비노출 큐 미리보기',
+                  '남은 문제 미리보기',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 5),
@@ -6272,7 +6270,7 @@ class _StudyQueuePreviewSheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  '문제 문구와 정답은 시작 전까지 표시하지 않습니다.',
+                  '문제와 정답은 실제로 풀 때 보여 드려요.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 16),
@@ -6300,7 +6298,7 @@ class _StudyQueuePreviewSheet extends StatelessWidget {
                 if (preview.entries.length > 30) ...[
                   const SizedBox(height: 8),
                   Text(
-                    '나머지 ${preview.entries.length - 30}문제는 세션에서 순서대로 이어집니다.',
+                    '나머지 ${preview.entries.length - 30}문제도 세션에서 이어서 나와요.',
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -6501,7 +6499,7 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
                 ],
               ),
               if (!_started) ...[
-                const Text('표현과 뜻을 한 쌍씩 연결하세요. 원본 자료와 복습 일정은 바뀌지 않습니다.'),
+                const Text('표현과 뜻을 한 쌍씩 연결하세요. 학습 자료와 복습 일정은 바뀌지 않아요.'),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
@@ -6526,7 +6524,7 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
                 ),
                 if (!widget.allowTimedMode) ...[
                   const SizedBox(height: 8),
-                  const Text('편한 입력 프로필에서는 시간 제한을 사용하지 않습니다.'),
+                  const Text('편한 입력 모드에서는 시간 제한이 없어요.'),
                 ],
                 const SizedBox(height: 20),
                 FilledButton.icon(
@@ -6546,7 +6544,7 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
                     Text(
                       _mode == MatchSprintMode.timed
                           ? '$_remainingSeconds초'
-                          : '오선택 $_mistakes회',
+                          : '실수 $_mistakes회',
                       style: TextStyle(
                         color: colors.primary,
                         fontWeight: FontWeight.w900,
@@ -6599,7 +6597,7 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
                           const SizedBox(height: 5),
-                          Text('성공 ${_matchedIds.length}쌍 · 오선택 $_mistakes회'),
+                          Text('성공 ${_matchedIds.length}쌍 · 실수 $_mistakes회'),
                           const SizedBox(height: 18),
                           FilledButton(
                             key: const Key('close-match-result'),
@@ -6768,8 +6766,8 @@ class _RepairOptionsSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('반복 오답 수선'),
-              subtitle: Text('“${item.text}”을 계속 반복하기 전에 원인을 정리해 보세요.'),
+              title: const Text('자꾸 틀리는 이유 확인'),
+              subtitle: Text('“${item.text}”을 다시 풀기 전에 어려웠던 부분을 확인해 보세요.'),
             ),
             ListTile(
               key: const Key('repair-edit-content'),
@@ -6777,8 +6775,8 @@ class _RepairOptionsSheet extends StatelessWidget {
               title: Text(editable ? '문제 수정' : '교정 메모 작성'),
               subtitle: Text(
                 editable
-                    ? '문제와 정답을 고치고 현재 세션을 그대로 이어갑니다.'
-                    : '기본 언어팩 원본은 보호하고 내 제안만 별도로 저장합니다.',
+                    ? '문제와 정답을 고친 뒤 지금 세션을 이어가요.'
+                    : '기본 언어팩은 그대로 두고 내 제안만 따로 저장해요.',
               ),
               onTap: () => Navigator.pop(context, _RepairAction.edit),
             ),
@@ -6786,14 +6784,14 @@ class _RepairOptionsSheet extends StatelessWidget {
               key: const Key('repair-memory-hint'),
               leading: const Icon(Icons.lightbulb_outline_rounded),
               title: Text(hasMemoryHint ? '암기 단서 수정' : '암기 단서 추가'),
-              subtitle: const Text('내 방식으로 기억할 짧은 단서를 저장합니다.'),
+              subtitle: const Text('나만의 짧은 기억 단서를 저장해요.'),
               onTap: () => Navigator.pop(context, _RepairAction.memoryHint),
             ),
             ListTile(
               key: const Key('repair-exclude-item'),
               leading: const Icon(Icons.pause_circle_outline_rounded),
               title: const Text('잠시 제외'),
-              subtitle: const Text('다음 학습부터 이 표현을 출제하지 않습니다.'),
+              subtitle: const Text('다음 학습부터 이 표현은 나오지 않아요.'),
               onTap: () => Navigator.pop(context, _RepairAction.exclude),
             ),
             ListTile(
@@ -7037,7 +7035,7 @@ class _BaseCorrectionEditDialogState extends State<_BaseCorrectionEditDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                '원본은 변경하지 않습니다. 내 제안은 이 항목에 연결되어 다음에도 다시 편집할 수 있습니다.',
+                '원본은 바뀌지 않아요. 내 제안은 이 항목에 따로 저장되어 나중에 다시 고칠 수 있어요.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
@@ -7144,14 +7142,14 @@ class _CompletionReviewSheetState extends State<CompletionReviewSheet> {
                     children: [
                       Expanded(
                         child: Text(
-                          '문항별 완료 검토',
+                          '문제별 결과 확인',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                       ),
                       FilterChip(
                         key: const Key('completion-review-wrong-only'),
                         selected: _wrongOnly,
-                        label: const Text('오답만'),
+                        label: const Text('틀린 문제만'),
                         onSelected: (value) =>
                             setState(() => _wrongOnly = value),
                       ),
@@ -7160,7 +7158,7 @@ class _CompletionReviewSheetState extends State<CompletionReviewSheet> {
                 ),
                 Expanded(
                   child: visible.isEmpty
-                      ? const Center(child: Text('검토할 오답이 없어요.'))
+                      ? const Center(child: Text('다시 볼 틀린 문제가 없어요.'))
                       : ListView.separated(
                           padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
                           itemCount: visible.length,
@@ -7225,7 +7223,7 @@ class _CompletionReviewSheetState extends State<CompletionReviewSheet> {
                                         Icons.edit_outlined,
                                         size: 18,
                                       ),
-                                      label: const Text('자료 확인·수정'),
+                                      label: const Text('자료 확인하기'),
                                     ),
                                   ),
                                 ],

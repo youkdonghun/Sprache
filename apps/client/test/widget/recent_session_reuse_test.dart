@@ -55,7 +55,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(actions);
       await tester.pumpAndSettle();
-      await tester.tap(find.text('맞힌 항목 제외하고 학습'));
+      await tester.tap(find.text('맞힌 항목 빼고 풀기'));
       await tester.pumpAndSettle();
 
       expect(store.savedPreferences.sessionPlan.selectedItemIds, {

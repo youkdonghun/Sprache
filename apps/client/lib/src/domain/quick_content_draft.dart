@@ -146,6 +146,11 @@ class QuickContentDraft {
       example.trim().isNotEmpty ||
       exampleMeaning.trim().isNotEmpty ||
       tags.isNotEmpty ||
+      kind != LearningItemKind.word ||
+      partOfSpeech != PartOfSpeech.noun ||
+      (group?.trim().isNotEmpty ?? false) ||
+      favorite ||
+      priority != 0 ||
       basket.isNotEmpty;
 
   Map<String, Object?> toJson() => {

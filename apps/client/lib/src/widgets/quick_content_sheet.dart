@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/study_store.dart';
 import '../domain/content_validation.dart';
 import '../domain/app_experience_preferences.dart';
 import '../domain/korean_pronunciation.dart';
@@ -115,8 +116,10 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   var _sentenceTokens = <String>[];
   var _basket = <_QuickBasketEntry>[];
   var _sessionUndo = <QuickContentSaveResult>[];
-  Future<void> _draftWriteQueue = Future<void>.value();
   Timer? _draftTimer;
+  late final StudyStore _studyStore;
+  late String _draftSubjectId;
+  QuickContentDraft? _pendingDraftSnapshot;
   QuickContentDraft? _recoverableDraft;
   QuickContentLocalPreferences _quickPreferences =
       const QuickContentLocalPreferences();
@@ -143,6 +146,8 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   @override
   void initState() {
     super.initState();
+    _studyStore = ref.read(studyStoreProvider);
+    _draftSubjectId = ref.read(appControllerProvider.notifier).activeSubject.id;
     final experience = ref.read(appControllerProvider).preferences.experience;
     _kind = widget.initialKind ?? _initialKind(experience.quickAddKind);
     _favorite = experience.quickAddFavoriteDefault;
@@ -167,6 +172,20 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   void dispose() {
     _navigationGuard.unregister(this);
     _draftTimer?.cancel();
+    final pendingDraft =
+        _pendingDraftSnapshot ??
+        (_draftFingerprint() == _cleanDraftFingerprint
+            ? null
+            : _currentDraft());
+    if (pendingDraft != null &&
+        _recoverableDraft == null &&
+        !_allowPop &&
+        !_clipboardSession.hasUnconfirmedContent) {
+      // Register the final snapshot with the store before this state becomes
+      // unreachable. Store-level write ordering makes a replacement sheet's
+      // immediate load wait for this best-effort flush.
+      unawaited(_persistDraftSnapshot(pendingDraft));
+    }
     if (_clipboardSession.hasUnconfirmedContent) {
       _suspendDraftRefresh = true;
       for (final controller in _draftControllers) {
@@ -280,6 +299,12 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
             excludedTags: selectedTags,
           )
         : const <String>[];
+    final groupSuggestions = suggestionsEnabled
+        ? controller.contentGroupSuggestions(
+            subjectId: subject.id,
+            text: suggestionText,
+          )
+        : const <String>[];
     final templates = _quickPreferences.orderedTemplates(subject.id);
     final detailFieldCount = <Object?>[
       if (_acceptedController.text.trim().isNotEmpty) true,
@@ -293,9 +318,9 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       if (_priority > 0) true,
     ].length;
     final duplicateDefaultLabel = switch (experience.duplicateDefault) {
-      AppDuplicateDefault.ask => '직접 선택',
-      AppDuplicateDefault.merge => '기본값 · 뜻 병합',
-      AppDuplicateDefault.separate => '기본값 · 별도 저장',
+      AppDuplicateDefault.ask => '저장할 때 물어보기',
+      AppDuplicateDefault.merge => '기본값 · 뜻 합치기',
+      AppDuplicateDefault.separate => '기본값 · 따로 저장',
     };
     final textField = TextFormField(
       key: const Key('quick-content-text'),
@@ -405,13 +430,13 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '빠른 자료 추가',
+                              '빠른 추가',
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             if (!dense && !keyboardFocusMode) ...[
                               const SizedBox(height: 2),
                               Text(
-                                '표현과 뜻만 입력해도 바로 저장됩니다.',
+                                '표현과 뜻만 쓰면 바로 저장할 수 있어요.',
                                 style: Theme.of(context).textTheme.bodyMedium,
                               ),
                             ],
@@ -459,7 +484,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 Expanded(
                                   child: Text(
                                     '${_draftAgeLabel(draft.updatedAt)} '
-                                    '작성하던 초안이 있습니다.',
+                                    '작성하던 내용이 남아 있어요.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall,
@@ -481,7 +506,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 FilledButton.tonal(
                                   key: const Key('quick-content-draft-restore'),
                                   onPressed: _restoreDraft,
-                                  child: const Text('복원'),
+                                  child: const Text('이어쓰기'),
                                 ),
                               ],
                             ),
@@ -650,15 +675,22 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                             ],
                             if (similarItems.isNotEmpty ||
                                 exampleSuggestions.isNotEmpty ||
-                                tagSuggestions.isNotEmpty) ...[
+                                tagSuggestions.isNotEmpty ||
+                                groupSuggestions.isNotEmpty) ...[
                               const SizedBox(height: 10),
                               _ContentSuggestions(
                                 similarItems: similarItems,
                                 examples: exampleSuggestions,
                                 tags: tagSuggestions,
+                                groups: groupSuggestions,
                                 onOpenSimilar: _openExistingItem,
                                 onUseExample: _applyExampleSuggestion,
                                 onUseTag: _appendRecentTag,
+                                onUseGroup: (group) {
+                                  setState(() => _selectedGroup = group);
+                                  _scheduleDraftSave();
+                                  unawaited(_rememberGroup(subject.id, group));
+                                },
                               ),
                             ],
                             if (_kind == LearningItemKind.sentence) ...[
@@ -683,8 +715,8 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                               title: const Text('학습 그룹'),
                               subtitle: Text(
                                 _selectedGroup == null
-                                    ? '선택 안 함 · 필요할 때 펼치기'
-                                    : '$_selectedGroup · 저장과 동시에 정리',
+                                    ? '선택하지 않음'
+                                    : '$_selectedGroup에 바로 저장',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -726,7 +758,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 Align(
                                   alignment: Alignment.centerLeft,
                                   child: Text(
-                                    '선택하면 저장과 동시에 그룹에 들어갑니다.',
+                                    '그룹을 고르면 저장할 때 바로 정리돼요.',
                                     style: Theme.of(
                                       context,
                                     ).textTheme.bodySmall,
@@ -760,7 +792,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                         key: const Key(
                                           'quick-content-no-group',
                                         ),
-                                        label: const Text('나중에 정리'),
+                                        label: const Text('그룹 없이 저장'),
                                         selected: _selectedGroup == null,
                                         onSelected: (_) {
                                           setState(() => _selectedGroup = null);
@@ -893,10 +925,10 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                   setState(() => _detailsExpanded = value),
                               tilePadding: EdgeInsets.zero,
                               childrenPadding: EdgeInsets.zero,
-                              title: const Text('추가 정보'),
+                              title: const Text('추가 정보 (선택)'),
                               subtitle: Text(
                                 detailFieldCount == 0
-                                    ? '예문·읽기·태그 등은 필요할 때만 입력'
+                                    ? '예문·읽기·태그는 필요할 때만 입력하세요'
                                     : '$detailFieldCount개 항목 입력됨',
                               ),
                               children: [
@@ -906,8 +938,8 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                   fieldKey: const Key(
                                     'quick-content-accepted-answers',
                                   ),
-                                  labelText: '추가 정답 (선택)',
-                                  hintText: '뜻 외에 정답으로 인정할 표현',
+                                  labelText: '다른 정답도 허용 (선택)',
+                                  hintText: '위의 뜻과 함께 정답으로 인정할 표현',
                                   helperText: null,
                                   textInputAction: TextInputAction.next,
                                   onSubmitted: (_) =>
@@ -990,7 +1022,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                                 context,
                                               ).nextFocus(),
                                           decoration: InputDecoration(
-                                            labelText: '한국어 발음 보조 (선택)',
+                                            labelText: '한글로 읽는 법 (선택)',
                                             hintText: _koreanPronunciationHint(
                                               subject.contentLanguage,
                                             ),
@@ -1253,8 +1285,8 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                               : () => _addToBasket(subject),
                           icon: const Icon(Icons.playlist_add_rounded),
                           tooltip: _basket.isEmpty
-                              ? '등록 바구니에 담기'
-                              : '등록 바구니에 담기 · ${_basket.length}',
+                              ? '저장 목록에 담기'
+                              : '저장 목록에 담기 · ${_basket.length}',
                         ),
                         if (!keyboardFocusMode) ...[
                           const SizedBox(width: 4),
@@ -1354,7 +1386,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 ? null
                                 : () => _addToBasket(subject),
                             icon: const Icon(Icons.playlist_add_rounded),
-                            tooltip: '등록 바구니에 담기',
+                            tooltip: '저장 목록에 담기',
                           ),
                         ),
                         const Spacer(),
@@ -1432,7 +1464,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   ].join('\u001f');
 
   Future<void> _loadDraft() async {
-    final store = ref.read(studyStoreProvider);
+    final store = _studyStore;
     final controller = ref.read(appControllerProvider.notifier);
     final subjectId = controller.activeSubject.id;
     final results = await Future.wait<Object?>([
@@ -1446,6 +1478,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       unawaited(_loadDraft());
       return;
     }
+    _draftSubjectId = subjectId;
     final recent = preferences.recentGroupBySubject[subjectId];
     final available = controller.availableLearningGroups.toSet();
     setState(() {
@@ -1496,6 +1529,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       return;
     }
     _draftTimer?.cancel();
+    _pendingDraftSnapshot = _currentDraft();
     final delay = ref
         .read(appControllerProvider)
         .preferences
@@ -1508,9 +1542,8 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   }
 
   QuickContentDraft _currentDraft() {
-    final subject = ref.read(appControllerProvider.notifier).activeSubject;
     return QuickContentDraft(
-      subjectId: subject.id,
+      subjectId: _draftSubjectId,
       kind: _kind,
       text: _textController.text,
       meanings: _splitValues(_meaningController.text),
@@ -1543,33 +1576,37 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   Future<void> _persistCurrentDraftNow() {
     _draftTimer?.cancel();
     final draft = _currentDraft();
-    final store = ref.read(studyStoreProvider);
-    _draftWriteQueue = _draftWriteQueue.then((_) async {
+    _pendingDraftSnapshot = draft;
+    return _persistDraftSnapshot(draft);
+  }
+
+  Future<void> _persistDraftSnapshot(QuickContentDraft draft) {
+    final write = () async {
       try {
         if (draft.hasContent) {
-          await store.saveQuickContentDraft(draft);
+          await _studyStore.saveQuickContentDraft(draft);
         } else {
-          await store.clearQuickContentDraft(subjectId: draft.subjectId);
+          await _studyStore.clearQuickContentDraft(subjectId: draft.subjectId);
         }
       } on Object {
         // Recovery storage is best-effort and never blocks content entry.
       }
-    });
-    return _draftWriteQueue;
+    }();
+    return write;
   }
 
   Future<void> _clearPersistedDraftNow() {
     _draftTimer?.cancel();
-    final store = ref.read(studyStoreProvider);
-    final subjectId = ref.read(appControllerProvider.notifier).activeSubject.id;
-    _draftWriteQueue = _draftWriteQueue.then((_) async {
+    final subjectId = _draftSubjectId;
+    _pendingDraftSnapshot = null;
+    final write = () async {
       try {
-        await store.clearQuickContentDraft(subjectId: subjectId);
+        await _studyStore.clearQuickContentDraft(subjectId: subjectId);
       } on Object {
         // Recovery cleanup must not change the result of a content action.
       }
-    });
-    return _draftWriteQueue;
+    }();
+    return write;
   }
 
   void _restoreDraft() {
@@ -1801,7 +1838,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
 
   void _addToBasket(StudySubject subject) {
     if (_basket.length >= 50) {
-      _showMessage('등록 바구니에는 한 번에 최대 50개까지 담을 수 있습니다.');
+      _showMessage('저장 목록에는 한 번에 50개까지 담을 수 있어요.');
       return;
     }
     final experience = ref.read(appControllerProvider).preferences.experience;
@@ -1821,7 +1858,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
     final validator = const LearningContentValidator();
     final key = validator.identityKey(candidate);
     if (_basket.any((entry) => validator.identityKey(entry.item) == key)) {
-      _showMessage('같은 표현이 이미 바구니에 있습니다. 기존 항목을 확인해 주세요.');
+      _showMessage('같은 표현이 저장 목록에 있어요. 기존 항목을 확인해 주세요.');
       return;
     }
     final duplicate = ref
@@ -1892,7 +1929,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       ];
     });
     unawaited(_persistCurrentDraftNow());
-    _showMessage('${_basket.length}개 항목에 그룹·태그·즐겨찾기·우선순위를 적용했습니다.');
+    _showMessage('${_basket.length}개에 현재 그룹·태그·즐겨찾기·우선순위를 적용했어요.');
   }
 
   Future<void> _saveBasket(StudySubject subject) async {
@@ -1943,7 +1980,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
           content: Text(
             preferenceSaveFailed
                 ? '${saved.length}개를 저장했습니다. 최근 옵션은 다음에 다시 기억합니다.'
-                : '${saved.length}개 바구니 항목을 저장했습니다.',
+                : '${saved.length}개를 한꺼번에 저장했어요.',
           ),
           action: SnackBarAction(
             label: '모두 취소',
@@ -1954,7 +1991,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
     } catch (error) {
       final restored = await _undoBatch(saved, announce: false);
       if (mounted) {
-        _showMessage('저장이 중단돼 성공했던 $restored개를 되돌렸습니다. 바구니는 유지됩니다. $error');
+        _showMessage('저장이 중단되어 먼저 저장된 $restored개를 되돌렸어요. 저장 목록은 그대로예요. $error');
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -2000,7 +2037,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
     }
     _showMessage(switch (status) {
       QuickContentUndoStatus.restored => '“${result.item.text}” 저장을 되돌렸습니다.',
-      QuickContentUndoStatus.conflict => '이후 수정된 자료라 안전하게 되돌리지 않았습니다.',
+      QuickContentUndoStatus.conflict => '저장한 뒤 수정된 자료라 자동으로 되돌리지 않았어요.',
       QuickContentUndoStatus.alreadyUndone => '이미 되돌린 저장입니다.',
     });
   }
@@ -2142,13 +2179,13 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   Future<void> _showClipboardIssues(BulkPasteResult result) => showDialog<void>(
     context: context,
     builder: (context) => AlertDialog(
-      title: const Text('가져올 쌍을 찾지 못했습니다'),
+      title: const Text('가져올 표현과 뜻을 찾지 못했어요'),
       content: SizedBox(
         width: 520,
         child: ListView(
           shrinkWrap: true,
           children: [
-            const Text('단어와 뜻을 탭·쉼표로 나누거나 두 줄씩 입력해 주세요.'),
+            const Text('표현과 뜻을 탭이나 쉼표로 나누거나, 두 줄씩 한 쌍으로 입력해 주세요.'),
             for (final issue in result.issues.take(8))
               ListTile(
                 dense: true,
@@ -2251,7 +2288,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       romanization: _romajiController.text,
     );
     if (suggestion == null) {
-      _showMessage('안전하게 만들 수 있는 발음 제안이 없습니다. 읽기를 먼저 입력해 보세요.');
+      _showMessage('발음을 제안하려면 읽는 법을 먼저 입력해 주세요.');
       return;
     }
     _readingController.text = suggestion;
@@ -2282,7 +2319,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
     }
     _showMessage(switch (status) {
       QuickContentUndoStatus.restored => '마지막 저장을 되돌렸습니다.',
-      QuickContentUndoStatus.conflict => '이후 수정된 자료라 안전하게 되돌리지 않았습니다.',
+      QuickContentUndoStatus.conflict => '저장한 뒤 수정된 자료라 자동으로 되돌리지 않았어요.',
       QuickContentUndoStatus.alreadyUndone => '이미 되돌린 저장입니다.',
     });
   }
@@ -2349,10 +2386,8 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         key: const Key('quick-content-unsaved-dialog'),
-        title: const Text('작성 중인 내용을 나갈까요?'),
-        content: const Text(
-          '저장하지 않은 입력 내용은 사라집니다. 계속 작성하거나, 내용을 버리고 나갈 수 있어요.',
-        ),
+        title: const Text('작성 중인 내용을 닫을까요?'),
+        content: const Text('저장하지 않은 내용은 사라져요. 계속 작성하거나 버리고 나갈 수 있어요.'),
         actions: [
           TextButton(
             key: const Key('quick-content-keep-editing'),
@@ -2510,7 +2545,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       switch (experience.duplicateDefault) {
         case AppDuplicateDefault.ask:
           FocusScope.of(context).unfocus();
-          _showMessage('같은 표현이 있습니다. 뜻 병합이나 별도 저장을 먼저 고르세요.');
+          _showMessage('같은 표현이 있어요. 뜻을 합칠지 따로 저장할지 골라 주세요.');
           return;
         case AppDuplicateDefault.merge:
           _duplicateDecisionKey = duplicateKey;
@@ -2581,9 +2616,9 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       _rememberSessionSaves([result]);
       final savedMessage = result.mergedWithExisting
           ? result.addedMeaningCount > 0
-                ? '기존 표현에 새 뜻을 추가했습니다.'
-                : '이미 같은 표현과 뜻이 있어 기존 자료를 유지했습니다.'
-          : '저장했습니다. 같은 그룹에 계속 추가할 수 있어요.';
+                ? '기존 표현에 새 뜻을 추가했어요.'
+                : '같은 표현과 뜻이 이미 있어 한 번만 저장했어요.'
+          : '저장했어요. 같은 그룹에 계속 추가할 수 있어요.';
       final message = preferenceSaveFailed
           ? '$savedMessage 최근 등록 기본값은 다음에 다시 기억합니다.'
           : savedMessage;
@@ -2736,7 +2771,7 @@ class _QuickInputFocusStatus extends StatelessWidget {
           Icon(Icons.shopping_basket_outlined, size: 16, color: colors.primary),
           const SizedBox(width: 4),
           Text(
-            '바구니 $basketCount',
+            '저장 목록 $basketCount',
             key: const Key('quick-content-focus-basket-count'),
             style: Theme.of(context).textTheme.labelMedium,
           ),
@@ -2883,9 +2918,9 @@ class _QuickRegistrationWorkbench extends StatelessWidget {
       child: ExpansionTile(
         key: const Key('quick-content-workbench'),
         initiallyExpanded: basket.isNotEmpty,
-        title: const Text('등록 도구'),
+        title: const Text('저장 도구'),
         subtitle: Text(
-          '템플릿 ${templates.length} · 바구니 ${basket.length} · 실행 취소 ${recentSaves.length}/5',
+          '템플릿 ${templates.length} · 저장 목록 ${basket.length} · 되돌리기 ${recentSaves.length}/5',
         ),
         childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         children: [
@@ -2974,7 +3009,7 @@ class _QuickRegistrationWorkbench extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Padding(
                 padding: EdgeInsets.only(bottom: 8),
-                child: Text('그룹·태그·즐겨찾기·우선순위를 이름 붙여 저장해 보세요.'),
+                child: Text('자주 쓰는 그룹·태그 설정을 저장해 두고 다시 사용할 수 있어요.'),
               ),
             )
           else
@@ -3043,7 +3078,7 @@ class _QuickRegistrationWorkbench extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('등록 바구니', style: Theme.of(context).textTheme.titleSmall),
+                Text('저장 목록', style: Theme.of(context).textTheme.titleSmall),
                 Align(
                   alignment: Alignment.centerLeft,
                   child: TextButton(
@@ -3059,7 +3094,7 @@ class _QuickRegistrationWorkbench extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '등록 바구니',
+                    '저장 목록',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
@@ -3075,7 +3110,7 @@ class _QuickRegistrationWorkbench extends StatelessWidget {
               alignment: Alignment.centerLeft,
               child: Padding(
                 padding: EdgeInsets.only(bottom: 8),
-                child: Text('여러 표현을 검토한 뒤 한 번에 저장할 수 있습니다.'),
+                child: Text('여러 표현을 모아 확인한 뒤 한 번에 저장할 수 있어요.'),
               ),
             )
           else ...[
@@ -3137,7 +3172,7 @@ class _QuickRegistrationWorkbench extends StatelessWidget {
                     trailing: IconButton(
                       onPressed: () => onRemoveBasket(entry.item.id),
                       icon: const Icon(Icons.remove_circle_outline_rounded),
-                      tooltip: '바구니에서 빼기',
+                      tooltip: '저장 목록에서 빼기',
                     ),
                   );
                 },
@@ -3158,7 +3193,7 @@ class _QuickRegistrationWorkbench extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '이번 등록 최근 실행 취소',
+                '이번에 저장한 내용 되돌리기',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
             ),
@@ -3209,17 +3244,21 @@ class _ContentSuggestions extends StatelessWidget {
     required this.similarItems,
     required this.examples,
     required this.tags,
+    required this.groups,
     required this.onOpenSimilar,
     required this.onUseExample,
     required this.onUseTag,
+    required this.onUseGroup,
   });
 
   final List<({LearningItem item, double score})> similarItems;
   final List<LearningItem> examples;
   final List<String> tags;
+  final List<String> groups;
   final ValueChanged<LearningItem> onOpenSimilar;
   final ValueChanged<LearningItem> onUseExample;
   final ValueChanged<String> onUseTag;
+  final ValueChanged<String> onUseGroup;
 
   @override
   Widget build(BuildContext context) {
@@ -3231,7 +3270,7 @@ class _ContentSuggestions extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('입력 도우미', style: Theme.of(context).textTheme.titleSmall),
+            Text('입력 추천', style: Theme.of(context).textTheme.titleSmall),
             if (similarItems.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text('비슷한 기존 표현', style: Theme.of(context).textTheme.labelMedium),
@@ -3245,15 +3284,35 @@ class _ContentSuggestions extends StatelessWidget {
                       key: Key('quick-content-similar-${match.item.id}'),
                       avatar: const Icon(Icons.manage_search_rounded, size: 16),
                       label: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 210),
+                        constraints: const BoxConstraints(maxWidth: 260),
                         child: Text(
-                          '${match.item.text} · ${(match.score * 100).round()}%',
+                          '${match.item.text} · ${match.item.primaryTranslation} · '
+                          '${(match.score * 100).round()}%',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       tooltip: '기존 자료 열기',
                       onPressed: () => onOpenSimilar(match.item),
+                    ),
+                ],
+              ),
+            ],
+            if (groups.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text('관련 그룹', style: Theme.of(context).textTheme.labelMedium),
+              const SizedBox(height: 5),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final group in groups)
+                    ActionChip(
+                      key: Key('quick-content-group-suggestion-$group'),
+                      avatar: const Icon(Icons.folder_copy_outlined, size: 16),
+                      label: Text(group),
+                      tooltip: '$group 그룹 선택',
+                      onPressed: () => onUseGroup(group),
                     ),
                 ],
               ),
@@ -3368,7 +3427,7 @@ class _DuplicateNoticeState extends State<_DuplicateNotice> {
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  added > 0 ? '같은 표현 · 새 뜻 $added개' : '같은 표현과 뜻이 이미 있음',
+                  added > 0 ? '같은 표현 · 새 뜻 $added개 추가 가능' : '이미 같은 표현과 뜻이 있어요',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(
@@ -3411,20 +3470,27 @@ class _DuplicateNoticeState extends State<_DuplicateNotice> {
                 selected: widget.mergeSelected,
                 onSelected: (_) => widget.onMerge(),
                 avatar: const Icon(Icons.merge_rounded, size: 16),
-                label: const Text('뜻 병합'),
+                label: const Text('뜻 합치기'),
               ),
               ActionChip(
                 key: const Key('quick-content-view-existing'),
                 onPressed: widget.onOpen,
                 avatar: const Icon(Icons.open_in_new_rounded, size: 16),
-                label: const Text('기존 열기'),
+                label: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 180),
+                  child: Text(
+                    '기존 · ${widget.item.primaryTranslation}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ),
               ChoiceChip(
                 key: const Key('quick-content-save-separate'),
                 selected: widget.separateSelected,
                 onSelected: (_) => widget.onSeparate(),
                 avatar: const Icon(Icons.call_split_rounded, size: 16),
-                label: const Text('별도 저장'),
+                label: const Text('따로 저장'),
               ),
             ],
           ),
@@ -3733,7 +3799,7 @@ class _ClipboardPairReviewDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AlertDialog(
     key: const Key('quick-content-clipboard-review'),
-    title: Text('${result.entryCount}개 쌍을 등록할까요?'),
+    title: Text('${result.entryCount}개를 저장할까요?'),
     content: SizedBox(
       width: 560,
       height: 360,
@@ -3761,7 +3827,7 @@ class _ClipboardPairReviewDialog extends StatelessWidget {
           ),
           if (result.issues.isNotEmpty)
             Text(
-              '문제가 있는 행은 저장하지 않습니다. 첫 문제: '
+              '확인이 필요한 행은 빼고 저장해요. 첫 번째 문제: '
               '${result.issues.first.message}',
               style: Theme.of(context).textTheme.bodySmall,
             ),

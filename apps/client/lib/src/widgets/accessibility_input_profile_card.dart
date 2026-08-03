@@ -71,12 +71,12 @@ class _AccessibilityInputProfileCardState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '접근성 입력 프로필',
+                        '보기·입력 편의',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '이 기기에만 저장됩니다. 제스처를 켜도 모든 기능은 화면 버튼과 키보드로 사용할 수 있습니다.',
+                        '이 설정은 이 기기에만 저장됩니다. 제스처를 끄더라도 화면 버튼과 키보드로 모든 기능을 이용할 수 있어요.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -87,8 +87,8 @@ class _AccessibilityInputProfileCardState
             const SizedBox(height: 12),
             _ProfileSwitch(
               controlKey: const Key('accessibility-large-rating-controls'),
-              title: '큰 평가 버튼',
-              subtitle: 'Again·Hard·Good·Easy 평가 버튼 높이를 64px로 넓힙니다.',
+              title: '복습 버튼 크게',
+              subtitle: '다시·어려움·좋음·쉬움 버튼을 누르기 편하게 키웁니다.',
               value: profile.largeRatingControls,
               onChanged: (value) => widget.onChanged(
                 profile.copyWith(largeRatingControls: value),
@@ -97,7 +97,7 @@ class _AccessibilityInputProfileCardState
             _ProfileSwitch(
               controlKey: const Key('accessibility-high-contrast'),
               title: '고대비',
-              subtitle: '카드 경계, 입력 포커스와 주요 버튼의 구분을 더 선명하게 표시합니다.',
+              subtitle: '카드 테두리와 입력 위치, 주요 버튼을 더 선명하게 보여 줍니다.',
               value: profile.highContrast,
               onChanged: (value) =>
                   widget.onChanged(profile.copyWith(highContrast: value)),
@@ -113,7 +113,7 @@ class _AccessibilityInputProfileCardState
             _ProfileSwitch(
               controlKey: const Key('accessibility-reduce-transparency'),
               title: '투명도 줄이기',
-              subtitle: '반투명 배경·그림자·겹침 효과를 없애고 불투명한 경계로 구분합니다.',
+              subtitle: '반투명 배경과 그림자를 줄여 화면 요소를 또렷하게 나눕니다.',
               value: profile.reduceTransparency,
               onChanged: (value) =>
                   widget.onChanged(profile.copyWith(reduceTransparency: value)),
@@ -121,7 +121,7 @@ class _AccessibilityInputProfileCardState
             _ProfileSwitch(
               controlKey: const Key('accessibility-disable-timed-challenges'),
               title: '시간 제한 없이 학습',
-              subtitle: '매치 스프린트처럼 시간이 흐르는 학습을 시간 제한 없는 방식으로 고정합니다.',
+              subtitle: '시간이 있는 게임도 제한 없이 천천히 풀 수 있게 바꿉니다.',
               value: profile.disableTimedChallenges,
               onChanged: (value) => widget.onChanged(
                 profile.copyWith(disableTimedChallenges: value),
@@ -144,8 +144,8 @@ class _AccessibilityInputProfileCardState
               const Divider(),
               const SizedBox(height: 10),
               _ProfileOptionGroup<AndroidSelectionGesture>(
-                label: 'Android 선택 방식',
-                description: '탭·스와이프는 보조 입력입니다. 선택 버튼은 항상 표시됩니다.',
+                label: '화면에서 선택하는 방식',
+                description: '탭이나 스와이프를 켜도 선택 버튼은 항상 표시됩니다.',
                 keyPrefix: 'accessibility-android-gesture',
                 value: profile.androidSelectionGesture,
                 options: [
@@ -164,7 +164,7 @@ class _AccessibilityInputProfileCardState
               Text('앱 전역 단축키', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 3),
               Text(
-                '검색·빠른 추가·도움말·본문 이동과 창 동작을 이 기기에서 재지정합니다.',
+                '검색, 빠른 추가, 도움말, 창 동작에 쓸 키를 정합니다.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
@@ -176,13 +176,10 @@ class _AccessibilityInputProfileCardState
                   onChanged: (key) => _remapGlobal(action, key),
                 ),
               const SizedBox(height: 8),
-              Text(
-                '데스크톱 학습 단축키',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+              Text('학습 단축키', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 3),
               Text(
-                '중복 키를 지정하면 기존 동작은 자동으로 “사용 안 함”으로 바뀝니다.',
+                '이미 쓰는 키를 고르면 기존 단축키는 “사용 안 함”으로 바뀝니다.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),

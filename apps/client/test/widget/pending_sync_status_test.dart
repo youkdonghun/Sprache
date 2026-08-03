@@ -72,7 +72,7 @@ void main() {
   );
 
   testWidgets(
-    'Railway binding deletion remains available after device disconnect',
+    'Drive binding deletion remains available after device disconnect',
     (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.android;
       tester.view.devicePixelRatio = 1;
@@ -122,7 +122,7 @@ void main() {
           find.byKey(const Key('delete-google-account-binding')),
           findsOneWidget,
         );
-        expect(find.text('Railway 연결 기록 확인·삭제'), findsOneWidget);
+        expect(find.text('남아 있는 Drive 연결 정보 삭제'), findsOneWidget);
 
         await tester.ensureVisible(
           find.byKey(const Key('open-privacy-details')),
@@ -130,8 +130,8 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('open-privacy-details')));
         await tester.pumpAndSettle();
-        expect(find.textContaining('이 기기의 Google 토큰만 삭제'), findsOneWidget);
-        expect(find.textContaining('Railway의 계정–폴더 연결은 유지'), findsOneWidget);
+        expect(find.textContaining('이 기기의 Google 로그인 정보만'), findsOneWidget);
+        expect(find.textContaining('Drive의 숨김 연결 정보는 남겨'), findsOneWidget);
         await tester.tap(find.text('확인'));
         await tester.pumpAndSettle();
 
@@ -148,14 +148,14 @@ void main() {
           findsOneWidget,
         );
         expect(find.textContaining('Google 계정을 확인한 뒤'), findsOneWidget);
-        expect(find.text('확인 후 삭제'), findsOneWidget);
+        expect(find.text('Google 확인 후 삭제'), findsOneWidget);
 
-        await tester.tap(find.text('확인 후 삭제'));
+        await tester.tap(find.text('Google 확인 후 삭제'));
         await tester.pumpAndSettle();
 
         expect(service.deleted, isTrue);
         expect(
-          find.text('계정 연결 기록 삭제를 완료했습니다. 로컬 저장 모드는 그대로 유지됩니다.'),
+          find.text('Drive 연결 정보를 삭제했습니다. 현재 저장 방식은 그대로 유지됩니다.'),
           findsOneWidget,
         );
         expect(tester.takeException(), isNull);

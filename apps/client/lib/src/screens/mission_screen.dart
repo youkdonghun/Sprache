@@ -57,7 +57,7 @@ class MissionCatalogScreen extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '외운 표현을 짧은 상황 안에서 듣고, 이해하고, 말해 보세요.',
+                                      '익힌 표현을 실제 상황처럼 듣고 말해 보세요.',
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodyMedium,
@@ -88,7 +88,7 @@ class MissionCatalogScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '추천 미션은 위에서 시작하고, ${otherUnits.length}개 다른 상황은 필요할 때 바로 골라 연습하세요.',
+                            '추천 미션부터 시작하거나, 원하는 상황을 골라 연습하세요.',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 12),
@@ -160,6 +160,7 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
   var _coachedTurns = 0;
   MissionDecision? _decision;
   String? _lastAutoPlayedQuestionId;
+  var _checkpointRestored = false;
 
   @override
   void initState() {
@@ -230,12 +231,22 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
     });
   }
 
-  void _choose(MissionDecision decision) {
+  void _choose({
+    required MissionScript script,
+    required MissionDecision decision,
+    required MissionCheckpointDecision checkpointDecision,
+    String? selectedOptionId,
+  }) {
     if (_decision != null) return;
     setState(() {
       _decision = decision;
       if (decision.usedCoaching) _coachedTurns++;
     });
+    _saveCheckpoint(
+      script,
+      decision: checkpointDecision,
+      selectedOptionId: selectedOptionId,
+    );
     if (ref
         .read(appControllerProvider)
         .preferences
@@ -245,9 +256,37 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
     }
   }
 
-  void _nextPhrase(int phraseCount) {
-    if (_decision == null) return;
-    if (_phraseIndex + 1 >= phraseCount) {
+  void _saveCheckpoint(
+    MissionScript script, {
+    MissionCheckpointDecision? decision,
+    String? selectedOptionId,
+  }) {
+    final scene = script.scenes[_phraseIndex];
+    final state = ref.read(appControllerProvider);
+    ref
+        .read(appControllerProvider.notifier)
+        .saveMissionProgress(
+          MissionProgressCheckpoint(
+            courseId: state.activeCourseId,
+            unitIndex: widget.unitIndex,
+            phraseIndex: _phraseIndex,
+            sceneId: scene.id,
+            coachedTurns: _coachedTurns,
+            decision: decision,
+            selectedOptionId: selectedOptionId,
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  void _nextPhrase(MissionScript script) {
+    final decision = _decision;
+    if (decision == null) return;
+    final nextIndex = script.nextSceneIndex(
+      currentIndex: _phraseIndex,
+      branch: decision.branch,
+    );
+    if (nextIndex == null) {
       ref
           .read(appControllerProvider.notifier)
           .completeMission(widget.unitIndex);
@@ -258,12 +297,45 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
       return;
     }
     setState(() {
-      _phraseIndex += 1;
+      _phraseIndex = nextIndex;
       _decision = null;
     });
+    _saveCheckpoint(script);
+  }
+
+  void _restoreCheckpoint(MissionScript script, AppController controller) {
+    if (_checkpointRestored) return;
+    _checkpointRestored = true;
+    final checkpoint = controller.missionProgressFor(widget.unitIndex);
+    if (checkpoint == null) return;
+    final validIndex =
+        checkpoint.phraseIndex >= 0 &&
+        checkpoint.phraseIndex < script.scenes.length;
+    if (!validIndex) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) controller.clearMissionProgress(widget.unitIndex);
+      });
+      return;
+    }
+    final scene = script.scenes[checkpoint.phraseIndex];
+    final restoredDecision = checkpoint.restoreDecision(scene);
+    final validDecision =
+        checkpoint.decision == null || restoredDecision != null;
+    if (scene.id != checkpoint.sceneId || !validDecision) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) controller.clearMissionProgress(widget.unitIndex);
+      });
+      return;
+    }
+    _phraseIndex = checkpoint.phraseIndex;
+    _coachedTurns = checkpoint.coachedTurns;
+    _decision = restoredDecision;
   }
 
   void _restart() {
+    ref
+        .read(appControllerProvider.notifier)
+        .clearMissionProgress(widget.unitIndex);
     setState(() {
       _phraseIndex = 0;
       _completed = false;
@@ -283,7 +355,7 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
         body: Center(
           child: FilledButton(
             onPressed: () => context.go('/missions'),
-            child: const Text('실전 미션으로 돌아가기'),
+            child: const Text('미션 목록으로 돌아가기'),
           ),
         ),
       );
@@ -297,6 +369,9 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
       goal: definition.briefing,
       progress: state.progress,
     );
+    if (state.isHydrated && !script.isEmpty) {
+      _restoreCheckpoint(script, controller);
+    }
     if (script.isEmpty) {
       return Scaffold(
         body: SafeArea(
@@ -318,12 +393,12 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          '미션에 사용할 표현이 없어요',
+                          '이 미션에 쓸 표현이 없어요',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '자료실에서 이 단원의 표현을 학습에 다시 포함한 뒤 시작해 주세요.',
+                          '자료실에서 이 단원의 표현을 다시 포함해 주세요.',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
@@ -380,7 +455,7 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
                             const SizedBox(height: 18),
                             _MissionBriefing(
                               definition: definition,
-                              phraseCount: script.scenes.length,
+                              phraseCount: script.mainSceneCount,
                               unitIndex: unit.index,
                               onGuide: () =>
                                   context.push('/unit/${unit.index}'),
@@ -389,7 +464,7 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
                             if (_completed)
                               _MissionCompleteCard(
                                 definition: definition,
-                                phraseCount: script.scenes.length,
+                                phraseCount: script.mainSceneCount,
                                 ending: script.endingFor(
                                   coachedTurns: _coachedTurns,
                                 ),
@@ -404,15 +479,34 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
                             else
                               _BranchingMissionCard(
                                 scene: scene,
-                                phraseIndex: _phraseIndex,
-                                phraseCount: script.scenes.length,
+                                stepIndex: scene.mainStepIndex,
+                                stepCount: script.mainSceneCount,
+                                coachedFollowUp: scene.coachedFollowUp,
                                 readingAidsLabel: readingAidsLabel,
                                 decision: _decision,
                                 onSpeak: () => _speak(scene.target),
-                                onChoose: (option) =>
-                                    _choose(scene.choose(option.id)),
-                                onCoach: () => _choose(scene.requestCoaching()),
-                                onNext: () => _nextPhrase(script.scenes.length),
+                                onChoose: (option) => _choose(
+                                  script: script,
+                                  decision: scene.choose(option.id),
+                                  checkpointDecision: option.isGoal
+                                      ? MissionCheckpointDecision.fluentChoice
+                                      : MissionCheckpointDecision.coachedChoice,
+                                  selectedOptionId: option.id,
+                                ),
+                                onCoach: () => _choose(
+                                  script: script,
+                                  decision: scene.requestCoaching(),
+                                  checkpointDecision:
+                                      MissionCheckpointDecision.coachedHelp,
+                                ),
+                                onNext: () => _nextPhrase(script),
+                                completesAfterDecision:
+                                    _decision != null &&
+                                    script.nextSceneIndex(
+                                          currentIndex: _phraseIndex,
+                                          branch: _decision!.branch,
+                                        ) ==
+                                        null,
                               ),
                           ],
                         ),
@@ -456,7 +550,7 @@ class _RecommendedMission extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '지금 추천하는 실전',
+                  '지금 추천하는 미션',
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: colors.onSecondaryContainer,
                   ),
@@ -629,7 +723,7 @@ class _MissionPracticeHeader extends StatelessWidget {
           children: [
             IconButton(
               onPressed: onBack,
-              tooltip: '실전 미션으로',
+              tooltip: '미션 목록으로',
               icon: const Icon(Icons.arrow_back_rounded),
             ),
             const SizedBox(width: 6),
@@ -718,7 +812,7 @@ class _MissionBriefing extends StatelessWidget {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '표현을 듣고 뜻을 확인한 뒤 직접 말합니다. 막히면 단원 가이드에서 핵심 표현을 다시 볼 수 있어요.',
+                '표현을 듣고 뜻을 확인한 뒤 직접 말해 보세요. 막히면 단원 가이드에서 다시 볼 수 있어요.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colors.onPrimaryContainer.withValues(alpha: 0.85),
                 ),
@@ -744,25 +838,29 @@ class _MissionBriefing extends StatelessWidget {
 class _BranchingMissionCard extends StatelessWidget {
   const _BranchingMissionCard({
     required this.scene,
-    required this.phraseIndex,
-    required this.phraseCount,
+    required this.stepIndex,
+    required this.stepCount,
+    required this.coachedFollowUp,
     required this.readingAidsLabel,
     required this.decision,
     required this.onSpeak,
     required this.onChoose,
     required this.onCoach,
     required this.onNext,
+    required this.completesAfterDecision,
   });
 
   final MissionScene scene;
-  final int phraseIndex;
-  final int phraseCount;
+  final int stepIndex;
+  final int stepCount;
+  final bool coachedFollowUp;
   final String readingAidsLabel;
   final MissionDecision? decision;
   final VoidCallback onSpeak;
   final ValueChanged<MissionOption> onChoose;
   final VoidCallback onCoach;
   final VoidCallback onNext;
+  final bool completesAfterDecision;
 
   @override
   Widget build(BuildContext context) {
@@ -775,13 +873,17 @@ class _BranchingMissionCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  '표현 ${phraseIndex + 1} / $phraseCount',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.labelLarge?.copyWith(color: colors.primary),
+                Expanded(
+                  child: Text(
+                    coachedFollowUp
+                        ? '보강 · 표현 ${stepIndex + 1} / $stepCount'
+                        : '표현 ${stepIndex + 1} / $stepCount',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.labelLarge?.copyWith(color: colors.primary),
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 10),
                 Text(
                   '상황 → 선택 → 말하기',
                   style: Theme.of(context).textTheme.bodySmall,
@@ -791,10 +893,10 @@ class _BranchingMissionCard extends StatelessWidget {
             const SizedBox(height: 10),
             Semantics(
               label: '실전 미션 표현 진행률',
-              value: '${phraseIndex + 1} / $phraseCount',
+              value: '${stepIndex + 1} / $stepCount',
               child: ExcludeSemantics(
                 child: LinearProgressIndicator(
-                  value: (phraseIndex + 1) / phraseCount,
+                  value: (stepIndex + 1) / stepCount,
                   minHeight: 7,
                   borderRadius: BorderRadius.circular(7),
                 ),
@@ -854,12 +956,12 @@ class _BranchingMissionCard extends StatelessWidget {
                 key: const Key('mission-reveal'),
                 onPressed: onCoach,
                 icon: const Icon(Icons.lightbulb_outline_rounded),
-                label: const Text('도움받아 계속'),
+                label: const Text('힌트 보고 계속'),
               ),
             ] else ...[
               Semantics(
                 liveRegion: true,
-                label: decision!.usedCoaching ? '도움 경로' : '자연스러운 경로',
+                label: decision!.usedCoaching ? '힌트 사용' : '혼자 해결',
                 child: Container(
                   key: const Key('mission-branch-feedback'),
                   padding: const EdgeInsets.all(15),
@@ -873,7 +975,7 @@ class _BranchingMissionCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Text(
-                        decision!.usedCoaching ? '도움 경로' : '대화가 이어졌어요',
+                        decision!.usedCoaching ? '힌트를 사용했어요' : '대화가 이어졌어요',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w900,
                         ),
@@ -910,7 +1012,7 @@ class _BranchingMissionCard extends StatelessWidget {
               key: const Key('mission-listen'),
               onPressed: onSpeak,
               icon: const Icon(Icons.volume_up_rounded),
-              label: const Text('목표 표현 듣기'),
+              label: const Text('표현 듣기'),
             ),
             if (decision != null) const SizedBox(height: 10),
             FilledButton.icon(
@@ -921,9 +1023,7 @@ class _BranchingMissionCard extends StatelessWidget {
               ),
               icon: const Icon(Icons.record_voice_over_rounded),
               label: Text(
-                phraseIndex + 1 == phraseCount
-                    ? '표현을 말했어요 · 미션 완료'
-                    : '표현을 말했어요 · 다음 장면',
+                completesAfterDecision ? '잘했어요 · 미션 완료' : '잘했어요 · 다음 장면',
               ),
             ),
           ],
@@ -1008,12 +1108,12 @@ class _MissionCompleteCard extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onPronunciation,
                   icon: const Icon(Icons.mic_rounded),
-                  label: const Text('발음 채점'),
+                  label: const Text('발음 연습'),
                 ),
                 TextButton.icon(
                   onPressed: onSentence,
                   icon: const Icon(Icons.space_bar_rounded),
-                  label: const Text('문장 문제'),
+                  label: const Text('문장 문제 풀기'),
                 ),
               ],
             ),

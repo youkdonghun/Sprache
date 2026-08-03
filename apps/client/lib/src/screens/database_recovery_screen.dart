@@ -31,7 +31,7 @@ class _DatabaseRecoveryScreenState extends State<DatabaseRecoveryScreen> {
       if (mounted) _showMessage(message);
     } catch (_) {
       if (mounted) {
-        _showMessage('복구 패키지를 저장하지 못했습니다. 저장 위치 권한을 확인해 주세요.');
+        _showMessage('복구 파일을 저장하지 못했습니다. 저장 위치 권한을 확인해 주세요.');
       }
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -129,8 +129,8 @@ class _DatabaseRecoveryScreenState extends State<DatabaseRecoveryScreen> {
                             ),
                             const SizedBox(height: 10),
                             const Text(
-                              '이 화면에서는 학습 DB에 쓰거나 초기화하지 않습니다. '
-                              '안전 사본을 저장한 뒤 앱 업데이트 또는 다시 열기를 진행하세요.',
+                              '복구가 끝날 때까지 학습 데이터에 새 내용을 쓰거나 초기화하지 않습니다. '
+                              '먼저 안전 사본을 저장한 다음 앱을 다시 열어 보세요.',
                             ),
                             if (diagnostic.hasPreservedDatabase) ...[
                               const SizedBox(height: 14),
@@ -150,8 +150,8 @@ class _DatabaseRecoveryScreenState extends State<DatabaseRecoveryScreen> {
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: Text(
-                                        '원본 관련 파일 ${diagnostic.preservedFiles.length}개를 '
-                                        '앱 내부 복구 폴더에 보존했습니다.',
+                                        '원본 데이터 파일 ${diagnostic.preservedFiles.length}개를 '
+                                        '앱 안의 복구 폴더에 안전하게 보관했습니다.',
                                         style: TextStyle(
                                           color: colors.onPrimaryContainer,
                                           fontWeight: FontWeight.w800,
@@ -183,9 +183,7 @@ class _DatabaseRecoveryScreenState extends State<DatabaseRecoveryScreen> {
                                   ),
                                 )
                               : const Icon(Icons.archive_rounded),
-                          label: Text(
-                            _exporting ? '복구 패키지 만드는 중…' : '안전 사본 저장',
-                          ),
+                          label: Text(_exporting ? '복구 파일 만드는 중…' : '복구 파일 저장'),
                         );
                         final retry = OutlinedButton.icon(
                           key: const Key('retry-database-open'),
@@ -228,8 +226,8 @@ class _DatabaseRecoveryScreenState extends State<DatabaseRecoveryScreen> {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      '지원 요청 시에는 먼저 진단 정보만 공유하세요. '
-                      '복구 ZIP에는 개인 학습 DB가 포함되므로 본인이 신뢰하는 위치에만 보관해야 합니다.',
+                      '도움을 요청할 때는 먼저 진단 정보만 공유해 주세요. '
+                      '복구 파일에는 개인 학습 데이터가 들어 있으니 믿을 수 있는 곳에만 보관하세요.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colors.onSurfaceVariant,
                       ),
@@ -267,7 +265,10 @@ class _RecoveryDetails extends StatelessWidget {
         childrenPadding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
         expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _detail('DB 형식', '$detected / 앱 ${diagnostic.expectedSchemaVersion}'),
+          _detail(
+            '데이터 형식',
+            '$detected / 앱 ${diagnostic.expectedSchemaVersion}',
+          ),
           _detail('원본 크기', size),
           _detail(
             '마지막 수정',

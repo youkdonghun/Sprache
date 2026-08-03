@@ -72,7 +72,7 @@ class CoursePathScreen extends ConsumerWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '단원마다 익히기·쓰기·문장·듣기·말하기를 순서대로 연습합니다.',
+                                      '단원마다 보고 익힌 뒤, 쓰고 듣고 말하며 연습해요.',
                                       style: Theme.of(
                                         context,
                                       ).textTheme.bodyMedium,
@@ -112,7 +112,7 @@ class CoursePathScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '현재 추천 단원은 위에서 이어 하고, 나머지 단원은 자유롭게 골라 보세요.',
+                                '추천 단원부터 이어가거나, 원하는 단원을 골라 시작하세요.',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
@@ -178,12 +178,12 @@ class _GeneralSubjectWorkspace extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '$symbol $subjectName 학습 보드',
+                    '$symbol $subjectName 학습',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '자료를 모으고, 암기 카드와 퀴즈를 반복하며 내 일정에 맞춰 복습합니다.',
+                    '자료를 모아 카드와 퀴즈로 익히고, 원하는 때 복습하세요.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 18),
@@ -199,7 +199,7 @@ class _GeneralSubjectWorkspace extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   itemCount == 0
-                                      ? '첫 자료를 추가해 보세요'
+                                      ? '첫 자료를 추가하세요'
                                       : '학습 $studiedCount / $itemCount · 완전 암기 $masteredCount',
                                   style: Theme.of(context).textTheme.titleLarge,
                                 ),
@@ -255,25 +255,25 @@ class _GeneralSubjectWorkspace extends StatelessWidget {
                         (
                           Icons.style_rounded,
                           '암기 카드',
-                          '개념과 설명을 차분히 익힌 뒤 기억 정도를 표시합니다.',
+                          '개념과 설명을 익히고 기억한 정도를 표시해요.',
                           '/cards?kind=mixed',
                         ),
                         (
                           Icons.quiz_rounded,
                           '혼합 퀴즈',
-                          '뜻 고르기와 직접 쓰기를 섞어 기억을 확인합니다.',
+                          '뜻 고르기와 직접 쓰기로 기억을 확인해요.',
                           '/study?mode=mixed',
                         ),
                         (
                           Icons.event_note_rounded,
                           '학습 일정 만들기',
-                          '원하는 자료만 골라 분량과 시간을 정합니다.',
+                          '원하는 자료를 골라 분량과 시간을 정해요.',
                           '/session-builder',
                         ),
                         (
                           Icons.folder_copy_rounded,
                           '자료·그룹 관리',
-                          '태그와 그룹으로 묶고 다른 학습 묶음으로 옮깁니다.',
+                          '태그와 그룹으로 정리하고 다른 묶음으로 옮겨요.',
                           '/library',
                         ),
                       ];
@@ -356,14 +356,14 @@ class _PathOverview extends StatelessWidget {
     final checkpoint = unit.masteryCheckpoint;
     final checkpointAction = checkpoint.available;
     final eyebrow = checkpoint.achieved
-        ? '코스 숙련도 유지'
+        ? '숙련도 다시 확인'
         : checkpointAction
         ? '단원 마무리'
-        : '지금 이어서 할 학습';
+        : '다음 학습';
     final description = checkpointAction
         ? checkpoint.achieved
-              ? '혼합 문제로 이 단원의 숙련도를 다시 확인해 보세요.'
-              : '표현을 넓게 익혔어요. ${checkpoint.questionCount}문제로 뜻·쓰기·듣기를 함께 확인해 보세요.'
+              ? '혼합 문제로 이 단원을 얼마나 기억하는지 확인하세요.'
+              : '표현을 충분히 익혔어요. ${checkpoint.questionCount}문제로 마무리해 보세요.'
         : unit.nextLesson.description;
     final actionLabel = checkpointAction
         ? checkpoint.achieved

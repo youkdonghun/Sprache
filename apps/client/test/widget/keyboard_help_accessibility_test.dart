@@ -37,7 +37,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('keyboard-help-overlay')), findsOneWidget);
-    expect(find.text('퀴즈 키보드 도움말'), findsOneWidget);
+    expect(find.text('퀴즈 단축키'), findsOneWidget);
     expect(find.text('힌트'), findsOneWidget);
     expect(find.text('Ctrl+H'), findsOneWidget);
     expect(find.text('키보드 도움말'), findsWidgets);

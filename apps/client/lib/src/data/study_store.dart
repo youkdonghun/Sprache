@@ -272,6 +272,8 @@ class MemoryStudyStore implements StudyStore {
   SyncDeviceSettings _syncDeviceSettings;
   final Map<String, QuickContentDraft> _quickContentDrafts;
   final Map<String, ItemEditorDraft> _itemEditorDrafts;
+  Future<void> _quickContentDraftWriteTail = Future<void>.value();
+  Future<void> _itemEditorDraftWriteTail = Future<void>.value();
   QuickContentLocalPreferences _quickContentLocalPreferences;
   SearchLocalPreferences _searchLocalPreferences;
   DevicePreferences _devicePreferences;
@@ -335,30 +337,78 @@ class MemoryStudyStore implements StudyStore {
   @override
   Future<QuickContentDraft?> loadQuickContentDraft({
     required String subjectId,
-  }) async => _quickContentDrafts[subjectId];
-
-  @override
-  Future<void> saveQuickContentDraft(QuickContentDraft draft) async {
-    _quickContentDrafts[draft.subjectId] = draft;
+  }) async {
+    try {
+      await _quickContentDraftWriteTail;
+    } on Object {
+      // A later read must still be possible after a best-effort write fails.
+    }
+    return _quickContentDrafts[subjectId];
   }
 
   @override
-  Future<void> clearQuickContentDraft({required String subjectId}) async {
-    _quickContentDrafts.remove(subjectId);
+  Future<void> saveQuickContentDraft(QuickContentDraft draft) =>
+      _enqueueQuickContentDraftWrite(
+        () async => _quickContentDrafts[draft.subjectId] = draft,
+      );
+
+  @override
+  Future<void> clearQuickContentDraft({required String subjectId}) =>
+      _enqueueQuickContentDraftWrite(
+        () async => _quickContentDrafts.remove(subjectId),
+      );
+
+  @override
+  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId}) async {
+    try {
+      await _itemEditorDraftWriteTail;
+    } on Object {
+      // A later read must still be possible after a best-effort write fails.
+    }
+    return _itemEditorDrafts[_itemEditorDraftScope(itemId)];
   }
 
   @override
-  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId}) async =>
-      _itemEditorDrafts[_itemEditorDraftScope(itemId)];
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft) =>
+      _enqueueItemEditorDraftWrite(
+        () async =>
+            _itemEditorDrafts[_itemEditorDraftScope(draft.itemId)] = draft,
+      );
 
   @override
-  Future<void> saveItemEditorDraft(ItemEditorDraft draft) async {
-    _itemEditorDrafts[_itemEditorDraftScope(draft.itemId)] = draft;
+  Future<void> clearItemEditorDraft({String? itemId}) =>
+      _enqueueItemEditorDraftWrite(
+        () async => _itemEditorDrafts.remove(_itemEditorDraftScope(itemId)),
+      );
+
+  Future<void> _enqueueQuickContentDraftWrite(
+    Future<void> Function() operation,
+  ) {
+    final previous = _quickContentDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _quickContentDraftWriteTail = next;
+    return next;
   }
 
-  @override
-  Future<void> clearItemEditorDraft({String? itemId}) async {
-    _itemEditorDrafts.remove(_itemEditorDraftScope(itemId));
+  Future<void> _enqueueItemEditorDraftWrite(Future<void> Function() operation) {
+    final previous = _itemEditorDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _itemEditorDraftWriteTail = next;
+    return next;
   }
 
   @override
@@ -610,6 +660,8 @@ class DriftStudyStore implements StudyStore {
   DriftStudyStore(this.database);
 
   final AppDatabase database;
+  Future<void> _quickContentDraftWriteTail = Future<void>.value();
+  Future<void> _itemEditorDraftWriteTail = Future<void>.value();
 
   @override
   Future<StoredProfile> loadProfile() async {
@@ -860,6 +912,11 @@ class DriftStudyStore implements StudyStore {
   Future<QuickContentDraft?> loadQuickContentDraft({
     required String subjectId,
   }) async {
+    try {
+      await _quickContentDraftWriteTail;
+    } on Object {
+      // Recovery writes are best-effort; a failed write cannot poison reads.
+    }
     final key = _quickContentDraftStorageKey(subjectId);
     var setting = await (database.select(
       database.appSettings,
@@ -889,28 +946,36 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
-  Future<void> saveQuickContentDraft(QuickContentDraft draft) async {
-    await database
-        .into(database.appSettings)
-        .insertOnConflictUpdate(
-          AppSettingsCompanion.insert(
-            key: _quickContentDraftStorageKey(draft.subjectId),
-            valueJson: jsonEncode(draft.toJson()),
-            updatedAt: DateTime.now().toUtc(),
-          ),
-        );
-  }
+  Future<void> saveQuickContentDraft(QuickContentDraft draft) =>
+      _enqueueQuickContentDraftWrite(() async {
+        await database
+            .into(database.appSettings)
+            .insertOnConflictUpdate(
+              AppSettingsCompanion.insert(
+                key: _quickContentDraftStorageKey(draft.subjectId),
+                valueJson: jsonEncode(draft.toJson()),
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+      });
 
   @override
-  Future<void> clearQuickContentDraft({required String subjectId}) async {
-    await (database.delete(database.appSettings)..where(
-          (table) => table.key.equals(_quickContentDraftStorageKey(subjectId)),
-        ))
-        .go();
-  }
+  Future<void> clearQuickContentDraft({required String subjectId}) =>
+      _enqueueQuickContentDraftWrite(() async {
+        await (database.delete(database.appSettings)..where(
+              (table) =>
+                  table.key.equals(_quickContentDraftStorageKey(subjectId)),
+            ))
+            .go();
+      });
 
   @override
   Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId}) async {
+    try {
+      await _itemEditorDraftWriteTail;
+    } on Object {
+      // Recovery writes are best-effort; a failed write cannot poison reads.
+    }
     final key = _itemEditorDraftStorageKey(itemId);
     var setting = await (database.select(
       database.appSettings,
@@ -940,24 +1005,56 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
-  Future<void> saveItemEditorDraft(ItemEditorDraft draft) async {
-    await database
-        .into(database.appSettings)
-        .insertOnConflictUpdate(
-          AppSettingsCompanion.insert(
-            key: _itemEditorDraftStorageKey(draft.itemId),
-            valueJson: jsonEncode(draft.toJson()),
-            updatedAt: DateTime.now().toUtc(),
-          ),
-        );
-  }
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft) =>
+      _enqueueItemEditorDraftWrite(() async {
+        await database
+            .into(database.appSettings)
+            .insertOnConflictUpdate(
+              AppSettingsCompanion.insert(
+                key: _itemEditorDraftStorageKey(draft.itemId),
+                valueJson: jsonEncode(draft.toJson()),
+                updatedAt: DateTime.now().toUtc(),
+              ),
+            );
+      });
 
   @override
-  Future<void> clearItemEditorDraft({String? itemId}) async {
-    await (database.delete(database.appSettings)..where(
-          (table) => table.key.equals(_itemEditorDraftStorageKey(itemId)),
-        ))
-        .go();
+  Future<void> clearItemEditorDraft({String? itemId}) =>
+      _enqueueItemEditorDraftWrite(() async {
+        await (database.delete(database.appSettings)..where(
+              (table) => table.key.equals(_itemEditorDraftStorageKey(itemId)),
+            ))
+            .go();
+      });
+
+  Future<void> _enqueueQuickContentDraftWrite(
+    Future<void> Function() operation,
+  ) {
+    final previous = _quickContentDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _quickContentDraftWriteTail = next;
+    return next;
+  }
+
+  Future<void> _enqueueItemEditorDraftWrite(Future<void> Function() operation) {
+    final previous = _itemEditorDraftWriteTail;
+    final next = () async {
+      try {
+        await previous;
+      } on Object {
+        // Keep the queue usable after a failed best-effort write.
+      }
+      await operation();
+    }();
+    _itemEditorDraftWriteTail = next;
+    return next;
   }
 
   @override

@@ -21,17 +21,17 @@ class PersonalizationScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('개인화 스튜디오'),
+        title: const Text('화면 맞춤 설정'),
         actions: [
           IconButton(
             key: const Key('copy-personalization-json'),
-            tooltip: '개인화 설정 복사',
+            tooltip: '화면 설정 복사',
             onPressed: () => _copyPreferences(context, preferences),
             icon: const Icon(Icons.copy_all_outlined),
           ),
           IconButton(
             key: const Key('paste-personalization-json'),
-            tooltip: '개인화 설정 붙여넣기',
+            tooltip: '화면 설정 붙여넣기',
             onPressed: () => _pastePreferences(context, controller),
             icon: const Icon(Icons.content_paste_go_outlined),
           ),
@@ -49,7 +49,7 @@ class PersonalizationScreen extends ConsumerWidget {
             ..hideCurrentSnackBar()
             ..showSnackBar(
               SnackBar(
-                content: const Text('컴팩트 작업 공간을 적용했습니다.'),
+                content: const Text('화면을 간결하게 정리했어요.'),
                 action: SnackBarAction(
                   key: const Key('undo-compact-workspace-preset'),
                   label: '실행 취소',
@@ -75,7 +75,7 @@ class PersonalizationScreen extends ConsumerWidget {
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('개인화 설정 JSON을 클립보드에 복사했습니다.')));
+    ).showSnackBar(const SnackBar(content: Text('화면 설정을 클립보드에 복사했어요.')));
   }
 
   Future<void> _pastePreferences(
@@ -92,11 +92,11 @@ class PersonalizationScreen extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('검증한 개인화 설정을 적용했습니다.')));
+      ).showSnackBar(const SnackBar(content: Text('가져온 화면 설정을 적용했어요.')));
     } on Object {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('올바른 Sprache 개인화 JSON이 아닙니다.')),
+        const SnackBar(content: Text('Sprache에서 만든 화면 설정이 아니에요.')),
       );
     }
   }
@@ -171,12 +171,12 @@ class PersonalizationPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  '내가 편한 방식으로',
+                  '내 눈과 손에 편하게',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '기본값은 그대로 두고, 원하는 부분만 바꿀 수 있습니다. 모든 선택은 먼저 이 기기에 저장됩니다.',
+                  '원하는 부분만 바꿔 보세요. 고른 설정은 이 기기에 바로 저장돼요.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 14),
@@ -219,8 +219,8 @@ class PersonalizationPanel extends StatelessWidget {
                       ),
                     _PreferenceSwitch(
                       controlKey: const Key('theme-separate-accents'),
-                      title: '라이트·다크 색상 따로 사용',
-                      subtitle: '밝은 화면과 어두운 화면에 서로 다른 강조색을 적용합니다.',
+                      title: '밝은 화면과 어두운 화면 색상 따로 쓰기',
+                      subtitle: '화면 모드마다 다른 강조색을 사용할 수 있어요.',
                       value: preferences.separateBrightnessAccents,
                       onChanged: (value) => onChanged(
                         preferences.copyWith(
@@ -358,8 +358,8 @@ class PersonalizationPanel extends StatelessWidget {
                     ],
                     _PreferenceSwitch(
                       controlKey: const Key('theme-per-subject'),
-                      title: '주제별 색상 기억',
-                      subtitle: '$subjectName에서 고른 색상을 따로 기억합니다.',
+                      title: '주제마다 색상 기억',
+                      subtitle: '$subjectName에서 고른 색상을 따로 저장해요.',
                       value: preferences.perSubjectAccentEnabled,
                       onChanged: (value) => onChanged(
                         preferences.copyWith(
@@ -575,7 +575,7 @@ class PersonalizationPanel extends StatelessWidget {
                           ),
                         ),
                         icon: const Icon(Icons.view_compact_alt_rounded),
-                        label: const Text('컴팩트 홈 적용'),
+                        label: const Text('간결한 홈 적용'),
                       ),
                     ),
                     _ChoiceGroup<AppHomeLayout>(
@@ -702,7 +702,7 @@ class PersonalizationPanel extends StatelessWidget {
                           ),
                         ),
                         icon: const Icon(Icons.compress_rounded),
-                        label: const Text('컴팩트 탐색 적용'),
+                        label: const Text('간결한 탐색 적용'),
                       ),
                     ),
                     _ChoiceGroup<AppNavigationLabelMode>(
@@ -772,7 +772,7 @@ class PersonalizationPanel extends StatelessWidget {
                     ),
                     _PreferenceSwitch(
                       controlKey: const Key('quick-default-details'),
-                      title: '상세 필드 먼저 펼치기',
+                      title: '추가 정보 먼저 펼치기',
                       value: preferences.quickAddOpenDetails,
                       onChanged: (value) => onChanged(
                         preferences.copyWith(quickAddOpenDetails: value),
@@ -811,8 +811,8 @@ class PersonalizationPanel extends StatelessWidget {
                     ),
                     _PreferenceSwitch(
                       controlKey: const Key('quick-auto-normalize'),
-                      title: '저장 전 자동 정규화',
-                      subtitle: 'Unicode NFKC와 공백 정리를 적용합니다.',
+                      title: '저장 전에 글자와 공백 자동 정리',
+                      subtitle: '겉보기는 같지만 다른 문자와 불필요한 공백을 정리해요.',
                       value: preferences.quickAddAutoNormalize,
                       onChanged: (value) => onChanged(
                         preferences.copyWith(quickAddAutoNormalize: value),
@@ -1137,10 +1137,10 @@ class _PresetSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('원터치 프리셋', style: Theme.of(context).textTheme.titleMedium),
+            Text('빠른 화면 설정', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
-              '홈과 등록 기본값은 유지하고 화면 스타일만 바꿉니다.',
+              '학습과 등록 설정은 그대로 두고 화면 모양만 바꿔요.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 10),
@@ -1334,7 +1334,7 @@ class _ThemeProfileManagerState extends State<_ThemeProfileManager> {
             Text('내 테마 프로필', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
-              '현재 화면 설정을 최대 5개 저장하고 한 번에 전환할 수 있습니다. 손상된 프로필은 불러올 때 개별 제외됩니다.',
+              '자주 쓰는 화면 설정을 5개까지 저장하고 한 번에 바꿀 수 있어요.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             if (profiles.isNotEmpty) ...[
@@ -1573,7 +1573,7 @@ class _CustomAccentPreferenceState extends State<_CustomAccentPreference> {
         _PreferenceSwitch(
           controlKey: const Key('theme-custom-accent-enabled'),
           title: '직접 만든 강조색',
-          subtitle: '배경 대비가 낮으면 읽기 안전 기준에 맞게 자동 보정합니다.',
+          subtitle: '글자가 잘 보이지 않는 색은 읽기 편하도록 자동으로 조정해요.',
           value: widget.enabled,
           onChanged: widget.onEnabledChanged,
         ),
@@ -1591,7 +1591,7 @@ class _CustomAccentPreferenceState extends State<_CustomAccentPreference> {
             decoration: InputDecoration(
               labelText: 'HEX 색상',
               prefixText: '#',
-              helperText: '적용 색상은 대비 안전 보정 후 표시됩니다.',
+              helperText: '글자가 잘 보이도록 밝기를 조정한 색이 적용돼요.',
               suffixIcon: Padding(
                 padding: const EdgeInsets.all(12),
                 child: CircleAvatar(backgroundColor: safeColor),
@@ -2062,8 +2062,8 @@ String _quickKindLabel(AppQuickAddKind value) => switch (value) {
 
 String _duplicateLabel(AppDuplicateDefault value) => switch (value) {
   AppDuplicateDefault.ask => '항상 질문',
-  AppDuplicateDefault.merge => '뜻 병합',
-  AppDuplicateDefault.separate => '별도 저장',
+  AppDuplicateDefault.merge => '뜻 합치기',
+  AppDuplicateDefault.separate => '따로 저장',
 };
 
 String _draftDelayLabel(int milliseconds) => switch (milliseconds) {

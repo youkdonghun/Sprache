@@ -63,9 +63,9 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
     final includeWords = words ? selected : _plan.includeWords;
     final includeSentences = words ? _plan.includeSentences : selected;
     if (!includeWords && !includeSentences) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('단어와 문장 중 하나는 반드시 포함해야 합니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('단어 또는 문장을 하나 이상 선택해 주세요.')));
       return;
     }
     _setPlan(
@@ -143,14 +143,14 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
         .useSavedSessionPlan(plan);
     if (loaded == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('현재 학습 주제에서 사용할 수 없는 일정입니다.')),
+        const SnackBar(content: Text('이 학습 주제에서는 사용할 수 없는 일정이에요.')),
       );
       return;
     }
     _setPlan(loaded, syncTitle: true);
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('“${loaded.title}” 설정을 불러왔습니다.')));
+    ).showSnackBar(SnackBar(content: Text('“${loaded.title}” 설정을 불러왔어요.')));
   }
 
   Future<void> _deleteSavedPlan(StudySessionPlan plan) async {
@@ -158,7 +158,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('저장한 일정 삭제'),
-        content: Text('“${plan.title}” 일정을 삭제할까요?\n학습 기록과 콘텐츠는 삭제되지 않습니다.'),
+        content: Text('“${plan.title}” 일정을 삭제할까요?\n학습 기록과 자료는 그대로 남아요.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -335,7 +335,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                     routineOrder: 0,
                   ),
                 ),
-                child: const Text('루틴 해제'),
+                child: const Text('루틴 끄기'),
               ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
@@ -461,8 +461,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
               const SizedBox(height: 14),
               _BuilderSection(
                 number: '1',
-                title: '어떻게 기억을 꺼낼까요?',
-                description: '한 세션에서는 하나의 문제 흐름을 사용합니다.',
+                title: '어떤 방식으로 풀까요?',
+                description: '이번 세션에서 풀 문제 방식을 하나 골라 주세요.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -488,8 +488,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
               const SizedBox(height: 14),
               _BuilderSection(
                 number: '2',
-                title: '어떤 덱에서 가져올까요?',
-                description: '코스 전체, 단원, 별표, 직접 추가한 표현을 분리해 연습합니다.',
+                title: '어떤 자료로 연습할까요?',
+                description: '코스, 단원, 별표, 직접 추가한 표현 중에서 골라요.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -569,8 +569,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
               const SizedBox(height: 14),
               _BuilderSection(
                 number: '3',
-                title: '현재 기억 단계',
-                description: '학습 기록을 기준으로 필요한 난이도만 고릅니다.',
+                title: '어떤 난이도로 풀까요?',
+                description: '학습 기록을 바탕으로 필요한 난이도만 골라요.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -650,8 +650,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
               const SizedBox(height: 14),
               _BuilderSection(
                 number: '4',
-                title: '단어와 문장 구성',
-                description: '세션 길이와 문장 비율을 실제 출제 목록에 반영합니다.',
+                title: '단어와 문장 비율',
+                description: '문제 수와 문장 비율을 정해 주세요.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -722,12 +722,12 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
               _BuilderSection(
                 number: '5',
                 title: '레벨과 태그',
-                description: '선택하지 않으면 모든 레벨과 태그를 포함합니다.',
+                description: '고르지 않으면 모든 레벨과 태그가 들어가요.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _FilterChoices(
-                      label: '콘텐츠 레벨',
+                      label: '자료 레벨',
                       emptyLabel: '현재 코스에 레벨 정보가 없습니다.',
                       values: levels,
                       selected: _plan.levels,
@@ -752,7 +752,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
               _BuilderSection(
                 number: '6',
                 title: '학습 일정 저장',
-                description: '퀴즈 이름과 다음 학습 시간을 정해 기기와 Drive에 함께 저장합니다.',
+                description: '이름과 다음 학습 시간을 정해 기기와 Drive에 저장해요.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -1377,7 +1377,7 @@ class _MobileSessionEditor extends StatelessWidget {
                     : null,
               ),
               _FilterChoices(
-                label: '콘텐츠 레벨',
+                label: '자료 레벨',
                 emptyLabel: '현재 주제에 레벨 정보가 없습니다.',
                 values: levels,
                 selected: plan.levels,
@@ -1919,7 +1919,7 @@ class _LearningGroupSelector extends StatelessWidget {
               TextButton(
                 key: const Key('session-groups-clear'),
                 onPressed: () => onChanged(const {}),
-                child: const Text('전체 해제'),
+                child: const Text('모두 해제'),
               ),
           ],
         ),
@@ -2076,8 +2076,8 @@ class _BacklogRecoveryEditor extends StatelessWidget {
                   dailyLimit: settings.dailyLimit,
                 ),
               ),
-              title: const Text('밀린 복습 회복'),
-              subtitle: const Text('오래 밀린 항목과 취약 항목부터 하루 분량만 다시 보여줍니다.'),
+              title: const Text('밀린 복습 따라잡기'),
+              subtitle: const Text('오래 밀렸거나 어려웠던 항목을 하루 분량만 보여줘요.'),
             ),
             if (settings.enabled) ...[
               const SizedBox(height: 4),
@@ -2149,7 +2149,7 @@ class _ExamScheduleEditor extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text('목표일 학습 계획', style: Theme.of(context).textTheme.titleSmall),
+        Text('목표일까지 학습 계획', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 4),
         Text(
           '현재 필터와 그룹의 남은 자료가 바뀌면 하루 권장량도 자동으로 다시 계산됩니다.',
@@ -2283,7 +2283,7 @@ class _ManualItemPickerState extends State<_ManualItemPicker> {
                           ...widget.selectedIds,
                           ...visible.map((item) => item.id),
                         }),
-                  child: const Text('보이는 항목 모두'),
+                  child: const Text('보이는 항목 선택'),
                 ),
                 TextButton(
                   onPressed: widget.selectedIds.isEmpty
@@ -2299,7 +2299,7 @@ class _ManualItemPickerState extends State<_ManualItemPicker> {
               onChanged: (value) => setState(() => _query = value.trim()),
               decoration: const InputDecoration(
                 isDense: true,
-                hintText: '퀴즈에 넣을 단어·뜻·문장 검색',
+                hintText: '단어·뜻·문장 검색',
                 prefixIcon: Icon(Icons.search_rounded),
               ),
             ),
@@ -2372,7 +2372,7 @@ class _Header extends StatelessWidget {
             IconButton(
               key: const Key('session-builder-back'),
               onPressed: onBack,
-              tooltip: '학습실로',
+              tooltip: '학습실로 돌아가기',
               icon: const Icon(Icons.arrow_back_rounded),
             ),
             SizedBox(width: veryNarrow ? 2 : 6),
@@ -2699,7 +2699,7 @@ class _PreviewCard extends StatelessWidget {
                   _PreviewPill(label: '그룹 ${plan.groupIds.length}개'),
                 if (plan.lengthMode == StudySessionLengthMode.timeBudget)
                   _PreviewPill(label: '${plan.timeBudgetMinutes}분 세션'),
-                if (!plan.recordProgress) const _PreviewPill(label: '진도 비기록'),
+                if (!plan.recordProgress) const _PreviewPill(label: '기록 안 함'),
                 if (plan.backlogRecovery.enabled)
                   _PreviewPill(
                     label: '회복 최대 ${plan.backlogRecovery.dailyLimit}',
@@ -2734,7 +2734,7 @@ class _PreviewCard extends StatelessWidget {
                 ),
               ),
               icon: const Icon(Icons.bookmark_add_outlined),
-              label: const Text('이 설정 저장'),
+              label: const Text('설정 저장'),
             ),
           ],
         ),
@@ -2806,7 +2806,7 @@ class _BottomActions extends StatelessWidget {
                       key: const Key('session-start-bottom'),
                       onPressed: preview.isEmpty ? null : onStart,
                       icon: const Icon(Icons.play_arrow_rounded),
-                      label: Text('지금 ${preview.items.length}문제'),
+                      label: Text('${preview.items.length}문제 시작'),
                     ),
                   ),
                   const SizedBox(width: 8),

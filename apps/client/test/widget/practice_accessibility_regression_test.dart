@@ -47,7 +47,7 @@ void main() {
           tester
               .getSemantics(
                 find.bySemanticsLabel(
-                  '뜻과 설명 보기. 카드를 뒤집고 평가 버튼으로 이동합니다. 단축키 Enter.',
+                  '뜻 보기. 카드를 뒤집은 뒤 평가 버튼으로 이동합니다. 단축키 Enter.',
                 ),
               )
               .getSemanticsData()
@@ -77,14 +77,14 @@ void main() {
         expect(status.properties.label, contains('뜻 연습 하나.'));
         expect(status.properties.label, contains('단축키 1부터 4.'));
         expect(
-          find.bySemanticsLabel(RegExp(r'기억남으로 평가\. 단축키 3\. 다음 복습 .+ 후\.')),
+          find.bySemanticsLabel(RegExp(r'기억나요 선택\. 단축키 3\. 다음 복습 .+ 후\.')),
           findsOneWidget,
         );
         expect(
           tester
               .getSemantics(
                 find.bySemanticsLabel(
-                  RegExp(r'기억남으로 평가\. 단축키 3\. 다음 복습 .+ 후\.'),
+                  RegExp(r'기억나요 선택\. 단축키 3\. 다음 복습 .+ 후\.'),
                 ),
               )
               .getSemanticsData()
@@ -108,7 +108,7 @@ void main() {
         status = tester.widget<Semantics>(
           find.byKey(const Key('flashcard-status-live-region')),
         );
-        expect(status.properties.label, contains('기억남으로 평가했습니다. 다음 카드 2/2 앞면'));
+        expect(status.properties.label, contains('평가: 기억나요. 다음 카드 2/2 앞면'));
 
         await tester.sendKeyEvent(LogicalKeyboardKey.enter);
         await tester.pumpAndSettle();
@@ -120,7 +120,7 @@ void main() {
           find.byKey(const Key('flashcard-status-live-region')),
         );
         expect(status.properties.liveRegion, isTrue);
-        expect(status.properties.label, contains('기억남으로 평가했습니다. 카드 학습 완료'));
+        expect(status.properties.label, contains('평가: 기억나요. 카드 학습 완료'));
         expect(tester.takeException(), isNull);
       } finally {
         semantics.dispose();
@@ -153,20 +153,17 @@ void main() {
         await tester.tap(find.byKey(const Key('pronunciation-mic')));
         await tester.pumpAndSettle();
 
-        expect(find.text('음성 인식 없이 스스로 평가'), findsOneWidget);
+        expect(find.text('직접 평가하기'), findsOneWidget);
         expect(
-          find.bySemanticsLabel(
-            '음성 인식 없이 스스로 평가. '
-            '목표 발음을 듣고 따라 읽은 뒤 결과를 직접 선택하세요.',
-          ),
+          find.bySemanticsLabel('직접 평가하기. 발음을 듣고 따라 읽은 뒤 결과를 골라 주세요.'),
           findsOneWidget,
         );
         expect(
-          find.bySemanticsLabel('연습 필요로 평가하고 다음 표현으로 이동. 단축키 1'),
+          find.bySemanticsLabel('더 연습할 표현으로 표시하고 다음으로 이동. 단축키 1'),
           findsOneWidget,
         );
         expect(
-          find.bySemanticsLabel('잘 읽었음으로 평가하고 다음 표현으로 이동. 단축키 2'),
+          find.bySemanticsLabel('잘 읽은 표현으로 표시하고 다음으로 이동. 단축키 2'),
           findsOneWidget,
         );
 

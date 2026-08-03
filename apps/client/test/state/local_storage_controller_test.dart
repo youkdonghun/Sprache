@@ -261,6 +261,33 @@ void main() {
       app.dispose();
     },
   );
+
+  test('a failed replacement folder keeps the previous location', () async {
+    final store = MemoryStudyStore(localStorageSettings: _configuredSettings);
+    final backend = _FakeLocalStorageBackend(
+      verifyError: StateError('replacement folder unavailable'),
+      verifyErrorLocationId: 'picked-local-folder',
+    );
+    final app = AppController(store);
+    final controller = _buildController(
+      store: store,
+      backend: backend,
+      app: app,
+    );
+
+    await _initialize(app, controller);
+    await expectLater(controller.chooseFolder(), throwsStateError);
+
+    expect(controller.state.settings.locationId, 'configured-local-folder');
+    expect(
+      (await store.loadLocalStorageSettings()).locationId,
+      'configured-local-folder',
+    );
+    expect(controller.state.errorMessage, isNotNull);
+
+    controller.dispose();
+    app.dispose();
+  });
 }
 
 const _configuredSettings = LocalStorageSettings(
@@ -304,6 +331,8 @@ class _FakeLocalStorageBackend implements LocalStorageBackend {
   _FakeLocalStorageBackend({
     this.hasExistingArchive = false,
     this.hasLatestArchiveError,
+    this.verifyError,
+    this.verifyErrorLocationId,
     this.selectedLocation = const LocalStorageLocation(
       locationId: 'picked-local-folder',
       displayName: 'Sprache',
@@ -313,6 +342,8 @@ class _FakeLocalStorageBackend implements LocalStorageBackend {
 
   bool hasExistingArchive;
   final Object? hasLatestArchiveError;
+  final Object? verifyError;
+  final String? verifyErrorLocationId;
   final LocalStorageLocation selectedLocation;
   final List<LocalStorageLocation> verifiedLocations = [];
   final List<LocalStorageBundle> writes = [];
@@ -330,6 +361,11 @@ class _FakeLocalStorageBackend implements LocalStorageBackend {
     LocalStorageLocation location,
   ) async {
     verifiedLocations.add(location);
+    if (verifyError != null &&
+        (verifyErrorLocationId == null ||
+            verifyErrorLocationId == location.locationId)) {
+      throw verifyError!;
+    }
     return location;
   }
 

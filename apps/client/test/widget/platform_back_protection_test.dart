@@ -52,8 +52,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('import-draft-exit-dialog')), findsOneWidget);
-    expect(find.text('계속 검토'), findsOneWidget);
-    expect(find.text('미리보기 닫기'), findsOneWidget);
+    expect(find.text('계속 가져오기'), findsOneWidget);
+    expect(find.text('그만하기'), findsOneWidget);
     debugDefaultTargetPlatformOverride = null;
   });
 }

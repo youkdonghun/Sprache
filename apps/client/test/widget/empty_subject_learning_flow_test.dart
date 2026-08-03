@@ -16,8 +16,8 @@ void main() {
   ) async {
     await _pumpEmptySubjectApp(tester);
 
-    expect(find.text('첫 학습 자료를 추가해 보세요'), findsOneWidget);
-    expect(find.text('첫 자료 추가'), findsOneWidget);
+    expect(find.text('첫 단어나 문장을 추가해 보세요'), findsOneWidget);
+    expect(find.text('단어·문장 추가'), findsOneWidget);
     expect(find.text('오늘 목표를 마쳤어요'), findsNothing);
     expect(find.text('다음 레슨'), findsNothing);
 
@@ -42,7 +42,7 @@ void main() {
           find.byKey(const Key('learning-hub-missing-material-notice')),
           findsOneWidget,
         );
-        expect(find.text('학습을 시작할 자료가 없어요'), findsOneWidget);
+        expect(find.text('학습할 자료가 없어요'), findsOneWidget);
         expect(find.text('이 주제에 학습 자료가 없어요.'), findsWidgets);
 
         await tester.tap(find.text('전체 게임'));
@@ -96,7 +96,7 @@ void main() {
     expect(_activityInkWell(tester, '발음 따라하기').onTap, isNull);
     expect(find.text('직접 쓰기를 지원하는 자료가 없어요.'), findsOneWidget);
     expect(find.text('듣기를 지원하는 발음 자료가 없어요.'), findsOneWidget);
-    expect(find.text('일부 학습 방식에 필요한 자료가 부족해요'), findsOneWidget);
+    expect(find.text('일부 게임을 시작할 자료가 부족해요'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, '지원 자료 추가'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });

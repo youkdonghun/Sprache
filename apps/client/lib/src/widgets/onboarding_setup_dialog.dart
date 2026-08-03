@@ -133,12 +133,12 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Sprache 시작 설정',
+                      '처음 학습 설정',
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${step + 1}/${OnboardingProfile.stepCount}단계 · 선택은 이 기기에 바로 저장됩니다.',
+                      '${step + 1}/${OnboardingProfile.stepCount}단계 · 고른 내용은 이 기기에 바로 저장돼요.',
                       key: const Key('onboarding-progress-label'),
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -214,8 +214,8 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
   }
 
   Widget _languageAndPurpose() => _StepSection(
-    title: '무엇을, 왜 배우나요?',
-    description: '언어와 목적에 따라 첫 큐·추천 그룹·게임 순서가 달라집니다.',
+    title: '배울 언어와 목표',
+    description: '고른 목표에 맞춰 첫 학습과 게임을 추천해 드려요.',
     children: [
       const _FieldLabel('학습 언어'),
       Wrap(
@@ -254,8 +254,8 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
   );
 
   Widget _levelAndTime() => _StepSection(
-    title: '지금 수준과 가능한 시간',
-    description: '처음에 보여 줄 새 자료 수와 세션 길이를 부담 없이 맞춥니다.',
+    title: '내 수준과 하루 학습 시간',
+    description: '처음 보여 줄 자료 수와 학습 길이를 알맞게 맞춰요.',
     children: [
       const _FieldLabel('현재 수준'),
       Wrap(
@@ -297,8 +297,8 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
   Widget _studyDays() {
     const labels = ['월', '화', '수', '목', '금', '토', '일'];
     return _StepSection(
-      title: '학습일과 쉬는 날',
-      description: '선택하지 않은 날은 홈에서 쉬는 날로 표시하고 알림은 다음 학습일로 옮깁니다.',
+      title: '공부할 요일',
+      description: '고르지 않은 날은 쉬는 날로 두고, 알림은 다음 학습일로 넘겨요.',
       children: [
         Wrap(
           spacing: 8,
@@ -356,8 +356,8 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
       OnboardingThemeMode.system => Theme.of(context).brightness,
     };
     return _StepSection(
-      title: '보기 편한 시작 화면',
-      description: '설정 결과를 실제 카드와 버튼으로 미리 보고 고릅니다.',
+      title: '편하게 볼 수 있는 화면',
+      description: '카드와 버튼 크기를 미리 보고 골라 보세요.',
       children: [
         SegmentedButton<OnboardingAccessibilityProfile>(
           key: const Key('onboarding-accessibility-profile'),
@@ -445,8 +445,8 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
   }
 
   Widget _quickActions() => _StepSection(
-    title: '홈 빠른 행동 3개',
-    description: '각 자리에 원하는 기능을 고르고 화살표로 순서를 바꿀 수 있습니다.',
+    title: '홈 바로가기 3개',
+    description: '자주 쓰는 기능을 고르고 원하는 순서로 놓아 보세요.',
     children: [
       for (final (index, action) in _profile.quickActions.indexed)
         Card(
@@ -539,8 +539,8 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
               .take(3)
               .toList(growable: false);
     return _StepSection(
-      title: '설정을 확인하고 시작하세요',
-      description: '계정 없이 아래 샘플 3문제를 먼저 풀 수 있으며, 결과는 이 기기에 저장됩니다.',
+      title: '마지막으로 확인해 주세요',
+      description: '가입 없이 샘플 3문제를 먼저 풀 수 있고, 결과는 이 기기에 저장돼요.',
       children: [
         _ReviewGrid(
           rows: [
@@ -559,7 +559,7 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
         Text('첫 샘플 미리보기', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 4),
         Text(
-          '3문제 · 약 ${_profile.easyAccess ? 3 : 2}분 · 시간 제한 없음',
+          '3문제 · 약 ${_profile.easyAccess ? 3 : 2}분 · 천천히 풀어도 괜찮아요',
           key: const Key('onboarding-sample-estimate'),
           style: Theme.of(context).textTheme.bodySmall,
         ),
@@ -583,8 +583,7 @@ class _OnboardingSetupPanelState extends State<OnboardingSetupPanel> {
         const SizedBox(height: 12),
         const _InfoBox(
           icon: Icons.lock_outline_rounded,
-          text:
-              'Google 연결은 영구 백업과 기기 간 동기화가 필요할 때만 선택합니다. 샘플 학습에는 계정이 필요하지 않습니다.',
+          text: '샘플 학습에는 계정이 필요 없어요. 백업하거나 다른 기기에서 이어볼 때만 Google을 연결하세요.',
         ),
         const SizedBox(height: 14),
         FilledButton.icon(

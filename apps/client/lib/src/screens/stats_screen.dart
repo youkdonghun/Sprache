@@ -113,8 +113,8 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                             const SizedBox(height: 4),
                             Text(
                               activeSubject.isLanguage
-                                  ? '${activeSubject.name} 코스 · 기억이 쌓이는 흐름을 확인하세요.'
-                                  : '${activeSubject.symbol} ${activeSubject.name} · 기억이 쌓이는 흐름을 확인하세요.',
+                                  ? '${activeSubject.name} 코스의 학습 기록을 확인하세요.'
+                                  : '${activeSubject.symbol} ${activeSubject.name} 학습 기록을 확인하세요.',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -126,14 +126,14 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                           IconButton.filledTonal(
                             key: const Key('export-private-summary'),
                             onPressed: () => _exportSummary(insights),
-                            tooltip: '개인정보 안전 요약 CSV',
+                            tooltip: '개인정보 제외 CSV 저장',
                             icon: const Icon(Icons.download_outlined),
                           ),
                           const SizedBox(width: 6),
                           IconButton.filledTonal(
                             key: const Key('report-settings'),
                             onPressed: () => context.go('/settings'),
-                            tooltip: '환경설정',
+                            tooltip: '설정',
                             icon: const Icon(Icons.tune_rounded),
                           ),
                         ],
@@ -228,21 +228,21 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
                         (
                           '정확도',
                           '$accuracy%',
-                          '$attempts회 응답',
+                          '$attempts회 풀이',
                           Icons.track_changes_rounded,
                           AppTheme.desktopAccent,
                         ),
                         (
                           '정답',
                           '$correct',
-                          '기억한 횟수',
+                          '맞힌 횟수',
                           Icons.check_circle_rounded,
                           AppTheme.success,
                         ),
                         (
                           '오답',
                           '$wrong',
-                          '다시 만날 횟수',
+                          '틀린 횟수',
                           Icons.replay_rounded,
                           AppTheme.warning,
                         ),
@@ -428,7 +428,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
           '${now.year}${now.month.toString().padLeft(2, '0')}'
           '${now.day.toString().padLeft(2, '0')}';
       final path = await FilePicker.platform.saveFile(
-        dialogTitle: '개인정보 안전 학습 요약 저장',
+        dialogTitle: '개인정보 제외 학습 요약 저장',
         fileName: 'sprache-learning-summary-$stamp.csv',
         type: FileType.custom,
         allowedExtensions: const ['csv'],
@@ -438,7 +438,7 @@ class _StatsScreenState extends ConsumerState<StatsScreen> {
       if (!mounted || path == null) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('학습 원문 없는 요약을 저장했습니다: $path')));
+      ).showSnackBar(SnackBar(content: Text('학습 원문을 뺀 요약을 저장했어요: $path')));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -518,7 +518,7 @@ class _LearningTrendCard extends StatelessWidget {
                 _InsightMetric(
                   label: '학습 시간',
                   value: '${insights.duration.inMinutes}분',
-                  caption: '실제 시작·종료 기준',
+                  caption: '시작부터 종료까지',
                 ),
                 _InsightMetric(
                   label: '최근 7일',
@@ -845,7 +845,7 @@ class _HardestItemsCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '오답 이유와 마지막 학습일을 확인하고 한 항목부터 다시 풀 수 있어요.',
+            '틀린 이유와 마지막 학습일을 보고 바로 복습하세요.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           for (final item in items.take(6))
@@ -1018,7 +1018,7 @@ class _ReviewForecastCard extends StatelessWidget {
 
 String _nextReviewLabel(DateTime? reviewAt, DateTime now) {
   if (reviewAt == null) return '카드를 학습하면 다음 복습 시점이 여기에 표시됩니다.';
-  if (!reviewAt.isAfter(now)) return '지금 복습할 카드가 준비되어 있습니다.';
+  if (!reviewAt.isAfter(now)) return '지금 복습할 카드가 있어요.';
   final local = reviewAt.toLocal();
   final difference = reviewAt.difference(now);
   if (difference.inHours < 24) {
@@ -1063,7 +1063,7 @@ class _RecentSessionsCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '완료한 세션을 기록합니다. 중단한 퀴즈는 홈에서 이어갈 수 있어요.',
+                        '완료한 세션만 표시해요. 중단한 퀴즈는 홈에서 이어갈 수 있어요.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
@@ -1201,7 +1201,7 @@ class _SessionRow extends StatelessWidget {
           ),
           PopupMenuButton<_RecentSessionAction>(
             key: Key('recent-session-actions-${session.sessionId}'),
-            tooltip: '세션 다시 사용',
+            tooltip: '이 세션 다시 시작',
             onSelected: (action) {
               switch (action) {
                 case _RecentSessionAction.repeat:
@@ -1221,7 +1221,7 @@ class _SessionRow extends StatelessWidget {
                 child: const ListTile(
                   dense: true,
                   leading: Icon(Icons.restart_alt_rounded),
-                  title: Text('이 문제 묶음 다시 학습'),
+                  title: Text('같은 문제 다시 풀기'),
                 ),
               ),
               PopupMenuItem(
@@ -1230,7 +1230,7 @@ class _SessionRow extends StatelessWidget {
                 child: const ListTile(
                   dense: true,
                   leading: Icon(Icons.filter_alt_off_rounded),
-                  title: Text('맞힌 항목 제외하고 학습'),
+                  title: Text('맞힌 항목 빼고 풀기'),
                 ),
               ),
               PopupMenuItem(
@@ -1239,7 +1239,7 @@ class _SessionRow extends StatelessWidget {
                 child: const ListTile(
                   dense: true,
                   leading: Icon(Icons.replay_rounded),
-                  title: Text('이 세션 오답만 학습'),
+                  title: Text('틀린 문제만 다시 풀기'),
                 ),
               ),
               PopupMenuItem(
@@ -1248,7 +1248,7 @@ class _SessionRow extends StatelessWidget {
                 child: const ListTile(
                   dense: true,
                   leading: Icon(Icons.fiber_new_rounded),
-                  title: Text('새 자료부터 다시 학습'),
+                  title: Text('새 자료부터 풀기'),
                 ),
               ),
             ],
@@ -1496,7 +1496,7 @@ class _DistributionCard extends StatelessWidget {
             Text('학습 단계', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
             Text(
-              '현재 코스의 표현이 어디까지 왔는지 보여줍니다.',
+              '표현별 학습 상태를 확인하세요.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 18),
@@ -1601,7 +1601,7 @@ class _BadgeCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               badges.isEmpty
-                  ? '첫 학습을 완료하면 배지가 열려요.'
+                  ? '첫 학습을 마치면 배지를 받을 수 있어요.'
                   : '${badges.length}개를 획득했어요.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),

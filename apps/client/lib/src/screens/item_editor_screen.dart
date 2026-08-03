@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/study_store.dart';
 import '../domain/content_validation.dart';
 import '../domain/import_distribution.dart';
 import '../domain/item_editor_draft.dart';
@@ -66,6 +67,8 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   String? _selectedGroup;
   ItemEditorDraft? _recoverableDraft;
   Timer? _draftTimer;
+  late final StudyStore _studyStore;
+  ItemEditorDraft? _pendingDraftSnapshot;
   late String _subjectId;
   late final String _initialDraftFingerprint;
   late final NavigationGuardController _navigationGuard;
@@ -98,6 +101,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   @override
   void initState() {
     super.initState();
+    _studyStore = ref.read(studyStoreProvider);
     _subjectId = ref.read(appControllerProvider).activeSubjectId;
     final itemId = widget.itemId;
     if (itemId != null) {
@@ -169,6 +173,13 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   void dispose() {
     _navigationGuard.unregister(this);
     _draftTimer?.cancel();
+    final pendingDraft =
+        _pendingDraftSnapshot ?? (_hasUnsavedChanges ? _currentDraft() : null);
+    if (pendingDraft != null &&
+        _recoverableDraft == null &&
+        !_savedSuccessfully) {
+      unawaited(_saveDraftSnapshot(pendingDraft));
+    }
     for (final controller in _draftControllers) {
       controller.removeListener(_refreshDraftState);
     }
@@ -258,7 +269,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             Text(
-                              '${subject.symbol} ${subject.name} · 기기에 바로 저장됩니다.',
+                              '${subject.symbol} ${subject.name} · 이 기기에 바로 저장돼요.',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -274,7 +285,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                                 ),
                               )
                             : const Icon(Icons.save_rounded),
-                        label: Text(_isEditing ? '수정 저장' : '추가하기'),
+                        label: Text(_isEditing ? '변경 내용 저장' : '표현 저장'),
                       ),
                     ],
                   ),
@@ -299,7 +310,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                             initialValue: subject.id,
                             decoration: const InputDecoration(
                               labelText: '저장할 학습 주제',
-                              helperText: '다른 주제를 선택하면 자료를 그 주제로 옮깁니다.',
+                              helperText: '다른 주제를 고르면 이 자료도 함께 옮겨져요.',
                             ),
                             items: [
                               for (final candidate in subjects)
@@ -390,12 +401,12 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                             initialValue: _selectedGroup ?? '__no_group__',
                             decoration: const InputDecoration(
                               labelText: '학습 그룹 (선택)',
-                              helperText: '저장과 동시에 선택한 그룹에 넣습니다.',
+                              helperText: '고른 그룹에 바로 정리해서 저장해요.',
                             ),
                             items: [
                               const DropdownMenuItem(
                                 value: '__no_group__',
-                                child: Text('나중에 그룹 정리'),
+                                child: Text('그룹 없이 저장'),
                               ),
                               for (final group in groups)
                                 DropdownMenuItem(
@@ -423,8 +434,8 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                           TextFormField(
                             controller: _acceptedController,
                             decoration: const InputDecoration(
-                              labelText: '정답으로 인정할 표현',
-                              hintText: '비워두면 한국어 뜻을 그대로 사용',
+                              labelText: '다른 정답도 허용 (선택)',
+                              hintText: '비워 두면 위의 한국어 뜻만 정답으로 사용해요',
                             ),
                           ),
                           if (_kind == LearningItemKind.word &&
@@ -509,10 +520,10 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                                 ReadingScheme.hangul,
                               ),
                               decoration: InputDecoration(
-                                labelText: '읽는 법 (한글 보조)',
+                                labelText: '한글로 읽는 법 (선택)',
                                 hintText: _koreanPronunciationHint(language),
                                 helperText:
-                                    '한글 보조 표기 · 실제 소리는 듣기로 확인 · 여러 표기는 쉼표로 구분',
+                                    '실제 발음은 듣기로 확인해 주세요. 여러 표기는 쉼표로 나눌 수 있어요.',
                               ),
                             ),
                           ],
@@ -525,7 +536,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                     child: ExpansionTile(
                       key: const Key('item-memory-hints-section'),
                       title: const Text('암기 단서'),
-                      subtitle: const Text('예문·태그·난이도 · 필요할 때만 입력'),
+                      subtitle: const Text('예문·태그·난이도는 필요할 때만 입력하세요'),
                       childrenPadding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
                       children: [
                         TextFormField(
@@ -540,7 +551,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                         TextFormField(
                           controller: _exampleTranslationController,
                           maxLines: 2,
-                          decoration: const InputDecoration(labelText: '예문 해석'),
+                          decoration: const InputDecoration(labelText: '예문 뜻'),
                         ),
                         const SizedBox(height: 12),
                         LayoutBuilder(
@@ -595,7 +606,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                           ),
                         ),
                         Text(
-                          '높을수록 새 항목 큐에서 먼저 출제됩니다.',
+                          '높을수록 새 자료 학습에서 먼저 나와요.',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ],
@@ -778,12 +789,12 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '저장하지 않은 편집 초안이 있어요',
+                    '작성하던 내용이 남아 있어요',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${_draftAgeLabel(draft.updatedAt)} 저장 · 복원해 이어서 작성할 수 있습니다.',
+                    '${_draftAgeLabel(draft.updatedAt)} 저장 · 불러와서 계속 작성할 수 있어요.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -801,7 +812,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                 FilledButton.tonal(
                   key: const Key('item-editor-draft-restore'),
                   onPressed: _restoreDraft,
-                  child: const Text('복원'),
+                  child: const Text('이어쓰기'),
                 ),
               ],
             ),
@@ -842,6 +853,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
       return;
     }
     _draftTimer?.cancel();
+    _pendingDraftSnapshot = _currentDraft();
     _draftTimer = Timer(
       const Duration(milliseconds: 600),
       () => unawaited(_persistDraft()),
@@ -852,14 +864,23 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     if (!mounted || _recoverableDraft != null || _savedSuccessfully) return;
     try {
       if (_hasUnsavedChanges) {
-        await ref.read(studyStoreProvider).saveItemEditorDraft(_currentDraft());
+        final draft = _currentDraft();
+        _pendingDraftSnapshot = draft;
+        await _saveDraftSnapshot(draft);
         _draftWasPersisted = true;
       } else if (_draftWasPersisted) {
-        await ref
-            .read(studyStoreProvider)
-            .clearItemEditorDraft(itemId: widget.itemId);
+        await _studyStore.clearItemEditorDraft(itemId: widget.itemId);
+        _pendingDraftSnapshot = null;
         _draftWasPersisted = false;
       }
+    } on Object {
+      // Editing remains available even if local recovery storage is full.
+    }
+  }
+
+  Future<void> _saveDraftSnapshot(ItemEditorDraft draft) async {
+    try {
+      await _studyStore.saveItemEditorDraft(draft);
     } on Object {
       // Editing remains available even if local recovery storage is full.
     }
@@ -1002,10 +1023,8 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         key: const Key('item-editor-unsaved-dialog'),
-        title: const Text('작성 중인 내용을 나갈까요?'),
-        content: const Text(
-          '저장하지 않은 입력 내용은 사라집니다. 계속 작성하거나, 내용을 버리고 나갈 수 있어요.',
-        ),
+        title: const Text('작성 중인 내용을 닫을까요?'),
+        content: const Text('저장하지 않은 내용은 사라져요. 계속 작성하거나 버리고 나갈 수 있어요.'),
         actions: [
           TextButton(
             key: const Key('item-editor-keep-editing'),
@@ -1023,11 +1042,10 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     _exitDialogOpen = false;
     if (!mounted || discard != true) return false;
     _savedSuccessfully = true;
+    _pendingDraftSnapshot = null;
     _draftTimer?.cancel();
     try {
-      await ref
-          .read(studyStoreProvider)
-          .clearItemEditorDraft(itemId: widget.itemId);
+      await _studyStore.clearItemEditorDraft(itemId: widget.itemId);
     } on Object {
       // Discarding editor input must not be blocked by recovery cleanup.
     }
@@ -1135,11 +1153,11 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
           ? null
           : await controller.saveQuickContent(item);
       if (_isEditing) await controller.upsertCustomItem(item);
+      _savedSuccessfully = true;
+      _pendingDraftSnapshot = null;
       _draftTimer?.cancel();
       try {
-        await ref
-            .read(studyStoreProvider)
-            .clearItemEditorDraft(itemId: widget.itemId);
+        await _studyStore.clearItemEditorDraft(itemId: widget.itemId);
       } on Object {
         // The learning item is already saved; recovery cleanup is best-effort.
       }
@@ -1151,15 +1169,14 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
       }
       final savedMessage = quickResult?.mergedWithExisting == true
           ? quickResult!.addedMeaningCount > 0
-                ? '같은 표현이 있어 기존 자료에 새 뜻을 추가했습니다.'
-                : '같은 표현과 뜻이 이미 있어 중복 저장하지 않았습니다.'
+                ? '기존 표현에 새 뜻을 추가했어요.'
+                : '같은 표현과 뜻이 이미 있어 한 번만 저장했어요.'
           : _isEditing
-          ? '표현을 수정했습니다.'
-          : '새 표현을 추가했습니다.';
+          ? '표현을 수정했어요.'
+          : '새 표현을 저장했어요.';
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(savedMessage)));
-      _savedSuccessfully = true;
       context.go(
         Uri(
           path: '/library',

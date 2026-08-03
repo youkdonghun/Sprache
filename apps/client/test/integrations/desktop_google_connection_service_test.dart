@@ -5,49 +5,51 @@ import 'package:sprache/src/integrations/google/google_connection_service.dart';
 import 'package:sprache/src/integrations/google/oauth_tokens.dart';
 
 void main() {
-  test('Windows checks the Railway broker before opening Google', () async {
-    var browserLaunched = false;
-    final stages = <GoogleConnectionStage>[];
-    final service = DesktopGoogleConnectionService(
-      config: const AppConfig(
-        apiBaseUrl: 'https://sprache-api.example',
-        googleAndroidClientId: '',
-        googleDesktopClientId: 'desktop-client-id',
-        googleServerClientId: '',
-        appEnvironment: 'test',
-        mockMode: false,
-      ),
-      tokenVault: MemoryTokenVault(),
-      tokenBroker: _UnavailableBroker(),
-      urlLauncher: (_) async {
-        browserLaunched = true;
-        return true;
-      },
-    );
-
-    await expectLater(
-      service.connect(onStage: stages.add),
-      throwsA(
-        isA<GoogleOAuthException>().having(
-          (error) => error.code,
-          'code',
-          'oauth_broker_not_configured',
+  test(
+    'Windows validates direct OAuth readiness before opening Google',
+    () async {
+      var browserLaunched = false;
+      final stages = <GoogleConnectionStage>[];
+      final service = DesktopGoogleConnectionService(
+        config: const AppConfig(
+          googleAndroidClientId: '',
+          googleDesktopClientId: 'desktop-client-id',
+          googleServerClientId: '',
+          appEnvironment: 'test',
+          mockMode: false,
         ),
-      ),
-    );
+        tokenVault: MemoryTokenVault(),
+        tokenBroker: _UnavailableBroker(),
+        urlLauncher: (_) async {
+          browserLaunched = true;
+          return true;
+        },
+      );
 
-    expect(stages, [GoogleConnectionStage.checkingConnection]);
-    expect(browserLaunched, isFalse);
-  });
+      await expectLater(
+        service.connect(onStage: stages.add),
+        throwsA(
+          isA<GoogleOAuthException>().having(
+            (error) => error.code,
+            'code',
+            'google_client_id_missing',
+          ),
+        ),
+      );
+
+      expect(stages, [GoogleConnectionStage.checkingConnection]);
+      expect(browserLaunched, isFalse);
+    },
+  );
 }
 
 class _UnavailableBroker implements DesktopGoogleTokenBroker {
   @override
   Future<void> ensureReady() {
     throw const GoogleOAuthException(
-      operation: 'Railway Google OAuth preflight',
-      statusCode: 503,
-      code: 'oauth_broker_not_configured',
+      operation: 'Direct Google OAuth preflight',
+      statusCode: 400,
+      code: 'google_client_id_missing',
     );
   }
 

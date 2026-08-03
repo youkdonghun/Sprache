@@ -2,14 +2,7 @@
   "name": "sprache",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "services/*"
-  ],
   "scripts": {
-    "dev:api": "npm --workspace @sprache/api run dev",
-    "build:api": "npm --workspace @sprache/api run build",
-    "test:api": "npm --workspace @sprache/api run test",
-    "lint:api": "npm --workspace @sprache/api run lint",
     "run:client": "node ./tool/run-flutter.mjs run",
     "test:client": "node ./tool/run-flutter.mjs test",
     "check:tatoeba": "node ./tool/verify-tatoeba-packs.mjs",
@@ -33,8 +26,8 @@
     "build:real:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target windows",
     "build:real:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target android",
     "build:apple:preview": "bash ./tool/build-apple-preview.sh",
-    "build:release-gated": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -RequireBrokerReady -RequirePrivacyPolicyUrl -RequireAndroidReleaseSigning -RequireWindowsCodeSigning",
-    "test": "npm run test:api && npm run test:release-bundle && npm run test:client"
+    "build:release-gated": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -RequirePrivacyPolicyUrl -RequireAndroidReleaseSigning -RequireWindowsCodeSigning",
+    "test": "npm run test:release-bundle && npm run test:client"
   },
   "engines": {
     "node": ">=22"

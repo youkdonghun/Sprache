@@ -144,7 +144,7 @@ void main() {
       find.byKey(const Key('pronunciation-score-history')),
       findsOneWidget,
     );
-    expect(find.textContaining('원문, 인식 문장, 음성 파일은 기록하지 않습니다'), findsOneWidget);
+    expect(find.textContaining('원문, 인식 문장, 음성 파일은 남기지 않아요'), findsOneWidget);
 
     final clear = find.byKey(const Key('clear-pronunciation-history'));
     await tester.ensureVisible(clear);

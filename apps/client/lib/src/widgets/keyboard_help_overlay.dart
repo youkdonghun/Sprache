@@ -97,7 +97,7 @@ class _KeyboardHelpDialog extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('현재 문맥에서 사용할 수 있는 키입니다. 설정에서 언제든 바꿀 수 있습니다.'),
+                const Text('지금 화면에서 쓸 수 있는 키예요. 설정 > 키보드에서 언제든 바꿀 수 있어요.'),
                 if (studyEntries.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _HelpSection(title: '현재 학습', entries: studyEntries),
@@ -210,18 +210,18 @@ class _HelpEntry extends StatelessWidget {
 
 String _title(KeyboardHelpContext context) => switch (context) {
   KeyboardHelpContext.global => '키보드 도움말',
-  KeyboardHelpContext.study => '퀴즈 키보드 도움말',
-  KeyboardHelpContext.flashcards => '플래시카드 키보드 도움말',
-  KeyboardHelpContext.pronunciation => '발음 연습 키보드 도움말',
+  KeyboardHelpContext.study => '퀴즈 단축키',
+  KeyboardHelpContext.flashcards => '플래시카드 단축키',
+  KeyboardHelpContext.pronunciation => '발음 연습 단축키',
 };
 
 String _studyActionLabel(StudyShortcutAction value) => switch (value) {
   StudyShortcutAction.revealAnswer => '정답 보기',
   StudyShortcutAction.playAudio => '음성 재생',
-  StudyShortcutAction.rateAgain => '다시 평가',
-  StudyShortcutAction.rateHard => '어려움 평가',
-  StudyShortcutAction.rateGood => '좋음 평가',
-  StudyShortcutAction.rateEasy => '쉬움 평가',
+  StudyShortcutAction.rateAgain => '다시 보기',
+  StudyShortcutAction.rateHard => '어려웠어요',
+  StudyShortcutAction.rateGood => '알겠어요',
+  StudyShortcutAction.rateEasy => '쉬웠어요',
   StudyShortcutAction.nextItem => '제출 또는 다음 문제',
   StudyShortcutAction.showHint => '힌트',
   StudyShortcutAction.dontKnow => '모르겠어요',
@@ -230,10 +230,10 @@ String _studyActionLabel(StudyShortcutAction value) => switch (value) {
 };
 
 String _globalActionLabel(GlobalShortcutAction value) => switch (value) {
-  GlobalShortcutAction.openSearch => '명령 팔레트·전체 검색',
+  GlobalShortcutAction.openSearch => '전체 검색',
   GlobalShortcutAction.quickAdd => '빠른 추가',
   GlobalShortcutAction.keyboardHelp => '키보드 도움말',
   GlobalShortcutAction.focusContent => '본문으로 이동',
-  GlobalShortcutAction.toggleCompactWindow => '컴팩트 창 전환',
+  GlobalShortcutAction.toggleCompactWindow => '작은 창으로 전환',
   GlobalShortcutAction.minimizeWindow => '창 최소화',
 };

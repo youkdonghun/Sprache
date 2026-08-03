@@ -108,7 +108,7 @@ class LearningDataFlowCard extends StatelessWidget {
                     key: const Key('open-learning-data-details-condensed'),
                     onPressed: () => _showStorageDetails(context),
                     icon: const Icon(Icons.info_outline_rounded),
-                    tooltip: '자료 저장 구조 보기',
+                    tooltip: '저장 위치 자세히 보기',
                   ),
                 ],
               ),
@@ -212,7 +212,7 @@ class LearningDataFlowCard extends StatelessWidget {
                       key: const Key('open-learning-data-details-very-compact'),
                       onPressed: () => _showStorageDetails(context),
                       icon: const Icon(Icons.info_outline_rounded),
-                      tooltip: '자료 저장 구조 보기',
+                      tooltip: '저장 위치 자세히 보기',
                     ),
                   ],
                 );
@@ -288,7 +288,7 @@ class LearningDataFlowCard extends StatelessWidget {
                           key: const Key('open-learning-data-details-compact'),
                           onPressed: () => _showStorageDetails(context),
                           icon: const Icon(Icons.info_outline_rounded),
-                          tooltip: '자료 저장 구조 보기',
+                          tooltip: '저장 위치 자세히 보기',
                         ),
                       ],
                     ),
@@ -330,20 +330,20 @@ class LearningDataFlowCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '그룹을 바꿔도 원본 자료와 학습 진도는 지워지지 않습니다. '
-                  '그룹은 같은 자료를 학습 목적에 맞게 묶어 보는 분류표입니다.',
+                  '그룹을 바꾸거나 옮겨도 원본 자료와 학습 기록은 그대로 남습니다. '
+                  '그룹은 같은 자료를 원하는 방식으로 묶어 보는 정리 도구예요.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 20),
                 const _StorageRow(
                   icon: Icons.inventory_2_outlined,
                   title: '앱 기본 자료',
-                  detail: '설치할 때 함께 제공되며 직접 수정하기 전까지 원본을 유지합니다.',
+                  detail: '앱에 처음부터 들어 있으며, 직접 고치기 전까지 원본 그대로 유지됩니다.',
                 ),
                 const _StorageRow(
                   icon: Icons.phone_android_rounded,
                   title: '이 기기의 로컬 데이터베이스',
-                  detail: '직접 추가·수정한 자료, 그룹, 진도, 일정과 XP를 항상 먼저 저장합니다.',
+                  detail: '직접 만든 자료, 그룹, 진도, 일정과 XP는 항상 이 기기에 먼저 저장됩니다.',
                 ),
                 _StorageRow(
                   icon: localFolderConfigured
@@ -354,7 +354,7 @@ class LearningDataFlowCard extends StatelessWidget {
                       ? driveConnected
                             ? '${localFolderName ?? 'Sprache'}는 Drive 연결 해제 시 자동으로 복귀할 대기 위치입니다.'
                             : '${localFolderName ?? 'Sprache'}에 정돈된 학습 데이터의 검증 사본을 자동 보관합니다.'
-                      : 'Google 미연결 시 사용할 폴더를 설정에서 선택해 주세요.',
+                      : '설정 > 저장·동기화에서 Drive 없이 쓸 로컬 폴더를 선택할 수 있습니다.',
                 ),
                 _StorageRow(
                   icon: driveConnected
@@ -362,13 +362,13 @@ class LearningDataFlowCard extends StatelessWidget {
                       : Icons.cloud_off_outlined,
                   title: 'Google Drive',
                   detail: driveConnected
-                      ? '연결한 Drive 폴더와 로컬 변경을 동기화합니다.'
-                      : '선택 사항입니다. 연결 전에도 모든 학습 기능을 사용할 수 있습니다.',
+                      ? '사용자가 고른 WordStudyData 폴더와 이 기기의 변경 내용을 맞춥니다.'
+                      : '설정 > 저장·동기화에서 연결할 수 있으며, 연결하지 않아도 학습할 수 있습니다.',
                 ),
                 const _StorageRow(
-                  icon: Icons.dns_outlined,
-                  title: 'Railway',
-                  detail: '계정 키와 Drive 폴더 연결만 저장하며 단어·문장·진도는 저장하지 않습니다.',
+                  icon: Icons.settings_suggest_outlined,
+                  title: 'Drive의 숨김 연결 정보',
+                  detail: '선택한 폴더의 ID와 이름만 내 Drive에 보관합니다. 별도 서버는 쓰지 않습니다.',
                   last: true,
                 ),
                 if (!driveConnected && onManageStorage != null) ...[
@@ -380,7 +380,7 @@ class LearningDataFlowCard extends StatelessWidget {
                     },
                     icon: const Icon(Icons.folder_open_rounded),
                     label: Text(
-                      localFolderConfigured ? '저장 위치 관리' : '로컬 폴더 선택',
+                      localFolderConfigured ? '저장 위치 설정 열기' : '로컬 폴더 선택',
                     ),
                   ),
                 ],
@@ -402,7 +402,7 @@ class LearningDataFlowCard extends StatelessWidget {
                         else
                           const Icon(Icons.sync_rounded, size: 20),
                         const SizedBox(width: 9),
-                        Expanded(child: Text(syncLabel ?? 'Drive 동기화 상태 확인')),
+                        Expanded(child: Text(syncLabel ?? 'Drive 상태 확인 중')),
                         if (onSync != null)
                           TextButton(
                             onPressed: syncBusy

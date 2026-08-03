@@ -254,7 +254,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
         _voiceRecordingActive = started;
         _voiceRecordingAvailable = false;
         _voiceRecordingMessage = started
-            ? '녹음 중입니다. 목표 표현을 말한 뒤 정지하세요.'
+            ? '녹음 중이에요. 표현을 말하고 정지를 누르세요.'
             : '마이크 권한이 없어 임시 녹음을 시작할 수 없어요.';
       });
     } catch (_) {
@@ -274,7 +274,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
         _voiceRecordingActive = false;
         _voiceRecordingAvailable = saved;
         _voiceRecordingMessage = saved
-            ? '이 기기에만 임시 저장했습니다. 내 음성을 바로 들어 보세요.'
+            ? '이 기기에 잠시 저장했어요. 바로 들어 보세요.'
             : '녹음된 음성이 없어요. 다시 녹음해 주세요.';
       });
     } catch (_) {
@@ -609,7 +609,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('비식별 발음 점수 $cleared개를 삭제했습니다.')));
+    ).showSnackBar(SnackBar(content: Text('발음 점수 기록 $cleared개를 삭제했어요.')));
   }
 
   String get _returnRoute => widget.customPlan
@@ -622,7 +622,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
       ? '세션 설계로 돌아가기'
       : widget.unitIndex == null
       ? '학습실로 돌아가기'
-      : '코스 여정으로';
+      : '코스로 돌아가기';
 
   @override
   Widget build(BuildContext context) {
@@ -811,7 +811,7 @@ class _PronunciationScreenState extends ConsumerState<PronunciationScreen> {
                                       ),
                                     ),
                                     icon: const Icon(Icons.volume_up_rounded),
-                                    label: const Text('목표 발음 듣기'),
+                                    label: const Text('발음 듣기'),
                                   ),
                                 ],
                               ),
@@ -1223,7 +1223,7 @@ class _ShadowingLadder extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            '목표 음성 ↔ 내 음성 A/B 반복',
+            '목표 발음과 내 음성 번갈아 듣기',
             style: Theme.of(context).textTheme.labelLarge,
           ),
           const SizedBox(height: 6),
@@ -1245,8 +1245,7 @@ class _ShadowingLadder extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            recordingMessage ??
-                '음성은 현재 기기에만 임시 저장되며, 다음 표현으로 이동하거나 화면을 닫으면 바로 삭제됩니다.',
+            recordingMessage ?? '음성은 이 기기에만 잠시 저장되고, 다음 표현으로 가거나 화면을 닫으면 삭제돼요.',
             key: const Key('pronunciation-local-recording-status'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: recording ? colors.error : colors.onSurfaceVariant,
@@ -1280,7 +1279,7 @@ class _ShadowingLadder extends StatelessWidget {
             onPressed: onOpenSpeechCheck,
             style: filledStyle,
             icon: const Icon(Icons.mic_rounded),
-            label: const Text('힌트를 보고 말하기'),
+            label: const Text('힌트 보고 말하기'),
           ),
         ],
       ),
@@ -1470,7 +1469,7 @@ class _PronunciationHistoryCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '최근 발음 흐름',
+                    '최근 발음 점수',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -1487,7 +1486,7 @@ class _PronunciationHistoryCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              '점수·시각·평가 방식만 저장합니다. 원문, 인식 문장, 음성 파일은 기록하지 않습니다.',
+              '점수, 시각, 평가 방식만 저장해요. 원문, 인식 문장, 음성 파일은 남기지 않아요.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 9),
@@ -1850,7 +1849,7 @@ class _ManualPronunciationAssessment extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final needsPracticeButton = Semantics(
       button: true,
-      label: '연습 필요로 평가하고 다음 표현으로 이동. 단축키 $needsPracticeShortcut',
+      label: '더 연습할 표현으로 표시하고 다음으로 이동. 단축키 $needsPracticeShortcut',
       child: ExcludeSemantics(
         child: OutlinedButton.icon(
           key: const Key('pronunciation-self-needs-practice'),
@@ -1859,13 +1858,13 @@ class _ManualPronunciationAssessment extends StatelessWidget {
             minimumSize: Size.fromHeight(max(52.0, minimumControlHeight)),
           ),
           icon: const Icon(Icons.replay_rounded),
-          label: Text('연습 필요 [$needsPracticeShortcut]'),
+          label: Text('더 연습 [$needsPracticeShortcut]'),
         ),
       ),
     );
     final passedButton = Semantics(
       button: true,
-      label: '잘 읽었음으로 평가하고 다음 표현으로 이동. 단축키 $passedShortcut',
+      label: '잘 읽은 표현으로 표시하고 다음으로 이동. 단축키 $passedShortcut',
       child: ExcludeSemantics(
         child: FilledButton.icon(
           key: const Key('pronunciation-self-passed'),
@@ -1874,7 +1873,7 @@ class _ManualPronunciationAssessment extends StatelessWidget {
             minimumSize: Size.fromHeight(max(52.0, minimumControlHeight)),
           ),
           icon: const Icon(Icons.check_rounded),
-          label: Text('잘 읽었음 [$passedShortcut]'),
+          label: Text('잘 읽었어요 [$passedShortcut]'),
         ),
       ),
     );
@@ -1887,7 +1886,7 @@ class _ManualPronunciationAssessment extends StatelessWidget {
           key: const Key('pronunciation-self-assessment'),
           container: true,
           explicitChildNodes: true,
-          label: '음성 인식 없이 스스로 평가. 목표 발음을 듣고 따라 읽은 뒤 결과를 직접 선택하세요.',
+          label: '직접 평가하기. 발음을 듣고 따라 읽은 뒤 결과를 골라 주세요.',
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -1902,11 +1901,11 @@ class _ManualPronunciationAssessment extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '음성 인식 없이 스스로 평가',
+                        '직접 평가하기',
                         style: TextStyle(fontWeight: FontWeight.w900),
                       ),
                       SizedBox(height: 3),
-                      Text('목표 발음을 듣고 따라 읽은 뒤 결과를 직접 선택하세요.'),
+                      Text('발음을 듣고 따라 읽은 뒤 결과를 골라 주세요.'),
                     ],
                   ),
                 ),
@@ -1970,7 +1969,7 @@ class _PronunciationCompletion extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '$minutes분 · 통과 $passed개 · 더 연습 $needsPractice개',
+                    '$minutes분 · 잘 읽은 표현 $passed개 · 더 연습할 표현 $needsPractice개',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),

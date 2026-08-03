@@ -23,6 +23,7 @@ import '../domain/learning_item.dart';
 import '../domain/learning_item_codec.dart';
 import '../domain/library_search.dart';
 import '../domain/local_search_query.dart';
+import '../domain/mission_script.dart';
 import '../domain/onboarding_profile.dart';
 import '../domain/progress.dart';
 import '../domain/quiz_session_support.dart';
@@ -2297,6 +2298,9 @@ class AppController extends StateNotifier<AppState> {
   bool hasCompletedMission(int unitIndex) =>
       state.preferences.hasCompletedMission(state.activeCourseId, unitIndex);
 
+  MissionProgressCheckpoint? missionProgressFor(int unitIndex) =>
+      state.preferences.missionCheckpointFor(state.activeCourseId, unitIndex);
+
   int get completedMissionCount => List.generate(
     coursePath.units.length,
     (index) => index,
@@ -2304,10 +2308,48 @@ class AppController extends StateNotifier<AppState> {
 
   void completeMission(int unitIndex) {
     if (unitIndex < 0 || unitIndex >= coursePath.units.length) return;
-    final completed = {...state.preferences.completedMissionIds}
-      ..add('${state.activeCourseId}:$unitIndex');
+    final key = '${state.activeCourseId}:$unitIndex';
+    final completed = {...state.preferences.completedMissionIds}..add(key);
+    final checkpoints = {...state.preferences.missionProgressCheckpoints}
+      ..remove(key);
     updatePreferences(
-      state.preferences.copyWith(completedMissionIds: completed),
+      state.preferences.copyWith(
+        completedMissionIds: completed,
+        missionProgressCheckpoints: checkpoints,
+      ),
+    );
+  }
+
+  void saveMissionProgress(MissionProgressCheckpoint checkpoint) {
+    if (checkpoint.courseId != state.activeCourseId ||
+        checkpoint.unitIndex < 0 ||
+        checkpoint.unitIndex >= coursePath.units.length ||
+        hasCompletedMission(checkpoint.unitIndex)) {
+      return;
+    }
+    final checkpoints = <String, MissionProgressCheckpoint>{
+      ...state.preferences.missionProgressCheckpoints,
+      checkpoint.storageKey: checkpoint,
+    };
+    final newest = checkpoints.values.toList()
+      ..sort((left, right) => right.updatedAt.compareTo(left.updatedAt));
+    updatePreferences(
+      state.preferences.copyWith(
+        missionProgressCheckpoints: {
+          for (final value in newest.take(24)) value.storageKey: value,
+        },
+      ),
+    );
+  }
+
+  void clearMissionProgress(int unitIndex) {
+    if (unitIndex < 0 || unitIndex >= coursePath.units.length) return;
+    final key = '${state.activeCourseId}:$unitIndex';
+    if (!state.preferences.missionProgressCheckpoints.containsKey(key)) return;
+    final checkpoints = {...state.preferences.missionProgressCheckpoints}
+      ..remove(key);
+    updatePreferences(
+      state.preferences.copyWith(missionProgressCheckpoints: checkpoints),
     );
   }
 
@@ -3215,6 +3257,61 @@ class AppController extends StateNotifier<AppState> {
         return byCount != 0 ? byCount : left.compareTo(right);
       });
     return List.unmodifiable(tags.take(limit));
+  }
+
+  List<String> contentGroupSuggestions({
+    required String subjectId,
+    required String text,
+    int limit = 4,
+  }) {
+    final query = text.trim().toLowerCase();
+    if (query.runes.length < 2 || limit <= 0) return const [];
+    final definitions = learningGroupDefinitionsForSubject(subjectId);
+    final available = definitions.map((group) => group.name).toSet();
+    final scores = <String, int>{};
+
+    for (final group in definitions) {
+      final name = group.name.toLowerCase();
+      if (name == query) {
+        scores[group.name] = 1000;
+      } else if (name.startsWith(query) || query.startsWith(name)) {
+        scores[group.name] = 700;
+      } else if (name.contains(query) || query.contains(name)) {
+        scores[group.name] = 500;
+      }
+    }
+
+    for (final item in itemsForSubject(subjectId)) {
+      final itemText = item.text.trim().toLowerCase();
+      final similarity = _duplicateRepairAnalyzer.textSimilarity(
+        query,
+        itemText,
+      );
+      final lexicalMatch = itemText.contains(query) || query.contains(itemText);
+      if (!lexicalMatch &&
+          similarity < _duplicateRepairAnalyzer.minimumSimilarity) {
+        continue;
+      }
+      final relevance = lexicalMatch
+          ? 350
+          : (similarity * 300).round().clamp(1, 300);
+      for (final group in learningGroupsOf(item)) {
+        if (!available.contains(group)) continue;
+        scores.update(
+          group,
+          (current) => current + relevance,
+          ifAbsent: () => relevance,
+        );
+      }
+    }
+
+    final ranked = scores.keys.toList(growable: false)
+      ..sort((left, right) {
+        final byScore = scores[right]!.compareTo(scores[left]!);
+        if (byScore != 0) return byScore;
+        return left.compareTo(right);
+      });
+    return List.unmodifiable(ranked.take(limit));
   }
 
   DuplicateRepairCatalog duplicateRepairCatalog({String? subjectId}) {
@@ -4416,6 +4513,14 @@ class AppController extends StateNotifier<AppState> {
       ),
       mergedContentItemAliases,
     );
+    final mergedCompletedMissionIds = {
+      ...remotePreferences.completedMissionIds,
+      ...state.preferences.completedMissionIds,
+    };
+    final mergedMissionProgressCheckpoints = _mergeMissionProgressCheckpoints(
+      remotePreferences.missionProgressCheckpoints,
+      state.preferences.missionProgressCheckpoints,
+    )..removeWhere((key, _) => mergedCompletedMissionIds.contains(key));
     final combinedPreferences = basePreferences.copyWith(
       experience: remoteExperienceWins
           ? remotePreferences.experience
@@ -4440,10 +4545,8 @@ class AppController extends StateNotifier<AppState> {
         mergedFavoriteItems.changedAtById,
         mergedContentItemAliases,
       ),
-      completedMissionIds: {
-        ...remotePreferences.completedMissionIds,
-        ...state.preferences.completedMissionIds,
-      },
+      completedMissionIds: mergedCompletedMissionIds,
+      missionProgressCheckpoints: mergedMissionProgressCheckpoints,
       sessionPlan: mergedSessionPlan,
       savedSessionPlans: [
         for (final plan in mergedSavedSessionPlans.plans)
@@ -6153,6 +6256,30 @@ _MergedVersionedPreferenceRecords<T> _mergeVersionedPreferenceRecords<T>({
         entry.key: entry.value,
     }),
   );
+}
+
+Map<String, MissionProgressCheckpoint> _mergeMissionProgressCheckpoints(
+  Map<String, MissionProgressCheckpoint> remote,
+  Map<String, MissionProgressCheckpoint> local,
+) {
+  final merged = <String, MissionProgressCheckpoint>{...remote};
+  for (final entry in local.entries) {
+    final current = merged[entry.key];
+    if (current == null ||
+        entry.value.updatedAt.isAfter(current.updatedAt) ||
+        (entry.value.updatedAt == current.updatedAt &&
+            jsonEncode(
+                  entry.value.toJson(),
+                ).compareTo(jsonEncode(current.toJson())) >
+                0)) {
+      merged[entry.key] = entry.value;
+    }
+  }
+  final sorted = merged.values.toList()
+    ..sort((left, right) => right.updatedAt.compareTo(left.updatedAt));
+  return {
+    for (final checkpoint in sorted.take(24)) checkpoint.storageKey: checkpoint,
+  };
 }
 
 StudySessionPlan _newerSessionPlan(

@@ -111,7 +111,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(Dialog), findsOneWidget);
-      expect(find.text('Sprache 시작 설정'), findsOneWidget);
+      expect(find.text('처음 학습 설정'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

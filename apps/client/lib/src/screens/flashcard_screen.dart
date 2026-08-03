@@ -232,9 +232,9 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
     final remembered = rating != ReviewRating.again;
     final ratingLabel = switch (rating) {
       ReviewRating.again => '다시',
-      ReviewRating.hard => '어려움',
-      ReviewRating.good => '기억남',
-      ReviewRating.easy => '쉬움',
+      ReviewRating.hard => '어려워요',
+      ReviewRating.good => '기억나요',
+      ReviewRating.easy => '쉬워요',
     };
     _attemptedItemIds.add(item.id);
     final xp = switch (rating) {
@@ -314,15 +314,15 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
           : shortcuts;
       return '답 공개. ${_item.text}.$reading '
           '뜻 ${_item.primaryTranslation}. '
-          '기억 정도를 다시, 어려움, 기억남, 쉬움 중에서 평가하세요. '
+          '기억한 정도를 다시, 어려워요, 기억나요, 쉬워요 중에서 골라 주세요. '
           '단축키 $shortcutDescription.';
     }
     final previousRating = _lastRatingLabel == null
         ? ''
-        : '$_lastRatingLabel으로 평가했습니다. ';
+        : '평가: $_lastRatingLabel. ';
     final cardPosition = _lastRatingLabel == null ? '카드' : '다음 카드';
     return '$previousRating$cardPosition ${_index + 1}/${_queue.length} 앞면. '
-        '${_item.text}. $revealShortcut 키 또는 뜻과 설명 보기 버튼으로 뒤집으세요.';
+        '${_item.text}. $revealShortcut 키 또는 뜻 보기 버튼으로 뒤집으세요.';
   }
 
   Future<void> _saveSession() async {
@@ -369,7 +369,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
       ? '세션 설계로 돌아가기'
       : widget.unitIndex == null
       ? '학습실로 돌아가기'
-      : '코스 여정으로';
+      : '코스로 돌아가기';
 
   void _handleCardSwipe(DragEndDetails details) {
     final velocity = details.primaryVelocity ?? 0;
@@ -386,7 +386,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
     if (_queue.isEmpty) {
       return _EmptyLearningScreen(
         title: '학습할 카드가 없어요',
-        description: '자료실에서 이 학습 주제의 단어·문장 또는 개념을 추가해 주세요.',
+        description: '자료실에서 이 주제에 맞는 단어나 문장을 추가해 주세요.',
         onClose: _close,
         onAdd: () => context.go('/library/new'),
       );
@@ -570,9 +570,9 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                             button: !_revealed,
                             label: _revealed ? '카드 뒷면' : '카드 앞면, 눌러서 뜻 보기',
                             hint: swipeRates
-                                ? '좌우로 밀어 공개하거나 평가할 수 있습니다. 평가 버튼도 항상 표시됩니다.'
+                                ? '좌우로 밀어 뜻을 보거나 바로 평가할 수 있어요. 아래 버튼도 사용할 수 있어요.'
                                 : tapRatesGood
-                                ? '답 공개 후 카드를 한 번 더 눌러 기억남으로 평가할 수 있습니다. 평가 버튼도 항상 표시됩니다.'
+                                ? '뜻을 본 뒤 카드를 한 번 더 누르면 “기억나요”로 평가해요. 아래 버튼도 사용할 수 있어요.'
                                 : null,
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
@@ -669,8 +669,8 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                             child: ExcludeSemantics(
                               child: Text(
                                 _revealed
-                                    ? '기억이 났는지 스스로 판단해 주세요. 어려웠던 카드는 마지막에 한 번 더 나옵니다.'
-                                    : '시험이 아닙니다. 충분히 읽어 본 뒤 카드를 뒤집으세요.',
+                                    ? '얼마나 잘 떠올렸는지 골라 주세요. 어려웠던 카드는 끝에 한 번 더 나와요.'
+                                    : '천천히 읽어 본 뒤 카드를 뒤집어 뜻을 확인하세요.',
                                 textAlign: TextAlign.center,
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
@@ -727,7 +727,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                                   key: const Key('flashcard-hard'),
                                   width: buttonWidth,
                                   icon: Icons.psychology_alt_rounded,
-                                  label: '어려움',
+                                  label: '어려워요',
                                   shortcut: ratingShortcuts[ReviewRating.hard]!,
                                   interval: intervalLabels[ReviewRating.hard]!,
                                   minimumHeight: accessibilityTheme
@@ -738,7 +738,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                                   key: const Key('flashcard-remembered'),
                                   width: buttonWidth,
                                   icon: Icons.check_rounded,
-                                  label: '기억남',
+                                  label: '기억나요',
                                   shortcut: ratingShortcuts[ReviewRating.good]!,
                                   interval: intervalLabels[ReviewRating.good]!,
                                   minimumHeight: accessibilityTheme
@@ -751,7 +751,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                                   key: const Key('flashcard-easy'),
                                   width: buttonWidth,
                                   icon: Icons.bolt_rounded,
-                                  label: '쉬움',
+                                  label: '쉬워요',
                                   shortcut: ratingShortcuts[ReviewRating.easy]!,
                                   interval: intervalLabels[ReviewRating.easy]!,
                                   minimumHeight: accessibilityTheme
@@ -767,7 +767,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                           enabled: true,
                           onTap: _reveal,
                           label:
-                              '뜻과 설명 보기. 카드를 뒤집고 평가 버튼으로 이동합니다. 단축키 $revealShortcut.',
+                              '뜻 보기. 카드를 뒤집은 뒤 평가 버튼으로 이동합니다. 단축키 $revealShortcut.',
                           child: ExcludeSemantics(
                             child: FilledButton.icon(
                               key: const Key('reveal-flashcard'),
@@ -783,7 +783,7 @@ class _FlashcardScreenState extends ConsumerState<FlashcardScreen> {
                                 ),
                               ),
                               icon: const Icon(Icons.visibility_rounded),
-                              label: const Text('뜻과 설명 보기'),
+                              label: const Text('뜻 보기'),
                             ),
                           ),
                         ),
@@ -850,7 +850,7 @@ class _RatingButton extends StatelessWidget {
       button: true,
       enabled: true,
       onTap: onPressed,
-      label: '$label으로 평가. 단축키 $shortcut. 다음 복습 $interval 후.',
+      label: '$label 선택. 단축키 $shortcut. 다음 복습 $interval 후.',
       child: ExcludeSemantics(
         child: SizedBox(
           width: width,
@@ -1076,8 +1076,8 @@ class _CardCompletion extends StatelessWidget {
                     container: true,
                     liveRegion: true,
                     label:
-                        '${lastRatingLabel == null ? '' : '$lastRatingLabel으로 평가했습니다. '}'
-                        '카드 학습 완료. 기억남 $remembered개, 다시 보기 $again개.',
+                        '${lastRatingLabel == null ? '' : '평가: $lastRatingLabel. '}'
+                        '카드 학습 완료. 기억한 카드 $remembered개, 다시 볼 카드 $again개.',
                     child: ExcludeSemantics(
                       child: Column(
                         children: [
@@ -1087,7 +1087,7 @@ class _CardCompletion extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '$minutes분 동안 기억남 $remembered개 · 다시 보기 $again개',
+                            '$minutes분 · 기억한 카드 $remembered개 · 다시 볼 카드 $again개',
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -1101,7 +1101,7 @@ class _CardCompletion extends StatelessWidget {
                       minimumSize: const Size.fromHeight(50),
                     ),
                     icon: const Icon(Icons.touch_app_rounded),
-                    label: const Text('뜻 고르기로 확인하기'),
+                    label: const Text('뜻 고르기 시작'),
                   ),
                   const SizedBox(height: 10),
                   OutlinedButton(

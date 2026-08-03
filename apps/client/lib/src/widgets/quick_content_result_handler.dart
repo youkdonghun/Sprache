@@ -17,11 +17,11 @@ Future<void> handleQuickContentResult({
 }) async {
   if (result == null || !context.mounted) return;
   final mergedMessage = result.addedMeaningCount > 0
-      ? '기존 표현에 새 뜻 ${result.addedMeaningCount}개를 추가했습니다.'
-      : '같은 표현과 뜻이 이미 있어 중복 저장하지 않았습니다.';
+      ? '기존 표현에 새 뜻 ${result.addedMeaningCount}개를 추가했어요.'
+      : '같은 표현과 뜻이 이미 있어 한 번만 저장했어요.';
   final message = result.mergedWithExisting
       ? mergedMessage
-      : '“${result.item.text}” 자료를 저장했습니다.';
+      : '“${result.item.text}”을 저장했어요.';
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(message),
@@ -39,7 +39,7 @@ Future<void> handleQuickContentResult({
   controller.updateSessionPlan(
     controller.activeSessionPlan.copyWith(
       planId: '',
-      title: '방금 등록한 자료 학습',
+      title: '방금 저장한 자료 학습',
       mode: StudyMode.mixed,
       deck: StudyDeckScope.selected,
       difficulty: StudyDifficulty.all,
@@ -72,9 +72,9 @@ Future<void> _undoQuickContent({
     controller.toggleFavorite(result.item.id);
   }
   final message = switch (status) {
-    QuickContentUndoStatus.restored => '마지막 저장을 되돌렸습니다.',
-    QuickContentUndoStatus.conflict => '이후 수정된 자료라 안전하게 되돌리지 않았습니다.',
-    QuickContentUndoStatus.alreadyUndone => '이미 되돌린 저장입니다.',
+    QuickContentUndoStatus.restored => '마지막 저장을 되돌렸어요.',
+    QuickContentUndoStatus.conflict => '저장한 뒤 수정된 자료라 자동으로 되돌리지 않았어요.',
+    QuickContentUndoStatus.alreadyUndone => '이미 되돌린 내용이에요.',
   };
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }

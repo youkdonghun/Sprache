@@ -55,6 +55,13 @@ void main() {
     await pumpHome(tester, experience: const AppExperiencePreferences());
 
     expect(find.byKey(const Key('home-header')), findsOneWidget);
+    expect(
+      find.text('오늘의 영어'),
+      findsOneWidget,
+      reason: '같은 화면 제목을 카드와 헤더에서 중복 노출하지 않는다.',
+    );
+    expect(find.byKey(const Key('home-next-study-card')), findsOneWidget);
+    expect(find.byKey(const Key('home-primary-study-button')), findsOneWidget);
     expect(find.byKey(const Key('home-xp-summary')), findsOneWidget);
     expect(find.byKey(const Key('home-today-plan')), findsOneWidget);
     expect(

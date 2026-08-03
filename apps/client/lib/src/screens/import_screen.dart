@@ -331,26 +331,26 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   Future<bool> _confirmLeave() async {
     if (_committed || (_preview == null && !_busy)) return true;
     if (_busy) {
-      _showMessage('안전 저장이 끝날 때까지 잠시 기다려 주세요.');
+      _showMessage('저장을 마칠 때까지 잠시 기다려 주세요.');
       return false;
     }
     return await showDialog<bool>(
           context: context,
           builder: (dialogContext) => AlertDialog(
             key: const Key('import-draft-exit-dialog'),
-            title: const Text('가져오기 미리보기를 닫을까요?'),
+            title: const Text('가져오기를 그만할까요?'),
             content: const Text(
-              '파일 원문 없이 해시·열 배치·선택·목적지만 이 기기의 검토 초안에 보관합니다. '
+              '지금까지 고른 열과 저장 위치는 이 기기에 임시로 남겨 둬요. '
               '기존 학습 자료는 바뀌지 않습니다.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('계속 검토'),
+                child: const Text('계속 가져오기'),
               ),
               FilledButton.tonal(
                 onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('미리보기 닫기'),
+                child: const Text('그만하기'),
               ),
             ],
           ),
@@ -393,7 +393,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         // Draft cleanup must not change the already safe learning dataset.
       }
     }();
-    _showMessage('분배 위치가 바뀌었습니다. 파일을 다시 선택해 새 기준으로 검증해 주세요.');
+    _showMessage('저장 위치가 바뀌었어요. 파일을 다시 골라 확인해 주세요.');
   }
 
   void _loadDistributionRule(String value) {
@@ -450,7 +450,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     if (_busy) return;
     setState(() {
       _busy = true;
-      _busyMessage = '파일을 백그라운드에서 검증하고 있습니다…';
+      _busyMessage = '파일 내용을 확인하고 있어요…';
     });
     try {
       final appController = ref.read(appControllerProvider.notifier);
@@ -714,7 +714,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _sheetName = sheetName;
         _sourceSummary = matchingDraft == null
             ? sourceSummary
-            : '${sourceSummary ?? '검증 완료'} · 이전 검토 선택 복원';
+            : '${sourceSummary ?? '확인 완료'} · 이전에 고른 항목 불러옴';
         _decisions
           ..clear()
           ..addAll({
@@ -735,7 +735,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     } on FormatException catch (error) {
       _showMessage(error.message.toString());
     } catch (_) {
-      _showMessage('파일을 분석하지 못했습니다. 파일 형식과 접근 권한을 확인해 주세요.');
+      _showMessage('파일을 열지 못했어요. 파일 형식과 접근 권한을 확인해 주세요.');
     } finally {
       if (mounted) {
         setState(() {
@@ -768,7 +768,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     }
     setState(() {
       _busy = true;
-      _busyMessage = '붙여넣은 ${quick.entryCount}개 행을 검증하고 있습니다…';
+      _busyMessage = '붙여넣은 ${quick.entryCount}개를 확인하고 있어요…';
     });
     try {
       final controller = ref.read(appControllerProvider.notifier);
@@ -855,7 +855,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     } on FormatException catch (error) {
       _showMessage(error.message.toString());
     } catch (_) {
-      _showMessage('붙여넣은 내용을 분석하지 못했습니다.');
+      _showMessage('붙여넣은 내용을 읽지 못했어요. 형식을 확인해 주세요.');
     } finally {
       if (mounted) {
         setState(() {
@@ -900,14 +900,14 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           '${now.hour.toString().padLeft(2, '0')}'
           '${now.minute.toString().padLeft(2, '0')}';
       final path = await FilePicker.platform.saveFile(
-        dialogTitle: '개인정보 안전 가져오기 보고서 저장',
+        dialogTitle: '개인 내용을 뺀 오류 보고서 저장',
         fileName: 'sprache-import-report-$stamp.csv',
         type: FileType.custom,
         allowedExtensions: const ['csv'],
         bytes: Uint8List.fromList(utf8.encode(csvText)),
       );
       if (path != null) {
-        _showMessage('원문을 제외한 가져오기 보고서를 저장했습니다.');
+        _showMessage('개인 내용은 빼고 오류 보고서만 저장했어요.');
       }
     } catch (_) {
       _showMessage('가져오기 보고서를 저장하지 못했습니다.');
@@ -958,7 +958,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
         _committed = false;
         _decisions.remove(entry.reviewKey);
       });
-      _showMessage('${entry.row}행을 다시 검증했습니다.');
+      _showMessage('${entry.row}행을 다시 확인했어요.');
     } on FormatException catch (error) {
       _showMessage(error.message.toString());
     }
@@ -1114,7 +1114,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       });
       _saveReviewDraft();
       if (addedCount > 0) {
-        _showMessage('${issue.row}행을 수정하고 다시 검증했습니다.');
+        _showMessage('${issue.row}행을 수정하고 다시 확인했어요.');
       } else if (parsed.issues.isNotEmpty) {
         _showMessage(parsed.issues.first.message);
       } else {
@@ -1179,7 +1179,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     } on FormatException catch (error) {
       _showMessage(error.message.toString());
     } catch (_) {
-      _showMessage('검증된 웹 예문 팩을 열지 못했습니다. 앱 파일을 다시 설치해 주세요.');
+      _showMessage('예문 팩을 열지 못했어요. 앱을 다시 설치해 주세요.');
     } finally {
       if (mounted) {
         setState(() {
@@ -1414,7 +1414,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
     setState(() {
       _busy = true;
-      _busyMessage = '1/4 · 가져오기 전 안전 지점을 검증하고 있습니다…';
+      _busyMessage = '1/4 · 되돌릴 수 있도록 현재 자료를 확인하고 있어요…';
     });
     ImportCommitResult? committedResult;
     try {
@@ -1426,7 +1426,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           );
       if (!mounted) return;
       setState(() {
-        _busyMessage = '2/4 · 전체 항목을 앱 DB에 원자적으로 저장하고 있습니다…';
+        _busyMessage = '2/4 · 선택한 자료를 이 기기에 저장하고 있어요…';
       });
       final result = await ref
           .read(appControllerProvider.notifier)
@@ -1453,28 +1453,28 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (result.added + result.replaced > 0) {
         if (ref.read(appControllerProvider).driveConnected) {
           setState(() {
-            _busyMessage = '3/4 · Drive의 기존 데이터와 키별로 병합하고 있습니다…';
+            _busyMessage = '3/4 · Drive의 기존 자료와 합치고 있어요…';
           });
           await ref.read(connectionControllerProvider.notifier).syncOrRestore();
           if (!mounted) return;
           final connection = ref.read(connectionControllerProvider);
           storageText = connection.phase == ConnectionPhase.connected
-              ? ' · Drive 기존 데이터셋 업데이트 완료'
+              ? ' · Drive 자료 업데이트 완료'
               : ' · 로컬 병합 완료 · Drive 재시도 대기';
         } else {
           setState(() {
-            _busyMessage = '3/4 · 지정한 로컬 저장본을 업데이트하고 있습니다…';
+            _busyMessage = '3/4 · 선택한 로컬 폴더에 사본을 저장하고 있어요…';
           });
           await ref.read(localStorageControllerProvider.notifier).saveNow();
           if (!mounted) return;
           final localStorage = ref.read(localStorageControllerProvider);
           storageText = localStorage.configured
               ? ' · 로컬 저장본 업데이트 완료'
-              : ' · 앱 DB에 저장됨';
+              : ' · 이 기기에 저장 완료';
         }
       }
       setState(() {
-        _busyMessage = '4/4 · 저장 결과와 이동할 자료실을 확인하고 있습니다…';
+        _busyMessage = '4/4 · 저장 결과를 확인하고 있어요…';
       });
       final staleText = result.stale == 0 ? '' : ' · 재검토 필요 ${result.stale}개';
       _showMessage(
@@ -1502,7 +1502,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (!mounted) return;
       _showMessage(
         committedResult == null
-            ? '안전 지점을 만들거나 앱 DB에 저장하지 못했습니다. 기존 학습 데이터는 변경되지 않았습니다. 저장 공간을 확인한 뒤 다시 시도해 주세요.'
+            ? '되돌리기용 사본을 만들거나 이 기기에 저장하지 못했어요. 기존 학습 자료는 그대로예요. 저장 공간을 확인한 뒤 다시 시도해 주세요.'
             : '앱 DB 저장은 완료했지만 외부 저장본을 갱신하지 못했습니다. 가져온 자료는 이 기기에 유지되며 설정에서 동기화·로컬 저장을 다시 시도할 수 있습니다.',
       );
     } finally {
@@ -1523,11 +1523,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       barrierDismissible: false,
       builder: (dialogContext) => SimpleDialog(
         key: const Key('import-destination-result-dialog'),
-        title: const Text('가져온 자료를 어디에서 볼까요?'),
+        title: const Text('가져온 자료를 바로 볼까요?'),
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, 10),
-            child: Text('목적지별 자료 수를 확인하고 바로 해당 자료실을 열 수 있습니다.'),
+            child: Text('저장된 주제와 자료 수를 확인하고 바로 열 수 있어요.'),
           ),
           for (final (index, destination) in destinations.indexed)
             SimpleDialogOption(
@@ -1600,7 +1600,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                 '병합·교체 ${receipt.mergedCount}개를 되돌립니다.',
               ),
               const SizedBox(height: 10),
-              Text('안전하게 되돌릴 변경 ${preview.safeChangeCount}개'),
+              Text('바로 되돌릴 수 있는 변경 ${preview.safeChangeCount}개'),
               if (preview.hasConflicts) ...[
                 const SizedBox(height: 10),
                 Text(
@@ -1620,7 +1620,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                 if (preview.conflicts.length > 5)
                   Text('외 ${preview.conflicts.length - 5}개 충돌'),
               ] else
-                const Text('가져온 뒤 직접 수정된 자료가 없어 모두 안전하게 되돌릴 수 있습니다.'),
+                const Text('가져온 뒤 직접 고친 자료가 없어 모두 되돌릴 수 있어요.'),
             ],
           ),
         ),
@@ -1951,7 +1951,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                               ? null
                               : () => _exportImportReport(review),
                           icon: const Icon(Icons.privacy_tip_outlined),
-                          label: const Text('원문 없는 오류 보고서 저장'),
+                          label: const Text('개인 내용을 뺀 오류 보고서 저장'),
                         ),
                       ],
                       const SizedBox(height: 14),
@@ -2027,7 +2027,7 @@ class _TextImportOptionsDialogState extends State<_TextImportOptionsDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('자동 감지 결과를 확인하거나 직접 바꾼 뒤 다음으로 진행하세요.'),
+              const Text('자동으로 찾은 형식이 맞는지 확인해 주세요. 필요하면 직접 바꿀 수 있어요.'),
               const SizedBox(height: 14),
               DropdownButtonFormField<TextImportEncoding>(
                 key: const Key('import-encoding-picker'),
@@ -2068,7 +2068,7 @@ class _TextImportOptionsDialogState extends State<_TextImportOptionsDialog> {
               ),
               const SizedBox(height: 8),
               const Text(
-                '선택을 바꾸면 확인 시 원본 바이트를 새 기준으로 다시 읽습니다.',
+                '선택을 바꾸면 파일을 새 기준으로 다시 읽어요.',
                 style: TextStyle(fontSize: 12),
               ),
             ],
@@ -2086,7 +2086,7 @@ class _TextImportOptionsDialogState extends State<_TextImportOptionsDialog> {
             context,
             _TextImportSelection(encoding: _encoding, delimiter: _delimiter),
           ),
-          child: const Text('이 형식으로 다시 확인'),
+          child: const Text('이 형식으로 확인'),
         ),
       ],
     );
@@ -2263,7 +2263,7 @@ class _BlockedEntryEditDialogState extends State<_BlockedEntryEditDialog> {
   Widget build(BuildContext context) {
     final sentence = widget.entry.incoming.kind == LearningItemKind.sentence;
     return AlertDialog(
-      title: Text('${widget.entry.row}행 문제 필드 수정'),
+      title: Text('${widget.entry.row}행 내용 수정'),
       content: SizedBox(
         width: 520,
         child: Column(
@@ -2281,7 +2281,7 @@ class _BlockedEntryEditDialogState extends State<_BlockedEntryEditDialog> {
               enabled: !sentence,
               decoration: InputDecoration(
                 labelText: '문제·표현',
-                helperText: sentence ? '문장 토큰 보호를 위해 원문 파일에서 수정하세요.' : null,
+                helperText: sentence ? '문장 배열용 낱말 조각은 원본 파일에서 수정해 주세요.' : null,
               ),
             ),
             const SizedBox(height: 10),
@@ -2317,7 +2317,7 @@ class _BlockedEntryEditDialogState extends State<_BlockedEntryEditDialog> {
               _BlockedEntryEdit(id: id, text: text, meaning: meaning),
             );
           },
-          child: const Text('수정하고 재검증'),
+          child: const Text('수정하고 다시 확인'),
         ),
       ],
     );
@@ -2355,11 +2355,12 @@ class _RejectedRowEditDialogState extends State<_RejectedRowEditDialog> {
         String value => value.trim(),
         num value => value.toString(),
         bool value => value.toString(),
-        List<Object?> values => values
-            .whereType<Object>()
-            .map((value) => value.toString().trim())
-            .where((value) => value.isNotEmpty)
-            .join('|'),
+        List<Object?> values =>
+          values
+              .whereType<Object>()
+              .map((value) => value.toString().trim())
+              .where((value) => value.isNotEmpty)
+              .join('|'),
         _ => '',
       };
       if (value.isNotEmpty) return value;
@@ -2472,7 +2473,7 @@ class _RejectedRowEditDialogState extends State<_RejectedRowEditDialog> {
               ),
             );
           },
-          child: const Text('수정하고 재검토'),
+          child: const Text('수정하고 다시 확인'),
         ),
       ],
     );
@@ -2530,121 +2531,123 @@ class _ImportColumnMappingDialogState
     return AlertDialog(
       key: const Key('import-column-mapping-dialog'),
       title: const Text('파일 열 연결 확인'),
-      content: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 620,
-          maxHeight: MediaQuery.sizeOf(context).height * 0.68,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
+      content: SizedBox(
+        width: 620,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.68,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, size: 20),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text('열 이름을 보고 자동으로 연결했어요. 표현과 뜻이 맞는지만 확인해 주세요.'),
+                    ),
+                  ],
+                ),
               ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.auto_awesome_rounded, size: 20),
-                  SizedBox(width: 8),
-                  Expanded(
-                    child: Text('열 이름을 자동으로 연결했습니다. 문제와 정답이 맞는지만 확인하세요.'),
+              const SizedBox(height: 12),
+              if (_usablePresets.isNotEmpty) ...[
+                DropdownButtonFormField<String>(
+                  key: const Key('import-mapping-preset-picker'),
+                  decoration: const InputDecoration(
+                    labelText: '저장한 열 연결 불러오기',
+                    prefixIcon: Icon(Icons.bookmark_outline_rounded),
                   ),
-                ],
+                  items: [
+                    for (final preset in _usablePresets)
+                      DropdownMenuItem(
+                        value: preset.id,
+                        child: Text(preset.name),
+                      ),
+                  ],
+                  onChanged: (id) {
+                    if (id == null) return;
+                    final preset = _usablePresets.firstWhere(
+                      (value) => value.id == id,
+                    );
+                    setState(() {
+                      _mapping
+                        ..clear()
+                        ..addAll(preset.columns);
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+              ],
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: ImportColumnMapper.fields.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final field = ImportColumnMapper.fields[index];
+                    final current = _mapping[field.key];
+                    return DropdownButtonFormField<String>(
+                      key: Key('import-column-${field.key}'),
+                      initialValue: widget.headers.contains(current)
+                          ? current
+                          : null,
+                      decoration: InputDecoration(
+                        labelText:
+                            '${field.label}${field.required ? ' · 필수' : ''}',
+                        isDense: true,
+                      ),
+                      items: [
+                        if (!field.required)
+                          const DropdownMenuItem(
+                            value: '',
+                            child: Text('연결하지 않음'),
+                          ),
+                        for (final header in widget.headers)
+                          DropdownMenuItem(value: header, child: Text(header)),
+                      ],
+                      onChanged: (value) => setState(() {
+                        if (value == null || value.isEmpty) {
+                          _mapping.remove(field.key);
+                        } else {
+                          _mapping[field.key] = value;
+                        }
+                      }),
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            if (_usablePresets.isNotEmpty) ...[
-              DropdownButtonFormField<String>(
-                key: const Key('import-mapping-preset-picker'),
+              if (missing.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Text(
+                  '${missing.map((field) => field.label).join('·')} 열을 연결해 주세요.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('import-mapping-preset-name'),
+                controller: _presetNameController,
+                maxLength: 40,
                 decoration: const InputDecoration(
-                  labelText: '저장한 열 연결 불러오기',
-                  prefixIcon: Icon(Icons.bookmark_outline_rounded),
-                ),
-                items: [
-                  for (final preset in _usablePresets)
-                    DropdownMenuItem(
-                      value: preset.id,
-                      child: Text(preset.name),
-                    ),
-                ],
-                onChanged: (id) {
-                  if (id == null) return;
-                  final preset = _usablePresets.firstWhere(
-                    (value) => value.id == id,
-                  );
-                  setState(() {
-                    _mapping
-                      ..clear()
-                      ..addAll(preset.columns);
-                  });
-                },
-              ),
-              const SizedBox(height: 10),
-            ],
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: ImportColumnMapper.fields.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final field = ImportColumnMapper.fields[index];
-                  final current = _mapping[field.key];
-                  return DropdownButtonFormField<String>(
-                    key: Key('import-column-${field.key}'),
-                    initialValue: widget.headers.contains(current)
-                        ? current
-                        : null,
-                    decoration: InputDecoration(
-                      labelText:
-                          '${field.label}${field.required ? ' · 필수' : ''}',
-                      isDense: true,
-                    ),
-                    items: [
-                      if (!field.required)
-                        const DropdownMenuItem(
-                          value: '',
-                          child: Text('연결하지 않음'),
-                        ),
-                      for (final header in widget.headers)
-                        DropdownMenuItem(value: header, child: Text(header)),
-                    ],
-                    onChanged: (value) => setState(() {
-                      if (value == null || value.isEmpty) {
-                        _mapping.remove(field.key);
-                      } else {
-                        _mapping[field.key] = value;
-                      }
-                    }),
-                  );
-                },
-              ),
-            ),
-            if (missing.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                '${missing.map((field) => field.label).join('·')} 열을 연결해 주세요.',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.error,
-                  fontWeight: FontWeight.w700,
+                  labelText: '이 연결을 저장할 이름 (선택)',
+                  hintText: '예: 회사 단어장 양식',
+                  prefixIcon: Icon(Icons.bookmark_add_outlined),
                 ),
               ),
             ],
-            const SizedBox(height: 10),
-            TextField(
-              key: const Key('import-mapping-preset-name'),
-              controller: _presetNameController,
-              maxLength: 40,
-              decoration: const InputDecoration(
-                labelText: '이 연결을 저장할 이름 (선택)',
-                hintText: '예: 회사 단어장 양식',
-                prefixIcon: Icon(Icons.bookmark_add_outlined),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
       actions: [
@@ -2665,7 +2668,7 @@ class _ImportColumnMappingDialogState
                         : _presetNameController.text.trim(),
                   ),
                 ),
-          child: const Text('이대로 분석'),
+          child: const Text('이대로 확인'),
         ),
       ],
     );
@@ -2744,7 +2747,7 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
     }
     return AlertDialog(
       key: const Key('bulk-paste-import-dialog'),
-      title: const Text('문제·정답 여러 줄 붙여넣기'),
+      title: const Text('표현·뜻 여러 줄 붙여넣기'),
       content: SizedBox(
         width: 680,
         child: ConstrainedBox(
@@ -2755,8 +2758,8 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Excel 두 열을 그대로 붙여넣거나 탭·쉼표·세미콜론·콜론·파이프·대시로 '
-                  '문제와 정답을 나누세요. 구분자가 없으면 두 줄씩 한 쌍으로 묶습니다.',
+                  'Excel의 두 열을 그대로 붙여넣어도 돼요. 탭이나 쉼표 등으로 '
+                  '표현과 뜻을 나누고, 구분자가 없으면 두 줄씩 한 쌍으로 읽습니다.',
                 ),
                 const SizedBox(height: 10),
                 Wrap(
@@ -2805,7 +2808,7 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
                         'hello\t안녕하세요\n'
                         'good morning | 좋은 아침\n'
                         'thank you - 고마워요',
-                    helperText: '여러 구분자를 혼합해도 됩니다 · 최대 100개',
+                    helperText: '여러 구분자를 섞어도 괜찮아요 · 최대 100개',
                     alignLabelWithHint: true,
                   ),
                 ),
@@ -2827,7 +2830,7 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
                     child: Text(
                       error ??
                           (preview == null
-                              ? '붙여넣으면 형식·개수·오류를 미리 확인합니다.'
+                              ? '붙여넣으면 형식과 개수를 먼저 보여 드려요.'
                               : '감지 형식 ${preview.detectedFormat.label} · '
                                     '가져올 ${preview.entryCount}개 · '
                                     '확인 ${preview.problemCount}건'
@@ -2947,7 +2950,7 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
                   Navigator.pop(context, _controller.text);
                 }
               : null,
-          child: const Text('검토 작업대로 보내기'),
+          child: const Text('가져올 내용 확인'),
         ),
       ],
     );
@@ -3022,14 +3025,14 @@ class _PageHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '학습 콘텐츠 가져오기',
+                '내 자료 가져오기',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 4),
               Text(
                 generalTopic
-                    ? '$subjectSymbol $subjectName 주제에 추가하기 전에 변경점을 한 항목씩 검토합니다.'
-                    : '$subjectName 코스에 추가하기 전에 변경점을 한 항목씩 검토합니다.',
+                    ? '$subjectSymbol $subjectName에 저장하기 전에 새 내용과 바뀔 내용을 확인해요.'
+                    : '$subjectName에 저장하기 전에 새 내용과 바뀔 내용을 확인해요.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ],
@@ -3064,17 +3067,17 @@ class _WebSentencePackCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '검증된 웹 예문 팩',
+                  '바로 써보는 예문 팩',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '6개 언어 Tatoeba 예문 24개 · 기초 또는 출퇴근·학습 팩을 골라 원문 ID, URL, 작성자와 라이선스 표시까지 가져옵니다.',
+                  '출처가 확인된 6개 언어 예문 24개예요. 기초 또는 출퇴근·학습 묶음을 골라 보세요.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '바로 저장하지 않고 다음 화면에서 항목별로 검토합니다.',
+                  '바로 저장하지 않고, 다음 화면에서 하나씩 확인할 수 있어요.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -3148,12 +3151,12 @@ class _TopicStarterPacksCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '무엇이든 외우는 샘플 주제',
+                  '관심사로 시작하는 샘플',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '주제와 학습 그룹을 자동으로 만들고, 출처가 기록된 개념·설명·예문을 검토 화면에 올립니다.',
+                  '주제와 그룹을 만들고, 개념·뜻·예문을 저장 전에 보여 드려요.',
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               ],
@@ -3225,8 +3228,8 @@ class _ImportRoutingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final statusText = driveConnected
-        ? '반영 후 원본 파일은 만들지 않고 기존 Drive 데이터에 병합'
-        : '정돈된 학습 데이터만 로컬 저장 · Google 연결 후 기기 간 동기화';
+        ? '가져온 자료를 기존 Drive 폴더에 합쳐 저장'
+        : '정리된 학습 자료를 이 기기에 저장 · Google 연결 시 기기 간 동기화';
     final fields = <Widget>[
       TextField(
         key: const Key('import-distribution-key'),
@@ -3237,7 +3240,7 @@ class _ImportRoutingCard extends StatelessWidget {
         decoration: const InputDecoration(
           labelText: '분배 키',
           hintText: '예: office-en, baseball-2026',
-          helperText: '같은 키를 다시 쓰면 같은 목적지로 분류',
+          helperText: '같은 키를 쓰면 다음에도 같은 곳에 저장해요',
           prefixIcon: Icon(Icons.key_rounded),
         ),
       ),
@@ -3313,7 +3316,7 @@ class _ImportRoutingCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '어디로 분배할까요?',
+                        '어디에 저장할까요?',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
@@ -3409,7 +3412,7 @@ class _UploadCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  selected ? fileName! : '학습 파일을 선택하세요',
+                  selected ? fileName! : '가져올 파일을 골라 주세요',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium,
@@ -3418,7 +3421,7 @@ class _UploadCard extends StatelessWidget {
                 Text(
                   selected
                       ? '다른 파일로 바꾸거나 아래 템플릿을 내려받을 수 있습니다.'
-                      : 'Excel, CSV, JSON, JSONL · 이 기기에서 검토한 뒤 저장합니다.',
+                      : 'Excel, CSV, JSON, JSONL · 내용을 확인한 뒤 저장해요.',
                   maxLines: compact ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -3469,7 +3472,7 @@ class _UploadCard extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onPickFile,
             icon: const Icon(Icons.folder_open_rounded),
-            label: Text(selected ? '바꾸기' : '찾아보기'),
+            label: Text(selected ? '파일 바꾸기' : '파일 선택'),
           ),
           OutlinedButton.icon(
             key: const Key('open-bulk-paste-import'),
@@ -3555,11 +3558,11 @@ class _ImportHistoryCard extends StatelessWidget {
         key: const Key('import-history-card'),
         leading: const Icon(Icons.history_rounded),
         title: const Text(
-          '최근 가져오기와 열 연결',
+          '최근 가져온 내역',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
-          '가져오기 ${receipts.length}건 · 저장한 열 연결 ${mappingPresets.length}개',
+          '가져온 파일 ${receipts.length}개 · 저장한 열 설정 ${mappingPresets.length}개',
         ),
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
         children: [
@@ -3567,7 +3570,7 @@ class _ImportHistoryCard extends StatelessWidget {
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '가져오기 영수증',
+                '가져온 파일',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
@@ -3630,7 +3633,7 @@ class _ImportHistoryCard extends StatelessWidget {
             const Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                '저장한 열 연결',
+                '저장한 열 설정',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
             ),
@@ -3649,7 +3652,7 @@ class _ImportHistoryCard extends StatelessWidget {
                       onDeleted: onDeletePreset == null
                           ? null
                           : () => onDeletePreset!(preset),
-                      deleteButtonTooltipMessage: '열 연결 삭제',
+                      deleteButtonTooltipMessage: '열 설정 삭제',
                     ),
                 ],
               ),
@@ -3681,7 +3684,7 @@ class _FormatGuide extends StatelessWidget {
       child: ExpansionTile(
         leading: const Icon(Icons.code_rounded),
         title: const Text(
-          '지원 형식과 필수 필드',
+          '파일 작성 방법',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: const Text(
@@ -3691,7 +3694,7 @@ class _FormatGuide extends StatelessWidget {
         expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            '일반 주제는 먼저 앱에서 주제를 선택한 뒤 가져오세요. subject_id를 비우면 현재 주제에 저장되고, 언어 코스에서는 language 값에 맞는 코스로 들어갑니다.',
+            '일반 주제는 위에서 저장할 주제를 먼저 골라 주세요. subject_id가 비어 있으면 현재 주제에, 언어 자료는 language 값에 맞는 코스에 저장돼요.',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 5),
@@ -3752,7 +3755,7 @@ class _ReviewSummary extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '가져오기 전 변경점 검토',
+                          '저장 전에 바뀔 내용 확인',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 3),
@@ -3803,7 +3806,7 @@ class _ReviewSummary extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                '붙여넣기·CSV·Excel 모두 같은 검증, 중복 판정, 목적지 규칙으로 검토합니다.',
+                '붙여넣기와 파일 가져오기 모두 같은 기준으로 중복과 저장 위치를 확인해요.',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
@@ -3819,12 +3822,12 @@ class _ReviewSummary extends StatelessWidget {
                   Chip(
                     key: const Key('import-workbench-selected'),
                     avatar: const Icon(Icons.task_alt_rounded, size: 17),
-                    label: Text('반영 후보 $selectedCount개'),
+                    label: Text('저장할 자료 $selectedCount개'),
                   ),
                   Chip(
                     key: const Key('import-workbench-destinations'),
                     avatar: const Icon(Icons.route_rounded, size: 17),
-                    label: Text('목적지 $destinationCount곳'),
+                    label: Text('저장 위치 $destinationCount곳'),
                   ),
                 ],
               ),
@@ -3889,12 +3892,12 @@ class _RepeatedImportNotice extends StatelessWidget {
         key: const Key('import-repeated-file-notice'),
         leading: const Icon(Icons.history_rounded, color: AppTheme.warning),
         title: const Text(
-          '이 파일은 이전에 가져온 기록이 있습니다.',
+          '전에 가져온 적이 있는 파일이에요.',
           style: TextStyle(fontWeight: FontWeight.w800),
         ),
         subtitle: Text(
           '$formatted · 저장 ${record.importedRows}행 · 제외 ${record.rejectedRows}행\n'
-          '현재 자료실과 다시 비교했으므로 필요한 변경만 선택할 수 있습니다.',
+          '현재 자료와 다시 비교했어요. 필요한 변경만 골라 저장할 수 있어요.',
         ),
       ),
     );
@@ -3922,20 +3925,20 @@ class _BulkActions extends StatelessWidget {
           runSpacing: 10,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
-            Text('빠른 선택', style: Theme.of(context).textTheme.titleMedium),
+            Text('한꺼번에 선택', style: Theme.of(context).textTheme.titleMedium),
             OutlinedButton.icon(
               key: const Key('import-bulk-add-new'),
               onPressed: review.newCount == 0
                   ? null
                   : () => onNewAction(ImportReviewAction.add),
               icon: const Icon(Icons.add_task_rounded),
-              label: Text('신규 ${review.newCount}개 포함'),
+              label: Text('새 자료 ${review.newCount}개 선택'),
             ),
             TextButton(
               onPressed: review.newCount == 0
                   ? null
                   : () => onNewAction(ImportReviewAction.skip),
-              child: const Text('신규 제외'),
+              child: const Text('새 자료 선택 해제'),
             ),
             OutlinedButton.icon(
               key: const Key('import-bulk-replace-changed'),
@@ -3943,13 +3946,13 @@ class _BulkActions extends StatelessWidget {
                   ? null
                   : () => onChangedAction(ImportReviewAction.replace),
               icon: const Icon(Icons.swap_horiz_rounded),
-              label: Text('변경 ${review.changedCount}개 병합·교체'),
+              label: Text('바뀐 자료 ${review.changedCount}개 선택'),
             ),
             TextButton(
               onPressed: review.changedCount == 0
                   ? null
                   : () => onChangedAction(ImportReviewAction.skip),
-              child: const Text('변경분 기존 유지'),
+              child: const Text('바뀐 자료 선택 해제'),
             ),
           ],
         ),
@@ -4133,7 +4136,7 @@ class _ImportEntryCard extends StatelessWidget {
                     key: Key('edit-blocked-import-${entry.row}'),
                     onPressed: onEdit,
                     icon: const Icon(Icons.edit_note_rounded),
-                    label: const Text('문제 필드 고치고 다시 검증'),
+                    label: const Text('문제 항목 고치고 다시 확인'),
                   ),
                 ),
               ],
@@ -4141,7 +4144,7 @@ class _ImportEntryCard extends StatelessWidget {
             if (entry.differences.isNotEmpty) ...[
               const SizedBox(height: 14),
               Text(
-                '바뀌는 필드 ${entry.differences.length}개',
+                '바뀌는 항목 ${entry.differences.length}개',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 7),
@@ -4303,15 +4306,15 @@ class _ActionPicker extends StatelessWidget {
   String _actionLabel(ImportReviewEntry entry, ImportReviewAction action) {
     return switch (action) {
       ImportReviewAction.add => '가져오기',
-      ImportReviewAction.replace when entry.mergeOnly => '새 뜻·그룹만 병합',
-      ImportReviewAction.replace => '가져온 값으로 교체',
+      ImportReviewAction.replace when entry.mergeOnly => '새 뜻·그룹 합치기',
+      ImportReviewAction.replace => '파일 내용으로 바꾸기',
       ImportReviewAction.skip when entry.status == ImportReviewStatus.changed =>
         '기존 값 유지',
       ImportReviewAction.skip
           when entry.status == ImportReviewStatus.unchanged =>
-        '동일 항목 · 건너뜀',
+        '같은 자료 · 건너뛰기',
       ImportReviewAction.skip when entry.status == ImportReviewStatus.blocked =>
-        '안전하게 제외',
+        '확인 필요 · 제외',
       ImportReviewAction.skip => '제외',
     };
   }
@@ -4340,7 +4343,7 @@ class _ImportNotices extends StatelessWidget {
           '발음 보조 확인 ${notices.length}개',
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        subtitle: const Text('가져오기는 가능하며, 추측이 위험한 발음만 비워 두었습니다.'),
+        subtitle: const Text('가져올 수는 있지만, 정확하지 않은 발음은 비워 뒀어요.'),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         children: [
           for (final notice in notices)
@@ -4375,10 +4378,10 @@ class _RejectedRows extends StatelessWidget {
         key: const Key('import-rejected-rows'),
         leading: const Icon(Icons.report_gmailerrorred_rounded),
         title: Text(
-          '저장하지 않는 원본 행 $total개',
+          '저장하지 않을 행 $total개',
           style: const TextStyle(fontWeight: FontWeight.w800),
         ),
-        subtitle: const Text('파일 안 중복과 형식 오류는 원본 행 번호와 이유를 표시합니다.'),
+        subtitle: const Text('중복되거나 형식이 맞지 않는 행은 번호와 이유를 보여 드려요.'),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
           for (final duplicate in review.duplicates)
@@ -4451,13 +4454,13 @@ class _ImportDestinationSummaryCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '반영 위치 확인',
+                        '저장 위치 확인',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
                         driveConnected
-                            ? '앱 데이터에 병합한 뒤 같은 Drive 데이터셋을 업데이트합니다.'
-                            : '이 기기의 앱 데이터와 선택한 로컬 저장본에 반영합니다.',
+                            ? '이 기기에 저장한 뒤 같은 Drive 폴더에도 저장해요.'
+                            : '이 기기와 선택한 로컬 폴더에 함께 저장해요.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -4467,7 +4470,7 @@ class _ImportDestinationSummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             if (destinations.isEmpty)
-              const Text('반영하도록 선택한 항목이 없습니다.')
+              const Text('저장할 항목을 하나 이상 골라 주세요.')
             else
               for (final (index, destination) in destinations.indexed) ...[
                 if (index > 0) const Divider(height: 14),
@@ -4549,7 +4552,7 @@ class _ImportCommitBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$selectedCount개를 자료실에 반영합니다.',
+                  '$selectedCount개를 자료실에 저장해요.',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 3),
@@ -4568,7 +4571,7 @@ class _ImportCommitBar extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_alt_rounded),
-              label: Text(busy ? '안전하게 저장 중…' : '$selectedCount개 가져오기'),
+              label: Text(busy ? '저장 중…' : '$selectedCount개 가져오기'),
             );
             if (narrow) {
               return Column(
@@ -4605,7 +4608,7 @@ class _EmptyFilterResult extends StatelessWidget {
               color: Theme.of(context).colorScheme.primary,
             ),
             const SizedBox(height: 8),
-            const Text('이 조건에 해당하는 항목이 없습니다.'),
+            const Text('조건에 맞는 항목이 없어요. 필터를 바꿔 보세요.'),
           ],
         ),
       ),

@@ -154,7 +154,7 @@ void main() {
         (value) => value.planId == plan.planId,
       );
       expect(saved.scheduledAt, now.toUtc().add(const Duration(minutes: 10)));
-      expect(find.text('학습 일정을 10분 미뤘어요.'), findsOneWidget);
+      expect(find.text('10분 뒤에 다시 알려 드릴게요.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

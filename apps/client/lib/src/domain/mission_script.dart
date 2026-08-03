@@ -4,6 +4,8 @@ import 'progress.dart';
 
 enum MissionBranch { fluent, coached }
 
+enum MissionCheckpointDecision { fluentChoice, coachedChoice, coachedHelp }
+
 class MissionOption {
   const MissionOption({
     required this.id,
@@ -36,12 +38,16 @@ class MissionScene {
     required this.situationPrompt,
     required this.target,
     required this.options,
+    required this.mainStepIndex,
+    this.coachedFollowUp = false,
   });
 
   final String id;
   final String situationPrompt;
   final LearningItem target;
   final List<MissionOption> options;
+  final int mainStepIndex;
+  final bool coachedFollowUp;
 
   MissionDecision choose(String optionId) {
     final option = options.where((value) => value.id == optionId).firstOrNull;
@@ -68,6 +74,121 @@ class MissionScene {
   );
 }
 
+class MissionProgressCheckpoint {
+  const MissionProgressCheckpoint({
+    required this.courseId,
+    required this.unitIndex,
+    required this.phraseIndex,
+    required this.sceneId,
+    required this.coachedTurns,
+    required this.updatedAt,
+    this.decision,
+    this.selectedOptionId,
+  });
+
+  final String courseId;
+  final int unitIndex;
+  final int phraseIndex;
+  final String sceneId;
+  final int coachedTurns;
+  final MissionCheckpointDecision? decision;
+  final String? selectedOptionId;
+  final DateTime updatedAt;
+
+  String get storageKey => '$courseId:$unitIndex';
+
+  MissionDecision? restoreDecision(MissionScene scene) {
+    final savedDecision = decision;
+    if (savedDecision == null) return null;
+    if (savedDecision == MissionCheckpointDecision.coachedHelp) {
+      return scene.requestCoaching();
+    }
+    final optionId = selectedOptionId;
+    if (optionId == null || optionId.isEmpty) return null;
+    try {
+      final restored = scene.choose(optionId);
+      final expectedBranch =
+          savedDecision == MissionCheckpointDecision.fluentChoice
+          ? MissionBranch.fluent
+          : MissionBranch.coached;
+      return restored.branch == expectedBranch ? restored : null;
+    } on ArgumentError {
+      return null;
+    }
+  }
+
+  Map<String, Object?> toJson() => {
+    'courseId': courseId,
+    'unitIndex': unitIndex,
+    'phraseIndex': phraseIndex,
+    'sceneId': sceneId,
+    'coachedTurns': coachedTurns,
+    if (decision != null) 'decision': decision!.name,
+    if (selectedOptionId != null) 'selectedOptionId': selectedOptionId,
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+  };
+
+  factory MissionProgressCheckpoint.fromJson(Map<String, Object?> json) {
+    final courseId = json['courseId'];
+    final unitIndex = _exactMissionInteger(json['unitIndex']);
+    final phraseIndex = _exactMissionInteger(json['phraseIndex']);
+    final sceneId = json['sceneId'];
+    final coachedTurns = _exactMissionInteger(json['coachedTurns']);
+    final updatedAt = switch (json['updatedAt']) {
+      final String value => DateTime.tryParse(value)?.toUtc(),
+      _ => null,
+    };
+    final rawDecision = json['decision'];
+    final decision = rawDecision == null
+        ? null
+        : MissionCheckpointDecision.values
+              .cast<MissionCheckpointDecision?>()
+              .firstWhere(
+                (value) => value?.name == rawDecision,
+                orElse: () => null,
+              );
+    final selectedOptionId = switch (json['selectedOptionId']) {
+      final String value when value.trim().isNotEmpty => value.trim(),
+      _ => null,
+    };
+    final validChoice =
+        decision != MissionCheckpointDecision.fluentChoice &&
+            decision != MissionCheckpointDecision.coachedChoice ||
+        selectedOptionId != null;
+    if (courseId is! String ||
+        courseId.trim().isEmpty ||
+        courseId.runes.length > 80 ||
+        unitIndex == null ||
+        unitIndex < 0 ||
+        unitIndex > 100 ||
+        phraseIndex == null ||
+        phraseIndex < 0 ||
+        phraseIndex > 1000 ||
+        sceneId is! String ||
+        sceneId.trim().isEmpty ||
+        sceneId.runes.length > 160 ||
+        coachedTurns == null ||
+        coachedTurns < 0 ||
+        coachedTurns > 1000 ||
+        updatedAt == null ||
+        (rawDecision != null && decision == null) ||
+        !validChoice ||
+        (selectedOptionId?.runes.length ?? 0) > 240) {
+      throw const FormatException('미션 진행 체크포인트가 올바르지 않습니다.');
+    }
+    return MissionProgressCheckpoint(
+      courseId: courseId.trim(),
+      unitIndex: unitIndex,
+      phraseIndex: phraseIndex,
+      sceneId: sceneId.trim(),
+      coachedTurns: coachedTurns,
+      decision: decision,
+      selectedOptionId: selectedOptionId,
+      updatedAt: updatedAt,
+    );
+  }
+}
+
 class MissionEnding {
   const MissionEnding({required this.title, required this.description});
 
@@ -87,6 +208,22 @@ class MissionScript {
   final List<MissionScene> scenes;
 
   bool get isEmpty => scenes.isEmpty;
+  int get mainSceneCount =>
+      scenes.where((scene) => !scene.coachedFollowUp).length;
+
+  int? nextSceneIndex({
+    required int currentIndex,
+    required MissionBranch branch,
+  }) {
+    if (currentIndex < 0 || currentIndex >= scenes.length) return null;
+    final current = scenes[currentIndex];
+    final nextIndex = current.coachedFollowUp
+        ? currentIndex + 1
+        : branch == MissionBranch.coached
+        ? currentIndex + 1
+        : currentIndex + 2;
+    return nextIndex < scenes.length ? nextIndex : null;
+  }
 
   MissionEnding endingFor({required int coachedTurns}) => coachedTurns == 0
       ? const MissionEnding(
@@ -127,16 +264,31 @@ class MissionScriptBuilder {
       if (_stableHash('${unit.index}|${target.id}').isOdd) {
         choices.setAll(0, choices.reversed.toList(growable: false));
       }
-      scenes.add(
-        MissionScene(
-          id: 'unit-${unit.index}-scene-$index',
-          situationPrompt:
-              '$setting에서 “${target.primaryTranslation}”라고 전할 차례예요. '
-              '상황에 맞는 표현을 골라 보세요.',
-          target: target,
-          options: List.unmodifiable(choices),
-        ),
-      );
+      final immutableChoices = List<MissionOption>.unmodifiable(choices);
+      scenes
+        ..add(
+          MissionScene(
+            id: 'unit-${unit.index}-scene-$index',
+            situationPrompt:
+                '$setting에서 “${target.primaryTranslation}”라고 전할 차례예요. '
+                '상황에 맞는 표현을 골라 보세요.',
+            target: target,
+            options: immutableChoices,
+            mainStepIndex: index,
+          ),
+        )
+        ..add(
+          MissionScene(
+            id: 'unit-${unit.index}-scene-$index-coached',
+            situationPrompt:
+                '방금 막힌 “${target.primaryTranslation}” 표현을 단서 없이 '
+                '한 번 더 골라 대화를 이어 보세요.',
+            target: target,
+            options: immutableChoices,
+            mainStepIndex: index,
+            coachedFollowUp: true,
+          ),
+        );
     }
     return MissionScript(
       setting: setting,
@@ -182,4 +334,9 @@ int _stableHash(String value) {
     hash = (37 * hash + codeUnit) & 0x7fffffff;
   }
   return hash;
+}
+
+int? _exactMissionInteger(Object? raw) {
+  if (raw is! num || !raw.isFinite || raw != raw.round()) return null;
+  return raw.toInt();
 }

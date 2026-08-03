@@ -192,7 +192,7 @@ void main() {
       );
       container.read(appRouterProvider).go('/settings');
       await tester.pumpAndSettle();
-      expect(find.text('환경설정'), findsOneWidget);
+      expect(find.text('설정'), findsWidgets);
       await tester.drag(find.byType(ListView).first, const Offset(0, -2400));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -536,8 +536,8 @@ void main() {
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();
       expect(find.text('데이터와 개인정보'), findsOneWidget);
-      expect(find.textContaining('Railway 데이터베이스'), findsOneWidget);
-      expect(find.text('Mock Mode'), findsOneWidget);
+      expect(find.textContaining('운영자 서버로 보내지 않습니다'), findsOneWidget);
+      expect(find.text('테스트 모드'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -923,7 +923,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('듣고 따라 말하기'), findsOneWidget);
-      expect(find.text('목표 발음 듣기'), findsOneWidget);
+      expect(find.text('발음 듣기'), findsOneWidget);
       expect(find.byKey(const Key('pronunciation-mic')), findsOneWidget);
       await tester.tap(find.byKey(const Key('pronunciation-score-disclosure')));
       await tester.pumpAndSettle();
@@ -973,20 +973,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('어떻게 지내세요?'), findsOneWidget);
 
-      for (var index = 0; index < 3; index++) {
+      for (var index = 0; index < 8; index++) {
         final next = find.byKey(const Key('mission-next-phrase'));
+        if (next.evaluate().isEmpty) break;
         await tester.ensureVisible(next);
         await tester.tap(next);
         await tester.pumpAndSettle();
-        if (index < 2) {
-          final coach = find.byKey(const Key('mission-reveal'));
+        if (find.text('실전 미션 완료').evaluate().isNotEmpty) break;
+        final coach = find.byKey(const Key('mission-reveal'));
+        if (coach.evaluate().isNotEmpty) {
           await tester.ensureVisible(coach);
           await tester.tap(coach);
           await tester.pumpAndSettle();
         }
       }
       expect(find.text('실전 미션 완료'), findsOneWidget);
-      expect(find.text('발음 채점'), findsOneWidget);
+      expect(find.text('발음 연습'), findsOneWidget);
       expect(store.savedPreferences.hasCompletedMission('ko-en', 0), isTrue);
       expect(tester.takeException(), isNull);
     } finally {
@@ -1035,7 +1037,7 @@ void main() {
         await tester.tap(find.byKey(const Key('start-recommended-mission')));
         await tester.pumpAndSettle();
 
-        expect(find.text('미션에 사용할 표현이 없어요'), findsOneWidget);
+        expect(find.text('이 미션에 쓸 표현이 없어요'), findsOneWidget);
         expect(find.text('자료실로 이동'), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
@@ -1201,7 +1203,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Unit 1 가이드'), findsOneWidget);
-      expect(find.text('이 단원의 의사소통 목표'), findsOneWidget);
+      expect(find.text('이 단원에서 할 수 있는 말'), findsOneWidget);
       expect(find.text('이 단원의 표현 노트'), findsOneWidget);
       expect(find.text('핵심 단어'), findsOneWidget);
       expect(find.text('핵심 문장'), findsOneWidget);
@@ -1253,16 +1255,10 @@ void main() {
         const Offset(0, 1200),
       );
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('library-mobile-filter-button')),
-      );
+      await tester.tap(find.byKey(const Key('library-mobile-filter-button')));
       await tester.pumpAndSettle();
-      await tester.tap(
-        find.byKey(const Key('library-sheet-filter-favorites')),
-      );
-      await tester.tap(
-        find.byKey(const Key('apply-library-advanced-filters')),
-      );
+      await tester.tap(find.byKey(const Key('library-sheet-filter-favorites')));
+      await tester.tap(find.byKey(const Key('apply-library-advanced-filters')));
       await tester.pumpAndSettle();
       expect(find.byKey(favoriteKey), findsOneWidget);
       await tester.drag(
@@ -1270,7 +1266,7 @@ void main() {
         const Offset(0, 1200),
       );
       await tester.pumpAndSettle();
-      expect(find.textContaining('저장 1'), findsOneWidget);
+      expect(find.textContaining('즐겨찾기 1'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -1402,7 +1398,7 @@ void main() {
           const Offset(0, -1200),
         );
         await tester.pumpAndSettle();
-        expect(find.text('이해했으면 바로 써 보기'), findsOneWidget);
+        expect(find.text('이제 직접 써 볼까요?'), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
         debugDefaultTargetPlatformOverride = null;
@@ -1441,7 +1437,7 @@ void main() {
         find.byKey(const Key('item-translation-field')),
         '책임감',
       );
-      await tester.tap(find.text('추가하기'));
+      await tester.tap(find.text('표현 저장'));
       await tester.pumpAndSettle();
 
       expect(find.text('accountability'), findsOneWidget);

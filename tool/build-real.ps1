@@ -2,12 +2,11 @@ param(
     [ValidateSet('all', 'android', 'windows')]
     [string]$Target = 'all',
     [string]$FlutterPath = "$env:LOCALAPPDATA\Programs\flutter\bin\flutter.bat",
-    [string]$ApiBaseUrl = 'https://sprache-api-production.up.railway.app',
     [string]$AndroidClientId = '1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com',
     [string]$ServerClientId = '1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com',
     [string]$DesktopClientId = '1054343487948-791d7jh7m90rt4cs1ncgkf6l5eecehut.apps.googleusercontent.com',
     [string]$PrivacyPolicyUrl = $(if ([string]::IsNullOrWhiteSpace($env:SPRACHE_PRIVACY_POLICY_URL)) {
-        'https://sprache-api-production.up.railway.app/privacy'
+        'https://youkdonghun.github.io/Sprache/privacy/'
     } else {
         $env:SPRACHE_PRIVACY_POLICY_URL
     }),
@@ -15,7 +14,6 @@ param(
     [string]$WindowsSigningThumbprint = $env:SPRACHE_WINDOWS_SIGNING_THUMBPRINT,
     [string]$WindowsTimestampUrl = 'https://timestamp.digicert.com',
     [string]$SignToolPath = '',
-    [switch]$RequireBrokerReady,
     [switch]$RequirePrivacyPolicyUrl,
     [switch]$RequireAndroidReleaseSigning,
     [switch]$RequireWindowsCodeSigning,
@@ -502,7 +500,6 @@ if (-not (Test-Path -LiteralPath $FlutterPath -PathType Leaf)) {
 }
 
 foreach ($requiredValue in @{
-    API_BASE_URL = $ApiBaseUrl
     APP_VERSION = $releaseVersion
     GOOGLE_ANDROID_CLIENT_ID = $AndroidClientId
     GOOGLE_SERVER_CLIENT_ID = $ServerClientId
@@ -560,24 +557,6 @@ if ($Target -in @('all', 'android') -and $androidReleaseSigningConfigured) {
 }
 $androidSigningLabel = if ($androidReleaseSigningConfigured) { 'release' } else { 'debug' }
 
-if ($Target -in @('all', 'windows') -and -not $InternalWindowsStagingBuild) {
-    $brokerReady = $false
-    try {
-        $health = Invoke-RestMethod -Uri "$($ApiBaseUrl.TrimEnd('/'))/health" -Method Get -TimeoutSec 15
-        $brokerReady = $health.desktopOAuthBroker -eq 'ready'
-    }
-    catch {
-        Write-Warning "Could not verify Railway desktop OAuth broker health."
-    }
-    if (-not $brokerReady) {
-        $message = 'Railway desktop OAuth broker is not ready. The build will keep local study available, but Windows Google login will show a configuration diagnostic.'
-        if ($RequireBrokerReady) {
-            throw $message
-        }
-        Write-Warning $message
-    }
-}
-
 New-Item -ItemType Directory -Path $artifactsRoot -Force | Out-Null
 
 if ($isWindowsHost -and $androidRequested -and -not $InternalAndroidStagingBuild) {
@@ -624,7 +603,6 @@ if ($isWindowsHost -and $androidRequested -and -not $InternalAndroidStagingBuild
         $stagedBuildParameters = @{
             Target = 'android'
             FlutterPath = $FlutterPath
-            ApiBaseUrl = $ApiBaseUrl
             AndroidClientId = $AndroidClientId
             ServerClientId = $ServerClientId
             DesktopClientId = $DesktopClientId
@@ -760,7 +738,6 @@ if ($isWindowsHost -and $windowsRequested -and -not $InternalWindowsStagingBuild
         $stagedWindowsBuildParameters = @{
             Target = 'windows'
             FlutterPath = $FlutterPath
-            ApiBaseUrl = $ApiBaseUrl
             AndroidClientId = $AndroidClientId
             ServerClientId = $ServerClientId
             DesktopClientId = $DesktopClientId
@@ -847,7 +824,6 @@ if ($runDirectAndroid -or $runDirectWindows) {
                 --dart-define=APP_ENV=production `
                 --dart-define=ENABLE_MOCK_MODE=false `
                 --dart-define="APP_VERSION=$releaseVersion" `
-                --dart-define="API_BASE_URL=$ApiBaseUrl" `
                 --dart-define="PRIVACY_POLICY_URL=$PrivacyPolicyUrl" `
                 --dart-define="GOOGLE_ANDROID_CLIENT_ID=$AndroidClientId" `
                 --dart-define="GOOGLE_SERVER_CLIENT_ID=$ServerClientId"
@@ -868,7 +844,6 @@ if ($runDirectAndroid -or $runDirectWindows) {
                 --dart-define="APP_VERSION=$releaseVersion" `
                 --dart-define="RELEASE_BUILD_NUMBER=$releaseBuildNumber" `
                 --dart-define=RELEASE_PROBE_KIND=native-runtime `
-                --dart-define="API_BASE_URL=$ApiBaseUrl" `
                 --dart-define="PRIVACY_POLICY_URL=$PrivacyPolicyUrl" `
                 --dart-define="GOOGLE_DESKTOP_CLIENT_ID=$DesktopClientId"
             if ($LASTEXITCODE -ne 0) {

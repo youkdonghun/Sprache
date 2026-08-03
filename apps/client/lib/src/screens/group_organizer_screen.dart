@@ -33,7 +33,7 @@ String _groupOrganizerSyncLabel(AppState state, ConnectionState connection) {
   if (connection.phase == ConnectionPhase.failed) {
     return '로컬 저장됨 · Drive 재시도 필요';
   }
-  if (state.pendingSync != null) return '로컬 저장됨 · Drive 반영 대기';
+  if (state.pendingSync != null) return '이 기기에 저장됨 · Drive 저장 대기';
   final syncedAt = connection.lastSyncedAt?.toLocal();
   if (syncedAt == null) return 'Drive 첫 동기화 대기';
   final hour = syncedAt.hour.toString().padLeft(2, '0');
@@ -397,8 +397,8 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
     if (_saving || itemIds.isEmpty) return;
     if (!await _confirmGroupChange(
       itemIds: itemIds,
-      title: '선택 자료의 그룹 연결을 해제할까요?',
-      target: '그룹 연결 해제',
+      title: '선택한 자료를 모든 그룹에서 뺄까요?',
+      target: '모든 그룹에서 빼기',
       destructive: true,
     )) {
       return;
@@ -411,7 +411,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
       if (!mounted) return;
       _syncAfterLocalChange();
       setState(() => _selectedIds.removeAll(itemIds));
-      _showUndoMessage('${itemIds.length}개 자료의 모든 그룹 연결을 해제했습니다.', snapshot);
+      _showUndoMessage('${itemIds.length}개를 모든 그룹에서 뺐어요.', snapshot);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -433,7 +433,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
     );
     if (!mounted) return;
     if (itemIds.isEmpty) {
-      _showUndoMessage('빈 학습 그룹 “${result.name}”을 만들었습니다.', snapshot);
+      _showUndoMessage('빈 그룹 “${result.name}”을 만들었어요.', snapshot);
       _syncAfterLocalChange();
       return;
     }
@@ -471,7 +471,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
     }
     if (!mounted) return;
     if (_source == group) setState(() => _source = result.name);
-    _showUndoMessage('$changed개 자료와 “${result.name}” 그룹 정보를 저장했습니다.', snapshot);
+    _showUndoMessage('“${result.name}” 그룹과 자료 $changed개를 저장했어요.', snapshot);
     _syncAfterLocalChange();
   }
 
@@ -492,7 +492,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(24, 0, 24, 10),
-            child: Text('자료와 연결된 학습 기록을 함께 옮깁니다.'),
+            child: Text('자료와 학습 기록을 함께 옮겨요.'),
           ),
           for (final subject in targets)
             SimpleDialogOption(
@@ -549,8 +549,8 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
       builder: (context) => AlertDialog(
         title: Text('“$group” 그룹을 삭제할까요?'),
         content: Text(
-          '$count개 자료에서 그룹 표시만 제거합니다. '
-          '자료와 학습 진도는 삭제되지 않습니다.',
+          '$count개 자료에서 이 그룹만 빼요. '
+          '자료와 학습 기록은 그대로 남습니다.',
         ),
         actions: [
           TextButton(
@@ -559,7 +559,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('그룹만 삭제'),
+            child: const Text('그룹 삭제'),
           ),
         ],
       ),
@@ -568,7 +568,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
     final changed = await controller.deleteLearningGroup(group);
     if (!mounted) return;
     if (_source == group) setState(() => _source = _allSource);
-    _showUndoMessage('$changed개 자료에서 “$group” 그룹 표시를 제거했습니다.', snapshot);
+    _showUndoMessage('$changed개 자료에서 “$group”을 뺐어요.', snapshot);
     _syncAfterLocalChange();
   }
 
@@ -608,8 +608,8 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
             const SizedBox(height: 10),
             Text(
               destructive
-                  ? '기존 그룹 연결이 바뀝니다. 원본 자료와 학습 진도는 유지됩니다.'
-                  : '기존 그룹은 유지됩니다. 작업 후 실행 취소할 수 있습니다.',
+                  ? '기존 그룹은 바뀌지만 자료와 학습 기록은 그대로 남아요.'
+                  : '기존 그룹은 그대로 두고 새 그룹만 추가해요. 나중에 되돌릴 수 있습니다.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
@@ -686,7 +686,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
       _source = _allSource;
     });
     _syncAfterLocalChange();
-    _showMessage('이전 그룹 상태로 되돌렸습니다.');
+    _showMessage('이전 그룹 상태로 되돌렸어요.');
   }
 
   Future<void> _togglePinnedGroup(String group, bool pinned) async {
@@ -938,7 +938,7 @@ class _GroupOrganizerScreenState extends ConsumerState<GroupOrganizerScreen> {
                   final list = visible.isEmpty
                       ? const _OrganizerEmpty(
                           icon: Icons.search_off_rounded,
-                          title: '표시할 학습 그룹이 없습니다',
+                          title: '보여 줄 그룹이 없어요',
                           detail: '검색어를 바꾸거나 새 그룹을 만들어 보세요.',
                         )
                       : sort == _GroupSort.manual && query.isEmpty
@@ -1208,7 +1208,7 @@ class _OrganizerHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$subjectSymbol $subjectName 그룹 작업판',
+                '$subjectSymbol $subjectName 그룹 정리',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.headlineSmall,
@@ -1216,8 +1216,8 @@ class _OrganizerHeader extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 split
-                    ? '왼쪽 자료를 선택하거나 끌어서 오른쪽 그룹에 놓으세요.'
-                    : '자료를 고른 다음 아래 버튼에서 그룹을 선택하세요.',
+                    ? '왼쪽에서 자료를 고르거나 오른쪽 그룹으로 끌어 놓으세요.'
+                    : '자료를 고른 뒤 넣을 그룹을 선택하세요.',
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -1492,7 +1492,7 @@ class _MobileOrganizer extends StatelessWidget {
                   child: Row(
                     children: [
                       const SizedBox(width: 12),
-                      const Expanded(child: Text('목록에서 정리할 자료를 선택하세요')),
+                      const Expanded(child: Text('정리할 자료를 목록에서 골라 주세요')),
                       TextButton.icon(
                         key: const Key('mobile-manage-groups'),
                         onPressed: onManageGroups,
@@ -1639,7 +1639,7 @@ class _TargetPanel extends StatelessWidget {
                   : Icons.search_off_rounded,
               title: groups.isEmpty ? '아직 만든 그룹이 없습니다' : '검색 결과가 없습니다',
               detail: groups.isEmpty
-                  ? '빈 그룹을 먼저 만들거나 자료를 선택해 바로 넣어 보세요.'
+                  ? '새 그룹을 만들거나 자료를 골라 바로 넣어 보세요.'
                   : '다른 그룹 이름이나 설명을 검색해 보세요.',
             ),
           )
@@ -1690,8 +1690,8 @@ class _TargetPanel extends StatelessWidget {
                   onPressed: saving ? null : () => onCreateGroup(),
                   icon: const Icon(Icons.create_new_folder_outlined),
                   tooltip: selectedIds.isEmpty
-                      ? '빈 학습 그룹 만들기'
-                      : '선택한 자료로 새 학습 그룹 만들기',
+                      ? '빈 그룹 만들기'
+                      : '선택한 자료로 새 그룹 만들기',
                 ),
               ],
             ),
@@ -1786,8 +1786,8 @@ class _TargetPanel extends StatelessWidget {
                           child: _DropGroupCard(
                             key: const Key('group-organizer-ungrouped-target'),
                             icon: Icons.folder_off_outlined,
-                            title: '그룹 연결 해제',
-                            detail: '$ungroupedCount개 자료가 현재 그룹 없음',
+                            title: '모든 그룹에서 빼기',
+                            detail: '$ungroupedCount개 자료가 현재 그룹 없이 저장됨',
                             selectedItemIds: selectedIds,
                             saving: saving,
                             destructive: true,
@@ -2018,7 +2018,9 @@ class _DropGroupCardState extends State<_DropGroupCard> {
                                 : Icons.move_to_inbox_rounded,
                             size: 17,
                           ),
-                          label: Text(widget.destructive ? '연결 해제' : '여기에 넣기'),
+                          label: Text(
+                            widget.destructive ? '그룹에서 빼기' : '여기에 넣기',
+                          ),
                         ),
                     ],
                   ),
@@ -2313,7 +2315,7 @@ class _GroupNameDialogState extends State<_GroupNameDialog> {
               onSubmitted: (_) => _submit(),
               decoration: const InputDecoration(
                 labelText: '설명',
-                hintText: '언제, 무엇을 공부할 그룹인지 적어 보세요',
+                hintText: '언제 공부할 자료인지 짧게 적어 보세요',
               ),
             ),
             const SizedBox(height: 8),

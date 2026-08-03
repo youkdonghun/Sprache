@@ -4,9 +4,7 @@
 
 ```powershell
 npm ci
-npm run lint:api
-npm run test:api
-npm run build:api
+npm run test:release-bundle
 
 cd apps/client
 flutter pub get
@@ -33,11 +31,11 @@ Windows는 EXE만 복사하면 안 된다. `Release` 폴더 전체를 ZIP으로 
 Mock 빌드는 CI 회귀 검증용이며 최종 사용자 전달 폴더에서는 `MOCK`으로 명확히
 표시한다. Windows·Android 최종 전달본은 아래 `build:real` 흐름으로 생성한다.
 
-## Google·Railway 실제 연결 릴리스
+## Google 실제 연결 릴리스
 
-Google OAuth client ID와 Railway 공개 API URL을 적용하고 Mock Mode를 끈다.
-Windows 빌드 전 운영 `/health`의 `desktopOAuthBroker`가 `ready`인지 확인한다.
-Desktop Client Secret은 빌드에 전달하지 않고 Railway sealed variable에만 둔다.
+플랫폼별 Google OAuth client ID와 공개 개인정보처리방침 URL을 적용하고 Mock
+Mode를 끈다. Windows는 Client Secret이나 중계 서버 없이 PKCE로 Google 토큰
+엔드포인트에 직접 연결한다.
 
 ```powershell
 npm run build:real
@@ -130,9 +128,8 @@ $env:SPRACHE_PRIVACY_POLICY_URL = 'https://소유도메인/privacy'
 npm run build:release-gated
 ```
 
-이 명령은 Railway OAuth broker, 공개 HTTPS 개인정보처리방침, Android 정식
-서명 네 값, Windows 코드서명 인증서 중 하나라도 준비되지 않으면 컴파일 전에
-중단한다.
+이 명령은 공개 HTTPS 개인정보처리방침, Android 정식 서명 네 값 또는 Windows
+코드서명 인증서 중 하나라도 준비되지 않으면 컴파일 전에 중단한다.
 
 ## 산출물 통합 검증
 
@@ -149,8 +146,8 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 
 - 체크섬 파일의 모든 항목과 실제 SHA-256 일치
 - Android 패키지·버전 코드·v2 서명·Debug/Release 파일명 일치
-- Android 3개 ABI와 Windows `app.so`의 운영 API·앱 버전
-- 개발 API 주소와 Railway Desktop Client Secret 변수명 부재
+- Android 3개 ABI와 Windows `app.so`의 앱 버전·실연결 설정
+- 구형 API 주소, `API_BASE_URL`과 Desktop Client Secret 변수명 부재
 - Windows ZIP의 EXE·Flutter data·Excel 템플릿
 - 설치 EXE 제품 버전과 선택적 Authenticode 강제
 - 선택 시 설치→실행→제거와 HKCU 제거 레지스트리 정리
@@ -288,6 +285,6 @@ Android APK는 이전 버전 위에 업그레이드 설치해 기존 학습 세�
 - 실제 Google 계정으로 Windows·Android 로그인과 Drive 양방향 복원 테스트
 - Windows 최소 크기 `380×520`, 일반·확장 크기 조절 테스트
 - Windows 영어 음성 인식과 비영어 코스의 따라 읽기 대체 흐름 테스트
-- Railway `/health`의 `desktopOAuthBroker=ready`, migration, 토큰 route `no-store`, 로그 redaction 확인
+- Windows 직접 PKCE 토큰 교환과 refresh, 민감값 로그 미노출 확인
 - Mock Mode가 production 산출물에서 꺼졌는지 확인
 - `npm run build:release-gated`와 정식 서명 강제 `verify-release.ps1` 통과

@@ -82,11 +82,11 @@ class _DataHealthScreenState extends ConsumerState<DataHealthScreen> {
     final localStorage = ref.watch(localStorageControllerProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('데이터 건강'),
+        title: const Text('데이터 상태'),
         actions: [
           IconButton(
             key: const Key('refresh-data-health'),
-            tooltip: '상태 새로고침',
+            tooltip: '다시 확인',
             onPressed: _refresh,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -164,7 +164,7 @@ class _DataHealthScreenState extends ConsumerState<DataHealthScreen> {
                   child: ListTile(
                     leading: Icon(Icons.warning_amber_rounded),
                     title: Text('복구 사본 목록을 읽지 못했습니다.'),
-                    subtitle: Text('앱 DB와 현재 저장 연결은 그대로 유지됩니다.'),
+                    subtitle: Text('앱 데이터와 현재 저장 연결은 그대로 유지됩니다.'),
                   ),
                 ),
               ],
@@ -201,13 +201,15 @@ class _OfflineReadinessCard extends StatelessWidget {
                 const SizedBox(width: 9),
                 Expanded(
                   child: Text(
-                    report.canStudy ? '오프라인 학습 준비됨' : '오프라인 준비 확인 필요',
+                    report.canStudy
+                        ? '인터넷 없이도 학습할 수 있어요'
+                        : '오프라인 학습 준비를 확인해 주세요',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
-                Text('${report.readyCount}/${report.checks.length} 준비'),
+                Text('${report.readyCount}/${report.checks.length} 완료'),
               ],
             ),
             const SizedBox(height: 8),
@@ -234,8 +236,8 @@ class _OfflineReadinessCard extends StatelessWidget {
               ),
             const Divider(),
             const Text(
-              '뜻 고르기·직접 쓰기·카드 복습은 완전 오프라인입니다. '
-              '듣기는 오프라인 음성이 없으면 읽기 표기로, 발음은 언어팩이 없으면 자기 평가로 전환합니다.',
+              '뜻 고르기, 직접 쓰기, 카드 복습은 인터넷 없이 이용할 수 있습니다. '
+              '오프라인 음성이나 언어팩이 없으면 읽기 표기와 자기 평가로 이어집니다.',
             ),
           ],
         ),
@@ -278,14 +280,14 @@ class _HealthSummary extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  healthy ? '로컬 학습 데이터가 안전합니다' : '확인할 저장 항목이 있습니다',
+                  healthy ? '학습 데이터에 문제가 없어요' : '확인할 저장 항목이 있어요',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '점검 ${report.generatedAt.toLocal()} · 문제 ${report.attentionCount}개',
+                  '마지막 확인 ${report.generatedAt.toLocal()} · 확인 필요 ${report.attentionCount}개',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -352,7 +354,7 @@ class _HealthSectionCard extends StatelessWidget {
         trailing: onRetry == null
             ? null
             : IconButton(
-                tooltip: '이 섹션 다시 시도',
+                tooltip: '이 항목 다시 확인',
                 onPressed: busy ? null : onRetry,
                 icon: busy
                     ? const SizedBox.square(
@@ -379,8 +381,8 @@ class _BackupReceiptCard extends StatelessWidget {
       child: value == null
           ? const ListTile(
               leading: Icon(Icons.receipt_long_outlined),
-              title: Text('백업 검증 영수증'),
-              subtitle: Text('아직 검증된 복구 지점이나 로컬 보관본이 없습니다.'),
+              title: Text('백업 확인 기록'),
+              subtitle: Text('아직 확인된 복구 사본이나 로컬 보관본이 없습니다.'),
             )
           : ListTile(
               leading: Icon(
@@ -390,26 +392,26 @@ class _BackupReceiptCard extends StatelessWidget {
                 color: value.verified ? AppTheme.success : AppTheme.warning,
               ),
               title: const Text(
-                '마지막 백업 검증 영수증',
+                '마지막 백업 확인',
                 style: TextStyle(fontWeight: FontWeight.w800),
               ),
               subtitle: Text(
                 '${value.createdAt.toLocal()} · ${_formatBytes(value.byteLength)}'
                 '${value.itemCount == null ? '' : ' · 항목 ${value.itemCount}개'}\n'
-                '${value.verified ? 'SHA-256 검증 통과' : '검증 정보 확인 필요'}'
+                '${value.verified ? '파일 손상 없음' : '파일 상태 확인 필요'}'
                 '${value.sha256Hex == null ? '' : ' · ${value.sha256Hex!.substring(0, 12)}…'}',
               ),
               isThreeLine: true,
               trailing: IconButton(
                 key: const Key('copy-backup-receipt'),
-                tooltip: '검증 영수증 복사',
+                tooltip: '백업 정보 복사',
                 onPressed: () async {
                   await Clipboard.setData(
                     ClipboardData(text: value.clipboardText),
                   );
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('백업 검증 영수증을 복사했습니다.')),
+                    const SnackBar(content: Text('백업 정보를 복사했습니다.')),
                   );
                 },
                 icon: const Icon(Icons.copy_rounded),
@@ -442,7 +444,7 @@ class _PendingSectionsCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '섹션별 동기화 대기',
+              '아직 동기화되지 않은 항목',
               style: Theme.of(
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
@@ -451,7 +453,7 @@ class _PendingSectionsCard extends StatelessWidget {
             Text(
               offlineLocked
                   ? 'Drive 동기화 일시 중지를 해제하면 다시 시도할 수 있습니다.'
-                  : '무결성을 위해 선택한 섹션과 함께 최신 스냅샷 전체를 원자적으로 검증합니다.',
+                  : '빠뜨리는 항목이 없도록 최신 전체 저장본도 함께 확인합니다.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
             for (final section in sections)
@@ -459,7 +461,7 @@ class _PendingSectionsCard extends StatelessWidget {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 title: Text(section.title),
-                subtitle: Text('대기 항목 ${section.itemCount}개'),
+                subtitle: Text('${section.itemCount}개 기다리는 중'),
                 trailing: TextButton.icon(
                   key: Key('retry-pending-${section.id}'),
                   onPressed: offlineLocked || busy

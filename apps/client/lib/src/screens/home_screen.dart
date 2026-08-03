@@ -221,8 +221,8 @@ class HomeScreen extends ConsumerWidget {
         SnackBar(
           content: Text(
             permission == StudyNotificationPermission.granted
-                ? '“${saved.title}” 알림과 루틴을 저장했습니다.'
-                : '루틴을 저장했습니다. 기기 설정에서 알림 권한을 켜면 알려드려요.',
+                ? '“${saved.title}” 알림과 루틴을 저장했어요.'
+                : '루틴을 저장했어요. 알림을 받으려면 기기 설정에서 권한을 켜 주세요.',
           ),
         ),
       );
@@ -233,7 +233,7 @@ class HomeScreen extends ConsumerWidget {
       if (!context.mounted || batch.entries.isEmpty) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('“${item.text}”을 휴지통으로 옮겼습니다.'),
+          content: Text('“${item.text}”을 휴지통으로 옮겼어요.'),
           action: SnackBarAction(
             label: '실행 취소',
             onPressed: () => unawaited(controller.restoreTrashBatch(batch.id)),
@@ -278,9 +278,9 @@ class HomeScreen extends ConsumerWidget {
     if (selectedItems.isEmpty) {
       nextAction = _HomeNextAction(
         eyebrow: '${activeSubject.name} · 학습 준비',
-        title: '첫 학습 자료를 추가해 보세요',
-        description: '단어·문장 또는 원하는 개념을 하나 추가하면 바로 학습을 시작할 수 있어요.',
-        buttonLabel: '첫 자료 추가',
+        title: '첫 단어나 문장을 추가해 보세요',
+        description: '표현과 뜻 하나만 입력하면 바로 학습할 수 있어요.',
+        buttonLabel: '단어·문장 추가',
         icon: Icons.add_rounded,
         onPressed: () => context.go('/library/new'),
       );
@@ -288,7 +288,7 @@ class HomeScreen extends ConsumerWidget {
       nextAction = _HomeNextAction(
         eyebrow: '${activeSubject.name} · 다음 학습',
         title: '복습할 표현 $reviewCount개',
-        description: '기억이 흐려지기 전에 예정된 복습부터 짧게 끝내세요.',
+        description: '지금 복습하면 더 오래 기억할 수 있어요.',
         buttonLabel: '복습 시작',
         icon: Icons.replay_rounded,
         onPressed: () => context.push('/study?mode=review'),
@@ -314,8 +314,8 @@ class HomeScreen extends ConsumerWidget {
         eyebrow: '${activeSubject.name} · 자율 학습',
         title: '오늘은 계획한 쉬는 날이에요',
         description:
-            '새 표현은 다음 학습일로 미뤘습니다. 원하면 ${state.preferences.preferredMode.label}로 가볍게 시작할 수 있어요.',
-        buttonLabel: '그래도 학습',
+            '새 표현은 다음 학습일에 보여 드릴게요. 원하면 ${state.preferences.preferredMode.label}로 가볍게 연습할 수 있어요.',
+        buttonLabel: '가볍게 학습',
         icon: Icons.self_improvement_rounded,
         onPressed: () => context.push(recommendedRoute),
       );
@@ -327,7 +327,7 @@ class HomeScreen extends ConsumerWidget {
         eyebrow: '${activeSubject.name} · 다음 학습',
         title: queue.isEmpty ? '오늘 목표를 마쳤어요' : unitTitle,
         description: queue.isEmpty
-            ? '${state.preferences.preferredMode.label}로 가볍게 더 연습할 수 있어요.'
+            ? '원하면 ${state.preferences.preferredMode.label}로 조금 더 연습할 수 있어요.'
             : '${state.preferences.preferredMode.label} · 새 표현 $newCount개',
         buttonLabel: isDesktop ? '다음 학습' : '다음 레슨',
         icon: Icons.play_arrow_rounded,
@@ -352,7 +352,7 @@ class HomeScreen extends ConsumerWidget {
         );
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('중단한 세션을 종료했습니다. 학습 진도는 유지됩니다.')),
+        const SnackBar(content: Text('진행하던 학습을 끝냈어요. 푼 기록은 남아 있어요.')),
       );
     }
 
@@ -360,21 +360,21 @@ class HomeScreen extends ConsumerWidget {
       controller.completeExamPlanForToday(plan.planId, completedAt: now);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('오늘 학습을 완료로 기록했어요.')));
+      ).showSnackBar(const SnackBar(content: Text('오늘 학습을 완료했어요.')));
     }
 
     void snoozeScheduledPlan(StudySessionPlan plan) {
       controller.snoozeSessionPlan(plan.planId, now: now);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('학습 일정을 10분 미뤘어요.')));
+      ).showSnackBar(const SnackBar(content: Text('10분 뒤에 다시 알려 드릴게요.')));
     }
 
     void deferScheduledPlan(StudySessionPlan plan) {
       controller.deferSessionPlanUntilTomorrow(plan.planId, now: now);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('학습 일정을 내일로 옮겼어요.')));
+      ).showSnackBar(const SnackBar(content: Text('내일 학습으로 옮겼어요.')));
     }
 
     Future<void> changeScheduledPlanTime(StudySessionPlan plan) async {
@@ -398,9 +398,9 @@ class HomeScreen extends ConsumerWidget {
     void openPinnedCollection(SmartCollectionDefinition collection) {
       final collectionItems = controller.itemsForSmartCollection(collection);
       if (collectionItems.isEmpty) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('현재 조건에 맞는 자료가 없습니다.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('학습할 자료가 없어요. 자료실에서 조건을 바꿔 보세요.')),
+        );
         return;
       }
       controller.updateSessionPlan(
@@ -800,7 +800,7 @@ class HomeScreen extends ConsumerWidget {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
-                                      '선택을 저장했습니다. 홈의 시작 설정에서 언제든 이어갈 수 있어요.',
+                                      '지금까지 고른 내용을 저장했어요. 홈에서 언제든 이어서 설정할 수 있어요.',
                                     ),
                                   ),
                                 );
@@ -963,7 +963,7 @@ class _FirstStartRecommendationCard extends StatelessWidget {
       children: [
         _RecommendationChip(
           icon: Icons.playlist_play_rounded,
-          label: '첫 큐 ${mode.label} $itemCount개',
+          label: '첫 학습 · ${mode.label} $itemCount개',
         ),
         _RecommendationChip(
           icon: Icons.folder_special_outlined,
@@ -990,7 +990,7 @@ class _FirstStartRecommendationCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    '내 시작 설정을 반영한 첫 추천',
+                    '내 시작 설정에 맞춘 첫 추천',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -1016,7 +1016,7 @@ class _FirstStartRecommendationCard extends StatelessWidget {
                   key: const Key('start-onboarding-queue'),
                   onPressed: onStart,
                   icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                  label: const Text('추천 큐 시작'),
+                  label: const Text('추천 학습 시작'),
                 ),
               ],
             ),
@@ -1207,7 +1207,7 @@ class _HomePinnedCollections extends StatelessWidget {
                     avatar: const Icon(Icons.bolt_rounded, size: 18),
                     label: Text('${collection.name} · $count개'),
                     tooltip: count == 0
-                        ? '현재 조건에 맞는 자료 없음'
+                        ? '이 모음에 맞는 자료가 없어요'
                         : '${collection.name} 바로 학습',
                     onPressed: count == 0 ? null : () => onOpen(collection),
                   );
@@ -1334,7 +1334,9 @@ class _LocalStoragePromptCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasError ? '로컬 보관 폴더를 다시 연결하세요' : '학습 데이터 보관 폴더를 선택하세요',
+                      hasError
+                          ? '로컬 저장 폴더를 다시 연결해 주세요'
+                          : '학습 자료를 저장할 폴더를 골라 주세요',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -1343,7 +1345,7 @@ class _LocalStoragePromptCard extends StatelessWidget {
                     Text(
                       hasError
                           ? errorMessage!
-                          : 'Google 미연결 상태에서는 선택한 폴더에 검증된 사본을 자동 저장합니다.',
+                          : 'Google을 연결하지 않아도 선택한 폴더에 사본을 자동으로 저장해요.',
                       maxLines: compact ? 2 : 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,
@@ -1623,8 +1625,8 @@ class _GettingStartedCard extends StatelessWidget {
                         ? '첫 학습 설정 이어하기'
                         : '첫 학습 루틴 설정'
                   : resuming
-                  ? '저장한 단계부터 학습 설정을 이어가세요'
-                  : '내 학습 루틴을 1분 안에 설정해 보세요',
+                  ? '저장한 곳부터 학습 설정을 이어가세요'
+                  : '1분이면 내 학습 루틴을 만들 수 있어요',
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
@@ -1743,10 +1745,10 @@ class _FirstRunSetupPanelState extends State<_FirstRunSetupPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sprache 시작 설정', style: theme.textTheme.headlineSmall),
+                    Text('처음 학습 설정', style: theme.textTheme.headlineSmall),
                     const SizedBox(height: 6),
                     Text(
-                      '5가지만 고르면 로그인 없이 내 학습 루틴을 바로 시작합니다.',
+                      '다섯 가지만 골라 주세요. 로그인 없이 바로 시작할 수 있어요.',
                       style: theme.textTheme.bodyMedium,
                     ),
                   ],
@@ -1763,7 +1765,7 @@ class _FirstRunSetupPanelState extends State<_FirstRunSetupPanel> {
           const _OnboardingStepHeader(
             step: 1,
             title: '공부할 언어',
-            description: '언어별 자료와 진도는 서로 섞이지 않습니다.',
+            description: '언어마다 자료와 학습 기록을 따로 관리해요.',
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1793,7 +1795,7 @@ class _FirstRunSetupPanelState extends State<_FirstRunSetupPanel> {
           const _OnboardingStepHeader(
             step: 2,
             title: '학습 목적',
-            description: '첫 화면에서 가장 잘 맞는 학습 방식을 먼저 추천합니다.',
+            description: '목적에 맞는 학습 방식을 먼저 추천해 드려요.',
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1814,7 +1816,7 @@ class _FirstRunSetupPanelState extends State<_FirstRunSetupPanel> {
           const _OnboardingStepHeader(
             step: 3,
             title: '현재 수준',
-            description: '처음에 보여 줄 새 자료의 양을 알맞게 조절합니다.',
+            description: '처음 보여 줄 새 자료의 양을 맞춰요.',
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1834,7 +1836,7 @@ class _FirstRunSetupPanelState extends State<_FirstRunSetupPanel> {
           const _OnboardingStepHeader(
             step: 4,
             title: '하루 학습 시간',
-            description: '나중에 설정에서 문제 수와 목표를 따로 바꿀 수 있습니다.',
+            description: '문제 수와 목표는 설정에서 언제든 바꿀 수 있어요.',
           ),
           const SizedBox(height: 8),
           Wrap(
@@ -1859,7 +1861,7 @@ class _FirstRunSetupPanelState extends State<_FirstRunSetupPanel> {
           const _OnboardingStepHeader(
             step: 5,
             title: '시작 방식',
-            description: '샘플을 먼저 체험하거나 내 자료를 곧바로 가져오세요.',
+            description: '샘플로 둘러보거나 내 자료를 바로 가져올 수 있어요.',
           ),
           const SizedBox(height: 8),
           DecoratedBox(
@@ -1878,7 +1880,7 @@ class _FirstRunSetupPanelState extends State<_FirstRunSetupPanel> {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      '학습은 로그인 없이 시작할 수 있습니다. Google 연결은 백업과 기기 간 동기화가 필요할 때만 설정하세요.',
+                      '로그인 없이도 학습할 수 있어요. 백업하거나 다른 기기에서 이어볼 때만 Google을 연결하세요.',
                     ),
                   ),
                 ],

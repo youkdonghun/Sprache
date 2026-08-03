@@ -80,10 +80,13 @@ void main() {
         rootResolver: () async => temporaryRoot.path,
         clock: () => now,
       );
-      await service.create(
+      final receipt = await service.create(
         controller.exportArchive(),
         reason: RecoveryCheckpointReason.restore,
       );
+      for (final file in Directory(receipt.path).listSync().whereType<File>()) {
+        await file.setLastModified(now);
+      }
 
       final inventory = await RecoveryBackupCatalogService(
         rootResolver: () async => temporaryRoot.path,

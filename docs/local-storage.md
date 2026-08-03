@@ -31,7 +31,7 @@
 Google 연결 해제는 현재 기기에만 적용한다. OS 보안 저장소의 이 기기 인증을
 정리하고 런타임 Drive 클라이언트를 닫지만, 아래 항목은 삭제하지 않는다.
 
-- Railway의 계정별 Drive 폴더 바인딩
+- Drive `appDataFolder`의 `WordStudyData` 연결 포인터
 - Google Drive의 `WordStudyData` 폴더와 그 안의 파일
 - 사용자가 선택한 로컬 `Sprache` 폴더와 그 안의 파일
 - 앱 전용 SQLite와 아직 전송하지 못한 업로드 대기 작업
@@ -39,9 +39,9 @@ Google 연결 해제는 현재 기기에만 적용한다. OS 보안 저장소의
 따라서 다른 기기는 같은 Drive 바인딩을 계속 사용할 수 있고, 이 기기도 나중에
 같은 계정으로 재연결할 수 있다.
 
-사용자가 설정의 `계정–Drive 연결 기록 삭제`를 별도로 확인하면 이 기기의
-Google 인증과 Railway의 HMAC 계정–폴더 매핑을 함께 삭제한다. 이 동작도 Drive
-폴더, 사용자 지정 로컬 폴더와 앱 DB 파일은 자동 삭제하지 않는다.
+사용자가 설정의 `Drive 연결 기록 삭제`를 별도로 확인하면 이 기기의 Google
+인증과 Drive 숨김 폴더 포인터를 함께 삭제한다. 이 동작도 Drive 학습 폴더,
+사용자 지정 로컬 폴더와 앱 DB 파일은 자동 삭제하지 않는다.
 
 ## 플랫폼별 폴더 선택
 
@@ -119,7 +119,7 @@ Drive 장애가 발생해도 원본 바이트가 아니라 정돈된 snapshot �
   네트워크 폴더는 피하고 사용자만 접근하는 위치를 선택한다.
 - 폴더를 다른 사람에게 복사하면 단어·문장·진도·학습 기록이 함께 전달될 수 있다.
 - OAuth access/refresh token과 Client Secret은 로컬 미러, Drive dataset,
-  가져오기 staging, Railway PostgreSQL에 넣지 않는다. 클라이언트 토큰은 OS
+  가져오기 staging에 넣지 않는다. 클라이언트 토큰은 OS
   보안 저장소에만 둔다.
 - Google Drive는 앱이 만들거나 사용자가 Picker로 선택해 권한을 준 파일에
-  접근하는 `drive.file` 범위만 요청한다.
+  접근하는 `drive.file`과 폴더 포인터용 `drive.appdata`만 요청한다.

@@ -912,6 +912,443 @@ void main() {
     },
   );
 
+  group('Drive appDataFolder binding', () {
+    const bindingFile = GoogleDriveClient.appDataBindingFileName;
+    final existingBinding = <String, Object?>{
+      'folderId': 'root-old',
+      'folderName': 'WordStudyData',
+      'schemaVersion': 1,
+      'updatedAt': '2026-08-01T00:00:00.000Z',
+    };
+
+    test('returns null when the hidden binding does not exist', () async {
+      final client = GoogleDriveClient(
+        accessTokenProvider: () async => 'token',
+        httpClient: MockClient((request) async {
+          expect(request.method, 'GET');
+          expect(request.url.path, '/drive/v3/files');
+          expect(request.url.queryParameters['spaces'], 'appDataFolder');
+          expect(request.url.queryParameters['q'], contains(bindingFile));
+          expect(request.headers['authorization'], 'Bearer token');
+          return http.Response(jsonEncode({'files': []}), 200);
+        }),
+      );
+
+      expect(await client.readAppDataBinding(), isNull);
+      expect(await client.deleteAppDataBinding(), isFalse);
+    });
+
+    test(
+      'creates the binding in appDataFolder with the compact payload',
+      () async {
+        final methods = <String>[];
+        Map<String, Object?>? metadata;
+        Map<String, Object?>? uploaded;
+        final client = GoogleDriveClient(
+          accessTokenProvider: () async => 'token',
+          clock: () => DateTime.utc(2026, 8, 3, 12),
+          httpClient: MockClient((request) async {
+            methods.add(request.method);
+            if (request.method == 'GET' &&
+                request.url.path == '/drive/v3/files') {
+              expect(request.url.queryParameters['spaces'], 'appDataFolder');
+              return http.Response(jsonEncode({'files': []}), 200);
+            }
+            if (request.method == 'POST' &&
+                request.url.path == '/drive/v3/files') {
+              metadata = Map<String, Object?>.from(
+                jsonDecode(request.body) as Map,
+              );
+              return http.Response(
+                jsonEncode({
+                  'id': 'binding-file',
+                  'name': bindingFile,
+                  'mimeType': 'application/json',
+                }),
+                200,
+              );
+            }
+            if (request.method == 'PATCH' &&
+                request.url.path == '/upload/drive/v3/files/binding-file') {
+              expect(request.url.queryParameters['uploadType'], 'media');
+              uploaded = Map<String, Object?>.from(
+                jsonDecode(request.body) as Map,
+              );
+              return http.Response('', 200);
+            }
+            return http.Response('unexpected request', 500);
+          }),
+        );
+
+        final result = await client.upsertAppDataBinding(
+          folderId: 'root-new',
+          folderName: 'WordStudyData',
+        );
+
+        expect(metadata, {
+          'name': bindingFile,
+          'parents': ['appDataFolder'],
+          'mimeType': 'application/json',
+        });
+        expect(uploaded, {
+          'folderId': 'root-new',
+          'folderName': 'WordStudyData',
+          'schemaVersion': 1,
+          'updatedAt': '2026-08-03T12:00:00.000Z',
+        });
+        expect(result.folderId, 'root-new');
+        expect(result.updatedAt, DateTime.utc(2026, 8, 3, 12));
+        expect(methods, ['GET', 'POST', 'PATCH']);
+      },
+    );
+
+    test('validates then updates the existing file in place', () async {
+      var postCount = 0;
+      String? patchedPath;
+      Map<String, Object?>? uploaded;
+      final client = GoogleDriveClient(
+        accessTokenProvider: () async => 'token',
+        clock: () => DateTime.utc(2026, 8, 3, 13),
+        httpClient: MockClient((request) async {
+          if (request.method == 'GET' &&
+              request.url.path == '/drive/v3/files') {
+            return http.Response(
+              jsonEncode({
+                'files': [
+                  {
+                    'id': 'binding-file',
+                    'name': bindingFile,
+                    'mimeType': 'application/json',
+                    'trashed': false,
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+          if (request.method == 'GET' &&
+              request.url.path == '/drive/v3/files/binding-file') {
+            expect(request.url.queryParameters['alt'], 'media');
+            return http.Response(jsonEncode(existingBinding), 200);
+          }
+          if (request.method == 'POST') {
+            postCount++;
+            return http.Response('unexpected create', 500);
+          }
+          if (request.method == 'PATCH') {
+            patchedPath = request.url.path;
+            uploaded = Map<String, Object?>.from(
+              jsonDecode(request.body) as Map,
+            );
+            return http.Response('', 200);
+          }
+          return http.Response('unexpected request', 500);
+        }),
+      );
+
+      await client.upsertAppDataBinding(
+        folderId: 'root-updated',
+        folderName: 'Renamed root',
+      );
+
+      expect(postCount, 0);
+      expect(patchedPath, '/upload/drive/v3/files/binding-file');
+      expect(uploaded?['folderId'], 'root-updated');
+      expect(uploaded?['folderName'], 'Renamed root');
+    });
+
+    test(
+      'validates and permanently deletes an appDataFolder binding',
+      () async {
+        var deleteCount = 0;
+        final client = GoogleDriveClient(
+          accessTokenProvider: () async => 'token',
+          httpClient: MockClient((request) async {
+            if (request.method == 'GET' &&
+                request.url.path == '/drive/v3/files') {
+              return http.Response(
+                jsonEncode({
+                  'files': [
+                    {
+                      'id': 'binding-file',
+                      'name': bindingFile,
+                      'mimeType': 'application/json',
+                    },
+                  ],
+                }),
+                200,
+              );
+            }
+            if (request.method == 'GET' &&
+                request.url.path == '/drive/v3/files/binding-file') {
+              return http.Response(jsonEncode(existingBinding), 200);
+            }
+            if (request.method == 'DELETE' &&
+                request.url.path == '/drive/v3/files/binding-file') {
+              deleteCount++;
+              return http.Response('', 204);
+            }
+            return http.Response('unexpected request', 500);
+          }),
+        );
+
+        expect(await client.deleteAppDataBinding(), isTrue);
+        expect(deleteCount, 1);
+      },
+    );
+
+    test(
+      'rejects duplicate bindings without reading or mutating either',
+      () async {
+        final methods = <String>[];
+        final client = GoogleDriveClient(
+          accessTokenProvider: () async => 'token',
+          httpClient: MockClient((request) async {
+            methods.add(request.method);
+            return http.Response(
+              jsonEncode({
+                'files': [
+                  {
+                    'id': 'binding-a',
+                    'name': bindingFile,
+                    'mimeType': 'application/json',
+                  },
+                  {
+                    'id': 'binding-b',
+                    'name': bindingFile,
+                    'mimeType': 'application/json',
+                  },
+                ],
+              }),
+              200,
+            );
+          }),
+        );
+
+        await expectLater(
+          client.readAppDataBinding(),
+          throwsA(
+            isA<DriveDataIntegrityException>().having(
+              (error) => error.code,
+              'code',
+              'drive_appdata_binding_duplicate',
+            ),
+          ),
+        );
+        expect(methods, ['GET']);
+      },
+    );
+
+    test(
+      'rejects corrupt and future-schema payloads before mutation',
+      () async {
+        for (final testCase in <(Map<String, Object?>, String)>[
+          (
+            {'folderId': 'root', 'schemaVersion': 1, 'updatedAt': 'not-a-date'},
+            'drive_appdata_binding_invalid',
+          ),
+          (
+            {...existingBinding, 'schemaVersion': 2},
+            'drive_appdata_binding_newer_schema',
+          ),
+        ]) {
+          final methods = <String>[];
+          final client = GoogleDriveClient(
+            accessTokenProvider: () async => 'token',
+            httpClient: MockClient((request) async {
+              methods.add(request.method);
+              if (request.url.path == '/drive/v3/files') {
+                return http.Response(
+                  jsonEncode({
+                    'files': [
+                      {
+                        'id': 'binding-file',
+                        'name': bindingFile,
+                        'mimeType': 'application/json',
+                      },
+                    ],
+                  }),
+                  200,
+                );
+              }
+              return http.Response(jsonEncode(testCase.$1), 200);
+            }),
+          );
+
+          await expectLater(
+            client.upsertAppDataBinding(
+              folderId: 'must-not-write',
+              folderName: 'WordStudyData',
+            ),
+            throwsA(
+              isA<DriveDataIntegrityException>().having(
+                (error) => error.code,
+                'code',
+                testCase.$2,
+              ),
+            ),
+          );
+          expect(methods, ['GET', 'GET']);
+        }
+      },
+    );
+  });
+
+  group('drive.file app root discovery', () {
+    Map<String, Object?> validManifest(String rootId) => {
+      'schemaVersion': 1,
+      'datasetVersion': 1,
+      'appRootFolderId': rootId,
+      'files': <String, Object?>{},
+      'updatedAt': '2026-08-03T00:00:00.000Z',
+    };
+
+    test('returns the only globally discoverable valid app root', () async {
+      final spaces = <String?>[];
+      final client = GoogleDriveClient(
+        accessTokenProvider: () async => 'token',
+        httpClient: MockClient((request) async {
+          if (request.url.path == '/drive/v3/files') {
+            spaces.add(request.url.queryParameters['spaces']);
+            final query = request.url.queryParameters['q'] ?? '';
+            if (query.contains("name = 'WordStudyData'")) {
+              return http.Response(
+                jsonEncode({
+                  'files': [
+                    {
+                      'id': 'root-one',
+                      'name': 'WordStudyData',
+                      'mimeType': 'application/vnd.google-apps.folder',
+                    },
+                  ],
+                }),
+                200,
+              );
+            }
+            expect(query, contains("'root-one' in parents"));
+            return http.Response(
+              jsonEncode({
+                'files': [
+                  {
+                    'id': 'manifest-one',
+                    'name': 'manifest.json',
+                    'mimeType': 'application/json',
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+          if (request.url.path == '/drive/v3/files/manifest-one') {
+            return http.Response(jsonEncode(validManifest('root-one')), 200);
+          }
+          return http.Response('unexpected request', 500);
+        }),
+      );
+
+      final result = await client.discoverAppRoot();
+
+      expect(result?.appRootFolderId, 'root-one');
+      expect(result?.manifestFileId, 'manifest-one');
+      expect(spaces, everyElement('drive'));
+    });
+
+    test('returns null for zero or multiple valid candidates', () async {
+      for (final rootIds in <List<String>>[
+        const [],
+        const ['root-a', 'root-b'],
+      ]) {
+        final client = GoogleDriveClient(
+          accessTokenProvider: () async => 'token',
+          httpClient: MockClient((request) async {
+            if (request.url.path == '/drive/v3/files') {
+              final query = request.url.queryParameters['q'] ?? '';
+              if (query.contains("name = 'WordStudyData'")) {
+                return http.Response(
+                  jsonEncode({
+                    'files': [
+                      for (final rootId in rootIds)
+                        {
+                          'id': rootId,
+                          'name': 'WordStudyData',
+                          'mimeType': 'application/vnd.google-apps.folder',
+                        },
+                    ],
+                  }),
+                  200,
+                );
+              }
+              final rootId = rootIds.singleWhere(query.contains);
+              return http.Response(
+                jsonEncode({
+                  'files': [
+                    {
+                      'id': 'manifest-$rootId',
+                      'name': 'manifest.json',
+                      'mimeType': 'application/json',
+                    },
+                  ],
+                }),
+                200,
+              );
+            }
+            final manifestId = request.url.path.split('/').last;
+            final rootId = manifestId.replaceFirst('manifest-', '');
+            return http.Response(jsonEncode(validManifest(rootId)), 200);
+          }),
+        );
+
+        expect(await client.discoverAppRoot(), isNull);
+      }
+    });
+
+    test('ignores damaged candidates and never mutates Drive', () async {
+      final methods = <String>[];
+      final client = GoogleDriveClient(
+        accessTokenProvider: () async => 'token',
+        httpClient: MockClient((request) async {
+          methods.add(request.method);
+          if (request.url.path == '/drive/v3/files') {
+            final query = request.url.queryParameters['q'] ?? '';
+            if (query.contains("name = 'WordStudyData'")) {
+              return http.Response(
+                jsonEncode({
+                  'files': [
+                    {
+                      'id': 'root-future',
+                      'name': 'WordStudyData',
+                      'mimeType': 'application/vnd.google-apps.folder',
+                    },
+                  ],
+                }),
+                200,
+              );
+            }
+            return http.Response(
+              jsonEncode({
+                'files': [
+                  {
+                    'id': 'manifest-future',
+                    'name': 'manifest.json',
+                    'mimeType': 'application/json',
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+          return http.Response(
+            jsonEncode({...validManifest('root-future'), 'schemaVersion': 99}),
+            200,
+          );
+        }),
+      );
+
+      expect(await client.discoverAppRoot(), isNull);
+      expect(methods, everyElement('GET'));
+    });
+  });
+
   test('retention only trashes unreferenced JSON older than 30 days', () async {
     final trashed = <String>[];
     final remoteManifest = {
@@ -1119,75 +1556,69 @@ void main() {
     expect(patchCount, 0);
   });
 
-  test(
-    'reuses a Railway-linked app root without creating a nested root',
-    () async {
-      final requestedPaths = <String>[];
-      final client = GoogleDriveClient(
-        accessTokenProvider: () async => 'token',
-        httpClient: MockClient((request) async {
-          requestedPaths.add('${request.method} ${request.url}');
-          if (request.method == 'GET' &&
-              request.url.path == '/drive/v3/files/existing-root') {
+  test('reuses a linked app root without creating a nested root', () async {
+    final requestedPaths = <String>[];
+    final client = GoogleDriveClient(
+      accessTokenProvider: () async => 'token',
+      httpClient: MockClient((request) async {
+        requestedPaths.add('${request.method} ${request.url}');
+        if (request.method == 'GET' &&
+            request.url.path == '/drive/v3/files/existing-root') {
+          return http.Response(
+            jsonEncode({
+              'id': 'existing-root',
+              'name': 'WordStudyData',
+              'mimeType': 'application/vnd.google-apps.folder',
+              'trashed': false,
+            }),
+            200,
+          );
+        }
+        if (request.method == 'GET' && request.url.path == '/drive/v3/files') {
+          final query = request.url.queryParameters['q'] ?? '';
+          final name = RegExp(r"name = '([^']+)'").firstMatch(query)?.group(1);
+          if (name == 'manifest.json') {
             return http.Response(
               jsonEncode({
-                'id': 'existing-root',
-                'name': 'WordStudyData',
-                'mimeType': 'application/vnd.google-apps.folder',
-                'trashed': false,
+                'files': [
+                  {'id': 'manifest-file'},
+                ],
               }),
               200,
             );
           }
-          if (request.method == 'GET' &&
-              request.url.path == '/drive/v3/files') {
-            final query = request.url.queryParameters['q'] ?? '';
-            final name = RegExp(
-              r"name = '([^']+)'",
-            ).firstMatch(query)?.group(1);
-            if (name == 'manifest.json') {
-              return http.Response(
-                jsonEncode({
-                  'files': [
-                    {'id': 'manifest-file'},
-                  ],
-                }),
-                200,
-              );
-            }
-            if (const {
-              'content',
-              'state',
-              'backups',
-              'quarantine',
-            }.contains(name)) {
-              return http.Response(
-                jsonEncode({
-                  'files': [
-                    {'id': '$name-folder'},
-                  ],
-                }),
-                200,
-              );
-            }
-            return http.Response(jsonEncode({'files': []}), 200);
+          if (const {
+            'content',
+            'state',
+            'backups',
+            'quarantine',
+          }.contains(name)) {
+            return http.Response(
+              jsonEncode({
+                'files': [
+                  {'id': '$name-folder'},
+                ],
+              }),
+              200,
+            );
           }
-          return http.Response('unexpected request', 500);
-        }),
-      );
+          return http.Response(jsonEncode({'files': []}), 200);
+        }
+        return http.Response('unexpected request', 500);
+      }),
+    );
 
-      final bootstrap = await client.reuseAppRoot(
-        'existing-root',
-        expectedFolderName: 'WordStudyData',
-      );
+    final bootstrap = await client.reuseAppRoot(
+      'existing-root',
+      expectedFolderName: 'WordStudyData',
+    );
 
-      expect(bootstrap.appRootFolderId, 'existing-root');
-      expect(bootstrap.appRootFolderName, 'WordStudyData');
-      expect(bootstrap.manifestFileId, 'manifest-file');
-      expect(requestedPaths.where((path) => path.startsWith('POST ')), isEmpty);
-      expect(requestedPaths.any((path) => path.contains('imports')), isFalse);
-    },
-  );
+    expect(bootstrap.appRootFolderId, 'existing-root');
+    expect(bootstrap.appRootFolderName, 'WordStudyData');
+    expect(bootstrap.manifestFileId, 'manifest-file');
+    expect(requestedPaths.where((path) => path.startsWith('POST ')), isEmpty);
+    expect(requestedPaths.any((path) => path.contains('imports')), isFalse);
+  });
 }
 
 class _MemoryDriveBackend {

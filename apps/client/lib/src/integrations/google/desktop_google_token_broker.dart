@@ -53,50 +53,31 @@ abstract interface class DesktopGoogleTokenBroker {
   Future<DesktopGoogleTokenResponse> refresh({required String refreshToken});
 }
 
-class RailwayDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
-  RailwayDesktopGoogleTokenBroker({
-    required String apiBaseUrl,
+/// Exchanges installed-app OAuth grants directly with Google's token endpoint.
+///
+/// A desktop OAuth client is a public client, so this broker deliberately never
+/// accepts or sends a client secret. Authorization-code exchanges are protected
+/// by the PKCE verifier created by [DesktopGoogleOAuth].
+class DirectDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
+  DirectDesktopGoogleTokenBroker({
+    required String clientId,
     http.Client? httpClient,
-  }) : _apiBaseUrl = apiBaseUrl.replaceFirst(RegExp(r'/+$'), ''),
+    this.requestTimeout = const Duration(seconds: 20),
+  }) : _clientId = clientId.trim(),
        _httpClient = httpClient ?? http.Client();
 
-  final String _apiBaseUrl;
+  static final Uri _tokenEndpoint = Uri.https(
+    'oauth2.googleapis.com',
+    '/token',
+  );
+
+  final String _clientId;
   final http.Client _httpClient;
+  final Duration requestTimeout;
 
   @override
   Future<void> ensureReady() async {
-    late final http.Response response;
-    try {
-      response = await _httpClient
-          .get(Uri.parse('$_apiBaseUrl/health'))
-          .timeout(const Duration(seconds: 15));
-    } catch (_) {
-      throw const GoogleOAuthException(
-        operation: 'Railway Google OAuth preflight',
-        statusCode: 503,
-        code: 'oauth_broker_unreachable',
-        description: 'Railway API is temporarily unreachable.',
-      );
-    }
-    final decoded = _decodeObject(response.body);
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw GoogleOAuthException(
-        operation: 'Railway Google OAuth preflight',
-        statusCode: response.statusCode,
-        code: 'oauth_broker_health_failed',
-        description: 'Railway health check failed.',
-      );
-    }
-    if (decoded?['desktopOAuthBroker'] != 'ready') {
-      throw GoogleOAuthException(
-        operation: 'Railway Google OAuth preflight',
-        statusCode: 503,
-        code: 'oauth_broker_not_configured',
-        description: decoded?['desktopOAuthBroker'] == null
-            ? 'Railway API must be updated before Windows Google login.'
-            : 'Desktop Google OAuth is not configured on Railway.',
-      );
-    }
+    _requireClientId(operation: 'Direct Google OAuth preflight');
   }
 
   @override
@@ -106,82 +87,184 @@ class RailwayDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
     required String redirectUri,
   }) {
     return _request(
-      operation: 'Railway Google token exchange',
-      payload: {
-        'grantType': 'authorization_code',
-        'authorizationCode': authorizationCode,
-        'codeVerifier': codeVerifier,
-        'redirectUri': redirectUri,
+      operation: 'Direct Google token exchange',
+      form: {
+        'client_id': _clientId,
+        'code': authorizationCode,
+        'code_verifier': codeVerifier,
+        'redirect_uri': redirectUri,
+        'grant_type': 'authorization_code',
       },
+      sensitiveValues: [authorizationCode, codeVerifier],
     );
   }
 
   @override
   Future<DesktopGoogleTokenResponse> refresh({required String refreshToken}) {
     return _request(
-      operation: 'Railway Google token refresh',
-      payload: {'grantType': 'refresh_token', 'refreshToken': refreshToken},
+      operation: 'Direct Google token refresh',
+      form: {
+        'client_id': _clientId,
+        'refresh_token': refreshToken,
+        'grant_type': 'refresh_token',
+      },
+      sensitiveValues: [refreshToken],
     );
   }
 
   Future<DesktopGoogleTokenResponse> _request({
     required String operation,
-    required Map<String, Object?> payload,
+    required Map<String, String> form,
+    required List<String> sensitiveValues,
   }) async {
+    _requireClientId(operation: operation);
     late final http.Response response;
     try {
       response = await _httpClient
           .post(
-            Uri.parse('$_apiBaseUrl/v1/oauth/google/desktop/token'),
-            headers: {'content-type': 'application/json; charset=utf-8'},
-            body: jsonEncode(payload),
+            _tokenEndpoint,
+            headers: const {
+              'content-type': 'application/x-www-form-urlencoded',
+              'accept': 'application/json',
+            },
+            body: form,
           )
-          .timeout(const Duration(seconds: 20));
-    } catch (_) {
+          .timeout(requestTimeout);
+    } on TimeoutException {
+      throw GoogleOAuthException(
+        operation: operation,
+        statusCode: 504,
+        code: 'google_oauth_timeout',
+        description: 'Google OAuth token request timed out.',
+      );
+    } on Object {
+      // Network exceptions may contain request details. Do not forward their
+      // text because authorization codes, PKCE verifiers, and refresh tokens
+      // must never enter diagnostics or logs.
       throw GoogleOAuthException(
         operation: operation,
         statusCode: 503,
-        code: 'oauth_broker_unreachable',
-        description: 'Railway API is temporarily unreachable.',
+        code: 'google_oauth_unreachable',
+        description: 'Google OAuth token endpoint is temporarily unreachable.',
       );
     }
+
     final decoded = _decodeObject(response.body);
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      final googleError = _googleError(
+        decoded,
+        sensitiveValues: sensitiveValues,
+      );
       throw GoogleOAuthException(
         operation: operation,
         statusCode: response.statusCode,
-        code: decoded?['error']?.toString(),
+        code: googleError.code ?? 'google_oauth_http_error',
         description:
-            decoded?['description']?.toString() ??
-            decoded?['message']?.toString(),
+            googleError.description ??
+            'Google OAuth token endpoint rejected the request.',
       );
     }
-    final accessToken = decoded?['accessToken'];
-    final expiresIn = decoded?['expiresIn'];
+
+    final accessToken = decoded?['access_token'];
+    final expiresIn = _positiveInteger(decoded?['expires_in']);
+    final refreshToken = _optionalToken(decoded, 'refresh_token');
+    final idToken = _optionalToken(decoded, 'id_token');
     if (accessToken is! String ||
         accessToken.isEmpty ||
-        expiresIn is! num ||
-        expiresIn <= 0) {
+        expiresIn == null ||
+        refreshToken.invalid ||
+        idToken.invalid) {
       throw GoogleOAuthException(
         operation: operation,
         statusCode: 502,
-        code: 'oauth_broker_invalid_response',
-        description: 'Railway returned an invalid Google token response.',
+        code: 'google_oauth_invalid_response',
+        description: 'Google returned an invalid OAuth token response.',
       );
     }
     return DesktopGoogleTokenResponse(
       accessToken: accessToken,
-      refreshToken: decoded?['refreshToken'] as String?,
-      idToken: decoded?['idToken'] as String?,
-      expiresIn: expiresIn.toInt(),
+      refreshToken: refreshToken.value,
+      idToken: idToken.value,
+      expiresIn: expiresIn,
     );
+  }
+
+  void _requireClientId({required String operation}) {
+    if (_clientId.isNotEmpty) return;
+    throw GoogleOAuthException(
+      operation: operation,
+      statusCode: 400,
+      code: 'google_client_id_missing',
+      description: 'GOOGLE_DESKTOP_CLIENT_ID is not configured.',
+    );
+  }
+
+  ({String? code, String? description}) _googleError(
+    Map<String, Object?>? decoded, {
+    required List<String> sensitiveValues,
+  }) {
+    final rawError = decoded?['error'];
+    final nested = rawError is Map ? Map<String, Object?>.from(rawError) : null;
+    final codeValue = rawError is String
+        ? rawError
+        : nested?['status'] ?? nested?['code'];
+    final descriptionValue =
+        decoded?['error_description'] ??
+        decoded?['description'] ??
+        decoded?['message'] ??
+        nested?['error_description'] ??
+        nested?['message'];
+    return (
+      code: _boundedText(codeValue),
+      description: _boundedText(
+        descriptionValue,
+        sensitiveValues: sensitiveValues,
+      ),
+    );
+  }
+
+  String? _boundedText(Object? raw, {List<String> sensitiveValues = const []}) {
+    if (raw == null) return null;
+    var value = raw.toString().trim();
+    if (value.isEmpty) return null;
+    for (final sensitiveValue in sensitiveValues) {
+      if (sensitiveValue.isNotEmpty) {
+        value = value.replaceAll(sensitiveValue, '[REDACTED]');
+      }
+    }
+    const maxLength = 500;
+    return value.length <= maxLength
+        ? value
+        : '${value.substring(0, maxLength)}…';
+  }
+
+  int? _positiveInteger(Object? value) {
+    final parsed = switch (value) {
+      final num number => number.toInt(),
+      final String text => int.tryParse(text),
+      _ => null,
+    };
+    return parsed != null && parsed > 0 ? parsed : null;
+  }
+
+  ({String? value, bool invalid}) _optionalToken(
+    Map<String, Object?>? decoded,
+    String key,
+  ) {
+    if (decoded == null || !decoded.containsKey(key) || decoded[key] == null) {
+      return (value: null, invalid: false);
+    }
+    final value = decoded[key];
+    return value is String && value.isNotEmpty
+        ? (value: value, invalid: false)
+        : (value: null, invalid: true);
   }
 
   Map<String, Object?>? _decodeObject(String body) {
     try {
       final decoded = jsonDecode(body);
       return decoded is Map<String, Object?> ? decoded : null;
-    } catch (_) {
+    } on Object {
       return null;
     }
   }

@@ -35,7 +35,7 @@ void main() {
 
       expect(find.text('나만의 학습 세션'), findsOneWidget);
       expect(find.byKey(const Key('session-start-bottom')), findsOneWidget);
-      expect(find.text('지금 10문제'), findsOneWidget);
+      expect(find.text('10문제 시작'), findsOneWidget);
       expect(find.byKey(const Key('session-schedule-bottom')), findsOneWidget);
       expect(
         tester

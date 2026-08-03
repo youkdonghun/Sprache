@@ -19,6 +19,27 @@ class DriveBootstrapResult {
   final String manifestFileId;
 }
 
+class DriveAppDataBinding {
+  const DriveAppDataBinding({
+    required this.folderId,
+    required this.folderName,
+    required this.schemaVersion,
+    required this.updatedAt,
+  });
+
+  final String folderId;
+  final String folderName;
+  final int schemaVersion;
+  final DateTime updatedAt;
+
+  Map<String, Object?> toJson() => {
+    'folderId': folderId,
+    'folderName': folderName,
+    'schemaVersion': schemaVersion,
+    'updatedAt': updatedAt.toUtc().toIso8601String(),
+  };
+}
+
 enum DriveRequestFailure {
   authenticationExpired,
   permissionRevoked,
@@ -189,6 +210,109 @@ class GoogleDriveClient {
   static const _folderMimeType = 'application/vnd.google-apps.folder';
   static const _jsonMimeType = 'application/json';
   static const _canonicalEnvelopeFormat = 'sprache-canonical-drive-snapshot-v1';
+  static const appDataOAuthScope =
+      'https://www.googleapis.com/auth/drive.appdata';
+  static const appDataBindingFileName = 'sprache-binding-v1.json';
+  static const appDataBindingSchemaVersion = 1;
+  static const _maximumAppDataBindingBytes = 16 * 1024;
+
+  Future<DriveAppDataBinding?> readAppDataBinding() async {
+    final file = await _findAppDataBindingFile();
+    if (file == null) return null;
+    return _readAppDataBindingFile(file);
+  }
+
+  Future<DriveAppDataBinding> upsertAppDataBinding({
+    required String folderId,
+    required String folderName,
+  }) async {
+    final binding = _parseAppDataBinding({
+      'folderId': folderId.trim(),
+      'folderName': folderName.trim(),
+      'schemaVersion': appDataBindingSchemaVersion,
+      'updatedAt': _clock().toUtc().toIso8601String(),
+    });
+    final existing = await _findAppDataBindingFile();
+    if (existing != null) {
+      // Refuse to overwrite an unknown or damaged binding. The caller can
+      // surface the integrity error without touching learning snapshots.
+      await _readAppDataBindingFile(existing);
+      await _uploadJson(existing.id, binding.toJson());
+      return binding;
+    }
+
+    final fileId = await _createAppDataBindingFile();
+    try {
+      await _uploadJson(fileId, binding.toJson());
+      return binding;
+    } catch (_) {
+      await _bestEffortDeleteAppDataFile(fileId);
+      rethrow;
+    }
+  }
+
+  Future<bool> deleteAppDataBinding() async {
+    final file = await _findAppDataBindingFile();
+    if (file == null) return false;
+    // appDataFolder files cannot be moved to trash. Validate ownership and
+    // payload shape before issuing the permanent files.delete request.
+    await _readAppDataBindingFile(file);
+    await _deleteAppDataFile(file.id);
+    return true;
+  }
+
+  Future<DriveBootstrapResult?> discoverAppRoot() async {
+    final roots = await _listDriveItems(
+      query: [
+        "name = 'WordStudyData'",
+        "mimeType = '$_folderMimeType'",
+        'trashed = false',
+      ].join(' and '),
+      spaces: 'drive',
+    );
+    final valid = <DriveBootstrapResult>[];
+    final visitedRootIds = <String>{};
+    for (final root in roots) {
+      if (!visitedRootIds.add(root.id) ||
+          root.name != 'WordStudyData' ||
+          root.mimeType != _folderMimeType) {
+        continue;
+      }
+      try {
+        final escapedRootId = root.id.replaceAll("'", r"\'");
+        final manifests = await _listDriveItems(
+          query: [
+            "'$escapedRootId' in parents",
+            "name = 'manifest.json'",
+            "mimeType = '$_jsonMimeType'",
+            'trashed = false',
+          ].join(' and '),
+          spaces: 'drive',
+        );
+        if (manifests.length != 1) continue;
+        final manifest = await _readJsonStrict(
+          manifests.single.id,
+          label: 'manifest.json',
+        );
+        _validateDiscoverableAppRootManifest(manifest, root.id);
+        valid.add(
+          DriveBootstrapResult(
+            appRootFolderId: root.id,
+            appRootFolderName: root.name,
+            manifestFileId: manifests.single.id,
+          ),
+        );
+        if (valid.length > 1) return null;
+      } on DriveDataIntegrityException {
+        // A damaged or future-schema candidate is not a safe recovery target.
+      } on FormatException {
+        // A malformed candidate is ignored without touching Drive data.
+      } on TypeError {
+        // A candidate with wrong JSON field types is not safe to recover.
+      }
+    }
+    return valid.length == 1 ? valid.single : null;
+  }
 
   Future<DriveRetentionInventory> inspectRetention({
     required String appRootId,
@@ -932,6 +1056,274 @@ class GoogleDriveClient {
     _cachedSections.clear();
   }
 
+  Future<_DriveListedItem?> _findAppDataBindingFile() async {
+    final files = await _listDriveItems(
+      query: [
+        "name = '$appDataBindingFileName'",
+        'trashed = false',
+      ].join(' and '),
+      spaces: 'appDataFolder',
+    );
+    if (files.length > 1) {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_duplicate',
+        '숨김 Drive 설정 파일이 중복되어 안전하게 선택할 수 없습니다.',
+      );
+    }
+    if (files.isEmpty) return null;
+    final file = files.single;
+    if (file.name != appDataBindingFileName || file.mimeType != _jsonMimeType) {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_invalid',
+        '숨김 Drive 설정 파일의 이름 또는 형식이 올바르지 않습니다.',
+      );
+    }
+    return file;
+  }
+
+  void _validateDiscoverableAppRootManifest(
+    Map<String, Object?> manifest,
+    String appRootId,
+  ) {
+    _validateManifestIdentity(manifest, appRootId);
+    final rawDatasetVersion = manifest['datasetVersion'];
+    final datasetVersion =
+        rawDatasetVersion is num &&
+            rawDatasetVersion.isFinite &&
+            rawDatasetVersion == rawDatasetVersion.round()
+        ? rawDatasetVersion.toInt()
+        : null;
+    if (datasetVersion == null || datasetVersion < 1) {
+      throw const DriveDataIntegrityException(
+        'drive_manifest_invalid',
+        'manifest datasetVersion이 올바르지 않습니다.',
+      );
+    }
+    final files = _manifestFiles(manifest);
+    final layout = manifest['layout'];
+    if (layout == SyncDatasetCodec.layout &&
+        !SyncDatasetCodec.sectionPaths.every(files.containsKey)) {
+      throw const DriveDataIntegrityException(
+        'drive_manifest_invalid',
+        '분할 manifest에 필수 데이터 파일 항목이 없습니다.',
+      );
+    }
+    if (layout == SyncDatasetCodec.canonicalLayout &&
+        !files.containsKey(SyncDatasetCodec.canonicalPath)) {
+      throw const DriveDataIntegrityException(
+        'drive_manifest_invalid',
+        'canonical manifest에 snapshot 파일 항목이 없습니다.',
+      );
+    }
+    if (layout == null &&
+        files.isNotEmpty &&
+        !files.containsKey(SyncDatasetCodec.canonicalPath)) {
+      throw const DriveDataIntegrityException(
+        'drive_manifest_invalid',
+        'legacy manifest에 snapshot 파일 항목이 없습니다.',
+      );
+    }
+    _datasetFingerprint(manifest);
+  }
+
+  Future<DriveAppDataBinding> _readAppDataBindingFile(
+    _DriveListedItem file,
+  ) async {
+    final response = await _authorizedGet(
+      Uri.parse('$_apiRoot/files/${file.id}?alt=media'),
+    );
+    if (response.bodyBytes.length > _maximumAppDataBindingBytes) {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_too_large',
+        '숨김 Drive 설정 파일이 허용 크기를 초과했습니다.',
+      );
+    }
+    try {
+      final decoded = jsonDecode(
+        utf8.decode(response.bodyBytes, allowMalformed: false),
+      );
+      if (decoded is! Map) throw const FormatException();
+      return _parseAppDataBinding(Map<String, Object?>.from(decoded));
+    } on DriveDataIntegrityException {
+      rethrow;
+    } on FormatException {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_invalid',
+        '숨김 Drive 설정 파일이 올바른 JSON 객체가 아닙니다.',
+      );
+    } on TypeError {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_invalid',
+        '숨김 Drive 설정 파일의 필드 형식이 올바르지 않습니다.',
+      );
+    }
+  }
+
+  DriveAppDataBinding _parseAppDataBinding(Map<String, Object?> json) {
+    final rawSchemaVersion = json['schemaVersion'];
+    final schemaVersion =
+        rawSchemaVersion is num &&
+            rawSchemaVersion.isFinite &&
+            rawSchemaVersion == rawSchemaVersion.round()
+        ? rawSchemaVersion.toInt()
+        : null;
+    if (schemaVersion != null && schemaVersion > appDataBindingSchemaVersion) {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_newer_schema',
+        '숨김 Drive 설정 파일이 현재 앱보다 최신 스키마입니다.',
+      );
+    }
+    final folderId = json['folderId'];
+    final folderName = json['folderName'];
+    final rawUpdatedAt = json['updatedAt'];
+    final updatedAt = rawUpdatedAt is String
+        ? DateTime.tryParse(rawUpdatedAt)?.toUtc()
+        : null;
+    if (schemaVersion != appDataBindingSchemaVersion ||
+        !_validAppDataText(folderId, maximumLength: 200) ||
+        !_validAppDataText(folderName, maximumLength: 240) ||
+        updatedAt == null) {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_invalid',
+        '숨김 Drive 설정 파일에 필수 바인딩 정보가 없습니다.',
+      );
+    }
+    return DriveAppDataBinding(
+      folderId: (folderId! as String).trim(),
+      folderName: (folderName! as String).trim(),
+      schemaVersion: schemaVersion!,
+      updatedAt: updatedAt,
+    );
+  }
+
+  bool _validAppDataText(Object? value, {required int maximumLength}) =>
+      value is String &&
+      value.trim().isNotEmpty &&
+      value.runes.length <= maximumLength &&
+      !RegExp(r'[\u0000-\u001F\u007F]').hasMatch(value);
+
+  Future<String> _createAppDataBindingFile() async {
+    final token = await accessTokenProvider();
+    final response = await _driveRequest(
+      operation: 'create Drive app data binding',
+      send: () => _httpClient.post(
+        Uri.parse('$_apiRoot/files?fields=id,name,mimeType'),
+        headers: {
+          'authorization': 'Bearer $token',
+          'content-type': 'application/json; charset=utf-8',
+        },
+        body: jsonEncode({
+          'name': appDataBindingFileName,
+          'parents': ['appDataFolder'],
+          'mimeType': _jsonMimeType,
+        }),
+      ),
+    );
+    try {
+      final body = jsonDecode(response.body);
+      final fileId = body is Map ? body['id'] as String? : null;
+      if (fileId == null || fileId.trim().isEmpty) {
+        throw const FormatException();
+      }
+      return fileId.trim();
+    } on FormatException {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_create_invalid',
+        'Drive가 숨김 설정 파일 ID를 반환하지 않았습니다.',
+      );
+    } on TypeError {
+      throw const DriveDataIntegrityException(
+        'drive_appdata_binding_create_invalid',
+        'Drive가 숨김 설정 파일 ID를 반환하지 않았습니다.',
+      );
+    }
+  }
+
+  Future<void> _deleteAppDataFile(String fileId) async {
+    final token = await accessTokenProvider();
+    await _driveRequest(
+      operation: 'delete Drive app data binding',
+      send: () => _httpClient.delete(
+        Uri.parse('$_apiRoot/files/$fileId'),
+        headers: {'authorization': 'Bearer $token'},
+      ),
+    );
+  }
+
+  Future<void> _bestEffortDeleteAppDataFile(String fileId) async {
+    try {
+      await _deleteAppDataFile(fileId);
+    } catch (_) {
+      // Preserve the upload failure as the actionable error. A later lookup
+      // will reject the empty or malformed file instead of touching data.
+    }
+  }
+
+  Future<List<_DriveListedItem>> _listDriveItems({
+    required String query,
+    required String spaces,
+  }) async {
+    final items = <String, _DriveListedItem>{};
+    final seenPageTokens = <String>{};
+    String? pageToken;
+    do {
+      final queryParameters = <String, String>{
+        'q': query,
+        'spaces': spaces,
+        'fields': 'nextPageToken,files(id,name,mimeType,trashed)',
+        'pageSize': '100',
+      };
+      if (pageToken != null) queryParameters['pageToken'] = pageToken;
+      final response = await _authorizedGet(
+        Uri.parse('$_apiRoot/files').replace(queryParameters: queryParameters),
+      );
+      try {
+        final decoded = jsonDecode(response.body);
+        if (decoded is! Map) throw const FormatException();
+        final rawFiles = decoded['files'];
+        if (rawFiles != null && rawFiles is! List) {
+          throw const FormatException();
+        }
+        for (final raw in (rawFiles as List? ?? const [])) {
+          if (raw is! Map || raw['trashed'] == true) continue;
+          final id = raw['id'];
+          final name = raw['name'];
+          final mimeType = raw['mimeType'];
+          if (id is! String ||
+              id.trim().isEmpty ||
+              name is! String ||
+              name.trim().isEmpty ||
+              mimeType is! String ||
+              mimeType.trim().isEmpty) {
+            throw const FormatException();
+          }
+          items[id] = _DriveListedItem(id: id, name: name, mimeType: mimeType);
+        }
+        final rawNextPageToken = decoded['nextPageToken'];
+        if (rawNextPageToken != null && rawNextPageToken is! String) {
+          throw const FormatException();
+        }
+        pageToken = rawNextPageToken as String?;
+        if (pageToken != null &&
+            pageToken.isNotEmpty &&
+            !seenPageTokens.add(pageToken)) {
+          throw const FormatException();
+        }
+      } on FormatException {
+        throw const DriveDataIntegrityException(
+          'drive_file_list_invalid',
+          'Drive 파일 목록 응답이 올바르지 않습니다.',
+        );
+      } on TypeError {
+        throw const DriveDataIntegrityException(
+          'drive_file_list_invalid',
+          'Drive 파일 목록 응답이 올바르지 않습니다.',
+        );
+      }
+    } while (pageToken != null && pageToken.isNotEmpty);
+    return List.unmodifiable(items.values);
+  }
+
   Future<String?> _findChildFolder(String parentId, String name) {
     return _findChild(
       parentId: parentId,
@@ -1477,6 +1869,18 @@ class _DriveChildFile {
   final String mimeType;
   final int byteLength;
   final DateTime modifiedAt;
+}
+
+class _DriveListedItem {
+  const _DriveListedItem({
+    required this.id,
+    required this.name,
+    required this.mimeType,
+  });
+
+  final String id;
+  final String name;
+  final String mimeType;
 }
 
 class _VerifiedJsonFile {

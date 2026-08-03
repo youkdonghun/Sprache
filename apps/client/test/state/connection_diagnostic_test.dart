@@ -245,24 +245,6 @@ void main() {
     app.dispose();
   });
 
-  test('missing Railway broker configuration has an admin action', () async {
-    final app = AppController(MemoryStudyStore());
-    await Future<void>.delayed(Duration.zero);
-    final controller = ConnectionController(_MissingBrokerService(), app);
-
-    await controller.connect();
-
-    final diagnostic = controller.state.diagnostic;
-    expect(diagnostic?.code, contains('OAUTH-BROKER-NOT-CONFIGURED'));
-    expect(diagnostic?.message, contains('Railway 환경변수'));
-    expect(diagnostic?.message, contains('Client Secret'));
-    expect(diagnostic?.retryable, isFalse);
-    expect(diagnostic?.stageLabel, '연결 준비 상태 확인');
-
-    controller.dispose();
-    app.dispose();
-  });
-
   test('transport abort is shown as a safe Korean retry diagnostic', () async {
     final app = AppController(MemoryStudyStore());
     await Future<void>.delayed(Duration.zero);
@@ -626,30 +608,6 @@ class _ClientSecretFailureService implements GoogleConnectionService {
       statusCode: 400,
       code: 'invalid_request',
       description: 'client_secret is missing.',
-    );
-  }
-
-  @override
-  Future<void> disconnect() async {}
-
-  @override
-  Future<Map<String, Object?>?> pullSnapshot() async => null;
-
-  @override
-  Future<void> pushSnapshot(Map<String, Object?> snapshot) async {}
-}
-
-class _MissingBrokerService implements GoogleConnectionService {
-  @override
-  Future<GoogleConnectionResult> connect({
-    GoogleConnectionStageCallback? onStage,
-  }) {
-    onStage?.call(GoogleConnectionStage.checkingConnection);
-    throw const GoogleOAuthException(
-      operation: 'Railway Google token exchange',
-      statusCode: 503,
-      code: 'oauth_broker_not_configured',
-      description: 'Desktop Google OAuth is not configured on Railway',
     );
   }
 

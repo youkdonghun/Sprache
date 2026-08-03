@@ -81,7 +81,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
       return Center(
         child: FilledButton(
           onPressed: () => context.go('/path'),
-          child: const Text('코스 여정으로 돌아가기'),
+          child: const Text('코스로 돌아가기'),
         ),
       );
     }
@@ -118,7 +118,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                             children: [
                               IconButton(
                                 onPressed: () => context.go('/path'),
-                                tooltip: '코스 여정으로',
+                                tooltip: '코스로 돌아가기',
                                 icon: const Icon(Icons.arrow_back_rounded),
                               ),
                               const SizedBox(width: 6),
@@ -154,7 +154,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                           const SizedBox(height: 24),
                           _SectionHeader(
                             title: '핵심 단어',
-                            caption: '먼저 눈으로 익히고 발음을 들어 보세요.',
+                            caption: '단어를 보고 발음을 들어 보세요.',
                             count: unit.words.length,
                           ),
                           const SizedBox(height: 10),
@@ -167,13 +167,13 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                           const SizedBox(height: 24),
                           _SectionHeader(
                             title: '핵심 문장',
-                            caption: '뜻을 확인한 뒤 문장 전체를 소리 내어 읽어 보세요.',
+                            caption: '뜻을 확인하고 문장을 소리 내어 읽어 보세요.',
                             count: unit.sentences.length,
                           ),
                           const SizedBox(height: 10),
                           if (unit.sentences.isEmpty)
                             const _EmptyUnitSection(
-                              message: '이 단원은 핵심 단어 연습에 집중합니다.',
+                              message: '이 단원은 핵심 단어를 집중해서 익혀요.',
                             )
                           else
                             for (final sentence in unit.sentences.take(4))
@@ -191,7 +191,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                           const SizedBox(height: 14),
                           _SectionHeader(
                             title: '추천 학습 순서',
-                            caption: '쉬운 인식에서 시작해 듣기와 말하기까지 이어갑니다.',
+                            caption: '보고 익힌 뒤 듣기와 말하기로 이어가세요.',
                             count: lessons.length,
                           ),
                           const SizedBox(height: 10),
@@ -245,7 +245,7 @@ class _UnitGuideScreenState extends ConsumerState<UnitGuideScreen> {
                               minimumSize: const Size.fromHeight(50),
                             ),
                             icon: const Icon(Icons.forum_rounded),
-                            label: const Text('이 표현을 실전 상황에서 써 보기'),
+                            label: const Text('실전 미션에서 써 보기'),
                           ),
                         ],
                       ),
@@ -324,7 +324,7 @@ class _PatternPreview extends StatelessWidget {
               onPressed: onOpen,
               style: OutlinedButton.styleFrom(minimumSize: const Size(146, 48)),
               icon: const Icon(Icons.arrow_forward_rounded),
-              label: const Text('노트 전체 보기'),
+              label: const Text('표현 노트 열기'),
             );
             if (constraints.maxWidth < 620) {
               return Column(
@@ -376,7 +376,7 @@ class _GoalCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '이 단원의 의사소통 목표',
+                    '이 단원에서 할 수 있는 말',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: colors.onPrimaryContainer,
                     ),

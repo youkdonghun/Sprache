@@ -11,7 +11,7 @@ class DelimitedChipInput extends StatelessWidget {
     this.onSubmitted,
     this.focusNode,
     this.textInputAction = TextInputAction.done,
-    this.helperText = '쉼표를 입력하면 각 항목을 답안으로 인식합니다.',
+    this.helperText = '여러 답은 쉼표로 나눠 입력하세요.',
     this.suffixIcon,
   });
 
@@ -53,7 +53,7 @@ class DelimitedChipInput extends StatelessWidget {
           ),
           validator: required
               ? (value) => value == null || parse(value).isEmpty
-                    ? '하나 이상 입력해 주세요.'
+                    ? '답을 하나 이상 입력해 주세요.'
                     : null
               : null,
         ),

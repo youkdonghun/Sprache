@@ -1,8 +1,7 @@
 param(
     [string]$Version = '',
-    [string]$ExpectedApiBaseUrl = 'https://sprache-api-production.up.railway.app',
     [string]$ExpectedPrivacyPolicyUrl = $(if ([string]::IsNullOrWhiteSpace($env:SPRACHE_PRIVACY_POLICY_URL)) {
-        'https://sprache-api-production.up.railway.app/privacy'
+        'https://youkdonghun.github.io/Sprache/privacy/'
     } else {
         $env:SPRACHE_PRIVACY_POLICY_URL
     }),
@@ -205,7 +204,7 @@ if ($RequireWindowsCodeSigning -and
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $binaryRows = @()
-$requiredBinaryTexts = @($ExpectedApiBaseUrl, $Version)
+$requiredBinaryTexts = @($Version)
 if (-not [string]::IsNullOrWhiteSpace($ExpectedPrivacyPolicyUrl)) {
     if (-not $ExpectedPrivacyPolicyUrl.StartsWith('https://', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Expected privacy policy URL must use HTTPS.'
@@ -214,6 +213,8 @@ if (-not [string]::IsNullOrWhiteSpace($ExpectedPrivacyPolicyUrl)) {
 }
 $forbiddenBinaryTexts = @(
     'http://127.0.0.1:3000',
+    'sprache-api-production.up.railway.app',
+    'API_BASE_URL',
     'GOOGLE_DESKTOP_CLIENT_SECRET'
 )
 

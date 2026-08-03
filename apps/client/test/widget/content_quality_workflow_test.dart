@@ -60,7 +60,7 @@ void main() {
       find.byKey(const Key('edit-quality-quality-user-item')),
       findsOneWidget,
     );
-    expect(find.text('기본팩 확인'), findsWidgets);
+    expect(find.text('내용 보기'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('quality-filter-exerciseNotReady')));
     await tester.pumpAndSettle();

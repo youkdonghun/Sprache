@@ -148,7 +148,7 @@ Future<void> _editStarterCorrection(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text('기본 언어팩 원본은 유지하고 이 메모만 로컬·Drive에 저장합니다.'),
+                const Text('기본 언어팩은 바꾸지 않고, 내 교정 메모만 저장해요.'),
                 const SizedBox(height: 12),
                 TextField(
                   controller: noteController,
@@ -156,13 +156,13 @@ Future<void> _editStarterCorrection(
                   minLines: 2,
                   maxLines: 4,
                   maxLength: 500,
-                  decoration: const InputDecoration(labelText: '무엇을 고쳐야 하나요?'),
+                  decoration: const InputDecoration(labelText: '어떤 부분을 고칠까요?'),
                 ),
                 const SizedBox(height: 8),
                 TextField(
                   controller: valueController,
                   maxLength: 300,
-                  decoration: const InputDecoration(labelText: '제안 값 (선택)'),
+                  decoration: const InputDecoration(labelText: '추천 수정값 (선택)'),
                 ),
               ],
             ),
@@ -420,7 +420,7 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
                         textInputAction: TextInputAction.search,
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.manage_search_rounded),
-                          hintText: '명령 또는 모든 주제의 자료 검색',
+                          hintText: '찾을 단어나 실행할 기능 입력',
                           suffixIcon: _query.isEmpty
                               ? null
                               : IconButton(
@@ -467,8 +467,8 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
                     Expanded(
                       child: Text(
                         _query.trim().isEmpty
-                            ? '명령을 선택하거나 자료를 검색하세요 · ↑↓ 이동 · Enter 실행'
-                            : '명령 ${commandResults.length}개 · 자료 ${results.length}개 · ↑↓ 이동 · Enter 실행',
+                            ? '기능을 바로 실행하거나 모든 주제의 자료를 찾아보세요'
+                            : '바로가기 ${commandResults.length}개 · 자료 ${results.length}개 · ↑↓ 이동 · Enter 실행',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ),
@@ -556,7 +556,7 @@ class _CommandPaletteResults extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 9, 18, 5),
             child: Text(
-              query.trim().isEmpty ? '빠른 명령' : '명령',
+              query.trim().isEmpty ? '빠른 실행' : '바로가기',
               style: Theme.of(context).textTheme.labelLarge?.copyWith(
                 color: colors.primary,
                 fontWeight: FontWeight.w800,
@@ -856,7 +856,7 @@ class _NoGlobalSearchResults extends StatelessWidget {
             const Text('일치하는 자료가 없어요.'),
             if (suggestions.isNotEmpty) ...[
               const SizedBox(height: 16),
-              Text('비슷한 로컬 자료', style: Theme.of(context).textTheme.labelLarge),
+              Text('비슷한 자료', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
               Wrap(
                 alignment: WrapAlignment.center,
@@ -903,18 +903,18 @@ class _GlobalSearchEmpty extends StatelessWidget {
             const Icon(Icons.manage_search_rounded, size: 44),
             const SizedBox(height: 12),
             Text(
-              '주제를 바꾸지 않고 전체 자료를 찾을 수 있어요.',
+              '지금 화면을 벗어나지 않고 모든 주제의 자료를 찾을 수 있어요.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 6),
             const Text(
-              '표현·뜻·읽는 법·예문·태그를 검색한 뒤 열기, 수정, 그룹 추가, 바로 학습을 실행하세요.',
+              '표현·뜻·읽는 법·예문·태그를 검색하고 바로 열거나 학습할 수 있어요.',
               textAlign: TextAlign.center,
             ),
             if (recent.isNotEmpty) ...[
               const SizedBox(height: 20),
-              Text('전체 최근 검색', style: Theme.of(context).textTheme.labelLarge),
+              Text('최근 검색', style: Theme.of(context).textTheme.labelLarge),
               const SizedBox(height: 8),
               Wrap(
                 alignment: WrapAlignment.center,

@@ -210,7 +210,7 @@ void main() {
 
     expect(find.text('오늘의 추천 시작'), findsNothing);
     expect(find.byKey(const Key('personalized-practice-hub')), findsOneWidget);
-    expect(find.text('오늘의 Practice Hub'), findsOneWidget);
+    expect(find.text('오늘의 추천 학습'), findsOneWidget);
     expect(find.byKey(const Key('open-session-builder')), findsOneWidget);
     expect(find.byKey(const Key('practice-category-퀴즈')), findsNothing);
 

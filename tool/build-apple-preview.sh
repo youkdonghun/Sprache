@@ -21,8 +21,8 @@ fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 client_dir="$repo_root/apps/client"
-version="${SPRACHE_VERSION:-1.33.0}"
-build_number="${SPRACHE_BUILD_NUMBER:-57}"
+version="${SPRACHE_VERSION:-1.34.0}"
+build_number="${SPRACHE_BUILD_NUMBER:-58}"
 artifact_dir="${SPRACHE_APPLE_ARTIFACT_DIR:-$repo_root/artifacts/apple-preview}"
 
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then

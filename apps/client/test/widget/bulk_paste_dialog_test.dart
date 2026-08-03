@@ -58,7 +58,7 @@ void main() {
 
     expect(find.byKey(const Key('bulk-paste-import-dialog')), findsOneWidget);
     expect(clipboardReads, 0);
-    expect(find.text('붙여넣으면 형식·개수·오류를 미리 확인합니다.'), findsOneWidget);
+    expect(find.text('붙여넣으면 형식과 개수를 먼저 보여 드려요.'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('bulk-paste-system-clipboard')));
     await tester.pumpAndSettle();

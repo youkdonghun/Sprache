@@ -341,7 +341,7 @@ void main() {
 
       await tester.drag(outerList, const Offset(0, -900));
       await tester.pumpAndSettle();
-      expect(find.text('2개를 자료실에 반영합니다.'), findsOneWidget);
+      expect(find.text('2개를 자료실에 저장해요.'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       tester.view.reset();

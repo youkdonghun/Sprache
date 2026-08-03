@@ -311,7 +311,7 @@ void main() {
         await tester.pumpAndSettle();
       }
 
-      expect(find.textContaining('바구니 6'), findsOneWidget);
+      expect(find.textContaining('저장 목록 6'), findsOneWidget);
       final basketList = find.byKey(const Key('quick-content-basket-list'));
       expect(
         find.descendant(of: basketList, matching: find.text('필수 완료')),
@@ -484,7 +484,7 @@ void main() {
   testWidgets('typing suggests similar items, examples, and tags', (
     tester,
   ) async {
-    const similar = LearningItem(
+    final similar = LearningItem(
       id: 'suggestion-accomplish',
       kind: LearningItemKind.word,
       learningLanguage: LanguageTag.english,
@@ -493,7 +493,7 @@ void main() {
       translations: ['성취하다'],
       acceptedAnswers: ['성취하다'],
       partOfSpeech: PartOfSpeech.verb,
-      tags: ['achievement'],
+      tags: ['achievement', learningGroupTag('성취')],
       capabilities: {
         ExerciseCapability.recognition,
         ExerciseCapability.production,
@@ -526,6 +526,15 @@ void main() {
       find.byKey(const Key('quick-content-similar-suggestion-accomplish')),
       findsOneWidget,
     );
+    expect(find.textContaining('accomplish · 성취하다 ·'), findsOneWidget);
+    final groupSuggestion = find.byKey(
+      const Key('quick-content-group-suggestion-성취'),
+    );
+    expect(groupSuggestion, findsOneWidget);
+    await tester.ensureVisible(groupSuggestion);
+    await tester.tap(groupSuggestion);
+    await tester.pump();
+    expect(find.textContaining('성취에 바로 저장'), findsOneWidget);
     final exampleChip = find.byKey(
       const Key('quick-content-example-suggestion-suggestion-example'),
     );
@@ -581,6 +590,48 @@ void main() {
     expect(find.byKey(const Key('quick-content-basket-list')), findsOneWidget);
     expect(find.text('persisted basket'), findsOneWidget);
   });
+
+  testWidgets(
+    'selection-only draft flushes pending debounce before recreation',
+    (tester) async {
+      final store = MemoryStudyStore(
+        preferences: StudyPreferences(
+          onboardingCompleted: true,
+          activeSubjectId: _subjectId,
+          learningGroups: [
+            LearningGroupDefinition(subjectId: _subjectId, name: '선택 전용'),
+          ],
+        ),
+      );
+      await _openQuickWord(tester, store);
+
+      final groupOptions = find.byKey(const Key('quick-content-group-options'));
+      await tester.ensureVisible(groupOptions);
+      await tester.tap(groupOptions);
+      await tester.pumpAndSettle();
+      final selection = find.byKey(const Key('quick-content-group-선택 전용'));
+      await tester.ensureVisible(selection);
+      await tester.tap(selection);
+      await tester.pump();
+
+      // Recreate immediately, before the normal draft debounce can fire.
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      await _openQuickWord(tester, store);
+
+      expect(
+        find.byKey(const Key('quick-content-draft-recovery')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('quick-content-draft-restore')));
+      await tester.pump();
+      expect(
+        find.byKey(const Key('quick-content-clear-group')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('선택 전용에 바로 저장'), findsOneWidget);
+    },
+  );
 
   testWidgets('saving one entry keeps the remaining basket recoverable', (
     tester,

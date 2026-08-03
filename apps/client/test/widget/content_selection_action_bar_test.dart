@@ -44,19 +44,19 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    await choose('저장 표시 전환');
+    await choose('즐겨찾기 바꾸기');
     expect(favorite, 1);
 
-    await choose('태그 일괄 변경');
+    await choose('선택한 자료의 태그 바꾸기');
     expect(tags, 1);
 
-    await choose('학습 포함·제외 전환');
+    await choose('학습에 넣거나 빼기');
     expect(visibility, 1);
 
     await choose('선택 자료 내보내기');
     expect(exported, 1);
 
-    await choose('사용자 자료 삭제');
+    await choose('내가 추가한 자료 삭제');
     expect(deleted, 1);
     expect(tester.takeException(), isNull);
   });

@@ -3,6 +3,7 @@ import 'content_management.dart';
 import 'import_distribution.dart';
 import 'learning_item.dart';
 import 'learning_group.dart';
+import 'mission_script.dart';
 import 'onboarding_profile.dart';
 import 'session_enhancements.dart';
 import 'smart_collection.dart';
@@ -497,6 +498,7 @@ class StudyPreferences {
     this.favoriteItemIds = const {},
     this.favoriteItemChangedAtById = const {},
     this.completedMissionIds = const {},
+    this.missionProgressCheckpoints = const {},
     this.preferredMode = StudyMode.mixed,
     this.sessionPlan = const StudySessionPlan(),
     this.savedSessionPlans = const [],
@@ -541,6 +543,7 @@ class StudyPreferences {
   final Set<String> favoriteItemIds;
   final Map<String, DateTime> favoriteItemChangedAtById;
   final Set<String> completedMissionIds;
+  final Map<String, MissionProgressCheckpoint> missionProgressCheckpoints;
   final StudyMode preferredMode;
   final StudySessionPlan sessionPlan;
   final List<StudySessionPlan> savedSessionPlans;
@@ -585,6 +588,7 @@ class StudyPreferences {
     Set<String>? favoriteItemIds,
     Map<String, DateTime>? favoriteItemChangedAtById,
     Set<String>? completedMissionIds,
+    Map<String, MissionProgressCheckpoint>? missionProgressCheckpoints,
     StudyMode? preferredMode,
     StudySessionPlan? sessionPlan,
     List<StudySessionPlan>? savedSessionPlans,
@@ -644,6 +648,8 @@ class StudyPreferences {
       favoriteItemChangedAtById:
           favoriteItemChangedAtById ?? this.favoriteItemChangedAtById,
       completedMissionIds: completedMissionIds ?? this.completedMissionIds,
+      missionProgressCheckpoints:
+          missionProgressCheckpoints ?? this.missionProgressCheckpoints,
       preferredMode: preferredMode ?? this.preferredMode,
       sessionPlan: sessionPlan ?? this.sessionPlan,
       savedSessionPlans: savedSessionPlans ?? this.savedSessionPlans,
@@ -706,6 +712,13 @@ class StudyPreferences {
     if (favoriteItemChangedAtById.isNotEmpty)
       'favoriteItemChangedAtById': _dateMapToJson(favoriteItemChangedAtById),
     'completedMissionIds': completedMissionIds.toList()..sort(),
+    if (missionProgressCheckpoints.isNotEmpty)
+      'missionProgressCheckpoints': {
+        for (final entry
+            in (missionProgressCheckpoints.entries.toList()
+              ..sort((left, right) => left.key.compareTo(right.key))))
+          entry.key: entry.value.toJson(),
+      },
     'preferredMode': preferredMode.name,
     'sessionPlan': sessionPlan.toJson(),
     'savedSessionPlans': [for (final plan in savedSessionPlans) plan.toJson()],
@@ -867,6 +880,9 @@ class StudyPreferences {
           ((json['completedMissionIds'] as List<Object?>?) ?? const [])
               .whereType<String>()
               .toSet(),
+      missionProgressCheckpoints: _parseMissionProgressCheckpoints(
+        json['missionProgressCheckpoints'],
+      ),
       preferredMode: StudyMode.values.firstWhere(
         (mode) => mode.name == rawMode,
         orElse: () => StudyMode.mixed,
@@ -986,6 +1002,11 @@ class StudyPreferences {
 
   bool hasCompletedMission(String courseId, int unitIndex) =>
       completedMissionIds.contains('$courseId:$unitIndex');
+
+  MissionProgressCheckpoint? missionCheckpointFor(
+    String courseId,
+    int unitIndex,
+  ) => missionProgressCheckpoints['$courseId:$unitIndex'];
 }
 
 String _safeSubjectId(Object? value, {required String fallback}) {
@@ -1027,6 +1048,27 @@ Set<String> _parseSubjectIdSet(Object? raw) {
     }
   }
   return Set.unmodifiable(ids.take(100));
+}
+
+Map<String, MissionProgressCheckpoint> _parseMissionProgressCheckpoints(
+  Object? raw,
+) {
+  if (raw is! Map) return const {};
+  final checkpoints = <String, MissionProgressCheckpoint>{};
+  for (final entry in raw.entries.take(100)) {
+    if (entry.key is! String || entry.value is! Map) continue;
+    try {
+      final checkpoint = MissionProgressCheckpoint.fromJson(
+        Map<String, Object?>.from(entry.value as Map),
+      );
+      if (checkpoint.storageKey == entry.key) {
+        checkpoints[checkpoint.storageKey] = checkpoint;
+      }
+    } on FormatException {
+      // Keep healthy checkpoints when one synchronized record is malformed.
+    }
+  }
+  return Map.unmodifiable(checkpoints);
 }
 
 List<ImportDistributionRule> _parseImportDistributionRules(Object? raw) {

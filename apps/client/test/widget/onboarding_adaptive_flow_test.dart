@@ -36,7 +36,7 @@ void main() {
     final drafts = <OnboardingProfile>[];
     await pumpPanel(tester, onDraft: drafts.add);
 
-    expect(find.text('1/6단계 · 선택은 이 기기에 바로 저장됩니다.'), findsOneWidget);
+    expect(find.text('1/6단계 · 고른 내용은 이 기기에 바로 저장돼요.'), findsOneWidget);
     expect(find.byKey(const Key('onboarding-previous')), findsOneWidget);
     expect(find.byKey(const Key('onboarding-later')), findsOneWidget);
 
@@ -112,8 +112,8 @@ void main() {
     expect(find.byKey(const Key('onboarding-sample-1')), findsOneWidget);
     expect(find.byKey(const Key('onboarding-sample-2')), findsOneWidget);
     expect(find.byKey(const Key('onboarding-sample-3')), findsOneWidget);
-    expect(find.textContaining('시간 제한 없음'), findsOneWidget);
-    expect(find.textContaining('샘플 학습에는 계정이 필요하지 않습니다'), findsOneWidget);
+    expect(find.textContaining('천천히 풀어도 괜찮아요'), findsOneWidget);
+    expect(find.textContaining('샘플 학습에는 계정이 필요 없어요'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('complete-first-run-setup')));
     await tester.pump();

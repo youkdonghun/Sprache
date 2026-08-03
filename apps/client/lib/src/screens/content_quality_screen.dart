@@ -58,12 +58,12 @@ class _ContentQualityScreenState extends ConsumerState<ContentQualityScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '콘텐츠 품질 점검',
+                          '학습 자료 점검',
                           style: Theme.of(context).textTheme.headlineSmall,
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          '저장을 막지 않고, 더 다양한 연습에 필요한 부분만 알려 드려요.',
+                          '자료는 그대로 저장할 수 있어요. 더 다양한 문제에 필요한 정보만 확인합니다.',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
@@ -127,7 +127,7 @@ class _ContentQualityScreenState extends ConsumerState<ContentQualityScreen> {
                     _cursor = (_cursor + 1) % filtered.length;
                   }),
                   icon: const Icon(Icons.skip_next_rounded),
-                  label: Text('다음 항목 고치기 · ${ordered.first.item.text}'),
+                  label: Text('다음 자료 수정 · ${ordered.first.item.text}'),
                 ),
                 const SizedBox(height: 12),
                 for (final result in ordered)
@@ -237,7 +237,7 @@ class _QualityItemCard extends StatelessWidget {
                     editable ? Icons.edit_outlined : Icons.lock_outline_rounded,
                     size: 18,
                   ),
-                  label: Text(editable ? '수정' : '기본팩 확인'),
+                  label: Text(editable ? '수정' : '내용 보기'),
                 ),
               ],
             ),
@@ -309,13 +309,13 @@ class _QualityEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 9),
           Text(
-            '이 조건의 품질 이슈가 없습니다.',
+            '이 조건에서 고칠 자료는 없어요.',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 3),
-          const Text('현재 자료는 선택한 연습에 사용할 준비가 되어 있어요.'),
+          const Text('선택한 연습에 바로 사용할 수 있는 자료예요.'),
         ],
       ),
     ),

@@ -72,7 +72,7 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
     if (source.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('클립보드에 문장이 없어요.')));
+      ).showSnackBar(const SnackBar(content: Text('클립보드에 나눌 문장이 없어요.')));
       return;
     }
     await _applySuggestion(source, sourceLabel: '클립보드');
@@ -88,9 +88,9 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
     final suggestion = _parser.suggest(source, language: widget.language);
     if (suggestion.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('$sourceLabel에서 토큰을 만들 수 없어요.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$sourceLabel을 낱말 조각으로 나눌 수 없어요.')),
+      );
       return;
     }
     if (widget.tokens.isNotEmpty) {
@@ -98,10 +98,10 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
         context: context,
         builder: (dialogContext) => AlertDialog(
           key: const Key('sentence-token-replace-dialog'),
-          title: const Text('현재 토큰을 바꿀까요?'),
+          title: const Text('현재 낱말 조각을 바꿀까요?'),
           content: Text(
-            '$sourceLabel에서 ${suggestion.length}개를 제안했어요. '
-            '적용한 뒤에도 각 토큰을 수정하거나 순서를 바꿀 수 있어요.',
+            '$sourceLabel을 ${suggestion.length}개로 나눴어요. '
+            '적용한 뒤에도 각 조각을 고치거나 순서를 바꿀 수 있어요.',
           ),
           actions: [
             TextButton(
@@ -145,7 +145,7 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
             children: [
               Expanded(
                 child: Text(
-                  '문장 배열 토큰',
+                  '문장 배열용 낱말 조각',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
@@ -154,8 +154,8 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
           ),
           const SizedBox(height: 4),
           Text(
-            '자동 분절하지 않습니다. 문장 배열 문제에서 하나씩 '
-            '선택할 단위를 직접 확인해 저장하세요.',
+            '문장 배열 문제에서 하나씩 누를 단위예요. '
+            '저장하기 전에 나눈 위치와 순서를 확인해 주세요.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 10),
@@ -169,13 +169,13 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
                     ? null
                     : _suggestFromSentence,
                 icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
-                label: const Text('현재 문장에서 제안'),
+                label: const Text('현재 문장 나누기'),
               ),
               OutlinedButton.icon(
                 key: const Key('sentence-token-paste'),
                 onPressed: _suggestFromClipboard,
                 icon: const Icon(Icons.content_paste_rounded, size: 18),
-                label: const Text('클립보드에서 제안'),
+                label: const Text('클립보드 문장 나누기'),
               ),
             ],
           ),
@@ -209,7 +209,7 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
                   textInputAction: TextInputAction.done,
                   onSubmitted: (_) => _addToken(),
                   decoration: const InputDecoration(
-                    labelText: '토큰 직접 추가',
+                    labelText: '낱말 조각 직접 추가',
                     hintText: '예: accomplished',
                     isDense: true,
                   ),
@@ -220,7 +220,7 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
                 key: const Key('sentence-token-add'),
                 onPressed: _addToken,
                 icon: const Icon(Icons.add_rounded),
-                tooltip: '토큰 추가',
+                tooltip: '낱말 조각 추가',
               ),
             ],
           ),
@@ -229,7 +229,7 @@ class _SentenceTokenEditorState extends State<SentenceTokenEditor> {
             inspection.message ??
                 (inspection.enablesSentenceExercises
                     ? '문장 배열과 빈칸 문제에 사용할 수 있어요.'
-                    : '토큰을 비우면 문장 배열과 빈칸 문제를 사용하지 않아요.'),
+                    : '비워 두면 문장 배열과 빈칸 문제에서는 나오지 않아요.'),
             key: const Key('sentence-token-validation'),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: inspection.canSave
@@ -271,14 +271,14 @@ class _EditTokenDialogState extends State<_EditTokenDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       key: const Key('sentence-token-edit-dialog'),
-      title: const Text('토큰 수정'),
+      title: const Text('낱말 조각 수정'),
       content: TextField(
         key: const Key('sentence-token-edit-field'),
         controller: _controller,
         autofocus: true,
         textInputAction: TextInputAction.done,
         onSubmitted: (value) => Navigator.pop(context, value),
-        decoration: const InputDecoration(labelText: '토큰'),
+        decoration: const InputDecoration(labelText: '낱말 조각'),
       ),
       actions: [
         TextButton(
@@ -339,7 +339,7 @@ class _EditableTokenChip extends StatelessWidget {
             ),
             onPressed: onEdit,
             onDeleted: onDelete,
-            tooltip: '토큰 수정',
+            tooltip: '낱말 조각 수정',
             side: BorderSide.none,
             backgroundColor: Colors.transparent,
           ),

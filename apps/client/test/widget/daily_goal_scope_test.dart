@@ -69,7 +69,7 @@ void main() {
         await tester.tap(find.byKey(const Key('home-settings')));
         await tester.pumpAndSettle();
         expect(find.text('일본어 하루 목표'), findsOneWidget);
-        expect(find.text('이 주제 오늘 15 XP · 계정 누적 400 XP'), findsOneWidget);
+        expect(find.text('오늘 15 XP · 전체 누적 400 XP'), findsOneWidget);
 
         await tester.tap(find.byKey(const Key('nav-home')));
         await tester.pumpAndSettle();

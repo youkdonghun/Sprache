@@ -55,7 +55,9 @@ class _StorageMaintenanceDialogState extends State<StorageMaintenanceDialog> {
       });
     } catch (_) {
       if (mounted) {
-        setState(() => _error = '보존 항목을 확인하지 못했습니다. 연결 상태와 폴더 권한을 확인해 주세요.');
+        setState(
+          () => _error = '오래된 저장 파일을 확인하지 못했습니다. Drive 연결과 폴더 권한을 확인해 주세요.',
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -81,7 +83,7 @@ class _StorageMaintenanceDialogState extends State<StorageMaintenanceDialog> {
       );
       if (!mounted) return;
       _showMessage(
-        '로컬 복구 사본 ${result.deletedCount}개 · ${_formatBytes(result.deletedBytes)}를 삭제했습니다.',
+        '복구 사본 ${result.deletedCount}개(${_formatBytes(result.deletedBytes)})를 삭제했습니다.',
       );
       await _refresh();
     } catch (_) {
@@ -96,10 +98,10 @@ class _StorageMaintenanceDialogState extends State<StorageMaintenanceDialog> {
     final service = widget.remoteService;
     if (inventory == null || service == null || _selectedRemote.isEmpty) return;
     final approved = await _confirm(
-      title: 'Drive의 이전 파일을 정리할까요?',
+      title: '이전 Drive 파일을 휴지통으로 옮길까요?',
       body:
-          '선택한 ${_selectedRemote.length}개는 현재 manifest가 참조하지 않고 '
-          '30일 이상 지난 파일입니다. 영구 삭제하지 않고 Google Drive 휴지통으로 이동합니다.',
+          '선택한 ${_selectedRemote.length}개는 현재 저장본에서 더 이상 쓰지 않고 '
+          '30일 넘게 지난 파일입니다. 영구 삭제하지 않고 Google Drive 휴지통으로 옮깁니다.',
       action: '휴지통으로 이동',
     );
     if (!approved || !mounted) return;
@@ -111,11 +113,11 @@ class _StorageMaintenanceDialogState extends State<StorageMaintenanceDialog> {
       );
       if (!mounted) return;
       _showMessage(
-        'Drive 파일 ${result.trashedCount}개 · ${_formatBytes(result.trashedBytes)}를 휴지통으로 옮겼습니다.',
+        'Drive 파일 ${result.trashedCount}개(${_formatBytes(result.trashedBytes)})를 휴지통으로 옮겼습니다.',
       );
       await _refresh();
     } catch (_) {
-      if (mounted) _showMessage('manifest가 바뀌었거나 Drive 정리에 실패했습니다. 새로고침해 주세요.');
+      if (mounted) _showMessage('Drive 파일 목록이 바뀌었습니다. 다시 확인한 뒤 시도해 주세요.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -262,7 +264,7 @@ class _LocalRetentionSection extends StatelessWidget {
     final items = inventory?.items ?? const <LocalRecoveryBackup>[];
     return _RetentionCard(
       key: const Key('local-recovery-retention'),
-      title: '로컬 DB 복구 사본',
+      title: '이 기기의 복구 사본',
       subtitle: items.isEmpty
           ? '보존된 사본이 없습니다.'
           : '${items.length}개 · 정리 가능 ${inventory!.eligibleCount}개',
@@ -285,14 +287,14 @@ class _LocalRetentionSection extends StatelessWidget {
             subtitle: Text(
               '${_formatDateTime(item.modifiedAt)} · ${_formatBytes(item.byteLength)} · ${item.fileCount}개 파일'
               '${item.itemCount == null ? '' : ' · 항목 ${item.itemCount}개'}'
-              '${item.sha256Hex == null ? '' : ' · ${item.verified ? 'SHA-256 확인' : '검증 실패'}'}'
+              '${item.sha256Hex == null ? '' : ' · ${item.verified ? '파일 확인 완료' : '파일 손상됨'}'}'
               '${item.eligibleForCleanup ? '' : ' · 30일 보존 중'}',
             ),
             secondary: item.sha256Hex == null
                 ? null
                 : IconButton(
                     key: Key('restore-checkpoint-${item.id}'),
-                    tooltip: item.verified ? '이 안전 지점 복원' : '손상되어 복원할 수 없음',
+                    tooltip: item.verified ? '이 사본으로 복원' : '손상되어 복원할 수 없음',
                     onPressed: enabled && item.verified && onRestore != null
                         ? () => onRestore!(item)
                         : null,
@@ -326,16 +328,16 @@ class _DriveRetentionSection extends StatelessWidget {
     final items = inventory?.items ?? const <DriveRetentionItem>[];
     return _RetentionCard(
       key: const Key('drive-retention'),
-      title: 'Google Drive 이전 동기화 파일',
+      title: 'Drive의 이전 저장 파일',
       subtitle: !connected
           ? 'Drive 연결 후 확인할 수 있습니다.'
           : items.isEmpty
-          ? '현재 manifest가 참조하지 않는 파일이 없습니다.'
+          ? '현재 저장본에서 쓰지 않는 파일이 없습니다.'
           : '${items.length}개 · 정리 가능 ${inventory!.eligibleCount}개',
       action: OutlinedButton.icon(
         onPressed: onTrash,
         icon: const Icon(Icons.delete_sweep_outlined),
-        label: const Text('선택 휴지통 이동'),
+        label: const Text('선택 항목 휴지통으로'),
       ),
       children: [
         for (final item in items)

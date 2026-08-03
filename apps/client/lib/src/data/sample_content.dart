@@ -730,7 +730,7 @@ const _japaneseSentences = <_SentenceSeed>[
   ),
   _SentenceSeed(
     'バスが遅れています。',
-    '버스가 늦고 있어요.',
+    '버스가 늦어요.',
     ['バスが', '遅れて', 'います。'],
     reading: 'バスがおくれています',
     romanization: 'basu ga okureteimasu',

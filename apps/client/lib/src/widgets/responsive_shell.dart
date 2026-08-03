@@ -13,6 +13,7 @@ import '../domain/app_experience_preferences.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
 import '../state/device_preferences_state.dart';
+import '../state/global_app_error_state.dart';
 import '../state/local_storage_state.dart';
 import '../state/navigation_guard_state.dart';
 import '../state/pending_import_state.dart';
@@ -62,6 +63,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
   int? _pendingDestination;
   bool _destinationSwitchScheduled = false;
   bool _fileDragActive = false;
+  String? _dismissedGlobalErrorFingerprint;
 
   int get _selectedIndex => widget.navigationShell.currentIndex;
 
@@ -124,7 +126,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
           label: '자료',
           menus: [
             PlatformMenuItem(
-              label: '명령 팔레트',
+              label: '전체 검색',
               shortcut: const SingleActivator(
                 LogicalKeyboardKey.keyK,
                 meta: true,
@@ -188,7 +190,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('xlsx, csv, tsv, json, jsonl 파일만 가져올 수 있어요.'),
+            content: Text('Excel, CSV, TSV, JSON, JSONL 파일을 가져올 수 있어요.'),
           ),
         );
       }
@@ -256,10 +258,10 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '놓으면 안전한 가져오기 미리보기가 열립니다',
+                            '놓으면 가져올 내용을 먼저 확인할 수 있어요',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          const Text('기존 자료는 검토·확인 전까지 바뀌지 않아요.'),
+                          const Text('내용을 확인하고 저장하기 전까지 기존 자료는 바뀌지 않아요.'),
                         ],
                       ),
                     ),
@@ -338,22 +340,45 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
         .read(appControllerProvider.notifier)
         .activeSubject;
     final connection = ref.watch(connectionControllerProvider);
-    final storageIndicator = _StorageIndicator.from(localStorage, connection);
-    ref.listen<String?>(
+    final workspaceError = ref.watch(
       windowWorkspaceControllerProvider.select((state) => state.errorMessage),
-      (previous, next) {
-        if (next == null || next == previous) return;
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            SnackBar(
-              key: const Key('window-workspace-error'),
-              content: Text(next),
-            ),
-          );
-        });
-      },
     );
+    final manuallyReportedError = ref.watch(globalAppErrorProvider);
+    final storageIndicator = _StorageIndicator.from(localStorage, connection);
+    final sourceError = connection.errorMessage != null
+        ? GlobalAppErrorNotice(
+            source: 'connection',
+            message: connection.errorMessage!,
+            actionRoute: '/settings?focus=storage',
+          )
+        : localStorage.errorMessage != null
+        ? GlobalAppErrorNotice(
+            source: 'local-storage',
+            message: localStorage.errorMessage!,
+            actionRoute: '/settings?focus=storage',
+          )
+        : workspaceError != null
+        ? GlobalAppErrorNotice(
+            source: 'window-workspace',
+            message: workspaceError,
+            actionRoute: '/settings?focus=windows',
+          )
+        : null;
+    final candidateError = manuallyReportedError ?? sourceError;
+    final candidateFingerprint = candidateError == null
+        ? null
+        : '${candidateError.source}\u001f${candidateError.message}';
+    if (candidateError == null && _dismissedGlobalErrorFingerprint != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _dismissedGlobalErrorFingerprint != null) {
+          setState(() => _dismissedGlobalErrorFingerprint = null);
+        }
+      });
+    }
+    final visibleError =
+        candidateFingerprint == _dismissedGlobalErrorFingerprint
+        ? null
+        : candidateError;
     final layout =
         Theme.of(context).extension<AppLayoutDensity>() ??
         AppLayoutDensity.fromPreference(
@@ -396,6 +421,29 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                 );
               }
 
+              Widget mainContentWithError(Widget child) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (visibleError != null)
+                      _GlobalAppErrorStrip(
+                        notice: visibleError,
+                        onOpen: () => _goProtected(visibleError.actionRoute),
+                        onDismiss: () {
+                          setState(
+                            () => _dismissedGlobalErrorFingerprint =
+                                candidateFingerprint,
+                          );
+                          if (identical(visibleError, manuallyReportedError)) {
+                            ref.read(globalAppErrorProvider.notifier).dismiss();
+                          }
+                        },
+                      ),
+                    Expanded(child: child),
+                  ],
+                );
+              }
+
               if (showSidebar) {
                 final extended =
                     constraints.maxWidth >= 1060 &&
@@ -424,7 +472,9 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                             experience.subjectSwitcherStyle ==
                             AppSubjectSwitcherStyle.compact,
                       ),
-                      Expanded(child: desktopMainContent()),
+                      Expanded(
+                        child: mainContentWithError(desktopMainContent()),
+                      ),
                     ],
                   ),
                 );
@@ -449,7 +499,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                             experience.subjectSwitcherStyle ==
                             AppSubjectSwitcherStyle.compact,
                       ),
-                      Expanded(child: _mainContent()),
+                      Expanded(child: mainContentWithError(_mainContent())),
                     ],
                   ),
                 ),
@@ -606,8 +656,8 @@ class _DesktopSidebar extends StatelessWidget {
                 extended: false,
                 selected: false,
                 icon: Icons.manage_search_rounded,
-                label: '명령·검색',
-                tooltip: '명령 팔레트 · Ctrl+K',
+                label: '전체 검색',
+                tooltip: '전체 검색 · Ctrl+K',
                 onTap: onSearchPressed,
               ),
               SizedBox(height: sidebarItemGap),
@@ -777,7 +827,7 @@ class _SidebarUtilityToolbar extends StatelessWidget {
                     key: const Key('open-global-search'),
                     onPressed: onSearch,
                     icon: const Icon(Icons.manage_search_rounded, size: 18),
-                    label: Text('명령 · $commandShortcut'),
+                    label: Text('전체 검색 · $commandShortcut'),
                     style: const ButtonStyle(
                       minimumSize: WidgetStatePropertyAll(Size.fromHeight(44)),
                       padding: WidgetStatePropertyAll(
@@ -997,7 +1047,7 @@ class _SubjectContextBar extends StatelessWidget {
               dimension: 44,
               child: IconButton(
                 key: const Key('open-global-search'),
-                tooltip: '명령 팔레트 · Ctrl/⌘+K',
+                tooltip: '전체 검색 · Ctrl/⌘+K',
                 onPressed: onSearchPressed,
                 icon: const Icon(Icons.manage_search_rounded),
               ),
@@ -1043,6 +1093,73 @@ enum _StorageIndicatorKind {
   local,
   setupRequired,
   attention,
+}
+
+class _GlobalAppErrorStrip extends StatelessWidget {
+  const _GlobalAppErrorStrip({
+    required this.notice,
+    required this.onOpen,
+    required this.onDismiss,
+  });
+
+  final GlobalAppErrorNotice notice;
+  final VoidCallback onOpen;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      key: const Key('global-app-error-strip'),
+      container: true,
+      liveRegion: true,
+      label: '문제가 발생했습니다. ${notice.message}',
+      child: Material(
+        color: colors.errorContainer,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(start: 12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 20,
+                  color: colors.onErrorContainer,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    notice.message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.onErrorContainer,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  key: const Key('global-app-error-open'),
+                  onPressed: onOpen,
+                  tooltip: '해결 방법 보기',
+                  color: colors.onErrorContainer,
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                ),
+                IconButton(
+                  key: const Key('global-app-error-dismiss'),
+                  onPressed: onDismiss,
+                  tooltip: '안내 닫기',
+                  color: colors.onErrorContainer,
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _StorageIndicator {

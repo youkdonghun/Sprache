@@ -57,6 +57,7 @@
 
 - `favoriteItemIds`: 사용자가 별표로 저장한 표현 ID
 - `completedMissionIds`: `courseId:unitIndex` 형식의 언어별 실전 미션 완료 키
+- `missionProgressCheckpoints`: 진행 중 미션의 장면·선택 분기·도움 횟수와 갱신 시각을 보존하는 `courseId:unitIndex` 키 맵
 - `excludedItemIds`: 학습 큐에서 제외한 표현 ID
 
 세 집합은 SQLite 설정 JSON에 먼저 저장되고 Drive snapshot의 `settings`에 포함된다. 사용자 표현을 삭제할 때 해당 ID는 즐겨찾기에서도 제거하지만, 기존 학습 기록은 통계 보존을 위해 남긴다.

@@ -66,9 +66,9 @@ canonical 파일의 ID, revision, SHA-256을 기록한다. push는 파일을 새
 - 인증 토큰, Drive 파일·폴더 ID, 로컬 경로를 제외한 진단 JSON을 내보낸다.
 
 동기화 정책, 네트워크 정책, 충돌 선택, 이력과 복구 지점은 기기별 로컬 설정이다.
-학습 콘텐츠·진도·음성은 Railway API나 PostgreSQL에 저장하지 않는다. Railway는
-기존과 같이 검증된 계정과 Drive 연결 정보만 보관하며, 음성 녹음은 Drive에도
-올리지 않는다.
+학습 콘텐츠·진도는 로컬 SQLite와 사용자가 고른 Drive `WordStudyData`에만
+저장한다. 숨김 `appDataFolder`에는 이 폴더의 ID·이름 포인터만 두고, 음성
+녹음은 Drive에도 올리지 않는다.
 
 ## SQLite·로컬 미러·Drive의 관계
 
@@ -84,7 +84,7 @@ canonical 파일의 ID, revision, SHA-256을 기록한다. push는 파일을 새
   재시도한다. 원본 업로드 파일을 staging하거나 로컬 폴더로 자동 failover하지
   않는다.
 - 명시적 Google 연결 해제: 현재 기기의 인증만 정리하고 설정된 로컬 미러를
-  다시 활성화한다. Railway 바인딩, Drive 파일, 로컬 폴더 파일은 삭제하지 않는다.
+  다시 활성화한다. 숨김 연결 포인터, Drive 파일, 로컬 폴더 파일은 삭제하지 않는다.
 
 로컬 미러도 SHA-256과 manifest-last 커밋을 사용한다. 섹션과 전체 archive를
 새 generation 파일로 검증해 쓴 뒤 현재 manifest를 `manifest.previous.json`으로

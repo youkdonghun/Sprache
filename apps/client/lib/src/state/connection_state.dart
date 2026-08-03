@@ -62,11 +62,11 @@ class PlatformSyncNetworkInspector implements SyncNetworkInspector {
 
 extension GoogleConnectionStageLabel on GoogleConnectionStage {
   String get label => switch (this) {
-    GoogleConnectionStage.checkingConnection => '연결 준비 상태 확인',
+    GoogleConnectionStage.checkingConnection => 'Google 연결 준비 확인',
     GoogleConnectionStage.signIn => '1/4 Google 계정 선택·동의',
     GoogleConnectionStage.folderSelection => '2/4 Drive 폴더 선택',
     GoogleConnectionStage.preparingDrive => '3/4 Sprache 저장 폴더 확인',
-    GoogleConnectionStage.linkingAccount => '4/4 Railway 계정 연결',
+    GoogleConnectionStage.linkingAccount => '4/4 Drive 연결 정보 저장',
     GoogleConnectionStage.pulling => '1/3 Drive 데이터 확인',
     GoogleConnectionStage.merging => '2/3 로컬·Drive 안전 병합',
     GoogleConnectionStage.pushing => '3/3 변경 사항 업로드',
@@ -1296,15 +1296,15 @@ class ConnectionController extends StateNotifier<ConnectionState> {
             '그 Client ID로 앱을 다시 빌드해 주세요. Client Secret은 앱에 넣지 않습니다.';
       }
       return switch (error.code) {
-        'oauth_broker_not_configured' =>
-          'Railway의 Windows Google OAuth 중계 설정이 아직 완료되지 않았습니다. '
-              '관리자가 Railway 환경변수에 데스크톱 Client ID와 Client Secret을 등록한 뒤 다시 시도해 주세요.',
-        'oauth_broker_upstream_failed' ||
-        'oauth_broker_invalid_response' ||
-        'oauth_broker_health_failed' ||
-        'oauth_broker_unreachable' =>
-          'Railway에서 Google 토큰 서버에 연결하지 못했습니다. 로컬 데이터는 유지됩니다. '
-              '잠시 후 다시 시도해 주세요.',
+        'google_client_id_missing' =>
+          'Google Cloud의 Windows용 OAuth Client ID가 설정되지 않았습니다. '
+              '“데스크톱 앱” 유형의 Client ID를 빌드 설정에 추가해 주세요.',
+        'google_oauth_timeout' ||
+        'google_oauth_unreachable' ||
+        'google_oauth_invalid_response' ||
+        'google_oauth_http_error' =>
+          'Google 인증 서버에 연결하지 못했습니다. 로컬 데이터는 유지됩니다. '
+              '인터넷 연결을 확인하고 잠시 후 다시 시도해 주세요.',
         'redirect_uri_mismatch' =>
           'Google OAuth 리디렉션 주소가 데스크톱 클라이언트 설정과 맞지 않습니다. '
               'Google Cloud에서 앱 유형이 “데스크톱 앱”인지 확인해 주세요.',
@@ -1454,7 +1454,6 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     }
     if (error is GoogleOAuthException) {
       if (_isClientSecretConfigurationError(error)) return false;
-      if (error.code == 'oauth_broker_not_configured') return false;
       return !const {
         'invalid_client',
         'redirect_uri_mismatch',

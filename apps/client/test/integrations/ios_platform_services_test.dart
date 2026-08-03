@@ -11,7 +11,6 @@ void main() {
     try {
       final service = createGoogleConnectionService(
         config: const AppConfig(
-          apiBaseUrl: 'https://sprache-api.example',
           googleAndroidClientId: 'android-client-id',
           googleDesktopClientId: 'desktop-client-id',
           googleServerClientId: 'server-client-id',

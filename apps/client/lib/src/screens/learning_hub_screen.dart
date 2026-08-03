@@ -58,7 +58,7 @@ class LearningHubScreen extends ConsumerWidget {
       final selectedIds = session.itemIds.where(availableIds.contains).toSet();
       if (selectedIds.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('최근 학습 자료가 변경되어 기본 맞춤 설정을 엽니다.')),
+          const SnackBar(content: Text('최근 학습 자료가 바뀌어 기본 설정으로 열었어요.')),
         );
         context.push('/session-builder');
         return;
@@ -195,7 +195,7 @@ class LearningHubScreen extends ConsumerWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        '먼저 익히고, 문제로 확인하고, 소리 내어 말해 보세요.',
+                                        '익힌 뒤 문제를 풀고, 소리 내어 말해 보세요.',
                                         style: Theme.of(
                                           context,
                                         ).textTheme.bodyMedium,
@@ -357,7 +357,7 @@ class _RecentSubjectSessionCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                 ),
                 icon: const Icon(Icons.replay_rounded, size: 18),
-                label: const Text('다시'),
+                label: const Text('다시 학습'),
               ),
             ],
           ),
@@ -583,7 +583,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     if (first == null || !_availabilityFor(first).enabled) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('첫 게임에 필요한 학습 자료가 부족합니다.')));
+      ).showSnackBar(const SnackBar(content: Text('첫 게임을 시작할 자료가 부족해요.')));
       return;
     }
     await _openActivity(
@@ -907,7 +907,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'due-review',
           icon: Icons.event_repeat_rounded,
           title: '오늘 복습',
-          description: '복습 기한이 온 표현부터 정리',
+          description: '복습할 표현부터 정리해요',
           route: '/study?mode=review',
           badge: '복습',
         ),
@@ -921,7 +921,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'recent-wrong',
           icon: Icons.history_toggle_off_rounded,
           title: '최근 오답',
-          description: '최근 놓친 표현만 다시 확인',
+          description: '최근 틀린 표현만 다시 봐요',
           route: '/study?mode=weak&historyFilter=wrongOnly',
           badge: '오답',
         ),
@@ -937,7 +937,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'words-review',
           icon: Icons.abc_rounded,
           title: '단어',
-          description: '새 단어와 복습 단어를 짧게 학습',
+          description: '새 단어와 복습 단어를 짧게 익혀요',
           route: '/study?mode=words',
           badge: '단어',
         ),
@@ -955,7 +955,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'listening-dictation',
           icon: Icons.headphones_rounded,
           title: '듣기',
-          description: '소리를 듣고 표현을 확인',
+          description: '소리를 듣고 표현을 확인해요',
           route: '/study?mode=listening',
           badge: '듣기',
         ),
@@ -969,7 +969,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'pronunciation',
           icon: Icons.record_voice_over_rounded,
           title: '말하기',
-          description: '듣고 따라 하며 발음 확인',
+          description: '듣고 따라 하며 발음을 확인해요',
           route: '/pronunciation',
           badge: '말하기',
         ),
@@ -1281,7 +1281,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'mixed-quiz',
           icon: Icons.shuffle_rounded,
           title: '혼합 퀴즈',
-          description: '여러 문제를 짧게 섞어 풀기',
+          description: '여러 문제를 섞어 짧게 풀어요',
           route: '/study?mode=mixed',
           badge: '혼합',
         ),
@@ -1289,7 +1289,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'meaning-choice',
           icon: Icons.touch_app_rounded,
           title: '뜻 고르기',
-          description: '표현에 맞는 뜻 선택',
+          description: '표현에 맞는 뜻을 골라요',
           route: '/study?mode=meaning',
           badge: '선택',
         ),
@@ -1297,7 +1297,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'production-writing',
           icon: Icons.keyboard_rounded,
           title: '직접 쓰기',
-          description: '뜻을 보고 표현 입력',
+          description: '뜻을 보고 표현을 써요',
           route: '/study?mode=production',
           badge: '쓰기',
         ),
@@ -1305,7 +1305,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'sentence-cloze',
           icon: Icons.space_bar_rounded,
           title: '문장 빈칸',
-          description: '문맥에 맞는 표현 넣기',
+          description: '문맥에 맞는 표현을 넣어요',
           route: '/study?mode=cloze',
           badge: '문장',
         ),
@@ -1313,7 +1313,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'sentence-order',
           icon: Icons.reorder_rounded,
           title: '문장 배열',
-          description: '토큰을 순서대로 조립',
+          description: '단어를 올바른 순서로 놓아요',
           route: '/study?mode=sentenceOrder',
           badge: '문장',
         ),
@@ -1321,7 +1321,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'listening-dictation',
           icon: Icons.headphones_rounded,
           title: '듣고 쓰기',
-          description: '소리를 듣고 받아쓰기',
+          description: '소리를 듣고 받아써요',
           route: '/study?mode=listening',
           badge: '듣기',
         ),
@@ -1329,7 +1329,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'listening-discrimination',
           icon: Icons.hearing_rounded,
           title: '소리 구별',
-          description: '발음 표기 또는 철자 유사도를 바탕으로 소리를 듣고 표현 선택',
+          description: '소리를 듣고 가장 가까운 표현을 골라요',
           route:
               '/study?mode=listening&practiceActivityId=listening-discrimination',
           badge: '듣기',
@@ -1338,7 +1338,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'match-sprint',
           icon: Icons.grid_view_rounded,
           title: '매치 스프린트',
-          description: '표현과 뜻을 빠르게 연결',
+          description: '표현과 뜻을 빠르게 연결해요',
           route: '/study?mode=mixed&match=true',
           badge: '매치',
         ),
@@ -1346,7 +1346,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'exam-simulator',
           icon: Icons.assignment_turned_in_rounded,
           title: '시험 시뮬레이터',
-          description: '시간·문항·합격선을 정해 실전 점검',
+          description: '시간과 합격 점수를 정해 실전처럼 풀어요',
           route: '/study?mode=mixed&exam=true',
           badge: '시험',
         ),
@@ -1356,7 +1356,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'word-cards',
           icon: Icons.style_rounded,
           title: '단어 카드',
-          description: '표현과 뜻을 차분히 익히기',
+          description: '표현과 뜻을 차분히 익혀요',
           route: '/cards?kind=words',
           badge: '암기',
         ),
@@ -1364,7 +1364,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'sentence-cards',
           icon: Icons.menu_book_rounded,
           title: '문장 카드',
-          description: '문장 의미와 구조 익히기',
+          description: '문장의 뜻과 구조를 익혀요',
           route: '/cards?kind=sentences',
           badge: '암기',
         ),
@@ -1372,7 +1372,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'unit-notes',
           icon: Icons.auto_stories_rounded,
           title: '단원 노트',
-          description: '문형과 사용 팁 확인',
+          description: '문형과 사용법을 살펴봐요',
           route: '/notes/${widget.recommendedUnitIndex}',
           badge: '노트',
         ),
@@ -1392,7 +1392,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'pronunciation',
           icon: Icons.mic_rounded,
           title: '발음 따라하기',
-          description: '말하고 일치도 확인',
+          description: '직접 말하고 발음을 확인해요',
           route: '/pronunciation',
           badge: '발음',
         ),
@@ -1400,7 +1400,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'situation-missions',
           icon: Icons.forum_rounded,
           title: '실전 상황 미션',
-          description: '듣기·뜻·말하기 연결',
+          description: '상황에 맞춰 듣고 말해요',
           route: '/missions',
           badge: '실전',
         ),
@@ -1408,7 +1408,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'weak-review',
           icon: Icons.bolt_rounded,
           title: '취약 복습',
-          description: '정확도 낮은 표현 집중',
+          description: '자주 틀린 표현을 집중해서 봐요',
           route: '/study?mode=weak',
           badge: '복습',
         ),
@@ -1416,7 +1416,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'course-path',
           icon: Icons.route_rounded,
           title: '코스 여정',
-          description: '단원별 학습 순서 보기',
+          description: '단원별 학습 순서를 확인해요',
           route: '/path',
           badge: '코스',
         ),
@@ -1483,7 +1483,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     if (available.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('깜짝 게임 조건에 맞는 활동이 없습니다.'),
+          content: const Text('이 조건으로 시작할 수 있는 게임이 없어요.'),
           action: SnackBarAction(
             label: '조건 초기화',
             onPressed: () => _updateCatalog(
@@ -1655,7 +1655,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
                   Text('학습 방식', style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 3),
                   Text(
-                    '퀴즈·암기·실전 중 원하는 방식을 바로 선택하세요.',
+                    '퀴즈, 암기, 실전 연습 중 원하는 방식을 고르세요.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
@@ -1899,7 +1899,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
                 (category) => _visibleActivities(category, catalog).isEmpty,
               )) ...[
             const SizedBox(height: 18),
-            const Center(child: Text('검색 조건에 맞는 게임이 없습니다.')),
+            const Center(child: Text('조건에 맞는 게임이 없어요.')),
           ],
           if (hidden.isNotEmpty) ...[
             const SizedBox(height: 18),
@@ -1907,7 +1907,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
               key: const Key('hidden-practice-games'),
               tilePadding: EdgeInsets.zero,
               title: Text('숨긴 게임 ${hidden.length}개'),
-              subtitle: const Text('원할 때 언제든 다시 표시할 수 있습니다.'),
+              subtitle: const Text('언제든 다시 표시할 수 있어요.'),
               children: [
                 Align(
                   alignment: Alignment.centerLeft,
@@ -1975,7 +1975,7 @@ class _MissionHubPanel extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                       Text(
-                        '추천 Unit ${recommendedUnitIndex + 1} · 선택에 따라 대화와 결말이 달라집니다.',
+                        'Unit ${recommendedUnitIndex + 1} 추천 · 선택에 따라 대화가 달라져요.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -2209,7 +2209,7 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
               children: [
                 Expanded(
                   child: Text(
-                    '오늘의 Practice Hub',
+                    '오늘의 추천 학습',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -2223,7 +2223,7 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
                       minimumSize: const Size(0, 44),
                     ),
                     icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                    label: const Text('알아서 추천'),
+                    label: const Text('추천대로 시작'),
                   ),
               ],
             ),
@@ -2247,7 +2247,7 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
               children: [
                 Expanded(
                   child: Text(
-                    '추천 ${widget.recommendations.length}개 · 휠·드래그 또는 ← →',
+                    '추천 ${widget.recommendations.length}개 · 좌우로 넘겨 보세요',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -2568,7 +2568,7 @@ class _DailyQuestBoard extends StatelessWidget {
             for (final (index, activity) in activities.indexed) ...[
               if (index == 0) ...[
                 Text(
-                  '각 방식을 한 번 완료하세요. 학습 결과와 XP는 평소처럼 기록됩니다.',
+                  '서로 다른 방식으로 하나씩 완료해 보세요. XP와 학습 결과는 그대로 기록돼요.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 const SizedBox(height: 6),
@@ -2822,7 +2822,7 @@ class _SurpriseSettingsSheetState extends State<_SurpriseSettingsSheet> {
           children: [
             Text('깜짝 게임 조건', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 4),
-            const Text('조건에 맞는 실행 가능한 게임 중 하나를 무작위로 고릅니다.'),
+            const Text('이 조건으로 시작할 수 있는 게임 하나를 골라 드려요.'),
             const SizedBox(height: 14),
             const Text('예상 시간', style: TextStyle(fontWeight: FontWeight.w800)),
             const SizedBox(height: 6),
@@ -2958,7 +2958,7 @@ class _PracticePlaylistPanel extends StatelessWidget {
                 icon: const Icon(Icons.save_outlined),
                 label: Text(
                   selectedIds.length < 2
-                      ? '게임을 ${2 - selectedIds.length}개 더 담아 주세요'
+                      ? '게임을 ${2 - selectedIds.length}개 더 골라 주세요'
                       : '${selectedIds.length}개 게임 묶음 저장',
                 ),
               ),
@@ -3838,7 +3838,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                     ),
                     child: Text(
                       '${widget.activity.title}에 사용할 수 있는 자료가 없습니다. '
-                      '자료실에서 별표·문장 토큰·듣기 자료를 확인해 주세요.',
+                      '자료실에서 필요한 표현을 추가하거나 설정을 확인해 주세요.',
                       style: TextStyle(color: colors.onErrorContainer),
                     ),
                   ),
@@ -3850,7 +3850,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                       router.go('/library');
                     },
                     icon: const Icon(Icons.menu_book_rounded),
-                    label: const Text('자료실에서 준비하기'),
+                    label: const Text('자료 추가하기'),
                   ),
                 ] else ...[
                   SizedBox(
@@ -3889,7 +3889,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                     ),
                   ),
                   Text(
-                    '짧은 시간 프리셋을 고르거나 문제 수를 직접 조정하세요.',
+                    '시간을 고르거나 문제 수를 직접 정하세요.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 8),
@@ -3923,8 +3923,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                     Semantics(
                       key: const Key('practice-time-selected-estimate'),
                       liveRegion: true,
-                      label:
-                          '선택한 시간 프리셋 $_timeBudgetMinutes분, 예상 $_selectedCount문제',
+                      label: '학습 시간 $_timeBudgetMinutes분, 예상 $_selectedCount문제',
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -4032,10 +4031,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Text(
-                    '난이도 프리셋',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
+                  Text('난이도', style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 7),
                   Wrap(
                     spacing: 7,
@@ -4167,7 +4163,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                               key: const Key('practice-challenge-scoring'),
                               contentPadding: EdgeInsets.zero,
                               value: _preferences.challengeScoringEnabled,
-                              title: const Text('선택적 도전 점수'),
+                              title: const Text('도전 점수 기록'),
                               subtitle: const Text(
                                 '정확도와 완료 시간을 개인 최고 기록에만 저장합니다.',
                               ),
@@ -4265,10 +4261,8 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                               key: const Key('practice-time-budget-toggle'),
                               contentPadding: EdgeInsets.zero,
                               value: _usesTimeBudget,
-                              title: const Text('시간 예산 모드'),
-                              subtitle: const Text(
-                                '문제 수 대신 3·5·10·15분 프리셋으로 학습량을 맞춥니다.',
-                              ),
+                              title: const Text('시간으로 정하기'),
+                              subtitle: const Text('문제 수 대신 학습 시간을 먼저 정해요.'),
                               onChanged: (value) {
                                 if (value) {
                                   _setLength(PracticeSessionLength.fiveMinutes);
@@ -4349,7 +4343,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           Expanded(
                             child: Text(
                               '${_usesTimeBudget ? '$_timeBudgetMinutes분 · 약 $_selectedCount문제' : '$_selectedCount문제 · 약 $estimatedMinutes분'} · '
-                              '매 문제 즉시 피드백 · '
+                              '문제마다 바로 채점 · '
                               '${_preferences.recordProgress ? '오답은 세션 안에서 다시 출제' : '진도 비기록 자유 연습'}',
                             ),
                           ),
@@ -4503,7 +4497,7 @@ class _MissingMaterialNotice extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isEmpty ? '학습을 시작할 자료가 없어요' : '일부 학습 방식에 필요한 자료가 부족해요',
+                  isEmpty ? '학습할 자료가 없어요' : '일부 게임을 시작할 자료가 부족해요',
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
@@ -4511,8 +4505,8 @@ class _MissingMaterialNotice extends StatelessWidget {
                 const SizedBox(height: 3),
                 Text(
                   isEmpty
-                      ? '첫 단어나 문장을 추가하면 사용할 수 있는 학습 방식이 바로 열려요.'
-                      : '비활성 카드에서 필요한 자료 유형을 확인한 뒤 알맞은 표현을 추가해 주세요.',
+                      ? '첫 단어나 문장을 추가하면 바로 학습할 수 있어요.'
+                      : '사용할 수 없는 게임에서 필요한 자료를 확인하고 표현을 추가해 주세요.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

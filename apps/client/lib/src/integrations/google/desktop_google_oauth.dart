@@ -33,6 +33,10 @@ class DesktopGoogleOAuth {
 
   static const _authorizationEndpoint =
       'https://accounts.google.com/o/oauth2/v2/auth';
+  static const driveScopes = [
+    'https://www.googleapis.com/auth/drive.file',
+    'https://www.googleapis.com/auth/drive.appdata',
+  ];
   static const authorizationTimeout = Duration(minutes: 10);
 
   static String loopbackRedirectUri(int port) => 'http://127.0.0.1:$port';
@@ -40,26 +44,22 @@ class DesktopGoogleOAuth {
   Future<void> ensureReady() => tokenBroker.ensureReady();
 
   Future<bool> hasStoredSession() async {
-    final tokens = await Future.wait([
-      tokenVault.read(GoogleTokenKind.identity),
-      tokenVault.read(GoogleTokenKind.drive),
-    ]);
-    return tokens.every((token) => token != null);
-  }
-
-  Future<OAuthAuthorizationResult> signIn() {
-    return _authorize(
-      kind: GoogleTokenKind.identity,
-      scopes: const ['openid', 'email', 'profile'],
-      usePicker: false,
-    );
+    return await tokenVault.read(GoogleTokenKind.drive) != null;
   }
 
   Future<OAuthAuthorizationResult> selectDriveFolder() {
     return _authorize(
       kind: GoogleTokenKind.drive,
-      scopes: const ['https://www.googleapis.com/auth/drive.file'],
+      scopes: driveScopes,
       usePicker: true,
+    );
+  }
+
+  Future<OAuthAuthorizationResult> authorizeDriveAccess() {
+    return _authorize(
+      kind: GoogleTokenKind.drive,
+      scopes: driveScopes,
+      usePicker: false,
     );
   }
 
@@ -87,22 +87,6 @@ class DesktopGoogleOAuth {
     );
     await tokenVault.write(kind, refreshed);
     return refreshed.accessToken;
-  }
-
-  Future<String> identityToken() async {
-    final stored = await tokenVault.read(GoogleTokenKind.identity);
-    if (stored == null) {
-      throw StateError('Google sign-in is required');
-    }
-    if (!stored.isAccessTokenUsable) {
-      await accessToken(GoogleTokenKind.identity);
-    }
-    final refreshed = await tokenVault.read(GoogleTokenKind.identity);
-    final idToken = refreshed?.idToken;
-    if (idToken == null || idToken.isEmpty) {
-      throw StateError('Google sign-in did not return an ID token');
-    }
-    return idToken;
   }
 
   Future<void> disconnect() => tokenVault.clear();
@@ -163,11 +147,11 @@ class DesktopGoogleOAuth {
       final code = query['code'];
       final isSuccess = isValidState && error == null && code != null;
       final successHeading = usePicker
-          ? 'Drive 폴더 선택이 완료되었습니다.'
-          : 'Google 계정 확인을 마쳤습니다.';
+          ? 'Drive 저장 위치를 연결했습니다.'
+          : 'Drive 권한을 확인했습니다.';
       final successBody = usePicker
-          ? '이 창을 닫고 Sprache로 돌아가세요.'
-          : '이 창을 닫아 주세요. 잠시 후 Drive 폴더 선택 화면이 한 번 더 열립니다.';
+          ? '이 창을 닫고 Sprache로 돌아가면 됩니다.'
+          : '이 창을 닫고 Sprache로 돌아가면 됩니다.';
 
       request.response
         ..statusCode = isSuccess ? 200 : 400
@@ -176,8 +160,8 @@ class DesktopGoogleOAuth {
           '<!doctype html><meta charset="utf-8">'
           '<title>Sprache</title>'
           '<body style="font-family:sans-serif;padding:40px">'
-          '<h2>${isSuccess ? successHeading : '연결을 완료하지 못했습니다.'}</h2>'
-          '<p>${isSuccess ? successBody : '이 창을 닫고 Sprache의 진단 안내를 확인하세요.'}</p></body>',
+          '<h2>${isSuccess ? successHeading : 'Google 연결을 마치지 못했어요.'}</h2>'
+          '<p>${isSuccess ? successBody : '창을 닫은 뒤 Sprache에서 해결 방법을 확인해 주세요.'}</p></body>',
         );
       await request.response.close();
 

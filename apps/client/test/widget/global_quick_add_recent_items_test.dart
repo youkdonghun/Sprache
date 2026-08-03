@@ -258,13 +258,13 @@ void main() {
         final saved = controller.state.customItems.singleWhere(
           (item) => item.text == 'home undo phrase',
         );
-        expect(find.text('“home undo phrase” 자료를 저장했습니다.'), findsOneWidget);
+        expect(find.text('“home undo phrase”을 저장했어요.'), findsOneWidget);
         expect(find.text('실행 취소'), findsOneWidget);
 
         await tester.tap(find.text('실행 취소'));
         await tester.pumpAndSettle();
         expect(controller.customItemById(saved.id), isNull);
-        expect(find.text('마지막 저장을 되돌렸습니다.'), findsOneWidget);
+        expect(find.text('마지막 저장을 되돌렸어요.'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );
@@ -304,7 +304,7 @@ void main() {
         expect(plan.deck, StudyDeckScope.selected);
         expect(plan.selectedItemIds, {saved.id});
         expect(plan.itemLimit, 1);
-        expect(find.text('“study this phrase” 자료를 저장했습니다.'), findsOneWidget);
+        expect(find.text('“study this phrase”을 저장했어요.'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );

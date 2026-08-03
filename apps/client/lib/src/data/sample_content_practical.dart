@@ -82,7 +82,7 @@ const _englishPracticalSentences = <_SentenceSeed>[
     'repeat',
     'that?',
   ]),
-  _SentenceSeed('How do you spell this?', '이것은 철자가 어떻게 되나요?', [
+  _SentenceSeed('How do you spell this?', '이건 철자가 어떻게 되나요?', [
     'How do you',
     'spell',
     'this?',
@@ -323,7 +323,7 @@ const _germanPracticalSentences = <_SentenceSeed>[
     'das bitte',
     'wiederholen?',
   ]),
-  _SentenceSeed('Wie schreibt man das?', '이것은 철자가 어떻게 되나요?', [
+  _SentenceSeed('Wie schreibt man das?', '이건 철자가 어떻게 되나요?', [
     'Wie schreibt',
     'man das?',
   ]),
@@ -418,7 +418,7 @@ const _frenchPracticalSentences = <_SentenceSeed>[
     'répéter,',
     's’il vous plaît ?',
   ]),
-  _SentenceSeed('Comment cela s’écrit-il ?', '이것은 철자가 어떻게 되나요?', [
+  _SentenceSeed('Comment cela s’écrit-il ?', '이건 철자가 어떻게 되나요?', [
     'Comment',
     'cela',
     's’écrit-il ?',
@@ -511,7 +511,7 @@ const _spanishPracticalSentences = <_SentenceSeed>[
     'repetirlo,',
     'por favor?',
   ]),
-  _SentenceSeed('¿Cómo se escribe esto?', '이것은 철자가 어떻게 되나요?', [
+  _SentenceSeed('¿Cómo se escribe esto?', '이건 철자가 어떻게 되나요?', [
     '¿Cómo',
     'se escribe',
     'esto?',

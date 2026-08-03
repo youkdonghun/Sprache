@@ -136,7 +136,7 @@ void main() {
       find.byKey(const Key('item-translation-field')),
       '토큰이 계속 명시적으로 유지됩니다.',
     );
-    await tester.tap(find.text('수정 저장'));
+    await tester.tap(find.text('변경 내용 저장'));
     await tester.pumpAndSettle();
 
     expect(store.savedItems.single.sentenceTokens, existing.sentenceTokens);

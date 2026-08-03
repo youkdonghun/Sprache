@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sprache는 Android와 Windows에서 사용하는 Local-First 반복 학습 도구입니다.">
+  <link rel="canonical" href="https://youkdonghun.github.io/Sprache/">
+  <title>Sprache — 나만의 반복 학습 작업공간</title>
+  <style>
+    :root { color-scheme: light dark; --ink:#18201a; --muted:#556058; --line:#dce5dd; --paper:#fbfdf9; --panel:#fff; --brand:#317c40; --soft:#e8f5e8; }
+    * { box-sizing: border-box; }
+    body { margin:0; color:var(--ink); background:var(--paper); font-family:system-ui,-apple-system,"Segoe UI","Noto Sans KR",sans-serif; line-height:1.65; }
+    main { width:min(920px,calc(100% - 32px)); margin:0 auto; padding:64px 0; }
+    header { padding:36px; border:1px solid var(--line); border-radius:24px; background:var(--panel); }
+    .eyebrow { color:var(--brand); font-weight:800; letter-spacing:.04em; }
+    h1 { margin:8px 0 12px; font-size:clamp(2rem,7vw,4rem); line-height:1.08; }
+    h2 { margin:0 0 12px; font-size:1.35rem; }
+    p { margin:0; color:var(--muted); }
+    .actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:24px; }
+    .button { display:inline-flex; min-height:44px; align-items:center; padding:10px 16px; border-radius:12px; color:#fff; background:var(--brand); font-weight:750; text-decoration:none; }
+    .button.secondary { color:var(--ink); background:var(--soft); }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; margin-top:18px; }
+    section { margin-top:36px; }
+    article { padding:22px; border:1px solid var(--line); border-radius:18px; background:var(--panel); }
+    ul { margin:12px 0 0; padding-left:22px; }
+    footer { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:40px; padding-top:20px; border-top:1px solid var(--line); color:var(--muted); }
+    a { color:#246b34; }
+    @media (prefers-color-scheme:dark) { :root { --ink:#e8eee8; --muted:#b7c1b8; --line:#354238; --paper:#111612; --panel:#18201a; --brand:#72cb83; --soft:#233a29; } .button { color:#102015; } }
+    @media (max-width:640px) { main { padding:24px 0; } header { padding:24px; border-radius:18px; } .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">ANDROID · WINDOWS · LOCAL-FIRST</div>
+      <h1>Sprache</h1>
+      <p>단어와 문장을 직접 만들고, 파일로 가져오고, 원하는 그룹과 일정으로 암기·퀴즈·듣기·발음을 반복하는 개인 학습 작업공간입니다.</p>
+      <div class="actions">
+        <a class="button" href="https://github.com/youkdonghun/Sprache">프로젝트 보기</a>
+        <a class="button secondary" href="./privacy/">개인정보처리방침</a>
+        <a class="button secondary" href="./terms/">서비스 이용약관</a>
+      </div>
+    </header>
+
+    <section>
+      <h2>무엇을 학습할 수 있나요?</h2>
+      <div class="grid">
+        <article><strong>여섯 언어</strong><p>영어, 일본어, 독일어, 프랑스어, 스페인어, 중국어 간체 코스를 제공합니다.</p></article>
+        <article><strong>나만의 주제</strong><p>시험, 취미, 업무처럼 원하는 주제를 직접 만들고 자료를 명확한 표현–뜻 쌍으로 정리합니다.</p></article>
+        <article><strong>직접 만든 자료</strong><p>단어, 여러 뜻, 예문, 문장, 읽기, 태그와 출처를 앱 또는 Excel·CSV·JSON에서 관리합니다.</p></article>
+        <article><strong>원하는 학습 방식</strong><p>플래시카드, 뜻 선택, 직접 쓰기, 빈칸, 문장 배열, 듣고 쓰기와 발음을 지원합니다.</p></article>
+      </div>
+    </section>
+
+    <section>
+      <h2>내 데이터는 어디에 저장되나요?</h2>
+      <article>
+        <p>학습 자료와 상세 진도는 먼저 기기의 SQLite에 저장됩니다. Google 연결은 선택 기능이며, 연결하면 사용자가 고른 Drive 위치의 <code>WordStudyData</code> 폴더에 검증된 동기화 자료를 보관합니다.</p>
+        <ul>
+          <li>Google 연결 전에도 로컬 학습과 사용자 지정 로컬 백업 폴더를 사용할 수 있습니다.</li>
+          <li>Drive의 숨겨진 앱 설정에는 학습 자료가 아닌 <code>WordStudyData</code> 폴더 포인터만 저장합니다.</li>
+          <li>OAuth 인증 코드는 PKCE로 Google에 직접 교환하며, 토큰은 운영체제 보안 저장소에만 둡니다.</li>
+          <li>별도 Sprache 서버로 학습 자료, 계정 연결 또는 토큰을 보내지 않습니다.</li>
+          <li>광고, 데이터 판매 또는 사용자 프로파일링을 하지 않습니다.</li>
+        </ul>
+      </article>
+    </section>
+
+    <footer>
+      <span>Sprache</span>
+      <a href="./privacy/">개인정보처리방침</a>
+      <a href="./terms/">서비스 이용약관</a>
+      <a href="https://github.com/youkdonghun/Sprache/issues">문의</a>
+    </footer>
+  </main>
+</body>
+</html>

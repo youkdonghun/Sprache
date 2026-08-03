@@ -1,5 +1,27 @@
 # Sprache
 
+## 현재 연결 구조
+
+Sprache는 별도 API나 중앙 데이터베이스 없이 동작하는 Local-First 앱이다.
+학습 자료와 상세 진도의 작업 원본은 기기 SQLite다. Google 연결을 선택하면
+사용자가 고른 Drive 위치에 `WordStudyData` 폴더를 만들고, 그 폴더에서 기기 간
+동기화 자료를 읽고 쓴다.
+
+- Windows는 시스템 브라우저·loopback·PKCE로 받은 인증 코드를 Google 토큰
+  엔드포인트에 직접 교환한다. client secret을 EXE나 서버에 두지 않는다.
+- Android는 같은 Google Cloud 프로젝트의 네이티브 OAuth 클라이언트를 쓴다.
+- OAuth 토큰은 OS 보안 저장소에만 보관하고 중앙 계정–폴더 매핑을 만들지 않는다.
+- Drive의 숨겨진 `appDataFolder`에는 `WordStudyData`의 폴더 ID와 이름만 담은
+  작은 연결 포인터를 둔다. 학습 데이터 자체는 숨김 공간에 저장하지 않는다.
+- 로컬 백업 폴더와 Google Drive 저장 위치는 설정에서 각각 확인하고 변경한다.
+- 앱 소개, [개인정보처리방침](https://youkdonghun.github.io/Sprache/privacy/)과
+  [서비스 이용약관](https://youkdonghun.github.io/Sprache/terms/)은 GitHub Pages의
+  정적 문서다.
+
+아래 버전별 기록의 Railway 언급은 당시 릴리스의 검증 이력이다. 현행 설정은
+[아키텍처](docs/architecture.md)와
+[Google Cloud 연결 설정](docs/google-setup.md)을 기준으로 한다.
+
 ## 1.32.0 컴팩트 작업 공간과 빠른 학습
 
 - 백그라운드 복귀 때 화면을 덮던 보호 커튼과 지연 설정을 제거하고, 알림 내용
@@ -148,8 +170,9 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 - Android 게임형 UI와 Windows 크기 조절형 업무 도구 UI
 - SQLite 기반 Local-First 저장과 Excel·CSV·JSON·JSONL 가져오기
 - 사용자 주제 생성, 주제별 자료함·학습 그룹·암기·퀴즈·일정 구성
-- Google Drive 폴더를 원본 저장소로 사용하는 기기 간 동기화
-- Railway API에는 HMAC 처리된 계정과 Drive 폴더 연결만 저장
+- 사용자가 고른 Google Drive `WordStudyData` 폴더를 이용한 기기 간 동기화
+- Drive `appDataFolder`에는 폴더 재연결용 포인터만 저장
+- PKCE 직접 토큰 교환과 OS 보안 저장소를 사용하며 중앙 연결 DB는 두지 않음
 
 ## 1.22.0 한국어 발음 표기와 Excel 업로드
 
@@ -503,12 +526,12 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 - 단어·문장 직접 추가·수정·삭제와 CSV·JSON·JSONL 일괄 가져오기
 - 코스 범위·정확도·학습 단계·최근 세션을 보여주는 학습 리포트
 - 설정·진도·사용자 표현·최근 세션을 포함한 JSON 백업 내보내기
-- Drive 저장 범위와 Railway 개인정보 경계를 설명하는 설정 화면
+- 로컬 백업 경로와 Drive 앱 전용 저장 범위를 구분해 설명하는 설정 화면
 
 ## 바로 실행하기
 
 `npm run build:real`을 실행하면 현재 `pubspec.yaml` 버전에 맞춘 실제
-Google·Railway 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.32.0의 표준
+Google 직접 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.32.0의 표준
 파일명은 다음과 같다.
 
 - Windows 설치본: `Sprache-Windows-Setup-1.32.0-google-x64.exe`
@@ -531,14 +554,10 @@ Flutter 3.44.8, Node.js 22 이상, JDK 17을 기준으로 검증했다. Windows 
 
 ```powershell
 npm install
-npm run dev:api
 npm run run:client -- --dart-define=ENABLE_MOCK_MODE=true
 ```
 
 ```powershell
-npm run lint:api
-npm run test:api
-npm run build:api
 npm run analyze:client
 npm run test:client
 ```
@@ -564,10 +583,10 @@ npm run test:client
 - [장기 오프라인 충돌 검증](docs/offline-conflict-testing.md)
 - [동기화 프로토콜](docs/sync-protocol.md)
 - [Google 설정](docs/google-setup.md)
-- [Railway 배포](docs/railway-deploy.md)
-- [Google·Railway 입력 정보](docs/integration-inputs.md)
-- [OAuth 앱 홈페이지 초안](docs/app-homepage.html)
-- [개인정보처리방침 초안](docs/privacy-policy.html)
+- [Railway 제거와 GitHub Pages 배포](docs/railway-deploy.md)
+- [공개 앱 홈페이지](docs/index.html)
+- [개인정보처리방침](docs/privacy/index.html)
+- [서비스 이용약관](docs/terms/index.html)
 - [빌드와 릴리스](docs/build-and-release.md)
 - [1.18.1 검증 보고서](docs/verification-report-1.18.1.md)
 - [1.19.0 검증 보고서](docs/verification-report-1.19.0.md)
@@ -588,7 +607,8 @@ npm run test:client
 - [1.21.0 검증 보고서](docs/verification-report-1.21.0.md)
 - [콘텐츠 출처와 이용 조건](ATTRIBUTIONS.md)
 
-Railway 공개 API와 플랫폼별 Google OAuth 설정은 실제 연결 빌드에 반영되어 있다.
-Windows 실계정 로그인·Drive 업로드와 Android 에뮬레이터의 동일 계정 복원은
-검증 완료했다. Android 물리 기기에서는 마이크·TTS·권한과 함께 같은 흐름을
-배포 전에 반복 검증해야 한다.
+플랫폼별 Google OAuth 설정은 공개 클라이언트와 `drive.file`·`drive.appdata`
+범위를 사용한다. Windows PKCE 직접 교환, Android 네이티브 인증, Drive 폴더
+선택과 숨김 연결 포인터 복원은 실제 연결 릴리스 전에 두 플랫폼에서 반복
+검증해야 한다.
+Android 물리 기기에서는 마이크·TTS·권한도 함께 확인한다.

@@ -170,7 +170,7 @@ void main() {
           expect(find.byKey(const Key('quick-content-sheet')), findsNothing);
         } else {
           expect(find.byKey(const Key('quick-content-sheet')), findsOneWidget);
-          expect(find.textContaining('뜻 병합이나 별도 저장'), findsOneWidget);
+          expect(find.textContaining('뜻을 합칠지 따로 저장할지'), findsOneWidget);
         }
         if (testCase.$1 == AppDuplicateDefault.merge) {
           expect(store.savedItems.single.id, existing.id);

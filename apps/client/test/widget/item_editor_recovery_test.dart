@@ -82,6 +82,40 @@ void main() {
     expect(translationField.controller?.text, '복구할 전체 초안');
   });
 
+  testWidgets('full editor flushes a pending draft before recreation', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 1000);
+    addTearDown(tester.view.reset);
+    final store = MemoryStudyStore();
+
+    await _openEditor(tester, store);
+    await tester.enterText(
+      find.byKey(const Key('item-text-field')),
+      'pending editor draft',
+    );
+    await tester.enterText(
+      find.byKey(const Key('item-translation-field')),
+      '즉시 복구',
+    );
+    await tester.pump();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await _openEditor(tester, store);
+
+    expect(find.byKey(const Key('item-editor-draft-recovery')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('item-editor-draft-restore')));
+    await tester.pump();
+    expect(
+      tester
+          .widget<TextFormField>(find.byKey(const Key('item-text-field')))
+          .controller
+          ?.text,
+      'pending editor draft',
+    );
+  });
+
   testWidgets('changing subject refreshes groups and clears stale selection', (
     tester,
   ) async {

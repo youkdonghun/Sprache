@@ -64,7 +64,7 @@ void main() {
         find.byKey(const Key('group-organizer-target-panel')),
         findsOneWidget,
       );
-      expect(find.textContaining('왼쪽 자료를 선택하거나 끌어서'), findsOneWidget);
+      expect(find.textContaining('왼쪽에서 자료를 고르거나'), findsOneWidget);
 
       final sourceFinder = find.byKey(
         const Key('group-organizer-item-group-board-source'),
@@ -125,7 +125,7 @@ void main() {
       container.read(appRouterProvider).go('/library/groups');
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('자료를 고른 다음 아래 버튼'), findsOneWidget);
+      expect(find.textContaining('자료를 고른 뒤 넣을 그룹'), findsOneWidget);
       await tester.tap(
         find.byKey(const Key('group-organizer-item-mobile-group-source')),
       );
@@ -331,11 +331,11 @@ void main() {
         );
         await tester.ensureVisible(unlinkTarget);
         await tester.tap(
-          find.descendant(of: unlinkTarget, matching: find.text('연결 해제')),
+          find.descendant(of: unlinkTarget, matching: find.text('그룹에서 빼기')),
         );
         await tester.pumpAndSettle();
-        expect(find.text('선택 자료의 그룹 연결을 해제할까요?'), findsOneWidget);
-        expect(find.textContaining('원본 자료와 학습 진도는 유지됩니다.'), findsOneWidget);
+        expect(find.text('선택한 자료를 모든 그룹에서 뺄까요?'), findsOneWidget);
+        expect(find.textContaining('자료와 학습 기록은 그대로 남아요.'), findsOneWidget);
         await tester.tap(find.text('취소'));
         await tester.pumpAndSettle();
         expect(
@@ -481,7 +481,7 @@ void main() {
     );
   }
 
-  testWidgets('library explains local, Drive, and Railway data ownership', (
+  testWidgets('library explains local, Drive, and hidden binding ownership', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
@@ -509,7 +509,7 @@ void main() {
       expect(find.text('내 학습 데이터는 어디에 있나요?'), findsOneWidget);
       expect(find.text('이 기기의 로컬 데이터베이스'), findsOneWidget);
       expect(find.text('Google Drive'), findsOneWidget);
-      expect(find.text('Railway'), findsOneWidget);
+      expect(find.text('Drive의 숨김 연결 정보'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

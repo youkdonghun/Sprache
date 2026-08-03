@@ -26,7 +26,6 @@ void main() {
               studyStoreProvider.overrideWithValue(MemoryStudyStore()),
               appConfigProvider.overrideWithValue(
                 const AppConfig(
-                  apiBaseUrl: 'https://sprache-api.example',
                   googleAndroidClientId: '',
                   googleDesktopClientId: 'desktop-client-id',
                   googleServerClientId: '',
@@ -44,7 +43,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byKey(const Key('windows-loopback-note')), findsOneWidget);
-        expect(find.textContaining('Cloudflare Tunnel'), findsOneWidget);
+        expect(find.textContaining('별도 중계 서버'), findsOneWidget);
 
         final connectGoogle = find.byKey(const Key('connect-google'));
         await tester.ensureVisible(connectGoogle);
@@ -58,7 +57,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('2/4 Drive 폴더 선택'), findsOneWidget);
-        expect(find.textContaining('127.0.0.1이 보여도 정상'), findsOneWidget);
+        expect(find.textContaining('127.0.0.1이 보여도 괜찮아요'), findsOneWidget);
 
         service.complete();
         await tester.pumpAndSettle();

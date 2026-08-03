@@ -177,7 +177,7 @@ void main() {
       find.byKey(const Key('quick-content-duplicate-notice')),
       findsOneWidget,
     );
-    expect(find.text('직접 선택'), findsOneWidget);
+    expect(find.text('저장할 때 물어보기'), findsOneWidget);
     expect(
       find.byKey(const Key('quick-content-merge-existing')),
       findsOneWidget,
@@ -186,6 +186,7 @@ void main() {
       find.byKey(const Key('quick-content-save-separate')),
       findsOneWidget,
     );
+    expect(find.text('기존 · 중복'), findsOneWidget);
     expect(
       find.byKey(const Key('quick-content-duplicate-details')),
       findsNothing,
@@ -268,7 +269,7 @@ void main() {
     );
     await tester.tap(find.byKey(const Key('quick-content-create-group')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('새 여행 · 저장과 동시에 정리'), findsOneWidget);
+    expect(find.textContaining('새 여행에 바로 저장'), findsOneWidget);
 
     final details = find.byKey(const Key('quick-content-more'));
     await tester.ensureVisible(details);
@@ -288,6 +289,29 @@ void main() {
     );
     await tester.pump();
     expect(find.text('1개 항목 입력됨'), findsOneWidget);
+  });
+
+  testWidgets('stale recent group is never selected in quick add', (
+    tester,
+  ) async {
+    final store = MemoryStudyStore(
+      quickContentLocalPreferences: QuickContentLocalPreferences(
+        recentGroupBySubject: {
+          _subjectId: QuickContentRecentGroup(
+            name: '삭제된 그룹',
+            selectedAt: DateTime.utc(2026, 8, 3),
+          ),
+        },
+      ),
+    );
+    await _pumpQuick(tester, store);
+
+    expect(
+      find.byKey(const Key('quick-content-select-recent-group')),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('quick-content-clear-group')), findsNothing);
+    expect(find.textContaining('삭제된 그룹에 바로 저장'), findsNothing);
   });
 
   testWidgets('library search and group controls expose compact context', (

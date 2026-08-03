@@ -60,7 +60,7 @@ void main() {
         expect(next, findsOneWidget);
         expect(back, findsOneWidget);
         expect(receipt, findsOneWidget);
-        expect(find.text('로컬 저장 영수증'), findsOneWidget);
+        expect(find.text('기기 저장 내역'), findsOneWidget);
         expect(find.textContaining('동기화 대기 1건'), findsOneWidget);
         expect(
           tester.getTopLeft(next).dy,

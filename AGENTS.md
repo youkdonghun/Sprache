@@ -7,13 +7,12 @@
 - 초기 완성 언어는 영어와 일본어다. 이후 독일어, 프랑스어·스페인어, 중국어 간체 순으로 확장한다.
 - Android는 게임형 학습 UI를 사용하고 Windows는 크기 조절이 가능한 차분한 업무 도구형 UI를 사용한다.
 - Google 로그인 전에도 샘플 학습을 체험할 수 있다. 영구 저장과 기기 간 동기화를 활성화할 때 Google 계정과 Drive를 연결한다.
-- 사용자 학습 콘텐츠와 상세 진도는 Railway PostgreSQL에 저장하지 않는다.
+- 사용자 학습 콘텐츠와 상세 진도는 로컬 SQLite와 사용자가 선택한 Google Drive 폴더에만 저장한다.
+- Drive `appDataFolder`에는 기기 간 폴더 재연결을 위한 폴더 ID·이름 포인터만 저장한다.
 
 ## 저장소 구조
 
 - `apps/client`: Android와 Windows용 Flutter 클라이언트
-- `services/api`: Fastify, Prisma, PostgreSQL 기반 계정-Drive 연결 API
-- `packages/contracts`: OpenAPI 계약
 - `docs`: 아키텍처, 데이터 모델, 동기화, 보안 및 설정 문서
 - `sample-data`: 라이선스와 출처가 기록된 검증용 다국어 콘텐츠
 
@@ -29,9 +28,8 @@
 
 ## 보안 규칙
 
-- 비밀값과 OAuth 토큰을 코드, 저장소, 로그, Railway DB에 기록하지 않는다.
+- 비밀값과 OAuth 토큰을 코드, 저장소, 로그에 기록하지 않는다.
 - 클라이언트 토큰은 OS 보안 저장소에만 저장한다.
-- `/v1/me/*` API는 검증된 Google ID Token과 HMAC 처리된 `account_key`를 사용한다.
 - Drive 파일과 폴더는 표시 경로가 아니라 ID로 참조한다.
 - 손상되거나 지원하지 않는 원격 데이터로 정상 로컬 데이터를 덮어쓰거나 삭제하지 않는다.
 - 삭제 동기화에는 tombstone을 사용한다.
@@ -39,8 +37,6 @@
 ## 명령
 
 - 전체 검사: `npm test`
-- API 개발: `npm run dev:api`
-- API 테스트: `npm run test:api`
 - Flutter 실행: `npm run run:client`
 - Flutter 테스트: `npm run test:client`
 - Windows 빌드: `npm run build:windows`
