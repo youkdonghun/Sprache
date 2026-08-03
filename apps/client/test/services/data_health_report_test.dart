@@ -1,15 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sprache/src/domain/local_storage.dart';
 import 'package:sprache/src/services/data_health_report.dart';
 import 'package:sprache/src/services/recovery_backup_catalog.dart';
 import 'package:sprache/src/state/app_state.dart';
 import 'package:sprache/src/state/connection_state.dart';
-import 'package:sprache/src/state/local_storage_state.dart';
 import 'package:sprache/src/sync/pending_sync.dart';
 import 'package:sprache/src/sync/sync_policy.dart';
 
 void main() {
-  test('summarizes local, Drive, queue, and last verified backup', () {
+  test('summarizes app cache, Drive, queue, and last verified backup', () {
     final now = DateTime.utc(2026, 8, 2, 10);
     final report = const DataHealthReportBuilder().build(
       app: AppState.initial().copyWith(isHydrated: true),
@@ -18,17 +16,6 @@ void main() {
         folderName: 'Sprache',
         runtimeReady: true,
         lastSyncedAt: now,
-      ),
-      localStorage: LocalStorageState(
-        initialized: true,
-        driveConnected: true,
-        settings: LocalStorageSettings(
-          locationId: 'local-folder',
-          displayName: 'Documents',
-          lastSavedAt: now,
-          lastArchiveSha256: 'a' * 64,
-          lastArchiveBytes: 2048,
-        ),
       ),
       recovery: LocalRecoveryInventory(
         items: [
@@ -107,11 +94,6 @@ void main() {
           runtimeReady: true,
           pendingChanges: true,
           policy: SyncPolicy(offlineLock: true),
-        ),
-        localStorage: const LocalStorageState(
-          initialized: true,
-          driveConnected: true,
-          settings: LocalStorageSettings(),
         ),
         recovery: LocalRecoveryInventory(
           items: const [],

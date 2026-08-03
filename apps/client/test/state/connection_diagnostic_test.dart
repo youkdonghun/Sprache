@@ -337,6 +337,36 @@ void main() {
     },
   );
 
+  test(
+    'expired Drive authorization never retries from background activity',
+    () async {
+      final app = AppController(MemoryStudyStore());
+      await Future<void>.delayed(Duration.zero);
+      final service = _DriveFailureService(
+        const DriveRequestException(
+          failure: DriveRequestFailure.authenticationExpired,
+          statusCode: 401,
+          operation: 'use cached web Drive authorization',
+        ),
+      );
+      final controller = ConnectionController(service, app);
+
+      await controller.connect();
+      expect(controller.state.phase, ConnectionPhase.failed);
+      expect(controller.state.diagnostic?.reconnectRequired, isTrue);
+      expect(service.pullCalls, 1);
+
+      await controller.syncAutomatically();
+      expect(service.pullCalls, 1);
+
+      await controller.syncNow();
+      expect(service.pullCalls, 2);
+
+      controller.dispose();
+      app.dispose();
+    },
+  );
+
   test('quarantined corruption exposes only a safe preview', () async {
     final app = AppController(MemoryStudyStore());
     await Future<void>.delayed(Duration.zero);
@@ -657,6 +687,7 @@ class _DriveFailureService implements GoogleConnectionService {
   _DriveFailureService(this.error);
 
   final Object error;
+  int pullCalls = 0;
 
   @override
   Future<GoogleConnectionResult> connect({
@@ -674,7 +705,10 @@ class _DriveFailureService implements GoogleConnectionService {
   Future<void> disconnect() async {}
 
   @override
-  Future<Map<String, Object?>?> pullSnapshot() => Future.error(error);
+  Future<Map<String, Object?>?> pullSnapshot() {
+    pullCalls += 1;
+    return Future.error(error);
+  }
 
   @override
   Future<void> pushSnapshot(Map<String, Object?> snapshot) async {}

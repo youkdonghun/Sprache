@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -10,7 +9,7 @@ import 'package:sprache/src/state/local_storage_state.dart';
 
 void main() {
   test(
-    'a disconnected hydrated app automatically mirrors local changes',
+    'legacy local folder metadata is retired without copying or deleting data',
     () async {
       final store = MemoryStudyStore(localStorageSettings: _configuredSettings);
       final backend = _FakeLocalStorageBackend();
@@ -22,27 +21,22 @@ void main() {
       );
 
       await _initialize(app, controller);
-      await _waitFor(() => backend.writes.isNotEmpty);
-      final initialWrites = backend.writes.length;
-
       app.updatePreferences(app.state.preferences.copyWith(newItemLimit: 17));
       controller.observeAppState(app.state);
-      await _waitFor(() => backend.writes.length > initialWrites);
+      await Future<void>.delayed(const Duration(milliseconds: 40));
 
-      expect(controller.state.localMirrorActive, isTrue);
-      expect(controller.state.settings.lastArchiveSha256, isNotNull);
-      expect(controller.state.settings.lastArchiveBytes, greaterThan(0));
-      expect(
-        (await store.loadLocalStorageSettings()).lastArchiveSha256,
-        controller.state.settings.lastArchiveSha256,
-      );
+      expect(controller.state.configured, isFalse);
+      expect(controller.state.activeTarget, ActiveStorageTarget.appOnly);
+      expect(backend.writes, isEmpty);
+      expect(backend.releasedLocations, hasLength(1));
+      expect((await store.loadLocalStorageSettings()).configured, isFalse);
 
       controller.dispose();
       app.dispose();
     },
   );
 
-  test('Drive pauses local writes and disconnecting resumes them', () async {
+  test('Drive is the only external storage target', () async {
     final store = MemoryStudyStore(localStorageSettings: _configuredSettings);
     final backend = _FakeLocalStorageBackend();
     final app = AppController(store);
@@ -53,24 +47,22 @@ void main() {
     );
 
     await _initialize(app, controller);
-    await _waitFor(() => backend.writes.isNotEmpty);
-
     app.setDriveConnected(true);
     controller.observeAppState(app.state);
-    final writesBeforeDriveChange = backend.writes.length;
     app.updatePreferences(app.state.preferences.copyWith(newItemLimit: 19));
     controller.observeAppState(app.state);
     await controller.saveNow();
     await Future<void>.delayed(const Duration(milliseconds: 40));
 
     expect(controller.state.activeTarget, ActiveStorageTarget.googleDrive);
-    expect(backend.writes.length, writesBeforeDriveChange);
+    expect(backend.writes, isEmpty);
 
     app.setDriveConnected(false);
     controller.observeAppState(app.state);
-    await _waitFor(() => backend.writes.length > writesBeforeDriveChange);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
 
-    expect(controller.state.activeTarget, ActiveStorageTarget.localFolder);
+    expect(controller.state.activeTarget, ActiveStorageTarget.appOnly);
+    expect(backend.writes, isEmpty);
     controller.dispose();
     app.dispose();
   });
@@ -106,188 +98,6 @@ void main() {
       app.dispose();
     },
   );
-
-  test(
-    'selecting a folder with an archive waits for an explicit decision',
-    () async {
-      final store = MemoryStudyStore();
-      final backend = _FakeLocalStorageBackend(hasExistingArchive: true);
-      final app = AppController(store);
-      final controller = _buildController(
-        store: store,
-        backend: backend,
-        app: app,
-      );
-
-      await _initialize(app, controller);
-      final selection = await controller.chooseFolder();
-      controller.observeAppState(app.state);
-      await Future<void>.delayed(const Duration(milliseconds: 40));
-
-      expect(selection.cancelled, isFalse);
-      expect(selection.existingArchiveAvailable, isTrue);
-      expect(controller.state.existingArchiveAvailable, isTrue);
-      expect(backend.writes, isEmpty);
-
-      await controller.keepCurrentDataInSelectedFolder();
-      expect(backend.writes, hasLength(1));
-      expect(controller.state.existingArchiveAvailable, isFalse);
-
-      controller.dispose();
-      app.dispose();
-    },
-  );
-
-  test('an existing archive decision survives controller recreation', () async {
-    final store = MemoryStudyStore();
-    final backend = _FakeLocalStorageBackend(hasExistingArchive: true);
-    final app = AppController(store);
-    var controller = _buildController(store: store, backend: backend, app: app);
-
-    await _initialize(app, controller);
-    await controller.chooseFolder();
-    expect(
-      (await store.loadLocalStorageSettings()).awaitingExistingArchiveDecision,
-      isTrue,
-    );
-    expect(backend.writes, isEmpty);
-
-    controller.dispose();
-    backend.hasExistingArchive = false;
-    controller = _buildController(store: store, backend: backend, app: app);
-    await _initialize(app, controller);
-    app.updatePreferences(app.state.preferences.copyWith(newItemLimit: 23));
-    controller.observeAppState(app.state);
-    await Future<void>.delayed(const Duration(milliseconds: 40));
-
-    expect(controller.state.existingArchiveAvailable, isTrue);
-    expect(controller.state.settings.awaitingExistingArchiveDecision, isTrue);
-    expect(backend.writes, isEmpty);
-    expect(
-      backend.hasLatestArchiveChecks,
-      1,
-      reason: 'restart must trust the persisted pending decision',
-    );
-
-    controller.dispose();
-    app.dispose();
-  });
-
-  test(
-    'archive probe failures cannot clear a persisted existing archive decision',
-    () async {
-      const pendingSettings = LocalStorageSettings(
-        locationId: 'configured-local-folder',
-        displayName: 'Sprache',
-        locationKind: LocalStorageLocationKind.fileSystemPath,
-        awaitingExistingArchiveDecision: true,
-      );
-      final store = MemoryStudyStore(localStorageSettings: pendingSettings);
-      final backend = _FakeLocalStorageBackend(
-        hasLatestArchiveError: StateError('temporary provider failure'),
-      );
-      final app = AppController(store);
-      await _waitFor(() => app.state.isHydrated);
-      final controller = _buildController(
-        store: store,
-        backend: backend,
-        app: app,
-      );
-      controller.observeAppState(app.state);
-
-      await _waitFor(() => controller.state.initialized);
-      await _waitFor(() => backend.verifiedLocations.isNotEmpty);
-      app.updatePreferences(app.state.preferences.copyWith(newItemLimit: 29));
-      controller.observeAppState(app.state);
-      await Future<void>.delayed(const Duration(milliseconds: 40));
-
-      expect(controller.state.existingArchiveAvailable, isTrue);
-      expect(controller.state.settings.awaitingExistingArchiveDecision, isTrue);
-      expect(controller.state.errorMessage, isNull);
-      expect(backend.hasLatestArchiveChecks, 0);
-      expect(backend.writes, isEmpty);
-      expect(
-        (await store.loadLocalStorageSettings())
-            .awaitingExistingArchiveDecision,
-        isTrue,
-      );
-
-      controller.dispose();
-      app.dispose();
-    },
-  );
-
-  test(
-    'folder settings are device-local and survive controller recreation',
-    () async {
-      final store = MemoryStudyStore();
-      final backend = _FakeLocalStorageBackend(
-        selectedLocation: const LocalStorageLocation(
-          locationId: 'device-only-folder-id',
-          displayName: 'My Sprache',
-          kind: LocalStorageLocationKind.fileSystemPath,
-        ),
-      );
-      final app = AppController(store);
-      var controller = _buildController(
-        store: store,
-        backend: backend,
-        app: app,
-      );
-
-      await _initialize(app, controller);
-      await controller.chooseFolder();
-      await _waitFor(() => backend.writes.isNotEmpty);
-      final stored = await store.loadLocalStorageSettings();
-
-      expect(stored.locationId, 'device-only-folder-id');
-      expect(stored.displayName, 'My Sprache');
-      expect(
-        jsonEncode(app.exportArchive()),
-        isNot(contains('device-only-folder-id')),
-        reason: 'the device path must never enter a Drive/backup snapshot',
-      );
-
-      controller.dispose();
-      controller = _buildController(store: store, backend: backend, app: app);
-      await _waitFor(() => controller.state.initialized);
-      controller.observeAppState(app.state);
-      await _waitFor(() => controller.state.settings.configured);
-
-      expect(controller.state.settings.locationId, stored.locationId);
-      expect(controller.state.settings.displayName, stored.displayName);
-
-      controller.dispose();
-      app.dispose();
-    },
-  );
-
-  test('a failed replacement folder keeps the previous location', () async {
-    final store = MemoryStudyStore(localStorageSettings: _configuredSettings);
-    final backend = _FakeLocalStorageBackend(
-      verifyError: StateError('replacement folder unavailable'),
-      verifyErrorLocationId: 'picked-local-folder',
-    );
-    final app = AppController(store);
-    final controller = _buildController(
-      store: store,
-      backend: backend,
-      app: app,
-    );
-
-    await _initialize(app, controller);
-    await expectLater(controller.chooseFolder(), throwsStateError);
-
-    expect(controller.state.settings.locationId, 'configured-local-folder');
-    expect(
-      (await store.loadLocalStorageSettings()).locationId,
-      'configured-local-folder',
-    );
-    expect(controller.state.errorMessage, isNotNull);
-
-    controller.dispose();
-    app.dispose();
-  });
 }
 
 const _configuredSettings = LocalStorageSettings(
@@ -328,46 +138,25 @@ Future<void> _waitFor(bool Function() condition) async {
 }
 
 class _FakeLocalStorageBackend implements LocalStorageBackend {
-  _FakeLocalStorageBackend({
-    this.hasExistingArchive = false,
-    this.hasLatestArchiveError,
-    this.verifyError,
-    this.verifyErrorLocationId,
-    this.selectedLocation = const LocalStorageLocation(
-      locationId: 'picked-local-folder',
-      displayName: 'Sprache',
-      kind: LocalStorageLocationKind.fileSystemPath,
-    ),
-  });
+  _FakeLocalStorageBackend();
 
-  bool hasExistingArchive;
-  final Object? hasLatestArchiveError;
-  final Object? verifyError;
-  final String? verifyErrorLocationId;
-  final LocalStorageLocation selectedLocation;
-  final List<LocalStorageLocation> verifiedLocations = [];
   final List<LocalStorageBundle> writes = [];
   final List<LocalStorageLocation> releasedLocations = [];
   final List<String> archivedImports = [];
-  int hasLatestArchiveChecks = 0;
 
   @override
   Future<LocalStorageLocation?> pickLocation({
     LocalStorageSettings? current,
-  }) async => selectedLocation;
+  }) async => const LocalStorageLocation(
+    locationId: 'picked-local-folder',
+    displayName: 'Sprache',
+    kind: LocalStorageLocationKind.fileSystemPath,
+  );
 
   @override
   Future<LocalStorageLocation> verifyLocation(
     LocalStorageLocation location,
-  ) async {
-    verifiedLocations.add(location);
-    if (verifyError != null &&
-        (verifyErrorLocationId == null ||
-            verifyErrorLocationId == location.locationId)) {
-      throw verifyError!;
-    }
-    return location;
-  }
+  ) async => location;
 
   @override
   Future<LocalStorageWriteResult> writeBundle({
@@ -387,11 +176,7 @@ class _FakeLocalStorageBackend implements LocalStorageBackend {
       null;
 
   @override
-  Future<bool> hasLatestArchive(LocalStorageLocation location) async {
-    hasLatestArchiveChecks += 1;
-    if (hasLatestArchiveError != null) throw hasLatestArchiveError!;
-    return hasExistingArchive;
-  }
+  Future<bool> hasLatestArchive(LocalStorageLocation location) async => false;
 
   @override
   Future<LocalImportArchiveResult> archiveImport({

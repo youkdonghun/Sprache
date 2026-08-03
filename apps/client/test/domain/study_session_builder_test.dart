@@ -4,6 +4,7 @@ import 'package:sprache/src/domain/learning_group.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/progress.dart';
 import 'package:sprache/src/domain/session_enhancements.dart';
+import 'package:sprache/src/domain/study_limits.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/domain/study_session_builder.dart';
 
@@ -222,8 +223,10 @@ void main() {
     expect(wrongOnly.items.single.id, 'wrong');
   });
 
-  test('supports a one-to-one-hundred item session boundary', () {
-    final items = [for (var index = 0; index < 120; index++) _word('w-$index')];
+  test('supports a one-to-one-thousand item session boundary', () {
+    final items = [
+      for (var index = 0; index < 1200; index++) _word('w-$index'),
+    ];
 
     final one = builder.build(
       courseId: 'ko-en',
@@ -232,16 +235,16 @@ void main() {
       progress: const {},
       plan: const StudySessionPlan(itemLimit: 1),
     );
-    final hundred = builder.build(
+    final thousand = builder.build(
       courseId: 'ko-en',
       localDate: now,
       items: items,
       progress: const {},
-      plan: const StudySessionPlan(itemLimit: 100),
+      plan: const StudySessionPlan(itemLimit: StudyLimits.maxSessionItems),
     );
 
     expect(one.items, hasLength(1));
-    expect(hundred.items, hasLength(100));
+    expect(thousand.items, hasLength(StudyLimits.maxSessionItems));
   });
 
   test(
@@ -283,8 +286,10 @@ void main() {
     },
   );
 
-  test('uses recent speed for timed sessions and never exceeds 100 items', () {
-    final items = [for (var index = 0; index < 150; index++) _word('w-$index')];
+  test('uses recent speed for timed sessions and never exceeds 1000 items', () {
+    final items = [
+      for (var index = 0; index < 1200; index++) _word('w-$index'),
+    ];
 
     final fiveMinutes = builder.build(
       courseId: 'ko-en',
@@ -308,9 +313,17 @@ void main() {
       ),
       averageSecondsPerItem: 5,
     );
+    final oversizedItemCount = builder.build(
+      courseId: 'ko-en',
+      localDate: now,
+      items: items,
+      progress: const {},
+      plan: const StudySessionPlan(itemLimit: 1200),
+    );
 
     expect(fiveMinutes.items, hasLength(10));
-    expect(fastFifteenMinutes.items, hasLength(100));
+    expect(fastFifteenMinutes.items, hasLength(180));
+    expect(oversizedItemCount.items, hasLength(StudyLimits.maxSessionItems));
   });
 
   test('recovery mode caps the queue and ranks overdue weak items first', () {

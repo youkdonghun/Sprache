@@ -22,8 +22,8 @@ fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 client_dir="$repo_root/apps/client"
-version="${SPRACHE_VERSION:-1.35.0}"
-build_number="${SPRACHE_BUILD_NUMBER:-60}"
+version="${SPRACHE_VERSION:-1.36.0}"
+build_number="${SPRACHE_BUILD_NUMBER:-61}"
 bundle_id="${SPRACHE_IOS_BUNDLE_ID:-com.youkdonghun.sprache}"
 apple_client_id="${SPRACHE_GOOGLE_APPLE_CLIENT_ID:-1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com}"
 apple_reversed_client_id="com.googleusercontent.apps.${apple_client_id%.apps.googleusercontent.com}"

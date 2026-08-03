@@ -3,6 +3,7 @@ import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/learning_group.dart';
 import 'package:sprache/src/domain/session_enhancements.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
+import 'package:sprache/src/domain/study_limits.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 
 void main() {
@@ -262,7 +263,7 @@ void main() {
         'language:ja': 9999,
         'bad subject': 200,
       },
-      'sessionItemLimit': 999,
+      'sessionItemLimit': StudyLimits.maxSessionItems + 1,
       'newItemLimit': -10,
       'reviewLimit': 0,
       'sentenceRatio': 3,
@@ -278,7 +279,7 @@ void main() {
         'includeWords': false,
         'includeSentences': false,
         'sentenceRatio': -4,
-        'itemLimit': 101,
+        'itemLimit': StudyLimits.maxSessionItems + 1,
       },
     });
 
@@ -286,7 +287,7 @@ void main() {
     expect(restored.dailyGoalFor('language:en'), 20);
     expect(restored.dailyGoalFor('language:ja'), 500);
     expect(restored.dailyGoalsBySubject, isNot(contains('bad subject')));
-    expect(restored.sessionItemLimit, 100);
+    expect(restored.sessionItemLimit, StudyLimits.maxSessionItems);
     expect(restored.newItemLimit, 0);
     expect(restored.reviewLimit, 1);
     expect(restored.sentenceRatio, 1);
@@ -301,7 +302,7 @@ void main() {
     expect(restored.sessionPlan.includeWords, isTrue);
     expect(restored.sessionPlan.includeSentences, isTrue);
     expect(restored.sessionPlan.sentenceRatio, 0);
-    expect(restored.sessionPlan.itemLimit, 100);
+    expect(restored.sessionPlan.itemLimit, StudyLimits.maxSessionItems);
   });
 
   test('updates one subject goal without changing another subject', () {

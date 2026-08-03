@@ -25,6 +25,7 @@ import '../domain/session_enhancements.dart';
 import '../domain/study_history.dart';
 import '../domain/study_completion_receipt.dart';
 import '../domain/study_interaction_preferences.dart';
+import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
 import '../domain/study_routines.dart';
 import '../domain/study_runtime_modes.dart';
@@ -4661,12 +4662,25 @@ class _ExamSetupDialogState extends State<_ExamSetupDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final countOptions = <int>{
-      min(5, widget.availableQuestions),
-      min(10, widget.availableQuestions),
-      min(20, widget.availableQuestions),
+    final maximumQuestionCount = min(
       widget.availableQuestions,
-    }.where((value) => value > 0).toList()..sort();
+      StudyLimits.maxSessionItems,
+    );
+    final countOptions =
+        <int>{
+              5,
+              10,
+              20,
+              50,
+              100,
+              250,
+              500,
+              StudyLimits.maxSessionItems,
+              maximumQuestionCount,
+            }
+            .where((value) => value > 0 && value <= maximumQuestionCount)
+            .toList()
+          ..sort();
     return AlertDialog(
       key: const Key('exam-setup-dialog'),
       title: const Text('시험 설정'),

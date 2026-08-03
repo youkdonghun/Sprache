@@ -19,11 +19,12 @@ class DriveConnectionGate extends ConsumerWidget {
     if (config.mockMode) return child;
     final app = ref.watch(appControllerProvider);
     final connection = ref.watch(connectionControllerProvider);
-    final ready =
-        app.isHydrated &&
-        app.driveConnected &&
-        connection.phase == ConnectionPhase.connected;
-    if (ready) return child;
+    // Drive authorization is required for the first permanent save, but it
+    // must not lock an already-linked user out of locally cached learning.
+    // Web access tokens intentionally live only in memory, so a PWA restart
+    // can temporarily leave the runtime disconnected until the next explicit
+    // sync/reconnect. The persisted binding is enough to open the app offline.
+    if (app.isHydrated && app.driveConnected) return child;
 
     final busy = connection.busy || !app.isHydrated;
     final stage = connection.stage;

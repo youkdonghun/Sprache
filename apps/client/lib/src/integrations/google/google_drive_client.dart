@@ -181,6 +181,13 @@ class DriveDataIntegrityException implements Exception {
 }
 
 class GoogleDriveClient {
+  static const appRootFolderName = 'Sprache';
+  static const legacyAppRootFolderName = 'WordStudyData';
+  static const _supportedAppRootFolderNames = {
+    appRootFolderName,
+    legacyAppRootFolderName,
+  };
+
   GoogleDriveClient({
     required this.accessTokenProvider,
     http.Client? httpClient,
@@ -264,7 +271,8 @@ class GoogleDriveClient {
   Future<DriveBootstrapResult?> discoverAppRoot() async {
     final roots = await _listDriveItems(
       query: [
-        "name = 'WordStudyData'",
+        "(name = '$appRootFolderName' or "
+            "name = '$legacyAppRootFolderName')",
         "mimeType = '$_folderMimeType'",
         'trashed = false',
       ].join(' and '),
@@ -274,7 +282,7 @@ class GoogleDriveClient {
     final visitedRootIds = <String>{};
     for (final root in roots) {
       if (!visitedRootIds.add(root.id) ||
-          root.name != 'WordStudyData' ||
+          !_supportedAppRootFolderNames.contains(root.name) ||
           root.mimeType != _folderMimeType) {
         continue;
       }
@@ -423,19 +431,31 @@ class GoogleDriveClient {
   }
 
   Future<DriveBootstrapResult> ensureAppRoot(String selectedFolderId) async {
-    final appRootId =
-        await _findChildFolder(selectedFolderId, 'WordStudyData') ??
-        await _createFolder('WordStudyData', selectedFolderId);
-    return _prepareAppRoot(appRootId, appRootFolderName: 'WordStudyData');
+    var resolvedFolderName = appRootFolderName;
+    var appRootId = await _findChildFolder(selectedFolderId, appRootFolderName);
+    if (appRootId == null) {
+      appRootId = await _findChildFolder(
+        selectedFolderId,
+        legacyAppRootFolderName,
+      );
+      if (appRootId != null) resolvedFolderName = legacyAppRootFolderName;
+    }
+    appRootId ??= await _createFolder(appRootFolderName, selectedFolderId);
+    return _prepareAppRoot(appRootId, appRootFolderName: resolvedFolderName);
   }
 
   Future<DriveBootstrapResult> reuseAppRoot(
     String appRootId, {
     String? expectedFolderName,
   }) async {
+    final folderName = await _readFolderName(appRootId);
+    return _prepareAppRoot(appRootId, appRootFolderName: folderName);
+  }
+
+  Future<String> _readFolderName(String folderId) async {
     final response = await _authorizedGet(
       Uri.parse(
-        '$_apiRoot/files/$appRootId'
+        '$_apiRoot/files/$folderId'
         '?fields=id,name,mimeType,trashed',
       ),
     );
@@ -449,7 +469,7 @@ class GoogleDriveClient {
         '연결된 Google Drive 저장 위치가 유효한 폴더가 아닙니다.',
       );
     }
-    return _prepareAppRoot(appRootId, appRootFolderName: folderName);
+    return folderName;
   }
 
   Future<DriveBootstrapResult> _prepareAppRoot(

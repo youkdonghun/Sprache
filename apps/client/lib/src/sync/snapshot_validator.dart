@@ -1549,7 +1549,9 @@ class SyncSnapshotValidator {
       'selectedItemIds',
     ]) {
       final value = plan[field];
-      final maxLength = field == 'selectedItemIds' ? 500 : 100;
+      final maxLength = field == 'selectedItemIds'
+          ? StudyLimits.maxSessionItems
+          : 100;
       final maxRunes = field == 'selectedItemIds' || field == 'groupIds'
           ? 160
           : 80;

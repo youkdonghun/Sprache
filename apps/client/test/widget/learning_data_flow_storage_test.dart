@@ -50,18 +50,16 @@ void main() {
             localCopyCount: 4,
             groupCount: 3,
             driveConnected: false,
-            localFolderConfigured: true,
-            localFolderName: 'Sprache',
           ),
         ),
       ),
     );
 
-    expect(find.text('현재: 로컬 폴더 · 앱 DB 원본'), findsOneWidget);
+    expect(find.text('현재: Google Drive 연결 필요'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('Drive details describe the local folder as the fallback', (
+  testWidgets('Drive details describe Drive and the app-only offline cache', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -76,21 +74,16 @@ void main() {
             localCopyCount: 4,
             groupCount: 3,
             driveConnected: true,
-            localFolderConfigured: true,
-            localFolderName: '내 Sprache 폴더',
           ),
         ),
       ),
     );
 
-    expect(find.text('현재: Drive · 앱 DB 원본'), findsOneWidget);
+    expect(find.text('현재: Google Drive · 앱 내부 오프라인 캐시'), findsOneWidget);
     await tester.tap(find.byKey(const Key('learning-data-flow-card')));
     await tester.pumpAndSettle();
 
-    expect(
-      find.text('내 Sprache 폴더는 Drive 연결 해제 시 자동으로 복귀할 대기 위치입니다.'),
-      findsOneWidget,
-    );
+    expect(find.text('앱 내부 오프라인 캐시'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

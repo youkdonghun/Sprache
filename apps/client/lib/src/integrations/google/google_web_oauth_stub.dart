@@ -15,6 +15,8 @@ class GoogleWebOAuthClient {
 
   WebGoogleAuthorization? get currentAuthorization => null;
 
+  Future<WebGoogleAuthorization?> restoreAuthorization() async => null;
+
   Future<WebGoogleAuthorization> authorize({bool forceAccountChoice = false}) {
     throw UnsupportedError(
       'Google Web OAuth is available only in a browser ($clientId).',

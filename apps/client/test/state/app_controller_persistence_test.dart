@@ -488,6 +488,66 @@ void main() {
     controller.dispose();
   });
 
+  test(
+    'bulk content edit validates first and writes one store batch',
+    () async {
+      final store = _CountingContentStore();
+      const first = LearningItem(
+        id: 'bulk-first',
+        kind: LearningItemKind.word,
+        learningLanguage: LanguageTag.english,
+        text: 'first',
+        translations: ['첫째'],
+        acceptedAnswers: ['첫째'],
+        partOfSpeech: PartOfSpeech.noun,
+      );
+      const second = LearningItem(
+        id: 'bulk-second',
+        kind: LearningItemKind.word,
+        learningLanguage: LanguageTag.english,
+        text: 'second',
+        translations: ['둘째'],
+        acceptedAnswers: ['둘째'],
+        partOfSpeech: PartOfSpeech.noun,
+      );
+      await store.saveCustomItems(const [first, second]);
+      store.resetWrites();
+      final controller = AppController(store);
+      await Future<void>.delayed(Duration.zero);
+
+      final saved = await controller.upsertCustomItems([
+        first.copyWith(translations: const ['첫 번째']),
+        second.copyWith(translations: const ['두 번째']),
+      ]);
+
+      expect(saved, 2);
+      expect(store.contentWriteCount, 1);
+      expect(store.lastBatchSize, 2);
+      expect(
+        controller.state.customItems
+            .map((item) => item.primaryTranslation)
+            .toSet(),
+        {'첫 번째', '두 번째'},
+      );
+      expect(
+        controller.state.customItems
+            .map((item) => item.source.contentVersion)
+            .toSet(),
+        {2},
+      );
+
+      await expectLater(
+        controller.upsertCustomItems([
+          first.copyWith(text: ''),
+          second.copyWith(translations: const ['저장되면 안 됨']),
+        ]),
+        throwsA(isA<Exception>()),
+      );
+      expect(store.contentWriteCount, 1);
+      controller.dispose();
+    },
+  );
+
   test('semantic import replacement preserves the existing item ID', () async {
     final store = MemoryStudyStore();
     final controller = AppController(store);
@@ -549,5 +609,31 @@ class _DelayedFirstProfileStore extends MemoryStudyStore {
       await releaseFirstProfileWrite.future;
     }
     await super.saveProfile(profile);
+  }
+}
+
+class _CountingContentStore extends MemoryStudyStore {
+  int contentWriteCount = 0;
+  int lastBatchSize = 0;
+
+  void resetWrites() {
+    contentWriteCount = 0;
+    lastBatchSize = 0;
+  }
+
+  @override
+  Future<void> commitCustomItemImport({
+    required Iterable<LearningItem> items,
+    required Map<String, DateTime> tombstones,
+    ImportCommitRecord? record,
+  }) async {
+    final batch = items.toList(growable: false);
+    contentWriteCount += 1;
+    lastBatchSize = batch.length;
+    await super.commitCustomItemImport(
+      items: batch,
+      tombstones: tombstones,
+      record: record,
+    );
   }
 }

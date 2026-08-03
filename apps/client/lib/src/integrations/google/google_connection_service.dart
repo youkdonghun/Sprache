@@ -170,7 +170,7 @@ class MockGoogleConnectionService
     onStage?.call(GoogleConnectionStage.preparingDrive);
     return const GoogleConnectionResult(
       folderId: 'mock_word_study_data',
-      folderName: 'WordStudyData (Mock)',
+      folderName: 'Sprache (Mock)',
       mock: true,
     );
   }
@@ -210,7 +210,7 @@ class MockGoogleConnectionService
     onStage?.call(GoogleConnectionStage.preparingDrive);
     return const GoogleConnectionResult(
       folderId: 'mock_word_study_data',
-      folderName: 'WordStudyData (Mock)',
+      folderName: 'Sprache (Mock)',
       mock: true,
     );
   }
@@ -898,7 +898,11 @@ class GoogleWebConnectionService
     GoogleConnectionStageCallback? onStage,
   }) async {
     onStage?.call(GoogleConnectionStage.checkingConnection);
-    final authorization = _oauth.currentAuthorization;
+    // Access tokens remain memory-only, but GIS can silently mint a new token
+    // from the browser's already-approved Google session. This keeps a PWA
+    // restart connected without persisting secrets or showing login UI.
+    final authorization =
+        _oauth.currentAuthorization ?? await _oauth.restoreAuthorization();
     if (authorization == null) return null;
     final drive = _driveClient();
     onStage?.call(GoogleConnectionStage.preparingDrive);
@@ -991,7 +995,16 @@ class GoogleWebConnectionService
       accessTokenProvider: () async {
         final current = _oauth.currentAuthorization;
         if (current != null) return current.accessToken;
-        return (await _oauth.authorize()).accessToken;
+        // Refresh from an already-approved Google browser session without an
+        // account picker or consent screen. If that session is gone, fail once
+        // and let the explicit reconnect action handle interactive OAuth.
+        final restored = await _oauth.restoreAuthorization();
+        if (restored != null) return restored.accessToken;
+        throw const DriveRequestException(
+          failure: DriveRequestFailure.authenticationExpired,
+          statusCode: 401,
+          operation: 'use cached web Drive authorization',
+        );
       },
     );
   }
@@ -1069,7 +1082,7 @@ class GoogleWebConnectionService
 /// Google Sign-In and Drive synchronization for iOS and macOS.
 ///
 /// Apple platforms do not expose Google's native OnePick folder selector. A
-/// first-time connection therefore creates the app-owned `WordStudyData`
+/// first-time connection therefore creates the app-owned `Sprache`
 /// folder in My Drive. If another Sprache device already wrote an app-data
 /// binding, that exact folder is restored instead.
 class AppleGoogleConnectionService

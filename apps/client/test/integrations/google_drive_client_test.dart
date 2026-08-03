@@ -1556,6 +1556,121 @@ void main() {
     expect(patchCount, 0);
   });
 
+  test('creates a new Drive app root with the Sprache folder name', () async {
+    final createdNames = <String>[];
+    final client = GoogleDriveClient(
+      accessTokenProvider: () async => 'token',
+      httpClient: MockClient((request) async {
+        if (request.method == 'GET' && request.url.path == '/drive/v3/files') {
+          final query = request.url.queryParameters['q'] ?? '';
+          final name = RegExp(r"name = '([^']+)'").firstMatch(query)?.group(1);
+          if (name == 'manifest.json') {
+            return http.Response(
+              jsonEncode({
+                'files': [
+                  {'id': 'manifest-file'},
+                ],
+              }),
+              200,
+            );
+          }
+          if (const {
+            'content',
+            'state',
+            'backups',
+            'quarantine',
+          }.contains(name)) {
+            return http.Response(
+              jsonEncode({
+                'files': [
+                  {'id': '$name-folder'},
+                ],
+              }),
+              200,
+            );
+          }
+          return http.Response(jsonEncode({'files': []}), 200);
+        }
+        if (request.method == 'POST' && request.url.path == '/drive/v3/files') {
+          final body = jsonDecode(request.body) as Map<String, Object?>;
+          final name = body['name']! as String;
+          createdNames.add(name);
+          return http.Response(jsonEncode({'id': 'new-root'}), 200);
+        }
+        return http.Response('unexpected request', 500);
+      }),
+    );
+
+    final bootstrap = await client.ensureAppRoot('selected-parent');
+
+    expect(createdNames, ['Sprache']);
+    expect(bootstrap.appRootFolderId, 'new-root');
+    expect(bootstrap.appRootFolderName, 'Sprache');
+  });
+
+  test(
+    'reuses a legacy WordStudyData root instead of duplicating it',
+    () async {
+      final postRequests = <http.Request>[];
+      final client = GoogleDriveClient(
+        accessTokenProvider: () async => 'token',
+        httpClient: MockClient((request) async {
+          if (request.method == 'POST') postRequests.add(request);
+          if (request.method == 'GET' &&
+              request.url.path == '/drive/v3/files') {
+            final query = request.url.queryParameters['q'] ?? '';
+            final name = RegExp(
+              r"name = '([^']+)'",
+            ).firstMatch(query)?.group(1);
+            if (name == 'WordStudyData') {
+              return http.Response(
+                jsonEncode({
+                  'files': [
+                    {'id': 'legacy-root'},
+                  ],
+                }),
+                200,
+              );
+            }
+            if (name == 'manifest.json') {
+              return http.Response(
+                jsonEncode({
+                  'files': [
+                    {'id': 'manifest-file'},
+                  ],
+                }),
+                200,
+              );
+            }
+            if (const {
+              'content',
+              'state',
+              'backups',
+              'quarantine',
+            }.contains(name)) {
+              return http.Response(
+                jsonEncode({
+                  'files': [
+                    {'id': '$name-folder'},
+                  ],
+                }),
+                200,
+              );
+            }
+            return http.Response(jsonEncode({'files': []}), 200);
+          }
+          return http.Response('unexpected request', 500);
+        }),
+      );
+
+      final bootstrap = await client.ensureAppRoot('selected-parent');
+
+      expect(postRequests, isEmpty);
+      expect(bootstrap.appRootFolderId, 'legacy-root');
+      expect(bootstrap.appRootFolderName, 'WordStudyData');
+    },
+  );
+
   test('reuses a linked app root without creating a nested root', () async {
     final requestedPaths = <String>[];
     final client = GoogleDriveClient(

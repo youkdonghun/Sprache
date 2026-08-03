@@ -1004,7 +1004,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     if (state.busy || (state.phase != ConnectionPhase.connected && !canRetry)) {
       return;
     }
-    await _runSync();
+    await _runSync(allowExplicitRetry: true);
   }
 
   Future<void> syncAutomatically() async {
@@ -1031,9 +1031,11 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     }
   }
 
-  Future<void> _runSync() async {
+  Future<void> _runSync({bool allowExplicitRetry = false}) async {
     final canRetry =
-        state.phase == ConnectionPhase.failed && state.runtimeReady;
+        state.phase == ConnectionPhase.failed &&
+        state.runtimeReady &&
+        (allowExplicitRetry || state.diagnostic?.reconnectRequired != true);
     if (state.busy || (state.phase != ConnectionPhase.connected && !canRetry)) {
       return;
     }
@@ -1509,7 +1511,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     if (error is RemoteSnapshotValidationException) {
       return [
         if (quarantine != null)
-          'Drive의 WordStudyData/quarantine에서 격리 사본과 안전 미리보기를 확인합니다.',
+          'Drive의 Sprache/quarantine에서 격리 사본과 안전 미리보기를 확인합니다.',
         'Drive의 원격 파일을 수정하거나 정상 백업으로 교체합니다.',
         '이 기기의 내보내기 백업을 먼저 보관한 뒤 동기화를 다시 실행합니다.',
       ];
@@ -1524,7 +1526,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       }
       return [
         if (error.quarantine != null)
-          'Drive의 WordStudyData/quarantine에서 격리 사본과 안전 미리보기를 확인합니다.',
+          'Drive의 Sprache/quarantine에서 격리 사본과 안전 미리보기를 확인합니다.',
         '정상 백업을 복원하거나 손상 원격 파일을 정리한 뒤 다시 동기화합니다.',
         '복구가 끝날 때까지 이 기기의 정상 로컬 데이터를 삭제하지 않습니다.',
       ];

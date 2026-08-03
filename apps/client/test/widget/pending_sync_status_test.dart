@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
+import 'package:sprache/src/config/app_config.dart';
 import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/integrations/google/google_connection_service.dart';
@@ -44,6 +45,15 @@ void main() {
           ProviderScope(
             overrides: [
               studyStoreProvider.overrideWithValue(store),
+              appConfigProvider.overrideWithValue(
+                const AppConfig(
+                  googleAndroidClientId: 'android-client-id',
+                  googleDesktopClientId: 'desktop-client-id',
+                  googleServerClientId: 'server-client-id',
+                  appEnvironment: 'test',
+                  mockMode: false,
+                ),
+              ),
               googleConnectionServiceProvider.overrideWithValue(
                 _UnavailableRestoreService(),
               ),
@@ -106,7 +116,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byKey(const Key('active-storage-target')), findsOneWidget);
-        expect(find.byKey(const Key('local-folder-status')), findsOneWidget);
+        expect(
+          find.byKey(const Key('drive-only-storage-status')),
+          findsOneWidget,
+        );
         expect(find.byKey(const Key('drive-management-menu')), findsOneWidget);
         final driveMenu = find.byKey(const Key('drive-management-menu'));
         await tester.ensureVisible(driveMenu);
@@ -154,10 +167,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(service.deleted, isTrue);
-        expect(
-          find.text('Drive 연결 정보를 삭제했습니다. 현재 저장 방식은 그대로 유지됩니다.'),
-          findsOneWidget,
-        );
+        expect(find.text('Drive 연결 정보를 삭제했습니다.'), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
         debugDefaultTargetPlatformOverride = null;

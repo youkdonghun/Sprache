@@ -32,7 +32,6 @@ import '../services/clipboard_read_session.dart';
 import '../services/recovery_checkpoint_service.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
-import '../state/local_storage_state.dart';
 import '../state/navigation_guard_state.dart';
 import '../state/pending_import_state.dart';
 import '../theme/app_theme.dart';
@@ -430,6 +429,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
 
   Future<void> _pickFile() async {
     if (_busy) return;
+    if (!ref.read(appControllerProvider).driveConnected &&
+        !ref.read(appConfigProvider).mockMode) {
+      _showMessage('Google Drive를 연결한 뒤 파일을 가져와 주세요.');
+      return;
+    }
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['xlsx', 'csv', 'tsv', 'json', 'jsonl', 'pdf'],
@@ -1646,6 +1650,12 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     )) {
       return;
     }
+    final driveConnected = ref.read(appControllerProvider).driveConnected;
+    final mockMode = ref.read(appConfigProvider).mockMode;
+    if (!driveConnected && !mockMode) {
+      _showMessage('Google Drive 연결이 필요합니다. 연결한 뒤 다시 저장해 주세요.');
+      return;
+    }
 
     setState(() {
       _busy = true;
@@ -1661,7 +1671,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           );
       if (!mounted) return;
       setState(() {
-        _busyMessage = '2/4 · 선택한 자료를 이 기기에 저장하고 있어요…';
+        _busyMessage = '2/4 · 선택한 자료를 앱 내부에 안전하게 반영하고 있어요…';
       });
       final result = await ref
           .read(appControllerProvider.notifier)
@@ -1686,7 +1696,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       if (!mounted) return;
       var storageText = ' · 앱 데이터에 병합됨';
       if (result.added + result.replaced > 0) {
-        if (ref.read(appControllerProvider).driveConnected) {
+        if (driveConnected) {
           setState(() {
             _busyMessage = '3/4 · Drive의 기존 자료와 합치고 있어요…';
           });
@@ -1695,17 +1705,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           final connection = ref.read(connectionControllerProvider);
           storageText = connection.phase == ConnectionPhase.connected
               ? ' · Drive 자료 업데이트 완료'
-              : ' · 로컬 병합 완료 · Drive 재시도 대기';
+              : ' · 앱 내부 반영 완료 · Drive 재시도 대기';
         } else {
-          setState(() {
-            _busyMessage = '3/4 · 선택한 로컬 폴더에 사본을 저장하고 있어요…';
-          });
-          await ref.read(localStorageControllerProvider.notifier).saveNow();
-          if (!mounted) return;
-          final localStorage = ref.read(localStorageControllerProvider);
-          storageText = localStorage.configured
-              ? ' · 로컬 저장본 업데이트 완료'
-              : ' · 이 기기에 저장 완료';
+          storageText = ' · 테스트용 앱 데이터에 반영 완료';
         }
       }
       setState(() {
@@ -3464,8 +3466,8 @@ class _ImportRoutingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final statusText = driveConnected
-        ? '가져온 자료를 기존 Drive 폴더에 합쳐 저장'
-        : '정리된 학습 자료를 이 기기에 저장 · Google 연결 시 기기 간 동기화';
+        ? '가져온 학습 자료만 Drive에 합쳐 저장 · PDF 원본은 저장하지 않음'
+        : 'Google Drive를 연결한 뒤 학습 자료를 저장할 수 있습니다.';
     final fields = <Widget>[
       TextField(
         key: const Key('import-distribution-key'),
@@ -3658,8 +3660,8 @@ class _UploadCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   selected
-                      ? '다른 파일로 바꾸거나 아래 템플릿을 내려받을 수 있습니다.'
-                      : 'PDF, Excel, CSV, JSON, JSONL · 내용을 확인한 뒤 저장해요.',
+                      ? '원본은 저장하지 않고 선택한 학습 자료만 Drive에 반영해요.'
+                      : 'PDF, Excel, CSV, JSON, JSONL · 원본은 저장하지 않아요.',
                   maxLines: compact ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -4704,8 +4706,8 @@ class _ImportDestinationSummaryCard extends StatelessWidget {
                       ),
                       Text(
                         driveConnected
-                            ? '이 기기에 저장한 뒤 같은 Drive 폴더에도 저장해요.'
-                            : '이 기기와 선택한 로컬 폴더에 함께 저장해요.',
+                            ? '앱 내부에 안전하게 반영한 뒤 같은 Drive 폴더에 동기화해요.'
+                            : 'Google Drive를 연결해야 저장할 수 있어요.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],

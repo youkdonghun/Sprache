@@ -2953,9 +2953,15 @@ class _SessionCountInputState extends State<_SessionCountInput> {
         textAlign: TextAlign.center,
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(3),
+          LengthLimitingTextInputFormatter(
+            StudyLimits.maxSessionItems.toString().length,
+          ),
         ],
-        decoration: const InputDecoration(isDense: true, helperText: '1~100'),
+        decoration: const InputDecoration(
+          isDense: true,
+          helperText:
+              '${StudyLimits.minSessionItems}~${StudyLimits.maxSessionItems}',
+        ),
         onChanged: _handleChanged,
         onEditingComplete: () {
           _commit();

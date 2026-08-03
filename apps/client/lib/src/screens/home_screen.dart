@@ -25,7 +25,6 @@ import '../services/study_notification_service.dart';
 import '../state/app_state.dart';
 import '../state/app_state_view.dart';
 import '../state/connection_state.dart';
-import '../state/local_storage_state.dart';
 import '../theme/app_theme.dart';
 import '../widgets/learning_data_flow_card.dart';
 import '../widgets/onboarding_setup_dialog.dart';
@@ -39,7 +38,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(appControllerProvider);
-    final localStorage = ref.watch(localStorageControllerProvider);
     final reconnectSummary = ref.watch(
       connectionControllerProvider.select((value) => value.reconnectSummary),
     );
@@ -595,15 +593,11 @@ class HomeScreen extends ConsumerWidget {
                         onAdd: () => unawaited(openQuickContent()),
                         onOrganize: () => context.go('/library/groups'),
                         onLearn: () => context.go('/learn'),
-                        localFolderConfigured: localStorage.configured,
-                        localFolderName: localStorage.settings.displayName,
-                        onManageStorage: () =>
+                        onConnectDrive: () =>
                             context.go('/settings?focus=storage'),
                         syncLabel: state.driveConnected
                             ? 'Drive 연결됨'
-                            : localStorage.configured
-                            ? '로컬 · ${localStorage.settings.displayName}'
-                            : '로컬 폴더 선택 필요',
+                            : 'Google Drive 연결 필요',
                       )
                     : null,
               AppHomeSection.schedules =>
@@ -839,16 +833,6 @@ class HomeScreen extends ConsumerWidget {
                             ),
                           ],
                           ...personalizedSections,
-                          if (localStorage.requiresSetup ||
-                              localStorage.errorMessage != null) ...[
-                            SizedBox(height: layout.sectionGap),
-                            _LocalStoragePromptCard(
-                              compact: homeCompact,
-                              errorMessage: localStorage.errorMessage,
-                              onPressed: () =>
-                                  context.go('/settings?focus=storage'),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -1287,79 +1271,6 @@ class _TwoMinuteStudyRow extends StatelessWidget {
               child: const Text('시작'),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LocalStoragePromptCard extends StatelessWidget {
-  const _LocalStoragePromptCard({
-    required this.compact,
-    required this.errorMessage,
-    required this.onPressed,
-  });
-
-  final bool compact;
-  final String? errorMessage;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final hasError = errorMessage != null;
-    final accent = hasError ? AppTheme.danger : AppTheme.warning;
-    return Material(
-      key: const Key('local-storage-setup-prompt'),
-      color: accent.withValues(alpha: 0.08),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(compact ? 11 : 14),
-        side: BorderSide(color: accent.withValues(alpha: 0.25)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        child: Padding(
-          padding: EdgeInsets.all(compact ? 11 : 14),
-          child: Row(
-            children: [
-              Icon(
-                hasError
-                    ? Icons.folder_off_outlined
-                    : Icons.create_new_folder_outlined,
-                color: accent,
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      hasError
-                          ? '로컬 저장 폴더를 다시 연결해 주세요'
-                          : '학습 자료를 저장할 폴더를 골라 주세요',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      hasError
-                          ? errorMessage!
-                          : 'Google을 연결하지 않아도 선택한 폴더에 사본을 자동으로 저장해요.',
-                      maxLines: compact ? 2 : 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              FilledButton.tonal(
-                onPressed: onPressed,
-                child: Text(hasError ? '다시 연결' : '폴더 선택'),
-              ),
-            ],
-          ),
         ),
       ),
     );

@@ -10,6 +10,7 @@ import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/session_enhancements.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
+import 'package:sprache/src/domain/study_limits.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/domain/study_subject.dart';
 import 'package:sprache/src/routing/app_router.dart';
@@ -716,7 +717,7 @@ void main() {
         .queue(
           _fixedNow(),
           mode: StudyMode.mixed,
-          itemLimit: 100,
+          itemLimit: StudyLimits.maxSessionItems,
           historyFilter: StudyHistoryFilter.all,
         )
         .map((item) => item.id)
@@ -743,7 +744,7 @@ void main() {
     final plan = controller.activeSessionPlan;
     expect(plan.deck, StudyDeckScope.selected);
     expect(plan.selectedItemIds, expectedIntrinsicIds);
-    expect(plan.selectedItemIds, hasLength(100));
+    expect(plan.selectedItemIds, hasLength(expectedIntrinsicIds.length));
     expect(plan.groupIds, isEmpty);
     expect(plan.tags, isEmpty);
     expect(plan.itemLimit, targetCount);
