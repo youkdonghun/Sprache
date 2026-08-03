@@ -37,6 +37,20 @@ void main() {
       expect(find.byKey(const Key('session-start-bottom')), findsOneWidget);
       expect(find.text('지금 10문제'), findsOneWidget);
       expect(find.byKey(const Key('session-schedule-bottom')), findsOneWidget);
+      expect(
+        tester
+            .widget<Material>(find.byKey(const Key('session-actions-bottom')))
+            .elevation,
+        1,
+      );
+      final actionsDecoration =
+          tester
+                  .widget<DecoratedBox>(
+                    find.byKey(const Key('session-actions-border')),
+                  )
+                  .decoration
+              as BoxDecoration;
+      expect((actionsDecoration.border! as Border).top.width, 1);
 
       await tester.ensureVisible(find.byKey(const Key('session-deck-unit')));
       await tester.tap(find.byKey(const Key('session-deck-unit')));

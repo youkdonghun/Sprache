@@ -26,7 +26,8 @@ void main() {
     expect(restored.notifications.enabled, isFalse);
     expect(restored.notifications.quietStartMinutes, 0);
     expect(restored.notifications.quietEndMinutes, 1439);
-    expect(restored.privacy.curtainDuration, const Duration(seconds: 60));
+    expect(restored.privacy.privacyMode, isTrue);
+    expect(restored.privacy.toJson(), isNot(contains('curtainDelay')));
     expect(restored.voice.pitch, 2);
     expect(restored.voice.voiceIdByLanguage.length, lessThanOrEqualTo(20));
     expect(restored.voice.soundStrength, DeviceFeedbackStrength.light);
@@ -68,8 +69,18 @@ void main() {
       restored.notifications.lockScreenContent,
       NotificationLockScreenContent.generic,
     );
-    expect(restored.privacy.curtainDelay, PrivacyCurtainDelay.seconds15);
+    expect(restored.privacy.privacyMode, isFalse);
     expect(restored.voice.pitch, 1);
+  });
+
+  test('legacy curtain delay is ignored without changing privacy mode', () {
+    final restored = DevicePreferences.fromJson({
+      'privacy': {'privacyMode': true, 'curtainDelay': 'immediate'},
+    });
+
+    expect(restored.privacy.privacyMode, isTrue);
+    expect(restored.privacy.toJson(), {'privacyMode': true});
+    expect(restored.toJson().toString(), isNot(contains('curtainDelay')));
   });
 
   test('voice selection and feedback strengths stay device scoped', () {

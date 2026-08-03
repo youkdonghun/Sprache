@@ -5,6 +5,181 @@ import '../domain/accessibility_input_profile.dart';
 import '../domain/app_experience_preferences.dart';
 import 'study_accessibility_theme.dart';
 
+@immutable
+class AppLayoutDensity extends ThemeExtension<AppLayoutDensity> {
+  const AppLayoutDensity({
+    required this.dense,
+    required this.pagePadding,
+    required this.cardPadding,
+    required this.sectionGap,
+    required this.controlGap,
+    required this.desktopSidebarExtendedWidth,
+    required this.desktopSidebarCollapsedWidth,
+    required this.desktopSidebarPadding,
+    required this.sidebarControlHeight,
+    required this.sidebarControlHorizontalPadding,
+    required this.subjectContextHeight,
+    required this.subjectContextPadding,
+  });
+
+  factory AppLayoutDensity.fromPreference(
+    AppDensity density, {
+    required bool isDesktop,
+  }) => switch (density) {
+    AppDensity.platform => AppLayoutDensity(
+      dense: isDesktop,
+      pagePadding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 20 : 16,
+        vertical: 16,
+      ),
+      cardPadding: const EdgeInsets.all(16),
+      sectionGap: isDesktop ? 14 : 16,
+      controlGap: isDesktop ? 3 : 4,
+      desktopSidebarExtendedWidth: 212,
+      desktopSidebarCollapsedWidth: 72,
+      desktopSidebarPadding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
+      sidebarControlHeight: 44,
+      sidebarControlHorizontalPadding: 11,
+      subjectContextHeight: 52,
+      subjectContextPadding: const EdgeInsets.fromLTRB(8, 4, 6, 4),
+    ),
+    AppDensity.comfortable => AppLayoutDensity(
+      dense: false,
+      pagePadding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 28 : 20,
+        vertical: isDesktop ? 24 : 20,
+      ),
+      cardPadding: EdgeInsets.all(isDesktop ? 24 : 20),
+      sectionGap: 20,
+      controlGap: 6,
+      desktopSidebarExtendedWidth: 236,
+      desktopSidebarCollapsedWidth: 82,
+      desktopSidebarPadding: const EdgeInsets.fromLTRB(14, 20, 14, 16),
+      sidebarControlHeight: 48,
+      sidebarControlHorizontalPadding: 14,
+      subjectContextHeight: 60,
+      subjectContextPadding: const EdgeInsets.fromLTRB(12, 6, 10, 6),
+    ),
+    AppDensity.compact => AppLayoutDensity(
+      dense: true,
+      pagePadding: EdgeInsets.symmetric(
+        horizontal: isDesktop ? 18 : 12,
+        vertical: isDesktop ? 14 : 12,
+      ),
+      cardPadding: const EdgeInsets.all(12),
+      sectionGap: 12,
+      controlGap: 2,
+      desktopSidebarExtendedWidth: 200,
+      desktopSidebarCollapsedWidth: 68,
+      desktopSidebarPadding: const EdgeInsets.fromLTRB(8, 12, 8, 10),
+      sidebarControlHeight: 44,
+      sidebarControlHorizontalPadding: 10,
+      subjectContextHeight: 52,
+      subjectContextPadding: const EdgeInsets.fromLTRB(6, 4, 6, 4),
+    ),
+  };
+
+  final bool dense;
+  final EdgeInsets pagePadding;
+  final EdgeInsets cardPadding;
+  final double sectionGap;
+  final double controlGap;
+  final double desktopSidebarExtendedWidth;
+  final double desktopSidebarCollapsedWidth;
+  final EdgeInsets desktopSidebarPadding;
+  final double sidebarControlHeight;
+  final double sidebarControlHorizontalPadding;
+  final double subjectContextHeight;
+  final EdgeInsets subjectContextPadding;
+
+  @override
+  AppLayoutDensity copyWith({
+    bool? dense,
+    EdgeInsets? pagePadding,
+    EdgeInsets? cardPadding,
+    double? sectionGap,
+    double? controlGap,
+    double? desktopSidebarExtendedWidth,
+    double? desktopSidebarCollapsedWidth,
+    EdgeInsets? desktopSidebarPadding,
+    double? sidebarControlHeight,
+    double? sidebarControlHorizontalPadding,
+    double? subjectContextHeight,
+    EdgeInsets? subjectContextPadding,
+  }) {
+    return AppLayoutDensity(
+      dense: dense ?? this.dense,
+      pagePadding: pagePadding ?? this.pagePadding,
+      cardPadding: cardPadding ?? this.cardPadding,
+      sectionGap: sectionGap ?? this.sectionGap,
+      controlGap: controlGap ?? this.controlGap,
+      desktopSidebarExtendedWidth:
+          desktopSidebarExtendedWidth ?? this.desktopSidebarExtendedWidth,
+      desktopSidebarCollapsedWidth:
+          desktopSidebarCollapsedWidth ?? this.desktopSidebarCollapsedWidth,
+      desktopSidebarPadding:
+          desktopSidebarPadding ?? this.desktopSidebarPadding,
+      sidebarControlHeight: sidebarControlHeight ?? this.sidebarControlHeight,
+      sidebarControlHorizontalPadding:
+          sidebarControlHorizontalPadding ??
+          this.sidebarControlHorizontalPadding,
+      subjectContextHeight: subjectContextHeight ?? this.subjectContextHeight,
+      subjectContextPadding:
+          subjectContextPadding ?? this.subjectContextPadding,
+    );
+  }
+
+  @override
+  AppLayoutDensity lerp(
+    covariant ThemeExtension<AppLayoutDensity>? other,
+    double t,
+  ) {
+    if (other is! AppLayoutDensity) return this;
+    return AppLayoutDensity(
+      dense: t < 0.5 ? dense : other.dense,
+      pagePadding: EdgeInsets.lerp(pagePadding, other.pagePadding, t)!,
+      cardPadding: EdgeInsets.lerp(cardPadding, other.cardPadding, t)!,
+      sectionGap: lerpDouble(sectionGap, other.sectionGap, t)!,
+      controlGap: lerpDouble(controlGap, other.controlGap, t)!,
+      desktopSidebarExtendedWidth: lerpDouble(
+        desktopSidebarExtendedWidth,
+        other.desktopSidebarExtendedWidth,
+        t,
+      )!,
+      desktopSidebarCollapsedWidth: lerpDouble(
+        desktopSidebarCollapsedWidth,
+        other.desktopSidebarCollapsedWidth,
+        t,
+      )!,
+      desktopSidebarPadding: EdgeInsets.lerp(
+        desktopSidebarPadding,
+        other.desktopSidebarPadding,
+        t,
+      )!,
+      sidebarControlHeight: lerpDouble(
+        sidebarControlHeight,
+        other.sidebarControlHeight,
+        t,
+      )!,
+      sidebarControlHorizontalPadding: lerpDouble(
+        sidebarControlHorizontalPadding,
+        other.sidebarControlHorizontalPadding,
+        t,
+      )!,
+      subjectContextHeight: lerpDouble(
+        subjectContextHeight,
+        other.subjectContextHeight,
+        t,
+      )!,
+      subjectContextPadding: EdgeInsets.lerp(
+        subjectContextPadding,
+        other.subjectContextPadding,
+        t,
+      )!,
+    );
+  }
+}
+
 abstract final class AppTheme {
   static const mobilePrimary = Color(0xFF3D8F40);
   static const mobileAccent = Color(0xFFF59E0B);
@@ -425,7 +600,13 @@ abstract final class AppTheme {
         AppDensity.compact => VisualDensity.compact,
       },
       pageTransitionsTheme: _pageTransitionsTheme(preferences.motionLevel),
-      extensions: [StudyAccessibilityTheme.fromProfile(accessibilityProfile)],
+      extensions: [
+        AppLayoutDensity.fromPreference(
+          preferences.density,
+          isDesktop: isDesktop,
+        ),
+        StudyAccessibilityTheme.fromProfile(accessibilityProfile),
+      ],
     );
   }
 

@@ -20,6 +20,7 @@ import '../domain/content_management.dart';
 import '../domain/duplicate_repair.dart';
 import '../domain/import_distribution.dart';
 import '../domain/progress.dart';
+import '../domain/session_enhancements.dart';
 import '../domain/smart_collection.dart';
 import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
@@ -410,13 +411,31 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final activeSubject = controller.activeSubject;
     final items = controller.courseItems;
     final groups = controller.availableLearningGroups;
+    final groupFilter = groups.contains(_groupFilter) ? _groupFilter : null;
+    if (state.isHydrated && _groupFilter != null && groupFilter == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _groupFilter == null) return;
+        final latestState = ref.read(appControllerProvider);
+        if (!latestState.isHydrated) return;
+        final availableGroups = ref
+            .read(appControllerProvider.notifier)
+            .availableLearningGroups;
+        if (availableGroups.contains(_groupFilter)) return;
+        setState(() {
+          _groupFilter = null;
+          _groupSelectionMode = false;
+          _selectedForGroup.clear();
+          _resultPage = 0;
+        });
+      });
+    }
     final weakItems = controller.weakItems;
     final recentWrongItems = controller.recentWrongItems;
     final smartCollections = controller.smartCollections;
     final trashEntries = controller.listTrash(subjectId: activeSubject.id);
-    final selectedGroupSummary = _groupFilter == null
+    final selectedGroupSummary = groupFilter == null
         ? null
-        : controller.learningGroupSummary(_groupFilter!);
+        : controller.learningGroupSummary(groupFilter);
     final customItemIds = state.customItems.map((item) => item.id).toSet();
     final localCopyCount = state.customItems
         .where((item) => item.effectiveSubjectId == activeSubject.id)
@@ -433,8 +452,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         _LibraryFilter.wrong => progress?.lastResult == ReviewRating.again,
       };
       if (!matchesFilter) return false;
-      if (_groupFilter != null &&
-          !learningGroupsOf(item).contains(_groupFilter)) {
+      if (groupFilter != null &&
+          !learningGroupsOf(item).contains(groupFilter)) {
         return false;
       }
       return true;
@@ -536,9 +555,29 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     ? '단어, 뜻, 읽기, 품사 검색'
                     : '검색 · tag: type: state: group: · Ctrl+F',
                 prefixIcon: const Icon(Icons.search_rounded),
+                suffix: _query.isEmpty
+                    ? null
+                    : Container(
+                        key: const Key('library-search-result-count'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          '${filtered.length}개',
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ),
                 suffixIcon: _query.isEmpty
                     ? null
                     : IconButton(
+                        key: const Key('library-clear-search'),
                         onPressed: _clearSearch,
                         icon: const Icon(Icons.close_rounded),
                         tooltip: '검색어 지우기',
@@ -568,7 +607,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                     for (final suggestion in emptySearchSuggestions) ...[
                       ActionChip(
                         key: Key('library-search-suggestion-$suggestion'),
-                        label: Text(suggestion),
+                        label: Text(switch (suggestion) {
+                          'state:due' => '복습할 자료',
+                          'state:favorite' => '즐겨찾기',
+                          'type:sentence' => '문장만',
+                          _ when suggestion.startsWith('tag:') =>
+                            '#${suggestion.substring(4)}',
+                          _ => suggestion,
+                        }),
+                        tooltip: suggestion,
                         onPressed: () => _applySearchSuggestion(suggestion),
                       ),
                       const SizedBox(width: 7),
@@ -585,6 +632,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             children: [
               _FilterChip(
                 label: '전체',
+                count: items.length,
                 selected: _filter == _LibraryFilter.all,
                 onSelected: () => setState(() {
                   _filter = _LibraryFilter.all;
@@ -594,6 +642,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               const SizedBox(width: 7),
               _FilterChip(
                 label: '저장됨',
+                count: favoriteCount,
                 selected: _filter == _LibraryFilter.favorites,
                 onSelected: () => setState(() {
                   _filter = _LibraryFilter.favorites;
@@ -603,6 +652,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               const SizedBox(width: 7),
               _FilterChip(
                 label: '단어',
+                count: items
+                    .where((item) => item.kind == LearningItemKind.word)
+                    .length,
                 selected: _filter == _LibraryFilter.word,
                 onSelected: () => setState(() {
                   _filter = _LibraryFilter.word;
@@ -612,6 +664,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               const SizedBox(width: 7),
               _FilterChip(
                 label: '문장',
+                count: items
+                    .where((item) => item.kind == LearningItemKind.sentence)
+                    .length,
                 selected: _filter == _LibraryFilter.sentence,
                 onSelected: () => setState(() {
                   _filter = _LibraryFilter.sentence;
@@ -668,6 +723,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           studiedCount: studiedCount,
           favoriteCount: favoriteCount,
           trashCount: trashEntries.length,
+          onQuickWord: () => _openQuickContent(LearningItemKind.word),
           onAdd: _openAddMenu,
           onTrash: _openTrash,
         ),
@@ -682,6 +738,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             items.isEmpty ||
             (!state.driveConnected && !localStorage.configured)) ...[
           LearningDataFlowCard(
+            condensed: true,
             totalCount: items.length,
             localCopyCount: localCopyCount,
             groupCount: groups.length,
@@ -715,16 +772,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         searchAndFilters,
         if (_query.isNotEmpty ||
             _filter != _LibraryFilter.all ||
-            _groupFilter != null ||
+            groupFilter != null ||
             _advancedCriteria.hasFacets ||
             _advancedCriteria.sortOrder != LibrarySortOrder.catalog) ...[
           const SizedBox(height: 8),
           _ActiveLibraryFilters(
             query: _query,
             filter: _filter,
-            group: _groupFilter,
+            group: groupFilter,
             advancedCriteria: _advancedCriteria,
             resultCount: filtered.length,
+            onStudy: filtered.isEmpty
+                ? null
+                : () => _startFilteredResults(filtered),
             onClear: () {
               _searchDebounce?.cancel();
               _searchController.clear();
@@ -737,20 +797,38 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               });
             },
           ),
-          if (filtered.isNotEmpty) ...[
-            const SizedBox(height: 6),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                key: const Key('study-current-filter-results'),
-                onPressed: () => _startFilteredResults(filtered),
-                icon: const Icon(Icons.play_arrow_rounded),
-                label: Text('이 결과 ${filtered.length}개 학습'),
-              ),
-            ),
-          ],
         ],
-        if (_groupFilter == null) ...[
+        const SizedBox(height: 8),
+        _GroupToolbar(
+          groups: groups,
+          summaries: controller.learningGroupSummaries,
+          selectedGroup: groupFilter,
+          summary: selectedGroupSummary,
+          selectionMode: _groupSelectionMode,
+          onGroupChanged: (group) => setState(() {
+            _groupFilter = group;
+            _resultPage = 0;
+            if (!_groupSelectionMode) {
+              _selectedForGroup.clear();
+            }
+          }),
+          onToggleSelectionMode: () => setState(() {
+            _groupSelectionMode = !_groupSelectionMode;
+            if (!_groupSelectionMode) {
+              _selectedForGroup.clear();
+            }
+          }),
+          onOpenOrganizer: () => context.go('/library/groups'),
+          onMemorize: groupFilter == null
+              ? null
+              : () => _startGroup(groupFilter, memorize: true),
+          onQuiz: groupFilter == null
+              ? null
+              : () => _startGroup(groupFilter, memorize: false),
+          onRename: groupFilter == null ? null : _renameSelectedGroup,
+          onDelete: groupFilter == null ? null : _deleteSelectedGroup,
+        ),
+        if (groupFilter == null) ...[
           const SizedBox(height: 8),
           _SmartCollectionsBar(
             weakCount: weakItems.length,
@@ -773,7 +851,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         ],
         if (smartCollections.isNotEmpty ||
             _query.isNotEmpty ||
-            _groupFilter != null ||
+            groupFilter != null ||
             _advancedCriteria.hasFacets ||
             _advancedCriteria.sortOrder != LibrarySortOrder.catalog ||
             _filter == _LibraryFilter.word ||
@@ -785,7 +863,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                 controller.itemsForSmartCollection(collection).length,
             canSaveCurrent:
                 _query.isNotEmpty ||
-                _groupFilter != null ||
+                groupFilter != null ||
                 _advancedCriteria.hasFacets ||
                 _advancedCriteria.sortOrder != LibrarySortOrder.catalog ||
                 _filter == _LibraryFilter.word ||
@@ -808,36 +886,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             onOpen: () => _openDuplicateRepair(duplicateCatalog),
           ),
         ],
-        const SizedBox(height: 8),
-        _GroupToolbar(
-          groups: groups,
-          summaries: controller.learningGroupSummaries,
-          selectedGroup: _groupFilter,
-          summary: selectedGroupSummary,
-          selectionMode: _groupSelectionMode,
-          onGroupChanged: (group) => setState(() {
-            _groupFilter = group;
-            _resultPage = 0;
-            if (!_groupSelectionMode) {
-              _selectedForGroup.clear();
-            }
-          }),
-          onToggleSelectionMode: () => setState(() {
-            _groupSelectionMode = !_groupSelectionMode;
-            if (!_groupSelectionMode) {
-              _selectedForGroup.clear();
-            }
-          }),
-          onOpenOrganizer: () => context.go('/library/groups'),
-          onMemorize: _groupFilter == null
-              ? null
-              : () => _startGroup(_groupFilter!, memorize: true),
-          onQuiz: _groupFilter == null
-              ? null
-              : () => _startGroup(_groupFilter!, memorize: false),
-          onRename: _groupFilter == null ? null : _renameSelectedGroup,
-          onDelete: _groupFilter == null ? null : _deleteSelectedGroup,
-        ),
         if (_groupSelectionMode) ...[
           const SizedBox(height: 8),
           _LibrarySelectionScopeToolbar(
@@ -1037,23 +1085,32 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
     final pagedResults = Card(
       margin: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (pageCount > 1)
-            _LibraryResultPager(
-              page: effectivePage,
-              pageCount: pageCount,
-              totalCount: filtered.length,
-              onPrevious: effectivePage == 0
-                  ? null
-                  : () => setState(() => _resultPage = effectivePage - 1),
-              onNext: effectivePage == pageCount - 1
-                  ? null
-                  : () => setState(() => _resultPage = effectivePage + 1),
-            ),
-          Expanded(child: resultBody),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // A NestedScrollView can briefly leave only a sliver of height for
+          // its body while the compact mobile controls are still expanded.
+          // Keep the results scrollable, then reveal paging as the header
+          // collapses and there is enough room for its 44dp controls.
+          final showPager = pageCount > 1 && constraints.maxHeight >= 60;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (showPager)
+                _LibraryResultPager(
+                  page: effectivePage,
+                  pageCount: pageCount,
+                  totalCount: filtered.length,
+                  onPrevious: effectivePage == 0
+                      ? null
+                      : () => setState(() => _resultPage = effectivePage - 1),
+                  onNext: effectivePage == pageCount - 1
+                      ? null
+                      : () => setState(() => _resultPage = effectivePage + 1),
+                ),
+              Expanded(child: resultBody),
+            ],
+          );
+        },
       ),
     );
     final results = desktopMasterDetail
@@ -1384,10 +1441,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     final current = ref.read(appControllerProvider).preferences.sessionPlan;
     controller.updateSessionPlan(
       current.copyWith(
+        planId: '',
+        subjectId: controller.activeSubject.id,
         title: _query.isEmpty ? '필터 결과 학습' : '“$_query” 검색 결과 학습',
         mode: StudyMode.mixed,
         deck: StudyDeckScope.selected,
+        unitIndex: null,
         difficulty: StudyDifficulty.all,
+        queuePriority: StudyQueuePriority.dueFirst,
+        historyFilter: StudyHistoryFilter.all,
+        groupIds: {},
         tags: {},
         levels: {},
         selectedItemIds: ids,
@@ -1397,7 +1460,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           StudyLimits.minSessionItems,
           StudyLimits.maxSessionItems,
         ),
+        lengthMode: StudySessionLengthMode.itemCount,
+        timeBudgetMinutes: 5,
+        backlogRecovery: const BacklogRecoverySettings(),
+        examSchedule: null,
         scheduledAt: null,
+        routineName: '',
+        routineWeekdays: {},
+        routineMinuteOfDay: null,
+        routineOrder: 0,
+        updatedAt: null,
       ),
     );
     context.push('/session-builder');
@@ -3044,6 +3116,7 @@ class _ActiveLibraryFilters extends StatelessWidget {
     required this.group,
     required this.advancedCriteria,
     required this.resultCount,
+    required this.onStudy,
     required this.onClear,
   });
 
@@ -3052,6 +3125,7 @@ class _ActiveLibraryFilters extends StatelessWidget {
   final String? group;
   final LibrarySearchCriteria advancedCriteria;
   final int resultCount;
+  final VoidCallback? onStudy;
   final VoidCallback onClear;
 
   @override
@@ -3099,6 +3173,13 @@ class _ActiveLibraryFilters extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
+          IconButton.filledTonal(
+            key: const Key('study-current-filter-results'),
+            onPressed: onStudy,
+            icon: const Icon(Icons.play_arrow_rounded),
+            tooltip: '현재 결과 $resultCount개 학습',
+          ),
+          const SizedBox(width: 2),
           TextButton(
             key: const Key('clear-library-filters'),
             onPressed: onClear,
@@ -3399,11 +3480,13 @@ class _DesktopDetailPlaceholder extends StatelessWidget {
 class _FilterChip extends StatelessWidget {
   const _FilterChip({
     required this.label,
+    required this.count,
     required this.selected,
     required this.onSelected,
   });
 
   final String label;
+  final int count;
   final bool selected;
   final VoidCallback onSelected;
 
@@ -3413,7 +3496,7 @@ class _FilterChip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: '$label 필터',
+      label: '$label $count개 필터',
       child: Material(
         color: selected ? colors.primaryContainer : colors.surfaceContainerLow,
         shape: RoundedRectangleBorder(
@@ -3447,6 +3530,16 @@ class _FilterChip extends StatelessWidget {
                           ? colors.onPrimaryContainer
                           : colors.onSurface,
                       fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    '$count',
+                    key: Key('library-filter-count-$label'),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: selected
+                          ? colors.onPrimaryContainer
+                          : colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -3691,7 +3784,7 @@ class _DuplicateRepairCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       key: const Key('duplicate-repair-card'),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(10, 4, 4, 4),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
@@ -3706,18 +3799,17 @@ class _DuplicateRepairCard extends StatelessWidget {
           Expanded(
             child: Text(
               exactGroupCount == 0
-                  ? '비슷한 자료 후보 $suggestionCount쌍을 찾았습니다. '
-                        '자동으로 합치지 않으며 직접 비교할 수 있습니다.'
-                  : '같은 표현 $itemCount개가 $exactGroupCount묶음 있습니다. '
-                        '유사 후보 $suggestionCount쌍도 별도로 검토할 수 있습니다.',
-              maxLines: 3,
+                  ? '유사 후보 $suggestionCount쌍 · 직접 비교 필요'
+                  : '중복 $exactGroupCount묶음 · $itemCount개 · 유사 $suggestionCount쌍',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
-          OutlinedButton(
+          IconButton.outlined(
             key: const Key('open-duplicate-repair'),
             onPressed: onOpen,
-            child: const Text('검토'),
+            icon: const Icon(Icons.chevron_right_rounded),
+            tooltip: '중복 자료 검토',
           ),
         ],
       ),
@@ -4134,6 +4226,10 @@ class _GroupToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveSelectedGroup = groups.contains(selectedGroup)
+        ? selectedGroup
+        : null;
+
     int groupCount(String group) {
       for (final item in summaries) {
         if (item.name == group) return item.totalCount;
@@ -4141,41 +4237,10 @@ class _GroupToolbar extends StatelessWidget {
       return 0;
     }
 
-    final toolbarItems = <Widget>[
-      const Icon(Icons.folder_copy_outlined, size: 20),
-      Text('학습 그룹', style: Theme.of(context).textTheme.titleSmall),
-      OutlinedButton.icon(
-        key: const Key('library-select-materials'),
-        onPressed: onToggleSelectionMode,
-        icon: Icon(
-          selectionMode
-              ? Icons.check_box_rounded
-              : Icons.check_box_outline_blank_rounded,
-        ),
-        label: Text(selectionMode ? '선택 종료' : '자료 선택'),
-      ),
-      OutlinedButton.icon(
-        key: const Key('library-group-selection'),
-        onPressed: onOpenOrganizer,
-        icon: const Icon(Icons.view_week_outlined),
-        label: const Text('그룹 작업판'),
-      ),
-      ChoiceChip(
-        label: const Text('전체'),
-        selected: selectedGroup == null,
-        onSelected: (_) => onGroupChanged(null),
-      ),
-      for (final group in groups)
-        ChoiceChip(
-          label: Text('$group ${groupCount(group)}'),
-          selected: selectedGroup == group,
-          onSelected: (_) => onGroupChanged(group),
-        ),
-    ];
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -4195,35 +4260,38 @@ class _GroupToolbar extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
+                          Tooltip(
+                            message: selectionMode ? '자료 선택 종료' : '자료 선택',
+                            child: OutlinedButton(
                               key: const Key('library-select-materials'),
                               onPressed: onToggleSelectionMode,
-                              icon: Icon(
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.square(44),
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: Icon(
                                 selectionMode
                                     ? Icons.check_box_rounded
                                     : Icons.check_box_outline_blank_rounded,
                               ),
-                              label: Text(selectionMode ? '선택 종료' : '자료 선택'),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
+                          const SizedBox(width: 4),
+                          Tooltip(
+                            message: '그룹 작업판',
+                            child: OutlinedButton(
                               key: const Key('library-group-selection'),
                               onPressed: onOpenOrganizer,
-                              icon: const Icon(Icons.view_week_outlined),
-                              label: const Text('작업판'),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size.square(44),
+                                padding: EdgeInsets.zero,
+                              ),
+                              child: const Icon(Icons.view_week_outlined),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 5),
                       SingleChildScrollView(
                         key: const Key('mobile-learning-group-scroll'),
                         scrollDirection: Axis.horizontal,
@@ -4232,7 +4300,7 @@ class _GroupToolbar extends StatelessWidget {
                             ChoiceChip(
                               key: const ValueKey('mobile-learning-group-all'),
                               label: const Text('전체'),
-                              selected: selectedGroup == null,
+                              selected: effectiveSelectedGroup == null,
                               onSelected: (_) => onGroupChanged(null),
                             ),
                             for (final group in groups) ...[
@@ -4240,7 +4308,7 @@ class _GroupToolbar extends StatelessWidget {
                               ChoiceChip(
                                 key: ValueKey('mobile-learning-group-$group'),
                                 label: Text('$group ${groupCount(group)}'),
-                                selected: selectedGroup == group,
+                                selected: effectiveSelectedGroup == group,
                                 onSelected: (_) => onGroupChanged(group),
                               ),
                             ],
@@ -4250,11 +4318,73 @@ class _GroupToolbar extends StatelessWidget {
                     ],
                   );
                 }
-                return Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: toolbarItems,
+                return Row(
+                  key: const Key('library-compact-group-toolbar'),
+                  children: [
+                    if (constraints.maxWidth >= 600) ...[
+                      const Icon(Icons.folder_copy_outlined, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        '학습 그룹',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                    Expanded(
+                      child: KeyedSubtree(
+                        key: ValueKey(
+                          'library-group-value-${effectiveSelectedGroup ?? 'all'}',
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          key: const Key('library-group-dropdown'),
+                          initialValue: effectiveSelectedGroup ?? '',
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                          ),
+                          items: [
+                            DropdownMenuItem(
+                              value: '',
+                              child: Text('전체 · ${groups.length}개 그룹'),
+                            ),
+                            for (final group in groups)
+                              DropdownMenuItem(
+                                value: group,
+                                child: Text(
+                                  '$group · ${groupCount(group)}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: (value) => onGroupChanged(
+                            value == null || value.isEmpty ? null : value,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton.outlined(
+                      key: const Key('library-select-materials'),
+                      onPressed: onToggleSelectionMode,
+                      icon: Icon(
+                        selectionMode
+                            ? Icons.check_box_rounded
+                            : Icons.check_box_outline_blank_rounded,
+                      ),
+                      tooltip: selectionMode ? '자료 선택 종료' : '자료 선택',
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton.outlined(
+                      key: const Key('library-group-selection'),
+                      onPressed: onOpenOrganizer,
+                      icon: const Icon(Icons.view_week_outlined),
+                      tooltip: '그룹 작업판',
+                    ),
+                  ],
                 );
               },
             ),
@@ -4380,6 +4510,7 @@ class _LibraryHeader extends StatelessWidget {
     required this.studiedCount,
     required this.favoriteCount,
     required this.trashCount,
+    required this.onQuickWord,
     required this.onAdd,
     required this.onTrash,
   });
@@ -4391,6 +4522,7 @@ class _LibraryHeader extends StatelessWidget {
   final int studiedCount;
   final int favoriteCount;
   final int trashCount;
+  final VoidCallback onQuickWord;
   final VoidCallback onAdd;
   final VoidCallback onTrash;
 
@@ -4418,23 +4550,29 @@ class _LibraryHeader extends StatelessWidget {
         ),
       ],
     );
-    final addButton = FilledButton.icon(
-      key: const Key('library-add-button'),
-      onPressed: onAdd,
+    final quickWordButton = FilledButton.icon(
+      key: const Key('library-quick-word-button'),
+      onPressed: onQuickWord,
       icon: const Icon(Icons.add_rounded),
-      label: const Text('자료 추가'),
+      label: const Text('단어 추가'),
     );
-    final compactAddButton = FilledButton.icon(
-      key: const Key('library-add-button'),
-      onPressed: onAdd,
+    final compactQuickWordButton = FilledButton.icon(
+      key: const Key('library-quick-word-button'),
+      onPressed: onQuickWord,
       icon: const Icon(Icons.add_rounded),
-      label: const Text('자료 추가'),
+      label: const Text('단어'),
     );
-    final iconAddButton = IconButton.filled(
+    final iconQuickWordButton = IconButton.filled(
+      key: const Key('library-quick-word-button'),
+      onPressed: onQuickWord,
+      icon: const Icon(Icons.add_rounded),
+      tooltip: '단어 바로 추가',
+    );
+    final addMenuButton = IconButton.outlined(
       key: const Key('library-add-button'),
       onPressed: onAdd,
-      icon: const Icon(Icons.add_rounded),
-      tooltip: '자료 추가 방식 선택',
+      icon: const Icon(Icons.arrow_drop_down_rounded),
+      tooltip: '문장·상세 편집·파일 가져오기',
     );
     final trashButton = Badge(
       isLabelVisible: trashCount > 0,
@@ -4457,9 +4595,11 @@ class _LibraryHeader extends StatelessWidget {
               trashButton,
               const SizedBox(width: 6),
               if (constraints.maxWidth < 420)
-                iconAddButton
+                iconQuickWordButton
               else
-                compactAddButton,
+                compactQuickWordButton,
+              const SizedBox(width: 4),
+              addMenuButton,
             ],
           );
         }
@@ -4469,7 +4609,9 @@ class _LibraryHeader extends StatelessWidget {
             const SizedBox(width: 18),
             trashButton,
             const SizedBox(width: 8),
-            addButton,
+            quickWordButton,
+            const SizedBox(width: 4),
+            addMenuButton,
           ],
         );
       },
@@ -4548,9 +4690,9 @@ class _LibraryRow extends ConsumerWidget {
               return Padding(
                 padding: EdgeInsets.fromLTRB(
                   compact ? 11 : 14,
-                  compact ? 6 : 11,
+                  compact ? 6 : 8,
                   8,
-                  compact ? 6 : 11,
+                  compact ? 6 : 8,
                 ),
                 child: Row(
                   children: [
@@ -4572,7 +4714,7 @@ class _LibraryRow extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: SizedBox.square(
-                            dimension: compact ? 40 : 46,
+                            dimension: compact ? 40 : 44,
                             child: Center(
                               child: Text(
                                 item.learningLanguage.symbol,

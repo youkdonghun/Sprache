@@ -20,10 +20,7 @@ void main() {
           enabled: false,
           lockScreenContent: NotificationLockScreenContent.hidden,
         ),
-        privacy: DevicePrivacyPreferences(
-          privacyMode: true,
-          curtainDelay: PrivacyCurtainDelay.immediate,
-        ),
+        privacy: DevicePrivacyPreferences(privacyMode: true),
       ),
       exportedAt: DateTime.utc(2026, 8, 2, 12),
     );

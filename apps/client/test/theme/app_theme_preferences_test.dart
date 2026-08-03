@@ -109,6 +109,46 @@ void main() {
       }
     });
 
+    test('density preferences expose reusable layout metrics', () {
+      final platform = AppTheme.desktopFor(
+        const AppExperiencePreferences(),
+        brightness: Brightness.light,
+      ).extension<AppLayoutDensity>()!;
+      final comfortable = AppTheme.desktopFor(
+        const AppExperiencePreferences(density: AppDensity.comfortable),
+        brightness: Brightness.light,
+      ).extension<AppLayoutDensity>()!;
+      final compactDesktop = AppTheme.desktopFor(
+        const AppExperiencePreferences(density: AppDensity.compact),
+        brightness: Brightness.light,
+      ).extension<AppLayoutDensity>()!;
+      final compactMobile = AppTheme.mobileFor(
+        const AppExperiencePreferences(density: AppDensity.compact),
+        brightness: Brightness.light,
+      ).extension<AppLayoutDensity>()!;
+
+      expect(platform.dense, isTrue);
+      expect(platform.pagePadding.left, 20);
+      expect(platform.desktopSidebarExtendedWidth, 212);
+      expect(platform.desktopSidebarCollapsedWidth, 72);
+      expect(comfortable.sectionGap, greaterThan(platform.sectionGap));
+      expect(
+        comfortable.cardPadding.left,
+        greaterThan(platform.cardPadding.left),
+      );
+
+      expect(compactDesktop.dense, isTrue);
+      expect(compactDesktop.pagePadding.left, 18);
+      expect(compactDesktop.cardPadding, const EdgeInsets.all(12));
+      expect(compactDesktop.sectionGap, 12);
+      expect(compactDesktop.controlGap, 2);
+      expect(compactDesktop.desktopSidebarExtendedWidth, 200);
+      expect(compactDesktop.desktopSidebarCollapsedWidth, 68);
+      expect(compactDesktop.sidebarControlHeight, 44);
+      expect(compactDesktop.subjectContextHeight, 52);
+      expect(compactMobile.pagePadding.left, 12);
+    });
+
     test('surface, card, contrast, and typography choices reach the theme', () {
       const preferences = AppExperiencePreferences(
         colorMode: AppColorMode.oled,

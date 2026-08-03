@@ -12,6 +12,7 @@ enum PracticeSessionLength {
   threeMinutes,
   fiveMinutes,
   tenMinutes,
+  fifteenMinutes,
 }
 
 enum PracticeDifficultyPreset { relaxed, balanced, challenge }

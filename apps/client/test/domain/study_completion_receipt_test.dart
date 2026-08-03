@@ -33,6 +33,7 @@ void main() {
     expect(pending.syncLabel, contains('2건'));
     expect(locked.syncStatus, StudyCompletionSyncStatus.offlineLocked);
     expect(locked.syncLabel, contains('3건'));
+    expect(locked.syncLabel, contains('동기화 일시 중지'));
     expect(local.semanticsLabel, contains('획득 15 XP'));
     expect(local.semanticsLabel, contains('연속 학습 4일'));
   });

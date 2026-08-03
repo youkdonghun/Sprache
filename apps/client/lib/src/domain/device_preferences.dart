@@ -1,7 +1,5 @@
 enum NotificationLockScreenContent { hidden, generic, detailed }
 
-enum PrivacyCurtainDelay { disabled, immediate, seconds15, seconds60 }
-
 enum DeviceFeedbackStrength { off, light, normal, strong }
 
 class DeviceNotificationPreferences {
@@ -99,43 +97,17 @@ class DeviceNotificationPreferences {
 }
 
 class DevicePrivacyPreferences {
-  const DevicePrivacyPreferences({
-    this.privacyMode = false,
-    this.curtainDelay = PrivacyCurtainDelay.seconds15,
-  });
+  const DevicePrivacyPreferences({this.privacyMode = false});
 
   factory DevicePrivacyPreferences.fromJson(Map<String, Object?> json) =>
-      DevicePrivacyPreferences(
-        privacyMode: json['privacyMode'] == true,
-        curtainDelay: _safeEnum(
-          PrivacyCurtainDelay.values,
-          json['curtainDelay'],
-          PrivacyCurtainDelay.seconds15,
-        ),
-      );
+      DevicePrivacyPreferences(privacyMode: json['privacyMode'] == true);
 
   final bool privacyMode;
-  final PrivacyCurtainDelay curtainDelay;
 
-  Duration? get curtainDuration => switch (curtainDelay) {
-    PrivacyCurtainDelay.disabled => null,
-    PrivacyCurtainDelay.immediate => Duration.zero,
-    PrivacyCurtainDelay.seconds15 => const Duration(seconds: 15),
-    PrivacyCurtainDelay.seconds60 => const Duration(seconds: 60),
-  };
+  DevicePrivacyPreferences copyWith({bool? privacyMode}) =>
+      DevicePrivacyPreferences(privacyMode: privacyMode ?? this.privacyMode);
 
-  DevicePrivacyPreferences copyWith({
-    bool? privacyMode,
-    PrivacyCurtainDelay? curtainDelay,
-  }) => DevicePrivacyPreferences(
-    privacyMode: privacyMode ?? this.privacyMode,
-    curtainDelay: curtainDelay ?? this.curtainDelay,
-  );
-
-  Map<String, Object?> toJson() => {
-    'privacyMode': privacyMode,
-    'curtainDelay': curtainDelay.name,
-  };
+  Map<String, Object?> toJson() => {'privacyMode': privacyMode};
 }
 
 class DeviceVoicePreferences {

@@ -97,6 +97,13 @@ void main() {
         find.byKey(const Key('quick-content-meaning')),
         '우회 방법',
       );
+      await tester.ensureVisible(
+        find.byKey(const Key('quick-content-group-options')),
+      );
+      await tester.tap(find.byKey(const Key('quick-content-group-options')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('quick-content-show-new-group')));
+      await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('quick-content-new-group')),
         '업무',

@@ -110,6 +110,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   var _priority = 0;
   var _saveDuplicateSeparately = false;
   var _detailsExpanded = false;
+  var _showNewGroupFields = false;
   var _sentenceTokens = <String>[];
   var _basket = <_QuickBasketEntry>[];
   var _sessionUndo = <QuickContentSaveResult>[];
@@ -224,6 +225,9 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                 ? byRank
                 : right.updatedAt.compareTo(left.updatedAt);
           });
+    final recentGroupAvailable =
+        recentGroup != null &&
+        controller.availableLearningGroups.contains(recentGroup);
     final duplicateCandidate = _candidate(subject);
     final duplicate = _textController.text.trim().isEmpty
         ? null
@@ -237,8 +241,11 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
     );
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final compact = MediaQuery.sizeOf(context).width < 560;
-    final compactLargeText =
-        compact && MediaQuery.textScalerOf(context).scale(1) > 1.4;
+    final dense = Theme.of(context).visualDensity.vertical < 0;
+    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.4;
+    final compactActionBar =
+        compact || (largeText && MediaQuery.sizeOf(context).width < 900);
+    final compactLargeText = compactActionBar && largeText;
     final requiredCompleted = [
       _textController.text.trim(),
       _meaningController.text.trim(),
@@ -246,6 +253,84 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
     final recentTags =
         _quickPreferences.recentTagsBySubject[subject.id] ?? const <String>[];
     final templates = _quickPreferences.orderedTemplates(subject.id);
+    final detailFieldCount = <Object?>[
+      if (_acceptedController.text.trim().isNotEmpty) true,
+      if (_readingController.text.trim().isNotEmpty) true,
+      if (_nativeReadingController.text.trim().isNotEmpty) true,
+      if (_romajiController.text.trim().isNotEmpty) true,
+      if (_exampleController.text.trim().isNotEmpty) true,
+      if (_exampleMeaningController.text.trim().isNotEmpty) true,
+      if (_tagsController.text.trim().isNotEmpty) true,
+      if (_favorite) true,
+      if (_priority > 0) true,
+    ].length;
+    final duplicateDefaultLabel = switch (experience.duplicateDefault) {
+      AppDuplicateDefault.ask => '직접 선택',
+      AppDuplicateDefault.merge => '기본값 · 뜻 병합',
+      AppDuplicateDefault.separate => '기본값 · 별도 저장',
+    };
+    final textField = TextFormField(
+      key: const Key('quick-content-text'),
+      controller: _textController,
+      focusNode: _textFocusNode,
+      autofocus: true,
+      textInputAction: TextInputAction.next,
+      onFieldSubmitted: (_) => _meaningFocusNode.requestFocus(),
+      decoration: InputDecoration(
+        labelText: _kind == LearningItemKind.word
+            ? subject.isLanguage
+                  ? '${subject.name} 단어'
+                  : '외울 개념·용어'
+            : subject.isLanguage
+            ? '${subject.name} 문장'
+            : '외울 사실·문장',
+        hintText: _kind == LearningItemKind.word
+            ? '예: accomplish'
+            : '예: I accomplished my goal.',
+        suffixIcon: _textController.text.isEmpty
+            ? null
+            : ExcludeFocus(
+                child: IconButton(
+                  key: const Key('quick-content-clear-text'),
+                  onPressed: _textController.clear,
+                  icon: const Icon(Icons.close_rounded),
+                  tooltip: '표현 지우기',
+                ),
+              ),
+      ),
+      validator: _required,
+    );
+    final meaningField = DelimitedChipInput(
+      controller: _meaningController,
+      focusNode: _meaningFocusNode,
+      fieldKey: const Key('quick-content-meaning'),
+      labelText: '한국어 뜻',
+      hintText: '예: 달성하다, 이루다',
+      required: true,
+      helperText: null,
+      suffixIcon: _meaningController.text.isEmpty
+          ? null
+          : ExcludeFocus(
+              child: IconButton(
+                key: const Key('quick-content-clear-meaning'),
+                onPressed: _meaningController.clear,
+                icon: const Icon(Icons.close_rounded),
+                tooltip: '뜻 지우기',
+              ),
+            ),
+      textInputAction: _detailsExpanded
+          ? TextInputAction.next
+          : TextInputAction.done,
+      onSubmitted: (_) {
+        if (_detailsExpanded) {
+          FocusScope.of(context).nextFocus();
+        } else {
+          unawaited(
+            _save(subject, keepAdding: experience.quickAddKeepAddingDefault),
+          );
+        }
+      },
+    );
 
     return CallbackShortcuts(
       bindings: {
@@ -269,9 +354,17 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
           if (!didPop) unawaited(_requestClose());
         },
         child: Padding(
-          padding: EdgeInsets.fromLTRB(18, 0, 18, bottomInset + 16),
+          padding: EdgeInsets.fromLTRB(
+            dense ? 12 : 18,
+            0,
+            dense ? 12 : 18,
+            bottomInset + (dense ? 10 : 16),
+          ),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720, maxHeight: 760),
+            constraints: BoxConstraints(
+              maxWidth: dense ? 680 : 720,
+              maxHeight: dense ? 720 : 760,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -287,11 +380,13 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                               '빠른 자료 추가',
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '표현과 뜻만 입력해도 바로 저장됩니다.',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
+                            if (!dense) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                '표현과 뜻만 입력해도 바로 저장됩니다.',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -317,7 +412,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: dense ? 9 : 14),
                   if (_recoverableDraft case final draft?) ...[
                     Card(
                       key: const Key('quick-content-draft-recovery'),
@@ -394,110 +489,86 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                               _scheduleDraftSave();
                             },
                           ),
-                          const SizedBox(height: 8),
-                          if (_draftReady)
-                            _QuickRegistrationWorkbench(
-                              templates: templates,
-                              templateSort: _quickPreferences.templateSort,
-                              basket: _basket,
-                              recentSaves: _sessionUndo,
-                              saving: _saving,
-                              onCreateTemplate: () => _createTemplate(subject),
-                              onApplyTemplate: (template) =>
-                                  _applyTemplate(subject, template),
-                              onTemplateAction: (template, action) =>
-                                  _handleTemplateAction(
-                                    subject,
-                                    template,
-                                    action,
-                                  ),
-                              onSortChanged: _changeTemplateSort,
-                              onRemoveBasket: _removeBasketEntry,
-                              onApplyBatchOptions: _applyCurrentOptionsToBasket,
-                              onSaveBasket: () => _saveBasket(subject),
-                              onUndo: _undoRecentSave,
-                            )
-                          else
-                            const LinearProgressIndicator(
-                              key: Key('quick-content-tools-loading'),
-                            ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            key: const Key('quick-content-text'),
-                            controller: _textController,
-                            focusNode: _textFocusNode,
-                            autofocus: true,
-                            textInputAction: TextInputAction.next,
-                            onFieldSubmitted: (_) =>
-                                _meaningFocusNode.requestFocus(),
-                            decoration: InputDecoration(
-                              labelText: _kind == LearningItemKind.word
-                                  ? subject.isLanguage
-                                        ? '${subject.name} 단어'
-                                        : '외울 개념·용어'
-                                  : subject.isLanguage
-                                  ? '${subject.name} 문장'
-                                  : '외울 사실·문장',
-                              hintText: _kind == LearningItemKind.word
-                                  ? '예: accomplish'
-                                  : '예: I accomplished my goal.',
-                            ),
-                            validator: _required,
-                          ),
-                          const SizedBox(height: 12),
-                          DelimitedChipInput(
-                            controller: _meaningController,
-                            focusNode: _meaningFocusNode,
-                            fieldKey: const Key('quick-content-meaning'),
-                            labelText: '한국어 뜻',
-                            hintText: '예: 달성하다, 이루다',
-                            required: true,
-                            textInputAction: _detailsExpanded
-                                ? TextInputAction.next
-                                : TextInputAction.done,
-                            onSubmitted: (_) {
-                              if (_detailsExpanded) {
-                                FocusScope.of(context).nextFocus();
-                              } else {
-                                unawaited(
-                                  _save(
-                                    subject,
-                                    keepAdding:
-                                        experience.quickAddKeepAddingDefault,
-                                  ),
+                          SizedBox(height: dense ? 8 : 12),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              if (constraints.maxWidth < 560) {
+                                return Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    textField,
+                                    SizedBox(height: dense ? 8 : 12),
+                                    meaningField,
+                                  ],
                                 );
                               }
+                              return Row(
+                                key: const Key(
+                                  'quick-content-core-fields-inline',
+                                ),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(child: textField),
+                                  const SizedBox(width: 10),
+                                  Expanded(child: meaningField),
+                                ],
+                              );
                             },
                           ),
                           const SizedBox(height: 8),
                           Semantics(
                             key: const Key('quick-content-required-progress'),
                             label: '필수 입력 $requiredCompleted개 중 2개 완료',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  requiredCompleted == 2
-                                      ? Icons.check_circle_rounded
-                                      : Icons.pending_outlined,
-                                  size: 18,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3,
+                                ),
+                                decoration: BoxDecoration(
                                   color: requiredCompleted == 2
-                                      ? Theme.of(context).colorScheme.primary
+                                      ? Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer
                                       : Theme.of(
                                           context,
-                                        ).colorScheme.onSurfaceVariant,
+                                        ).colorScheme.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(999),
                                 ),
-                                const SizedBox(width: 7),
-                                Expanded(
-                                  child: Text(
-                                    requiredCompleted == 2
-                                        ? '필수 입력 완료'
-                                        : '필수 입력 $requiredCompleted / 2',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      requiredCompleted == 2
+                                          ? Icons.check_circle_rounded
+                                          : Icons.pending_outlined,
+                                      size: 16,
+                                      color: requiredCompleted == 2
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      requiredCompleted == 2
+                                          ? compactLargeText
+                                                ? '완료'
+                                                : '필수 입력 완료'
+                                          : compactLargeText
+                                          ? '$requiredCompleted / 2'
+                                          : '필수 입력 $requiredCompleted / 2',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelMedium,
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
                           if (!compact) ...[
@@ -520,6 +591,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                             _DuplicateNotice(
                               item: duplicate,
                               incoming: duplicateCandidate,
+                              defaultLabel: duplicateDefaultLabel,
                               mergeSelected:
                                   _duplicateDecisionKey == duplicateKey &&
                                   !_saveDuplicateSeparately,
@@ -549,116 +621,205 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                               },
                             ),
                           ],
-                          const SizedBox(height: 16),
-                          Text(
-                            '학습 그룹 (선택)',
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '선택하면 저장과 동시에 그룹에 들어갑니다.',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: 8),
-                          if (controller
-                                      .availableLearningGroupDefinitions
-                                      .length >=
-                                  4 ||
-                              groupQuery.isNotEmpty) ...[
-                            TextField(
-                              key: const Key('quick-content-group-search'),
-                              controller: _groupSearchController,
-                              decoration: const InputDecoration(
-                                isDense: true,
-                                prefixIcon: Icon(Icons.search_rounded),
-                                labelText: '그룹 검색',
-                                hintText: '이름으로 그룹 찾기',
-                              ),
+                          SizedBox(height: dense ? 8 : 12),
+                          ExpansionTile(
+                            key: const Key('quick-content-group-options'),
+                            initiallyExpanded: _selectedGroup != null,
+                            tilePadding: EdgeInsets.zero,
+                            childrenPadding: EdgeInsets.zero,
+                            leading: const Icon(Icons.folder_copy_outlined),
+                            title: const Text('학습 그룹'),
+                            subtitle: Text(
+                              _selectedGroup == null
+                                  ? '선택 안 함 · 필요할 때 펼치기'
+                                  : '$_selectedGroup · 저장과 동시에 정리',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 8),
-                          ],
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                ChoiceChip(
-                                  key: const Key('quick-content-no-group'),
-                                  label: const Text('나중에 정리'),
-                                  selected: _selectedGroup == null,
-                                  onSelected: (_) {
-                                    setState(() => _selectedGroup = null);
-                                    _scheduleDraftSave();
-                                  },
-                                ),
-                                for (final definition in groupDefinitions) ...[
-                                  const SizedBox(width: 7),
-                                  ChoiceChip(
-                                    key: Key(
-                                      'quick-content-group-${definition.name}',
+                            trailing: _selectedGroup != null
+                                ? IconButton(
+                                    key: const Key('quick-content-clear-group'),
+                                    onPressed: () {
+                                      setState(() => _selectedGroup = null);
+                                      _scheduleDraftSave();
+                                    },
+                                    icon: const Icon(Icons.close_rounded),
+                                    tooltip: '그룹 선택 해제',
+                                  )
+                                : recentGroupAvailable
+                                ? TextButton.icon(
+                                    key: const Key(
+                                      'quick-content-select-recent-group',
                                     ),
-                                    avatar: definition.pinned
-                                        ? const Icon(
-                                            Icons.push_pin_rounded,
-                                            size: 16,
-                                          )
-                                        : definition.name == recentGroup
-                                        ? const Icon(
-                                            Icons.history_rounded,
-                                            size: 16,
-                                          )
-                                        : null,
-                                    label: Text(definition.name),
-                                    selected: _selectedGroup == definition.name,
-                                    onSelected: (_) {
+                                    onPressed: () {
                                       setState(
-                                        () => _selectedGroup = definition.name,
+                                        () => _selectedGroup = recentGroup,
                                       );
                                       _scheduleDraftSave();
-                                      unawaited(
-                                        _rememberGroup(
-                                          subject.id,
-                                          definition.name,
-                                        ),
-                                      );
                                     },
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 9),
-                          Row(
+                                    icon: const Icon(
+                                      Icons.history_rounded,
+                                      size: 17,
+                                    ),
+                                    label: Text(
+                                      recentGroup,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  )
+                                : null,
                             children: [
-                              Expanded(
-                                child: TextField(
-                                  key: const Key('quick-content-new-group'),
-                                  controller: _newGroupController,
-                                  maxLength: 40,
-                                  textInputAction: TextInputAction.done,
-                                  onSubmitted: (_) => _createGroup(),
-                                  decoration: const InputDecoration(
-                                    labelText: '새 그룹 이름',
-                                    counterText: '',
-                                    isDense: true,
-                                  ),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  '선택하면 저장과 동시에 그룹에 들어갑니다.',
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              IconButton.filledTonal(
-                                key: const Key('quick-content-create-group'),
-                                onPressed: _creatingGroup ? null : _createGroup,
-                                icon: _creatingGroup
-                                    ? const SizedBox.square(
-                                        dimension: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
+                              const SizedBox(height: 8),
+                              if (controller
+                                          .availableLearningGroupDefinitions
+                                          .length >=
+                                      4 ||
+                                  groupQuery.isNotEmpty) ...[
+                                TextField(
+                                  key: const Key('quick-content-group-search'),
+                                  controller: _groupSearchController,
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    prefixIcon: Icon(Icons.search_rounded),
+                                    labelText: '그룹 검색',
+                                    hintText: '이름으로 그룹 찾기',
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                              ],
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: [
+                                    ChoiceChip(
+                                      key: const Key('quick-content-no-group'),
+                                      label: const Text('나중에 정리'),
+                                      selected: _selectedGroup == null,
+                                      onSelected: (_) {
+                                        setState(() => _selectedGroup = null);
+                                        _scheduleDraftSave();
+                                      },
+                                    ),
+                                    for (final definition
+                                        in groupDefinitions) ...[
+                                      const SizedBox(width: 7),
+                                      ChoiceChip(
+                                        key: Key(
+                                          'quick-content-group-${definition.name}',
                                         ),
-                                      )
-                                    : const Icon(
-                                        Icons.create_new_folder_outlined,
+                                        avatar: definition.pinned
+                                            ? const Icon(
+                                                Icons.push_pin_rounded,
+                                                size: 16,
+                                              )
+                                            : definition.name == recentGroup
+                                            ? const Icon(
+                                                Icons.history_rounded,
+                                                size: 16,
+                                              )
+                                            : null,
+                                        label: Text(definition.name),
+                                        selected:
+                                            _selectedGroup == definition.name,
+                                        onSelected: (_) {
+                                          setState(
+                                            () => _selectedGroup =
+                                                definition.name,
+                                          );
+                                          _scheduleDraftSave();
+                                          unawaited(
+                                            _rememberGroup(
+                                              subject.id,
+                                              definition.name,
+                                            ),
+                                          );
+                                        },
                                       ),
-                                tooltip: '그룹 만들고 선택',
+                                    ],
+                                  ],
+                                ),
                               ),
+                              const SizedBox(height: 8),
+                              if (!_showNewGroupFields)
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: TextButton.icon(
+                                    key: const Key(
+                                      'quick-content-show-new-group',
+                                    ),
+                                    onPressed: () => setState(
+                                      () => _showNewGroupFields = true,
+                                    ),
+                                    icon: const Icon(
+                                      Icons.create_new_folder_outlined,
+                                    ),
+                                    label: const Text('새 그룹 만들기'),
+                                  ),
+                                )
+                              else
+                                Row(
+                                  key: const Key(
+                                    'quick-content-new-group-fields',
+                                  ),
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        key: const Key(
+                                          'quick-content-new-group',
+                                        ),
+                                        controller: _newGroupController,
+                                        maxLength: 40,
+                                        textInputAction: TextInputAction.done,
+                                        onSubmitted: (_) => _createGroup(),
+                                        decoration: InputDecoration(
+                                          labelText:
+                                              groupDefinitions.isEmpty &&
+                                                  groupQuery.isNotEmpty
+                                              ? '“$groupQuery” 그룹 만들기'
+                                              : '새 그룹 이름',
+                                          counterText: '',
+                                          isDense: true,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton.filledTonal(
+                                      key: const Key(
+                                        'quick-content-create-group',
+                                      ),
+                                      onPressed: _creatingGroup
+                                          ? null
+                                          : () {
+                                              if (_newGroupController.text
+                                                      .trim()
+                                                      .isEmpty &&
+                                                  groupQuery.isNotEmpty) {
+                                                _newGroupController.text =
+                                                    groupQuery;
+                                              }
+                                              _createGroup();
+                                            },
+                                      icon: _creatingGroup
+                                          ? const SizedBox.square(
+                                              dimension: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                              ),
+                                            )
+                                          : const Icon(
+                                              Icons.create_new_folder_outlined,
+                                            ),
+                                      tooltip: '그룹 만들고 선택',
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
                           const SizedBox(height: 8),
@@ -669,8 +830,12 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 setState(() => _detailsExpanded = value),
                             tilePadding: EdgeInsets.zero,
                             childrenPadding: EdgeInsets.zero,
-                            title: const Text('예문·읽는 법 등 더 입력'),
-                            subtitle: const Text('필요할 때만 펼쳐서 입력하세요.'),
+                            title: const Text('추가 정보'),
+                            subtitle: Text(
+                              detailFieldCount == 0
+                                  ? '예문·읽기·태그 등은 필요할 때만 입력'
+                                  : '$detailFieldCount개 항목 입력됨',
+                            ),
                             children: [
                               const SizedBox(height: 6),
                               DelimitedChipInput(
@@ -680,6 +845,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 ),
                                 labelText: '추가 정답 (선택)',
                                 hintText: '뜻 외에 정답으로 인정할 표현',
+                                helperText: null,
                                 textInputAction: TextInputAction.next,
                                 onSubmitted: (_) =>
                                     FocusScope.of(context).nextFocus(),
@@ -785,28 +951,54 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 ),
                               ],
                               const SizedBox(height: 12),
-                              TextFormField(
-                                key: const Key('quick-content-example'),
-                                controller: _exampleController,
-                                maxLines: 2,
-                                textInputAction: TextInputAction.next,
-                                onFieldSubmitted: (_) =>
-                                    FocusScope.of(context).nextFocus(),
-                                decoration: const InputDecoration(
-                                  labelText: '예문 (선택)',
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                key: const Key('quick-content-example-meaning'),
-                                controller: _exampleMeaningController,
-                                maxLines: 2,
-                                textInputAction: TextInputAction.next,
-                                onFieldSubmitted: (_) =>
-                                    FocusScope.of(context).nextFocus(),
-                                decoration: const InputDecoration(
-                                  labelText: '예문 뜻 (선택)',
-                                ),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final example = TextFormField(
+                                    key: const Key('quick-content-example'),
+                                    controller: _exampleController,
+                                    maxLines: 2,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) =>
+                                        FocusScope.of(context).nextFocus(),
+                                    decoration: const InputDecoration(
+                                      labelText: '예문 (선택)',
+                                    ),
+                                  );
+                                  final meaning = TextFormField(
+                                    key: const Key(
+                                      'quick-content-example-meaning',
+                                    ),
+                                    controller: _exampleMeaningController,
+                                    maxLines: 2,
+                                    textInputAction: TextInputAction.next,
+                                    onFieldSubmitted: (_) =>
+                                        FocusScope.of(context).nextFocus(),
+                                    decoration: const InputDecoration(
+                                      labelText: '예문 뜻 (선택)',
+                                    ),
+                                  );
+                                  if (constraints.maxWidth < 560) {
+                                    return Column(
+                                      children: [
+                                        example,
+                                        const SizedBox(height: 12),
+                                        meaning,
+                                      ],
+                                    );
+                                  }
+                                  return Row(
+                                    key: const Key(
+                                      'quick-content-examples-inline',
+                                    ),
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(child: example),
+                                      const SizedBox(width: 10),
+                                      Expanded(child: meaning),
+                                    ],
+                                  );
+                                },
                               ),
                               if (_kind == LearningItemKind.word &&
                                   subject.isLanguage) ...[
@@ -861,6 +1053,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 fieldKey: const Key('quick-content-tags'),
                                 labelText: '태그 (선택)',
                                 hintText: '예: 여행, 시험, 자주 틀림',
+                                helperText: null,
                                 textInputAction: TextInputAction.done,
                                 onSubmitted: (_) => unawaited(
                                   _save(
@@ -871,41 +1064,98 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              SwitchListTile.adaptive(
-                                key: const Key('quick-content-favorite'),
-                                contentPadding: EdgeInsets.zero,
-                                value: _favorite,
-                                title: const Text('즐겨찾기에 추가'),
-                                subtitle: const Text(
-                                  '저장 직후 즐겨찾기 학습에서 볼 수 있어요.',
-                                ),
-                                onChanged: (value) {
-                                  setState(() => _favorite = value);
-                                  _scheduleDraftSave();
-                                },
-                              ),
-                              Text('학습 우선순위 $_priority / 5'),
-                              Slider(
-                                key: const Key('quick-content-priority'),
-                                value: _priority.toDouble(),
-                                min: 0,
-                                max: 5,
-                                divisions: 5,
-                                label: '$_priority',
-                                onChanged: (value) {
-                                  setState(() => _priority = value.round());
-                                  _scheduleDraftSave();
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  final favorite = SwitchListTile.adaptive(
+                                    key: const Key('quick-content-favorite'),
+                                    dense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                    value: _favorite,
+                                    title: const Text('즐겨찾기'),
+                                    onChanged: (value) {
+                                      setState(() => _favorite = value);
+                                      _scheduleDraftSave();
+                                    },
+                                  );
+                                  final priority = Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('우선순위 $_priority / 5'),
+                                      Slider(
+                                        key: const Key(
+                                          'quick-content-priority',
+                                        ),
+                                        value: _priority.toDouble(),
+                                        min: 0,
+                                        max: 5,
+                                        divisions: 5,
+                                        label: '$_priority',
+                                        onChanged: (value) {
+                                          setState(
+                                            () => _priority = value.round(),
+                                          );
+                                          _scheduleDraftSave();
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                  if (constraints.maxWidth < 520) {
+                                    return Column(
+                                      children: [favorite, priority],
+                                    );
+                                  }
+                                  return Row(
+                                    key: const Key(
+                                      'quick-content-preferences-inline',
+                                    ),
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(child: favorite),
+                                      const SizedBox(width: 12),
+                                      Expanded(child: priority),
+                                    ],
+                                  );
                                 },
                               ),
                               const SizedBox(height: 8),
                             ],
                           ),
+                          SizedBox(height: dense ? 8 : 12),
+                          if (_draftReady)
+                            _QuickRegistrationWorkbench(
+                              templates: templates,
+                              templateSort: _quickPreferences.templateSort,
+                              basket: _basket,
+                              recentSaves: _sessionUndo,
+                              saving: _saving,
+                              onCreateTemplate: () => _createTemplate(subject),
+                              onApplyTemplate: (template) =>
+                                  _applyTemplate(subject, template),
+                              onTemplateAction: (template, action) =>
+                                  _handleTemplateAction(
+                                    subject,
+                                    template,
+                                    action,
+                                  ),
+                              onSortChanged: _changeTemplateSort,
+                              onRemoveBasket: _removeBasketEntry,
+                              onApplyBatchOptions: _applyCurrentOptionsToBasket,
+                              onSaveBasket: () => _saveBasket(subject),
+                              onUndo: _undoRecentSave,
+                            )
+                          else
+                            const LinearProgressIndicator(
+                              key: Key('quick-content-tools-loading'),
+                            ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  if (compact)
+                  if (compactActionBar)
                     Row(
                       children: [
                         IconButton.filledTonal(
@@ -1001,40 +1251,42 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                           ),
                       ],
                     )
-                  else ...[
-                    OutlinedButton.icon(
-                      key: const Key('quick-content-save-and-study'),
-                      onPressed: _saving
-                          ? null
-                          : () => _save(
-                              subject,
-                              keepAdding: false,
-                              studyNow: true,
-                            ),
-                      icon: const Icon(Icons.play_circle_outline_rounded),
-                      label: const Text('저장하고 이 자료 학습하기'),
-                    ),
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      key: const Key('quick-content-add-to-basket'),
-                      onPressed: _saving ? null : () => _addToBasket(subject),
-                      icon: const Icon(Icons.playlist_add_rounded),
-                      label: Text(
-                        _basket.isEmpty
-                            ? '등록 바구니에 담기'
-                            : '등록 바구니에 담기 · ${_basket.length}',
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                  else
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                      key: const Key('quick-content-desktop-action-row'),
                       children: [
+                        IconButton.filledTonal(
+                          key: const Key('quick-content-save-and-study'),
+                          onPressed: _saving
+                              ? null
+                              : () => _save(
+                                  subject,
+                                  keepAdding: false,
+                                  studyNow: true,
+                                ),
+                          icon: const Icon(Icons.play_circle_outline_rounded),
+                          tooltip: '저장하고 이 자료 학습하기',
+                        ),
+                        const SizedBox(width: 4),
+                        Badge(
+                          isLabelVisible: _basket.isNotEmpty,
+                          label: Text('${_basket.length}'),
+                          child: IconButton.filledTonal(
+                            key: const Key('quick-content-add-to-basket'),
+                            onPressed: _saving
+                                ? null
+                                : () => _addToBasket(subject),
+                            icon: const Icon(Icons.playlist_add_rounded),
+                            tooltip: '등록 바구니에 담기',
+                          ),
+                        ),
+                        const Spacer(),
                         TextButton(
                           key: const Key('quick-content-cancel'),
                           onPressed: _saving ? null : _requestClose,
                           child: const Text('취소'),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         if (experience.quickAddKeepAddingDefault)
                           FilledButton.icon(
                             key: const Key('quick-content-save-and-add'),
@@ -1042,7 +1294,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 ? null
                                 : () => _save(subject, keepAdding: true),
                             icon: const Icon(Icons.add_rounded),
-                            label: const Text('저장 후 계속 추가 · 기본'),
+                            label: const Text('저장 후 계속 · 기본'),
                           )
                         else
                           OutlinedButton.icon(
@@ -1051,9 +1303,9 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                                 ? null
                                 : () => _save(subject, keepAdding: true),
                             icon: const Icon(Icons.add_rounded),
-                            label: const Text('저장 후 계속 추가'),
+                            label: const Text('저장 후 계속'),
                           ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         if (experience.quickAddKeepAddingDefault)
                           OutlinedButton.icon(
                             key: const Key('quick-content-save'),
@@ -1074,7 +1326,6 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                           ),
                       ],
                     ),
-                  ],
                 ],
               ),
             ),
@@ -2069,6 +2320,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       setState(() {
         _selectedGroup = group.name;
         _newGroupController.clear();
+        _showNewGroupFields = false;
       });
       await _rememberGroup(
         ref.read(appControllerProvider.notifier).activeSubject.id,
@@ -2729,10 +2981,11 @@ class _BasketStatusBadge extends StatelessWidget {
   );
 }
 
-class _DuplicateNotice extends StatelessWidget {
+class _DuplicateNotice extends StatefulWidget {
   const _DuplicateNotice({
     required this.item,
     required this.incoming,
+    required this.defaultLabel,
     required this.mergeSelected,
     required this.separateSelected,
     required this.onMerge,
@@ -2742,6 +2995,7 @@ class _DuplicateNotice extends StatelessWidget {
 
   final LearningItem item;
   final LearningItem incoming;
+  final String defaultLabel;
   final bool mergeSelected;
   final bool separateSelected;
   final VoidCallback onMerge;
@@ -2749,18 +3003,25 @@ class _DuplicateNotice extends StatelessWidget {
   final VoidCallback onSeparate;
 
   @override
+  State<_DuplicateNotice> createState() => _DuplicateNoticeState();
+}
+
+class _DuplicateNoticeState extends State<_DuplicateNotice> {
+  var _showDetails = false;
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final existing = item.translations
+    final existing = widget.item.translations
         .map((value) => value.trim().toLowerCase())
         .toSet();
-    final added = incoming.translations
+    final added = widget.incoming.translations
         .where((value) => !existing.contains(value.trim().toLowerCase()))
         .length;
-    final summary = _duplicateMergeSummary(item, incoming);
+    final summary = _duplicateMergeSummary(widget.item, widget.incoming);
     return Container(
       key: const Key('quick-content-duplicate-notice'),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
       decoration: BoxDecoration(
         color: colors.tertiaryContainer.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(12),
@@ -2770,110 +3031,141 @@ class _DuplicateNotice extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(Icons.merge_rounded, color: colors.tertiary),
-              const SizedBox(width: 9),
+              Icon(Icons.merge_rounded, color: colors.tertiary, size: 20),
+              const SizedBox(width: 7),
               Expanded(
                 child: Text(
-                  added > 0
-                      ? '같은 표현이 있습니다. 새 뜻 $added개를 합칠지, 열어볼지, 별도 저장할지 고르세요.'
-                      : '같은 표현과 뜻이 이미 있습니다. 저장 방법을 직접 고르세요.',
+                  added > 0 ? '같은 표현 · 새 뜻 $added개' : '같은 표현과 뜻이 이미 있음',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final existingCard = _DuplicateSide(
-                label: '기존 자료',
-                item: item,
-                highlighted: mergeSelected,
-              );
-              final incomingCard = _DuplicateSide(
-                label: '새로 입력',
-                item: incoming,
-                highlighted: separateSelected,
-              );
-              if (constraints.maxWidth < 430) {
-                return Column(
-                  children: [
-                    existingCard,
-                    const SizedBox(height: 6),
-                    incomingCard,
-                  ],
-                );
-              }
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: existingCard),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 18),
-                    child: Icon(Icons.compare_arrows_rounded, size: 18),
-                  ),
-                  Expanded(child: incomingCard),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            key: const Key('quick-content-merge-summary'),
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              _MergeSummaryChip(
-                key: const Key('quick-content-merge-summary-add'),
-                label: '추가',
-                fields: summary.added,
-                color: colors.primaryContainer,
+              Container(
+                key: const Key('quick-content-duplicate-default'),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: colors.surface.withValues(alpha: 0.75),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  widget.defaultLabel,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
               ),
-              _MergeSummaryChip(
-                key: const Key('quick-content-merge-summary-keep'),
-                label: '유지',
-                fields: summary.kept,
-                color: colors.secondaryContainer,
-              ),
-              _MergeSummaryChip(
-                key: const Key('quick-content-merge-summary-conflict'),
-                label: '충돌',
-                fields: summary.conflicts,
-                color: colors.errorContainer,
+              IconButton(
+                key: const Key('quick-content-duplicate-details-toggle'),
+                onPressed: () => setState(() => _showDetails = !_showDetails),
+                icon: Icon(
+                  _showDetails
+                      ? Icons.expand_less_rounded
+                      : Icons.compare_arrows_rounded,
+                ),
+                tooltip: _showDetails ? '비교 접기' : '기존 자료와 상세 비교',
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Wrap(
             alignment: WrapAlignment.end,
             spacing: 6,
+            runSpacing: 4,
             children: [
               ChoiceChip(
                 key: const Key('quick-content-merge-existing'),
-                selected: mergeSelected,
-                onSelected: (_) => onMerge(),
+                selected: widget.mergeSelected,
+                onSelected: (_) => widget.onMerge(),
                 avatar: const Icon(Icons.merge_rounded, size: 16),
                 label: const Text('뜻 병합'),
               ),
               ActionChip(
                 key: const Key('quick-content-view-existing'),
-                onPressed: onOpen,
+                onPressed: widget.onOpen,
                 avatar: const Icon(Icons.open_in_new_rounded, size: 16),
-                label: const Text('기존 항목 열기'),
+                label: const Text('기존 열기'),
               ),
               ChoiceChip(
                 key: const Key('quick-content-save-separate'),
-                selected: separateSelected,
-                onSelected: (_) => onSeparate(),
+                selected: widget.separateSelected,
+                onSelected: (_) => widget.onSeparate(),
                 avatar: const Icon(Icons.call_split_rounded, size: 16),
                 label: const Text('별도 저장'),
               ),
             ],
           ),
+          if (_showDetails) ...[
+            const Divider(height: 14),
+            KeyedSubtree(
+              key: const Key('quick-content-duplicate-details'),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final existingCard = _DuplicateSide(
+                    label: '기존 자료',
+                    item: widget.item,
+                    highlighted: widget.mergeSelected,
+                  );
+                  final incomingCard = _DuplicateSide(
+                    label: '새로 입력',
+                    item: widget.incoming,
+                    highlighted: widget.separateSelected,
+                  );
+                  if (constraints.maxWidth < 430) {
+                    return Column(
+                      children: [
+                        existingCard,
+                        const SizedBox(height: 6),
+                        incomingCard,
+                      ],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: existingCard),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 18,
+                        ),
+                        child: Icon(Icons.compare_arrows_rounded, size: 18),
+                      ),
+                      Expanded(child: incomingCard),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              key: const Key('quick-content-merge-summary'),
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                _MergeSummaryChip(
+                  key: const Key('quick-content-merge-summary-add'),
+                  label: '추가',
+                  fields: summary.added,
+                  color: colors.primaryContainer,
+                ),
+                _MergeSummaryChip(
+                  key: const Key('quick-content-merge-summary-keep'),
+                  label: '유지',
+                  fields: summary.kept,
+                  color: colors.secondaryContainer,
+                ),
+                _MergeSummaryChip(
+                  key: const Key('quick-content-merge-summary-conflict'),
+                  label: '충돌',
+                  fields: summary.conflicts,
+                  color: colors.errorContainer,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -2926,10 +3218,7 @@ class _DuplicateSide extends StatelessWidget {
           ),
           _DuplicateField(
             label: '예문',
-            value: [
-              ?item.example,
-              ?item.exampleTranslation,
-            ].join(' / '),
+            value: [?item.example, ?item.exampleTranslation].join(' / '),
           ),
           _DuplicateField(
             label: '태그',
@@ -3081,17 +3370,18 @@ class _NormalizationNotice extends StatelessWidget {
     ].join(' / ');
     return Card(
       key: const Key('quick-content-normalization-preview'),
+      margin: EdgeInsets.zero,
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.fromLTRB(9, 4, 4, 4),
         child: Row(
           children: [
             const Icon(Icons.cleaning_services_outlined, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                '저장 전 문자·공백 정리\n$before → $after',
-                maxLines: 3,
+                '문자·공백 정리 · $before → $after',
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall,
               ),

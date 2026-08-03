@@ -47,10 +47,10 @@ npm run build:real
 
 출력:
 
-- Android: `artifacts/Sprache-Android-1.31.0-google-debug-signed.apk`
-- Windows 설치본: `artifacts/Sprache-Windows-Setup-1.31.0-google-x64.exe`
-- Windows 포터블: `artifacts/Sprache-Windows-1.31.0-google-x64.zip`
-- SHA-256: `artifacts/SHA256SUMS-1.31.0-google.txt`
+- Android: `artifacts/Sprache-Android-1.32.0-google-debug-signed.apk`
+- Windows 설치본: `artifacts/Sprache-Windows-Setup-1.32.0-google-x64.exe`
+- Windows 포터블: `artifacts/Sprache-Windows-1.32.0-google-x64.zip`
+- SHA-256: `artifacts/SHA256SUMS-1.32.0-google.txt`
 
 Android 파일은 실제 Google 연결이 켜져 있지만 현재 로컬 debug 인증서로 서명된다. Play 배포본은 release keystore와 Play App Signing 지문용 Android OAuth 클라이언트를 별도로 사용해야 한다.
 
@@ -72,12 +72,12 @@ npm run test:installer
 ## iOS Simulator·macOS 미리보기 산출물
 
 Apple 산출물은 Xcode가 있는 GitHub `macos-latest` 러너에서 만든다. CI의
-`ios-simulator`와 `macos-release` 작업은 pubspec의 `1.31.0+55`, Bundle ID,
+`ios-simulator`와 `macos-release` 작업은 pubspec의 `1.32.0+56`, Bundle ID,
 최소 OS와 실행 파일을 확인한다. 이어서 앱을 실제로 실행하고 Flutter 첫 프레임
 뒤 생성되는 CI 전용 evidence를 회수한 후 다음 이름으로 업로드한다.
 
-- `Sprache-iOS-Simulator-1.31.0-mock.zip`
-- `Sprache-macOS-1.31.0-mock.zip`
+- `Sprache-iOS-Simulator-1.32.0-mock.zip`
+- `Sprache-macOS-1.32.0-mock.zip`
 - `runtime-ios.json`, `runtime-ios-first-frame.png`, `runtime-macos.json`
 
 둘 다 운영 Google Drive 자격 증명을 포함하지 않는 `MOCK` 산출물이다. iOS ZIP은
@@ -148,40 +148,42 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - 설치 EXE 제품 버전과 선택적 Authenticode 강제
 - 선택 시 설치→실행→제거와 HKCU 제거 레지스트리 정리
 
-## 1.31.0 네 플랫폼 번들 manifest
+## 1.32.0 네 플랫폼 번들 manifest
 
 Windows·Android 실제 연결 산출물과 CI에서 받은 Apple `MOCK` ZIP을 같은 최종
-폴더에 모은다. `packaging/release-bundle-spec-1.31.0.json`에 기록된 파일명과
-일치해야 한다. 각 플랫폼에서 실제로 실행과 첫 프레임을 확인한 뒤에만
-`runtime-windows.json`, `runtime-android.json`, `runtime-ios.json`,
-`runtime-macos.json`을 작성한다. 빌드 성공만으로 이 evidence를 대신하지 않는다.
+폴더에 모은다. `packaging/release-bundle-spec-1.32.0.json`에 기록된 파일명과
+일치해야 한다. Windows·iOS·macOS는 실제 실행과 첫 프레임을 확인한
+`runtime-windows.json`, `runtime-ios.json`, `runtime-macos.json`을 사용한다.
+Android는 빌드·v2 서명·패키지·버전·ABI를 APK 해시와 결속한
+`build-android.json`을 사용하며 실행 검증으로 표시하지 않는다.
 
-Windows와 Android evidence는 각각 `npm run capture:runtime:windows -- ...`,
-`npm run capture:runtime:android -- ...`로 수집한다. Windows는 최종 설치 EXE의
-격리 설치·픽셀 캡처·제거까지, Android는 최종 APK의 에뮬레이터 설치·foreground
-activity·실제 렌더 프레임·스크린샷까지 통과해야 JSON을 쓴다.
+Windows evidence는 `npm run capture:runtime:windows -- ...`로 수집한다. 최종
+설치 EXE의 격리 설치·픽셀 캡처·제거까지 통과해야 JSON을 쓴다. Android
+에뮬레이터가 준비된 환경에서는 `npm run capture:runtime:android -- ...`로
+별도 실행 evidence를 추가할 수 있지만, 기본 번들의 `BUILD_ONLY` 판정을
+`RUNTIME`으로 바꾸지는 않는다.
 
 ```powershell
 npm run create:release-bundle -- `
-  --spec packaging/release-bundle-spec-1.31.0.json `
+  --spec packaging/release-bundle-spec-1.32.0.json `
   --root <최종-산출물-폴더> `
-  --out <최종-산출물-폴더>\release-manifest-1.31.0.json
+  --out <최종-산출물-폴더>\release-manifest-1.32.0.json
 
 npm run verify:release-bundle -- `
-  --manifest <최종-산출물-폴더>\release-manifest-1.31.0.json `
+  --manifest <최종-산출물-폴더>\release-manifest-1.32.0.json `
   --root <최종-산출물-폴더>
 ```
 
 manifest는 네 산출물과 네 evidence의 SHA-256 및 바이트 길이를 봉인한다. 생성 후
 파일을 교체하거나 evidence를 수정하면 재검증이 실패한다. 상세 형식과 합격 조건은
-[`release-quality-gates-1.31.0.md`](release-quality-gates-1.31.0.md)에 있다.
+[`release-quality-gates-1.32.0.md`](release-quality-gates-1.32.0.md)에 있다.
 
 구버전 산출물 정리는 네 플랫폼 manifest 재검증까지 통과한 뒤에만 실행한다.
 manifest 경로를 생략하면 안전하게 중단하며 학습 DB와 복구 백업은 대상이 아니다.
 
 ```powershell
 npm run verify:release:promote -- `
-  -ReleaseBundleManifest <최종-산출물-폴더>\release-manifest-1.31.0.json
+  -ReleaseBundleManifest <최종-산출물-폴더>\release-manifest-1.32.0.json
 ```
 
 ## Windows 실제 크기와 엔진 UI 검증

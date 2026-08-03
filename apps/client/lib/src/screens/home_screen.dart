@@ -448,11 +448,16 @@ class HomeScreen extends ConsumerWidget {
           final officeCompact = isWindows && constraints.maxWidth < 560;
           final mobile = constraints.maxWidth < 720;
           final wide = constraints.maxWidth >= 1020;
-          final padding = officeCompact
-              ? 14.0
-              : mobile
-              ? 16.0
-              : 28.0;
+          final layout =
+              Theme.of(context).extension<AppLayoutDensity>() ??
+              AppLayoutDensity.fromPreference(
+                experience.density,
+                isDesktop: isDesktop,
+              );
+          final homeCompact = officeCompact || mobile || layout.dense;
+          final horizontalPadding = officeCompact
+              ? 12.0
+              : layout.pagePadding.horizontal / 2;
           Widget primaryStudyCard({required bool compact}) {
             final active = activeSession;
             if (active != null && activeSessionSubject != null) {
@@ -481,8 +486,9 @@ class HomeScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 primaryStudyCard(compact: compact),
-                const SizedBox(height: 8),
+                SizedBox(height: layout.controlGap + 5),
                 _WeeklyTargetSummaryCard(
+                  compact: compact,
                   studiedDays: weeklyInsights.studiedDaysInLastSeven(),
                   targetDays: state.preferences.weeklyTargetDays,
                   studiedMinutes: weeklyInsights
@@ -496,7 +502,7 @@ class HomeScreen extends ConsumerWidget {
                   onOpen: () => context.go('/stats'),
                 ),
                 if (primaryScheduledPlan case final plan?) ...[
-                  const SizedBox(height: 8),
+                  SizedBox(height: layout.controlGap + 5),
                   _ScheduleQuickActions(
                     plan: plan,
                     onComplete: () => completeScheduledPlan(plan),
@@ -511,7 +517,7 @@ class HomeScreen extends ConsumerWidget {
 
           Widget studyOverview() {
             final plan = _TodayPlan(
-              compact: officeCompact || mobile,
+              compact: homeCompact,
               reviewCount: reviewCount,
               newCount: newCount,
               weakCount: weakCount,
@@ -525,11 +531,11 @@ class HomeScreen extends ConsumerWidget {
                   Align(
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 880),
-                      child: primaryStudyArea(compact: officeCompact || mobile),
+                      child: primaryStudyArea(compact: homeCompact),
                     ),
                   ),
                   if (experience.showTodayPlan) ...[
-                    SizedBox(height: officeCompact ? 12 : 16),
+                    SizedBox(height: layout.sectionGap),
                     plan,
                   ],
                 ],
@@ -554,9 +560,9 @@ class HomeScreen extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                primaryStudyArea(compact: officeCompact || mobile),
+                primaryStudyArea(compact: homeCompact),
                 if (experience.showTodayPlan) ...[
-                  SizedBox(height: officeCompact ? 12 : 16),
+                  SizedBox(height: layout.sectionGap),
                   plan,
                 ],
               ],
@@ -580,11 +586,12 @@ class HomeScreen extends ConsumerWidget {
               AppHomeSection.recentAdditions =>
                 experience.showRecentAdditions && recentCustomItems.isNotEmpty
                     ? _RecentAdditionsTray(
-                        items: recentCustomItems.take(5).toList(),
+                        items: recentCustomItems.take(3).toList(),
                         onOpen: (item) =>
                             context.push('/library/edit/${item.id}'),
                         onStudy: studyRecentItem,
                         onTrash: (item) => unawaited(trashRecentItem(item)),
+                        onViewAll: () => context.go('/library'),
                       )
                     : null,
               AppHomeSection.dataFlow =>
@@ -617,7 +624,7 @@ class HomeScreen extends ConsumerWidget {
                     ? _ScheduledPlansCard(
                         plans: secondaryScheduledPlans,
                         now: now,
-                        compact: officeCompact || mobile,
+                        compact: homeCompact,
                         onOpen: (plan) {
                           final loaded = controller.useSavedSessionPlan(plan);
                           if (loaded != null) context.push('/session-builder');
@@ -632,7 +639,7 @@ class HomeScreen extends ConsumerWidget {
             };
             if (content != null) {
               personalizedSections
-                ..add(SizedBox(height: mobile ? 12 : 16))
+                ..add(SizedBox(height: layout.sectionGap))
                 ..add(content);
             }
           }
@@ -641,15 +648,12 @@ class HomeScreen extends ConsumerWidget {
             physics: const ClampingScrollPhysics(),
             slivers: [
               SliverPadding(
+                key: const Key('home-page-padding'),
                 padding: EdgeInsets.fromLTRB(
-                  padding,
-                  officeCompact
-                      ? 14
-                      : mobile
-                      ? 16
-                      : 22,
-                  padding,
-                  mobile ? 24 : 32,
+                  horizontalPadding,
+                  layout.pagePadding.top,
+                  horizontalPadding,
+                  layout.pagePadding.bottom + (mobile ? 8 : 12),
                 ),
                 sliver: SliverToBoxAdapter(
                   child: Center(
@@ -664,7 +668,7 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           if (experience.showHomeHeader)
                             _HomeHeader(
-                              compact: officeCompact,
+                              compact: homeCompact,
                               now: now,
                               subjectName: activeSubject.name,
                               subjectSymbol: activeSubject.symbol,
@@ -702,9 +706,9 @@ class HomeScreen extends ConsumerWidget {
                               onSettings: () => context.go('/settings'),
                             ),
                           if (!state.preferences.onboardingCompleted) ...[
-                            SizedBox(height: officeCompact ? 12 : 16),
+                            SizedBox(height: layout.sectionGap),
                             _GettingStartedCard(
-                              compact: officeCompact || mobile,
+                              compact: homeCompact,
                               language: onboardingDisplayLanguage,
                               dailyGoal: hasOnboardingDraft
                                   ? onboardingProfile.dailyGoal
@@ -839,109 +843,43 @@ class HomeScreen extends ConsumerWidget {
                               },
                             ),
                           ] else ...[
-                            SizedBox(height: officeCompact ? 10 : 12),
+                            SizedBox(height: layout.controlGap + 6),
                             _HomeQuickActions(
                               actions: onboardingProfile.quickActions,
-                              compact: officeCompact || mobile,
+                              compact: homeCompact,
                               onSelected: runHomeQuickAction,
                             ),
                             if (!hasCompletedCourseSession &&
                                 onboardingProfile.languageCode.isNotEmpty) ...[
-                              SizedBox(height: officeCompact ? 8 : 10),
+                              SizedBox(height: layout.controlGap + 6),
                               _FirstStartRecommendationCard(
                                 profile: onboardingProfile,
                                 mode: state.preferences.preferredMode,
                                 itemCount: state.preferences.sessionItemLimit,
-                                compact: officeCompact || mobile,
+                                compact: homeCompact,
                                 onStart: () => context.push(recommendedRoute),
                                 onPractice: () => context.go('/learn'),
                               ),
                             ],
                           ],
-                          SizedBox(
-                            height: officeCompact
-                                ? 14
-                                : mobile
-                                ? 14
-                                : 20,
-                          ),
+                          SizedBox(height: layout.sectionGap),
                           studyOverview(),
                           if (quickStudyPlan != null) ...[
-                            SizedBox(height: mobile ? 12 : 16),
-                            Card(
-                              key: const Key('two-minute-study-card'),
-                              child: Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.timer_outlined,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '2분 취약·복습',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleSmall,
-                                          ),
-                                          Text(
-                                            '복습·취약 표현 ${quickStudyPlan.selectedItemIds.length}개만 바로 학습해요.',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodySmall,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (!mobile)
-                                      TextButton.icon(
-                                        key: const Key(
-                                          'schedule-two-minute-study',
-                                        ),
-                                        onPressed: () =>
-                                            unawaited(scheduleTwoMinuteStudy()),
-                                        icon: const Icon(
-                                          Icons.notifications_outlined,
-                                        ),
-                                        label: const Text('알림'),
-                                      )
-                                    else
-                                      IconButton(
-                                        key: const Key(
-                                          'schedule-two-minute-study',
-                                        ),
-                                        tooltip: '2분 학습 알림 저장',
-                                        onPressed: () =>
-                                            unawaited(scheduleTwoMinuteStudy()),
-                                        icon: const Icon(
-                                          Icons.notifications_outlined,
-                                        ),
-                                      ),
-                                    const SizedBox(width: 6),
-                                    FilledButton(
-                                      key: const Key('start-two-minute-study'),
-                                      onPressed: startTwoMinuteStudy,
-                                      child: const Text('바로 시작'),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            SizedBox(height: layout.sectionGap),
+                            _TwoMinuteStudyRow(
+                              itemCount: quickStudyPlan.selectedItemIds.length,
+                              compact: homeCompact,
+                              onSchedule: () =>
+                                  unawaited(scheduleTwoMinuteStudy()),
+                              onStart: startTwoMinuteStudy,
                             ),
                           ],
                           ...personalizedSections,
                           if (localStorage.requiresSetup ||
                               localStorage.errorMessage != null) ...[
-                            SizedBox(height: mobile ? 10 : 14),
+                            SizedBox(height: layout.sectionGap),
                             _LocalStoragePromptCard(
-                              compact: officeCompact || mobile,
+                              compact: homeCompact,
                               errorMessage: localStorage.errorMessage,
                               onPressed: () => context.go('/settings'),
                             ),
@@ -981,16 +919,24 @@ class _HomeQuickActions extends StatelessWidget {
     return Semantics(
       container: true,
       label: '내 홈 빠른 행동',
-      child: Card(
+      child: Material(
         key: const Key('home-custom-quick-actions'),
-        margin: EdgeInsets.zero,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
         child: Padding(
-          padding: EdgeInsets.all(compact ? 8 : 10),
+          padding: EdgeInsets.all(compact ? 4 : 6),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.2;
+              final columns =
+                  MediaQuery.sizeOf(context).width < 360 || largeText
+                  ? 2
+                  : safeActions.length;
               final width =
-                  (constraints.maxWidth - (safeActions.length - 1) * 6) /
-                  safeActions.length;
+                  (constraints.maxWidth - (columns - 1) * 6) / columns;
               return Wrap(
                 spacing: 6,
                 runSpacing: 6,
@@ -1002,7 +948,8 @@ class _HomeQuickActions extends StatelessWidget {
                         key: Key('home-quick-action-$index-${action.name}'),
                         onPressed: () => onSelected(action),
                         style: FilledButton.styleFrom(
-                          minimumSize: Size(0, compact ? 44 : 48),
+                          minimumSize: const Size(0, 44),
+                          visualDensity: VisualDensity.standard,
                           padding: EdgeInsets.symmetric(
                             horizontal: compact ? 6 : 10,
                           ),
@@ -1143,12 +1090,14 @@ class _RecentAdditionsTray extends StatelessWidget {
     required this.onOpen,
     required this.onStudy,
     required this.onTrash,
+    required this.onViewAll,
   });
 
   final List<LearningItem> items;
   final ValueChanged<LearningItem> onOpen;
   final ValueChanged<LearningItem> onStudy;
   final ValueChanged<LearningItem> onTrash;
+  final VoidCallback onViewAll;
 
   @override
   Widget build(BuildContext context) {
@@ -1156,7 +1105,7 @@ class _RecentAdditionsTray extends StatelessWidget {
     return Card(
       key: const Key('recent-additions-tray'),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.fromLTRB(10, 6, 6, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1167,26 +1116,29 @@ class _RecentAdditionsTray extends StatelessWidget {
                 Expanded(
                   child: Text(
                     '최근 추가한 자료',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
                 Text(
                   '${items.length}개',
                   style: Theme.of(context).textTheme.labelLarge,
                 ),
+                TextButton(
+                  key: const Key('home-view-all-recent-additions'),
+                  onPressed: onViewAll,
+                  child: const Text('전체'),
+                ),
               ],
             ),
-            const SizedBox(height: 5),
-            Text(
-              '다시 열거나 바로 한 문제로 익혀 보세요.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 10),
             for (final item in items)
               ListTile(
                 key: Key('recent-addition-${item.id}'),
                 contentPadding: EdgeInsets.zero,
-                minVerticalPadding: 6,
+                minVerticalPadding: 4,
+                minTileHeight: 48,
+                visualDensity: VisualDensity.compact,
                 leading: CircleAvatar(
                   child: Icon(
                     item.kind == LearningItemKind.word
@@ -1252,7 +1204,7 @@ class _HomePinnedCollections extends StatelessWidget {
       key: const Key('home-pinned-collections'),
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 8, 9),
+        padding: const EdgeInsets.fromLTRB(10, 4, 6, 7),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1268,15 +1220,16 @@ class _HomePinnedCollections extends StatelessWidget {
                     ),
                   ),
                 ),
-                TextButton(
+                IconButton(
                   key: const Key('manage-home-pinned-collections'),
+                  tooltip: '고정 컬렉션 관리',
                   onPressed: onManage,
-                  child: const Text('자료실에서 관리'),
+                  icon: const Icon(Icons.tune_rounded, size: 19),
                 ),
               ],
             ),
             SizedBox(
-              height: 48,
+              height: 44,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 itemCount: collections.length,
@@ -1295,6 +1248,78 @@ class _HomePinnedCollections extends StatelessWidget {
                   );
                 },
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TwoMinuteStudyRow extends StatelessWidget {
+  const _TwoMinuteStudyRow({
+    required this.itemCount,
+    required this.compact,
+    required this.onSchedule,
+    required this.onStart,
+  });
+
+  final int itemCount;
+  final bool compact;
+  final VoidCallback onSchedule;
+  final VoidCallback onStart;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      key: const Key('two-minute-study-card'),
+      color: colors.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colors.outlineVariant),
+      ),
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(compact ? 10 : 14, 6, 6, 6),
+        child: Row(
+          children: [
+            Icon(Icons.timer_outlined, color: colors.primary, size: 21),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(
+                      text: '2분 취약·복습',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    TextSpan(
+                      text: compact ? ' · $itemCount개' : ' · 표현 $itemCount개',
+                      style: TextStyle(color: colors.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            IconButton(
+              key: const Key('schedule-two-minute-study'),
+              tooltip: '2분 학습 알림 저장',
+              onPressed: onSchedule,
+              icon: const Icon(Icons.notifications_outlined, size: 20),
+            ),
+            const SizedBox(width: 2),
+            FilledButton(
+              key: const Key('start-two-minute-study'),
+              onPressed: onStart,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(60, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                visualDensity: VisualDensity.standard,
+              ),
+              child: const Text('시작'),
             ),
           ],
         ),
@@ -2357,6 +2382,7 @@ class _HomeNextAction {
 
 class _WeeklyTargetSummaryCard extends StatelessWidget {
   const _WeeklyTargetSummaryCard({
+    required this.compact,
     required this.studiedDays,
     required this.targetDays,
     required this.studiedMinutes,
@@ -2365,6 +2391,7 @@ class _WeeklyTargetSummaryCard extends StatelessWidget {
     required this.onOpen,
   });
 
+  final bool compact;
   final int studiedDays;
   final int targetDays;
   final int studiedMinutes;
@@ -2377,58 +2404,72 @@ class _WeeklyTargetSummaryCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final percent = (progress * 100).round();
     return Semantics(
+      key: const Key('home-weekly-target-summary'),
       button: true,
       label:
           '주간 목표 달성률 $percent퍼센트. 학습일 $studiedDays/$targetDays일. '
           '학습 분량 $studiedMinutes/$targetMinutes분.',
-      child: Card(
-        key: const Key('home-weekly-target-summary'),
-        margin: EdgeInsets.zero,
+      child: Material(
+        key: const Key('home-weekly-target-summary-row'),
+        color: colors.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onOpen,
           borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: compact ? 48 : 56),
             child: Row(
               children: [
-                Icon(Icons.calendar_view_week_rounded, color: colors.primary),
-                const SizedBox(width: 10),
+                SizedBox(width: compact ? 10 : 12),
+                Icon(
+                  Icons.calendar_view_week_rounded,
+                  color: colors.primary,
+                  size: 20,
+                ),
+                SizedBox(width: compact ? 7 : 9),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '이번 주 목표',
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '$studiedDays/$targetDays일 · '
-                        '$studiedMinutes/$targetMinutes분',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        if (!compact)
+                          const TextSpan(
+                            text: '이번 주  ',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
+                        TextSpan(
+                          text:
+                              '$studiedDays/$targetDays일 · '
+                              '$studiedMinutes/$targetMinutes분',
+                          style: TextStyle(color: colors.onSurfaceVariant),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
                 SizedBox(
-                  width: 92,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text('$percent%'),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: progress,
-                        minHeight: 6,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ],
+                  width: compact ? 56 : 76,
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ),
-                const SizedBox(width: 4),
+                SizedBox(width: compact ? 6 : 8),
+                Text(
+                  '$percent%',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
                 const Icon(Icons.chevron_right_rounded),
+                SizedBox(width: compact ? 2 : 4),
               ],
             ),
           ),
@@ -2468,7 +2509,7 @@ class _DailyHero extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 14 : 20),
       ),
       child: Padding(
-        padding: EdgeInsets.all(compact ? 16 : 22),
+        padding: EdgeInsets.all(compact ? 14 : 22),
         child: Row(
           children: [
             if (!compact && showXp) ...[
@@ -2499,7 +2540,7 @@ class _DailyHero extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     action.description,
-                    maxLines: compact ? 2 : 3,
+                    maxLines: compact ? 1 : 3,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colors.onPrimaryContainer.withValues(alpha: 0.82),
@@ -2509,8 +2550,10 @@ class _DailyHero extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       key: const Key('home-xp-summary'),
-                      '오늘 $dailyXp/$dailyGoal XP · 계정 레벨 $level · '
-                      '누적 $accountTotalXp XP',
+                      compact
+                          ? '오늘 $dailyXp/$dailyGoal XP · Lv.$level · 누적 $accountTotalXp'
+                          : '오늘 $dailyXp/$dailyGoal XP · 계정 레벨 $level · '
+                                '누적 $accountTotalXp XP',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colors.onPrimaryContainer.withValues(
                           alpha: 0.78,
@@ -2531,7 +2574,7 @@ class _DailyHero extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  SizedBox(height: compact ? 10 : 16),
                   Align(
                     alignment: Alignment.centerLeft,
                     child: FilledButton.icon(
@@ -2541,6 +2584,7 @@ class _DailyHero extends StatelessWidget {
                         backgroundColor: colors.onPrimaryContainer,
                         foregroundColor: colors.primaryContainer,
                         minimumSize: Size(compact ? 0 : 150, compact ? 44 : 48),
+                        visualDensity: VisualDensity.standard,
                       ),
                       icon: Icon(action.icon),
                       label: Text(action.buttonLabel),
@@ -2612,85 +2656,100 @@ class _ProgressDial extends StatelessWidget {
 
 class _TodayPlan extends StatelessWidget {
   const _TodayPlan({
+    required this.compact,
     required this.reviewCount,
     required this.newCount,
     required this.weakCount,
     required this.isStudyDay,
     required this.nextStudyDate,
-    this.compact = false,
   });
 
+  final bool compact;
   final int reviewCount;
   final int newCount;
   final int weakCount;
   final bool isStudyDay;
   final DateTime nextStudyDate;
-  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    final colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
       key: const Key('home-today-plan'),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.outlineVariant),
+      ),
       child: Padding(
-        padding: EdgeInsets.all(compact ? 12 : 18),
+        padding: EdgeInsets.fromLTRB(12, compact ? 5 : 8, 12, compact ? 5 : 9),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (!isStudyDay) ...[
-              DecoratedBox(
-                key: const Key('home-rest-day-banner'),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.secondaryContainer.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(10),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.self_improvement_rounded, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '쉬는 날 · 다음 학습 ${nextStudyDate.month}/${nextStudyDate.day}',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
+            if (!compact || !isStudyDay) ...[
+              Row(
+                children: [
+                  if (!compact)
+                    Text(
+                      '오늘의 학습',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
                       ),
-                    ],
+                    ),
+                  if (!compact) const Spacer(),
+                  if (!isStudyDay)
+                    Container(
+                      key: const Key('home-rest-day-banner'),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.secondaryContainer.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        '쉬는 날 · 다음 학습 ${nextStudyDate.month}/${nextStudyDate.day}',
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 2),
+            ],
+            Row(
+              key: const Key('home-today-plan-summary-row'),
+              children: [
+                Expanded(
+                  child: _PlanMetric(
+                    key: const Key('home-plan-review-summary'),
+                    icon: Icons.replay_rounded,
+                    label: '복습 예정',
+                    count: reviewCount,
+                    color: AppTheme.desktopPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-            ],
-            if (!compact) ...[
-              Text('오늘의 학습', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(
-                '다음 학습을 고르는 데 쓰이는 현재 수치입니다.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 12),
-            ],
-            _PlanRow(
-              icon: Icons.replay_rounded,
-              label: '복습 예정',
-              count: reviewCount,
-              color: AppTheme.desktopPrimary,
-            ),
-            if (!compact) const Divider(height: 16),
-            _PlanRow(
-              icon: Icons.auto_awesome_rounded,
-              label: '새 표현',
-              count: newCount,
-              color: AppTheme.mobilePrimary,
-            ),
-            if (!compact) const Divider(height: 16),
-            _PlanRow(
-              icon: Icons.bolt_rounded,
-              label: '집중 필요',
-              count: weakCount,
-              color: AppTheme.warning,
+                _SummaryDivider(color: colors.outlineVariant),
+                Expanded(
+                  child: _PlanMetric(
+                    key: const Key('home-plan-new-summary'),
+                    icon: Icons.auto_awesome_rounded,
+                    label: '새 표현',
+                    count: newCount,
+                    color: AppTheme.mobilePrimary,
+                  ),
+                ),
+                _SummaryDivider(color: colors.outlineVariant),
+                Expanded(
+                  child: _PlanMetric(
+                    key: const Key('home-plan-weak-summary'),
+                    icon: Icons.bolt_rounded,
+                    label: '집중 필요',
+                    count: weakCount,
+                    color: AppTheme.warning,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -2940,8 +2999,9 @@ String _homeScheduleLabel(DateTime value, DateTime now) {
   return '${local.month}월 ${local.day}일 $time';
 }
 
-class _PlanRow extends StatelessWidget {
-  const _PlanRow({
+class _PlanMetric extends StatelessWidget {
+  const _PlanMetric({
+    super.key,
     required this.icon,
     required this.label,
     required this.count,
@@ -2959,35 +3019,48 @@ class _PlanRow extends StatelessWidget {
       label: label,
       value: '$count개',
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 48),
+        constraints: const BoxConstraints(minHeight: 44),
         child: Row(
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 19, color: color),
-            ),
-            const SizedBox(width: 11),
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: 5),
             Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ),
-            Text(
-              '$count',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w900,
-                fontFeatures: const [FontFeature.tabularFigures()],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$count',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _SummaryDivider extends StatelessWidget {
+  const _SummaryDivider({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 1, height: 28, color: color);
   }
 }

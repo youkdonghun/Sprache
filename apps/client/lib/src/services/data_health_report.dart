@@ -176,10 +176,10 @@ class DataHealthReportBuilder {
             ConnectionPhase.disconnected => DataHealthLevel.unavailable,
           },
           summary: connection.policy.offlineLock
-              ? '완전 오프라인 잠금'
+              ? 'Drive 동기화 일시 중지'
               : connection.displayStatus.label,
           detail: connection.policy.offlineLock
-              ? '명시적으로 잠금을 해제할 때까지 Drive 요청을 보내지 않습니다.'
+              ? '일시 중지를 해제할 때까지 Drive 요청을 보내지 않습니다.'
               : connection.diagnostic?.message ??
                     (connection.folderName == null
                         ? 'Drive를 연결하지 않아도 모든 학습 기능을 사용할 수 있습니다.'

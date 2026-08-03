@@ -21,8 +21,8 @@ void main() {
         quickLaunchActivityIds: {'/study?mode=production'},
         launchByActivityId: {
           '/study?mode=production': PracticeLaunchPreferences(
-            length: PracticeSessionLength.tenMinutes,
-            itemCount: 24,
+            length: PracticeSessionLength.fifteenMinutes,
+            itemCount: 36,
             difficulty: PracticeDifficultyPreset.challenge,
             historyScope: PracticeHistoryScope.excludeCorrect,
             queueOrder: PracticeQueueOrder.newFirst,
@@ -82,8 +82,8 @@ void main() {
         restored.launchFor('/study?mode=production').itemCount,
         launch.itemCount,
       );
-      expect(launch.length, PracticeSessionLength.tenMinutes);
-      expect(launch.itemCount, 24);
+      expect(launch.length, PracticeSessionLength.fifteenMinutes);
+      expect(launch.itemCount, 36);
       expect(launch.difficulty, PracticeDifficultyPreset.challenge);
       expect(launch.historyScope, PracticeHistoryScope.excludeCorrect);
       expect(launch.queueOrder, PracticeQueueOrder.newFirst);

@@ -423,6 +423,7 @@ $androidStagingMarkerName = 'SPRACHE_ANDROID_ASCII_STAGING_ROOT'
 $androidStagingMarker = [Environment]::GetEnvironmentVariable($androidStagingMarkerName, 'Process')
 $windowsStagingMarkerName = 'SPRACHE_WINDOWS_ASCII_STAGING_ROOT'
 $windowsStagingMarker = [Environment]::GetEnvironmentVariable($windowsStagingMarkerName, 'Process')
+$windowsStagingBaseName = 'SW'
 
 if ($InternalAndroidStagingBuild -and $InternalWindowsStagingBuild) {
     throw 'Android and Windows internal staging modes cannot be enabled together.'
@@ -479,13 +480,13 @@ if ($InternalWindowsStagingBuild) {
         throw 'Internal Windows staging requires an absolute LOCALAPPDATA path.'
     }
     $expectedWindowsStagingBase = [IO.Path]::GetFullPath(
-        (Join-Path $internalWindowsLocalAppData 'SpracheBuild')
+        (Join-Path $internalWindowsLocalAppData $windowsStagingBaseName)
     )
     if (-not (Test-PathInside -Candidate $repoRoot -Root $expectedWindowsStagingBase) -or
         $repoRoot.Equals($expectedWindowsStagingBase, [StringComparison]::OrdinalIgnoreCase)) {
         throw "Internal Windows staging repository is outside the approved base: $repoRoot"
     }
-    $expectedWindowsStagingName = '^windows-' + [regex]::Escape($releaseVersion) + '-\d+$'
+    $expectedWindowsStagingName = '^w-' + [regex]::Escape($releaseVersion) + '-\d+$'
     if ((Split-Path -Leaf $repoRoot) -notmatch $expectedWindowsStagingName) {
         throw "Internal Windows staging directory has an unexpected name: $repoRoot"
     }
@@ -718,7 +719,11 @@ if ($isWindowsHost -and $windowsRequested -and -not $InternalWindowsStagingBuild
     if (-not (Test-Path -LiteralPath $windowsLocalAppDataPath -PathType Container)) {
         throw "LOCALAPPDATA directory was not found: $windowsLocalAppDataPath"
     }
-    $windowsStagingBase = [IO.Path]::GetFullPath((Join-Path $windowsLocalAppDataPath 'SpracheBuild'))
+    # Keep the staging root deliberately short. Some MSBuild plugin tlog paths
+    # still enforce MAX_PATH even when long paths are enabled system-wide.
+    $windowsStagingBase = [IO.Path]::GetFullPath(
+        (Join-Path $windowsLocalAppDataPath $windowsStagingBaseName)
+    )
     Assert-AsciiPath -Path $windowsStagingBase -Label 'Windows staging base'
     if ((Test-PathInside -Candidate $windowsStagingBase -Root $repoRoot) -or
         (Test-PathInside -Candidate $repoRoot -Root $windowsStagingBase)) {
@@ -730,7 +735,7 @@ if ($isWindowsHost -and $windowsRequested -and -not $InternalWindowsStagingBuild
         throw "Windows staging base must not be a reparse point: $windowsStagingBase"
     }
 
-    $windowsStagingLeaf = "windows-$releaseVersion-$PID"
+    $windowsStagingLeaf = "w-$releaseVersion-$PID"
     $windowsStagingRoot = [IO.Path]::GetFullPath(
         (Join-Path $windowsStagingBase $windowsStagingLeaf)
     )

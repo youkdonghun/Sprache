@@ -57,6 +57,20 @@ void main() {
         find.byKey(const Key('two-minute-study-card')),
       );
       expect(find.byKey(const Key('two-minute-study-card')), findsOneWidget);
+      expect(
+        tester
+            .getSize(find.byKey(const Key('schedule-two-minute-study')))
+            .height,
+        greaterThanOrEqualTo(44),
+      );
+      expect(
+        tester.getSize(find.byKey(const Key('start-two-minute-study'))).height,
+        greaterThanOrEqualTo(44),
+      );
+      expect(
+        tester.getSize(find.byKey(const Key('two-minute-study-card'))).height,
+        lessThanOrEqualTo(60),
+      );
       await tester.tap(find.byKey(const Key('start-two-minute-study')));
       await tester.pumpAndSettle();
 

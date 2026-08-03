@@ -29,11 +29,11 @@ Xcode와 CocoaPods가 설치된 macOS에서 실행한다.
 cd apps/client
 flutter pub get
 flutter build ios --simulator --debug \
-  --build-name=1.31.0 \
-  --build-number=55 \
+  --build-name=1.32.0 \
+  --build-number=56 \
   --dart-define=APP_ENV=ci \
   --dart-define=ENABLE_MOCK_MODE=true \
-  --dart-define=APP_VERSION=1.31.0
+  --dart-define=APP_VERSION=1.32.0
 ```
 
 Simulator 결과는 `build/ios/iphonesimulator/Runner.app`에 생성된다. 이 파일은
@@ -45,11 +45,11 @@ iPhone에 설치하는 IPA가 아니다.
 cd apps/client
 flutter pub get
 flutter build macos --release \
-  --build-name=1.31.0 \
-  --build-number=55 \
+  --build-name=1.32.0 \
+  --build-number=56 \
   --dart-define=APP_ENV=ci \
   --dart-define=ENABLE_MOCK_MODE=true \
-  --dart-define=APP_VERSION=1.31.0
+  --dart-define=APP_VERSION=1.32.0
 ```
 
 결과는 `build/macos/Build/Products/Release/Sprache.app`이다. 현재 CI 전달본은
@@ -82,7 +82,7 @@ Windows에는 Xcode와 Apple 코드 서명 도구가 없으므로 IPA를 생성�
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File .\tool\clean-release-artifacts.ps1 `
-  -KeepVersion 1.31.0 `
+  -KeepVersion 1.32.0 `
   -WhatIf
 ```
 

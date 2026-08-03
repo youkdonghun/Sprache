@@ -58,6 +58,12 @@ void main() {
         .practiceCatalog;
     expect(catalog.favoriteActivityIds, contains(activityId));
     expect(find.text('즐겨찾는 게임'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('즐겨찾는 게임')).dy,
+      lessThan(
+        tester.getTopLeft(find.byKey(const Key('practice-category-암기'))).dy,
+      ),
+    );
 
     await _openActivityMenu(tester, activityId, activityTitle);
     await tester.tap(find.text('이 게임 숨기기').last);
@@ -108,6 +114,10 @@ void main() {
 
     await _tapVisible(tester, find.byKey(const Key('practice-surprise-game')));
     expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
+    expect(find.byKey(const Key('practice-advanced-settings')), findsOneWidget);
+    expect(find.byKey(const Key('practice-record-progress')), findsNothing);
+    expect(find.byKey(const Key('practice-history-all')), findsNothing);
+    expect(find.byKey(const Key('practice-priority-dueFirst')), findsNothing);
     await tester.tap(find.byTooltip('닫기').last);
     await tester.pumpAndSettle();
 
@@ -131,6 +141,12 @@ void main() {
       final basis = find.byKey(const Key('practice-recommendation-basis'));
       expect(basis, findsOneWidget);
       expect(
+        tester
+            .getSize(find.byKey(const Key('personalized-practice-hub')))
+            .height,
+        88,
+      );
+      expect(
         find.descendant(of: basis, matching: find.text('복습 0')),
         findsOneWidget,
       );
@@ -151,6 +167,54 @@ void main() {
     },
   );
 
+  testWidgets('15 minute preset shows its estimated item count and launches', (
+    tester,
+  ) async {
+    final harness = await _pumpPracticeHub(tester);
+    await _openPracticeActivity(tester, '혼합 퀴즈');
+
+    final preset = find.byKey(const Key('practice-time-fifteenMinutes'));
+    expect(preset, findsOneWidget);
+    await _tapVisible(tester, preset);
+
+    expect(tester.widget<ChoiceChip>(preset).selected, isTrue);
+    final inlineEstimate = find.byKey(
+      const Key('practice-time-selected-estimate'),
+    );
+    expect(inlineEstimate, findsOneWidget);
+    expect(
+      find.descendant(
+        of: inlineEstimate,
+        matching: find.text('선택 · 15분 · 예상 36문제'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.getTopLeft(inlineEstimate).dy,
+      greaterThan(
+        tester.getBottomLeft(find.byKey(const Key('practice-time-options'))).dy,
+      ),
+    );
+    final estimate = find.byKey(const Key('practice-session-estimate'));
+    expect(estimate, findsOneWidget);
+    expect(
+      find.descendant(
+        of: estimate,
+        matching: find.textContaining('15분 · 약 36문제'),
+      ),
+      findsOneWidget,
+    );
+
+    await _tapVisible(tester, find.byKey(const Key('start-practice-session')));
+    final plan = harness.container
+        .read(appControllerProvider.notifier)
+        .activeSessionPlan;
+    expect(plan.lengthMode, StudySessionLengthMode.timeBudget);
+    expect(plan.timeBudgetMinutes, 15);
+    expect(plan.itemLimit, 36);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('started games are recorded and exposed from the recent row', (
     tester,
   ) async {
@@ -170,6 +234,12 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('recent-practice-games')), findsOneWidget);
     expect(find.byKey(const Key('recent-practice-mixed-quiz')), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.byKey(const Key('recent-practice-games'))).dy,
+      lessThan(
+        tester.getTopLeft(find.byKey(const Key('practice-category-암기'))).dy,
+      ),
+    );
     await tester.pump(const Duration(milliseconds: 30));
     catalog = harness.store.savedPreferences.interaction.practiceCatalog;
     expect(catalog.recentActivityIds.first, 'mixed-quiz');
@@ -289,6 +359,19 @@ void main() {
       tester,
       find.byKey(const Key('practice-difficulty-challenge')),
     );
+    expect(
+      find.byKey(const Key('practice-history-excludeCorrect')),
+      findsNothing,
+    );
+    expect(find.byKey(const Key('practice-priority-newFirst')), findsNothing);
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('practice-advanced-settings')),
+    );
+    expect(
+      find.byKey(const Key('practice-advanced-history-and-order')),
+      findsOneWidget,
+    );
     await _tapVisible(
       tester,
       find.byKey(const Key('practice-history-excludeCorrect')),
@@ -297,11 +380,11 @@ void main() {
       tester,
       find.byKey(const Key('practice-priority-newFirst')),
     );
+    expect(find.byKey(const Key('practice-quick-rules')), findsOneWidget);
     await _tapVisible(
       tester,
       find.byKey(const Key('practice-record-progress')),
     );
-    await _tapVisible(tester, find.byKey(const Key('practice-quick-rules')));
     await _tapVisible(
       tester,
       find.byKey(const Key('practice-direction-meaningToLearning')),
@@ -355,6 +438,10 @@ void main() {
     harness.container.read(appRouterProvider).go('/learn');
     await tester.pumpAndSettle();
     await _openPracticeActivity(tester, '혼합 퀴즈');
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('practice-advanced-settings')),
+    );
     expect(
       tester
           .widget<ChoiceChip>(
@@ -379,7 +466,6 @@ void main() {
           .value,
       isFalse,
     );
-    await _tapVisible(tester, find.byKey(const Key('practice-quick-rules')));
     expect(
       tester
           .widget<ChoiceChip>(
@@ -415,7 +501,10 @@ void main() {
   ) async {
     final harness = await _pumpPracticeHub(tester);
     await _openPracticeActivity(tester, '혼합 퀴즈');
-    await _tapVisible(tester, find.byKey(const Key('practice-quick-rules')));
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('practice-advanced-settings')),
+    );
 
     final toggle = find.byKey(const Key('practice-time-budget-toggle'));
     expect(tester.widget<SwitchListTile>(toggle).value, isFalse);

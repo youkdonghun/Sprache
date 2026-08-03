@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/app_experience_preferences.dart';
+import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/screens/personalization_screen.dart';
+import 'package:sprache/src/state/app_state.dart';
 
 void main() {
   late AppExperiencePreferences preferences;
@@ -66,9 +70,16 @@ void main() {
       find.descendant(of: preview, matching: find.byType(Chip)),
       findsOneWidget,
     );
-    for (final name in ['sprache', 'focus', 'paper', 'oledNight']) {
+    for (final name in [
+      'sprache',
+      'compactWorkspace',
+      'focus',
+      'paper',
+      'oledNight',
+    ]) {
       expect(find.byKey(Key('personalization-preset-$name')), findsOneWidget);
     }
+    expect(find.byKey(const Key('theme-density-group')), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('personalization-preset-oledNight')));
     await tester.pumpAndSettle();
@@ -79,6 +90,84 @@ void main() {
     expect(preferences.quickAddFavoriteDefault, isTrue);
     expect(preferences.showStreak, isTrue);
   });
+
+  testWidgets(
+    'compact workspace undo restores the complete previous preferences',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(980, 1200);
+      addTearDown(tester.view.reset);
+      const original = StudyPreferences(
+        onboardingCompleted: true,
+        dailyGoal: 85,
+        weeklyTargetDays: 5,
+        experience: AppExperiencePreferences(
+          colorMode: AppColorMode.dark,
+          accentPalette: AppAccentPalette.coral,
+          density: AppDensity.comfortable,
+          homeLayout: AppHomeLayout.insights,
+          navigationLabelMode: AppNavigationLabelMode.always,
+          subjectSwitcherStyle: AppSubjectSwitcherStyle.full,
+          showRecentAdditions: true,
+          showDataFlow: true,
+          showSyncStatus: true,
+        ),
+      );
+      final store = MemoryStudyStore(preferences: original);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [studyStoreProvider.overrideWithValue(store)],
+          child: const MaterialApp(home: PersonalizationScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(PersonalizationScreen)),
+      );
+
+      final compactPreset = find.byKey(
+        const Key('personalization-preset-compactWorkspace'),
+      );
+      await tester.ensureVisible(compactPreset);
+      await tester.tap(compactPreset);
+      await tester.pumpAndSettle();
+
+      var current = container.read(appControllerProvider).preferences;
+      expect(current.dailyGoal, 85);
+      expect(current.weeklyTargetDays, 5);
+      expect(current.experience.density, AppDensity.compact);
+      expect(current.experience.homeLayout, AppHomeLayout.focus);
+      expect(
+        current.experience.navigationLabelMode,
+        AppNavigationLabelMode.selected,
+      );
+      expect(current.experience.showRecentAdditions, isFalse);
+      expect(current.experience.showDataFlow, isFalse);
+
+      await tester.tap(find.byKey(const Key('undo-compact-workspace-preset')));
+      await tester.pumpAndSettle();
+
+      current = container.read(appControllerProvider).preferences;
+      expect(current.dailyGoal, 85);
+      expect(current.weeklyTargetDays, 5);
+      expect(current.experience.colorMode, AppColorMode.dark);
+      expect(current.experience.accentPalette, AppAccentPalette.coral);
+      expect(current.experience.density, AppDensity.comfortable);
+      expect(current.experience.homeLayout, AppHomeLayout.insights);
+      expect(
+        current.experience.navigationLabelMode,
+        AppNavigationLabelMode.always,
+      );
+      expect(
+        current.experience.subjectSwitcherStyle,
+        AppSubjectSwitcherStyle.full,
+      );
+      expect(current.experience.showRecentAdditions, isTrue);
+      expect(current.experience.showDataFlow, isTrue);
+      expect(current.experience.showSyncStatus, isTrue);
+    },
+  );
 
   testWidgets('home visibility, ordering, reset, and preview update together', (
     tester,
@@ -176,5 +265,39 @@ void main() {
     expect(preferences.quickAddRememberTags, isTrue);
     expect(preferences.quickAddPriorityDefault, 4);
     expect(preferences.quickAddDraftDelayMs, 1200);
+  });
+
+  testWidgets('compact home and navigation actions apply focused defaults', (
+    tester,
+  ) async {
+    preferences = const AppExperiencePreferences(
+      homeLayout: AppHomeLayout.insights,
+      showDataFlow: true,
+      showSchedules: true,
+      navigationLabelMode: AppNavigationLabelMode.always,
+      navigationIconStyle: AppNavigationIconStyle.filled,
+      subjectSwitcherStyle: AppSubjectSwitcherStyle.full,
+      showQuickAdd: false,
+      showGlobalSearch: false,
+    );
+    await pumpPanel(tester);
+    await collapseTheme(tester);
+    await openSection(tester, 'personalization-home-section');
+    await tapControl(tester, 'apply-compact-home-layout');
+
+    expect(preferences.homeLayout, AppHomeLayout.focus);
+    expect(preferences.showHomeHeader, isFalse);
+    expect(preferences.showDataFlow, isFalse);
+    expect(preferences.showSchedules, isFalse);
+    expect(preferences.showTodayPlan, isTrue);
+
+    await openSection(tester, 'personalization-navigation-section');
+    await tapControl(tester, 'apply-compact-navigation');
+
+    expect(preferences.navigationLabelMode, AppNavigationLabelMode.selected);
+    expect(preferences.navigationIconStyle, AppNavigationIconStyle.adaptive);
+    expect(preferences.subjectSwitcherStyle, AppSubjectSwitcherStyle.compact);
+    expect(preferences.showQuickAdd, isTrue);
+    expect(preferences.showGlobalSearch, isTrue);
   });
 }

@@ -1,10 +1,17 @@
 import 'app_experience_preferences.dart';
 
-enum PersonalizationPreset { sprache, focus, paper, oledNight }
+enum PersonalizationPreset {
+  sprache,
+  compactWorkspace,
+  focus,
+  paper,
+  oledNight,
+}
 
 extension PersonalizationPresetDetails on PersonalizationPreset {
   String get label => switch (this) {
     PersonalizationPreset.sprache => 'Sprache 기본',
+    PersonalizationPreset.compactWorkspace => '컴팩트 작업 공간',
     PersonalizationPreset.focus => '집중',
     PersonalizationPreset.paper => '종이',
     PersonalizationPreset.oledNight => 'OLED 밤',
@@ -12,6 +19,7 @@ extension PersonalizationPresetDetails on PersonalizationPreset {
 
   String get description => switch (this) {
     PersonalizationPreset.sprache => '익숙한 기본 색상과 균형 잡힌 정보량',
+    PersonalizationPreset.compactWorkspace => '색상은 유지하고 탐색·홈·간격만 촘촘하게 정리',
     PersonalizationPreset.focus => '좁은 본문과 은은한 움직임으로 학습에 집중',
     PersonalizationPreset.paper => '따뜻한 표면과 여유로운 행간의 읽기 화면',
     PersonalizationPreset.oledNight => '완전 검정 화면과 최소 효과를 사용하는 야간 모드',
@@ -43,6 +51,33 @@ extension PersonalizationPresetDetails on PersonalizationPreset {
         showFocusRing: true,
         readingLineHeight: AppReadingLineHeight.comfortable,
         readingWidth: AppReadingWidth.balanced,
+        activeThemeProfileId: null,
+      ),
+      PersonalizationPreset.compactWorkspace => current.copyWith(
+        density: AppDensity.compact,
+        cardStyle: AppCardStyle.flat,
+        contentWidth: AppContentWidth.wide,
+        decorationIntensity: AppDecorationIntensity.minimal,
+        homeLayout: AppHomeLayout.focus,
+        navigationLabelMode: AppNavigationLabelMode.selected,
+        subjectSwitcherStyle: AppSubjectSwitcherStyle.compact,
+        feedbackDetail: AppFeedbackDetail.concise,
+        readingLineHeight: AppReadingLineHeight.compact,
+        showHomeHeader: true,
+        showStreak: true,
+        showXp: true,
+        showSyncStatus: false,
+        showTodayPlan: true,
+        showPinnedCollections: true,
+        showRecentAdditions: false,
+        showDataFlow: false,
+        showSchedules: false,
+        showQuickAdd: true,
+        showGlobalSearch: true,
+        showShortcutHints: true,
+        focusStudyMode: false,
+        showStudyTimer: true,
+        showQuestionCounter: true,
         activeThemeProfileId: null,
       ),
       PersonalizationPreset.focus => current.copyWith(

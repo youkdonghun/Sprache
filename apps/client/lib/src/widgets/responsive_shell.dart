@@ -338,6 +338,12 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
         .activeSubject;
     final connection = ref.watch(connectionControllerProvider);
     final storageIndicator = _StorageIndicator.from(localStorage, connection);
+    final layout =
+        Theme.of(context).extension<AppLayoutDensity>() ??
+        AppLayoutDensity.fromPreference(
+          experience.density,
+          isDesktop: isDesktop,
+        );
 
     return _withNativeDesktopMenu(
       _withDesktopFileDrop(
@@ -351,7 +357,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
           }),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final showSidebar = isDesktop && constraints.maxWidth >= 760;
+              final showSidebar = isDesktop && constraints.maxWidth >= 840;
               final compactNavigation =
                   constraints.maxWidth < 360 ||
                   MediaQuery.textScalerOf(context).scale(1) > 1.15;
@@ -425,6 +431,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                         showSearch: experience.showGlobalSearch,
                         showQuickAdd: experience.showQuickAdd,
                         showStorageStatus: experience.showSyncStatus,
+                        showKeyboardHelp: isDesktop,
                         compactSubject:
                             experience.subjectSwitcherStyle ==
                             AppSubjectSwitcherStyle.compact,
@@ -451,7 +458,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                       animationDuration: Duration.zero,
                       height: isDesktop
                           ? 58
-                          : compactNavigation
+                          : compactNavigation || layout.dense
                           ? 60
                           : 64,
                       labelBehavior: switch (experience.navigationLabelMode) {
@@ -547,18 +554,24 @@ class _DesktopSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final layout =
+        Theme.of(context).extension<AppLayoutDensity>() ??
+        AppLayoutDensity.fromPreference(AppDensity.platform, isDesktop: true);
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final sidebarItemGap = layout.controlGap + (layout.dense ? 2 : 3);
     return AnimatedContainer(
       key: const Key('desktop-sidebar'),
       duration: reduceMotion
           ? Duration.zero
           : const Duration(milliseconds: 180),
-      width: extended ? 226 : 78,
+      width: extended
+          ? layout.desktopSidebarExtendedWidth
+          : layout.desktopSidebarCollapsedWidth,
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(right: BorderSide(color: colors.outlineVariant)),
       ),
-      padding: const EdgeInsets.fromLTRB(12, 18, 12, 14),
+      padding: layout.desktopSidebarPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -566,46 +579,55 @@ class _DesktopSidebar extends StatelessWidget {
             extended: extended,
             decorationIntensity: decorationIntensity,
           ),
-          const SizedBox(height: 16),
-          if (showSearch) ...[
+          SizedBox(height: layout.sectionGap),
+          if (extended)
+            _SidebarUtilityToolbar(
+              showSearch: showSearch,
+              showQuickAdd: showQuickAdd,
+              onSearch: onSearchPressed,
+              onQuickAdd: onQuickAddPressed,
+              onHelp: onHelpPressed,
+            )
+          else ...[
+            if (showSearch) ...[
+              _SidebarDestination(
+                key: const Key('open-global-search'),
+                extended: false,
+                selected: false,
+                icon: Icons.search_rounded,
+                label: '전체 검색',
+                tooltip: '전체 검색 · Ctrl+K',
+                onTap: onSearchPressed,
+              ),
+              SizedBox(height: sidebarItemGap),
+            ],
+            if (showQuickAdd) ...[
+              _SidebarDestination(
+                key: const Key('shell-quick-add'),
+                extended: false,
+                selected: false,
+                icon: Icons.add_circle_outline_rounded,
+                label: '빠른 추가',
+                tooltip: '빠른 자료 추가 · Ctrl+N',
+                onTap: onQuickAddPressed,
+              ),
+              SizedBox(height: sidebarItemGap),
+            ],
             _SidebarDestination(
-              key: const Key('open-global-search'),
-              extended: extended,
+              key: const Key('open-keyboard-help'),
+              extended: false,
               selected: false,
-              icon: Icons.search_rounded,
-              label: '전체 검색',
-              tooltip: '전체 검색 · Ctrl+K',
-              onTap: onSearchPressed,
+              icon: Icons.keyboard_alt_outlined,
+              label: '키보드 도움말',
+              tooltip: '키보드 도움말',
+              onTap: onHelpPressed,
             ),
-            const SizedBox(height: 7),
           ],
-          if (showQuickAdd) ...[
-            _SidebarDestination(
-              key: const Key('shell-quick-add'),
-              extended: extended,
-              selected: false,
-              icon: Icons.add_circle_outline_rounded,
-              label: '빠른 추가',
-              tooltip: '빠른 자료 추가 · Ctrl+N',
-              onTap: onQuickAddPressed,
-            ),
-            const SizedBox(height: 7),
-          ],
-          _SidebarDestination(
-            key: const Key('open-keyboard-help'),
-            extended: extended,
-            selected: false,
-            icon: Icons.keyboard_alt_outlined,
-            label: '키보드 도움말',
-            tooltip: '키보드 도움말',
-            onTap: onHelpPressed,
-          ),
-          const SizedBox(height: 7),
-          const SizedBox(height: 5),
+          SizedBox(height: layout.sectionGap * 0.75),
           for (final (index, destination)
               in ResponsiveShell._destinations.indexed)
             Padding(
-              padding: const EdgeInsets.only(bottom: 7),
+              padding: EdgeInsets.only(bottom: sidebarItemGap),
               child: _SidebarDestination(
                 key: Key('nav-${destination.$1.substring(1)}'),
                 extended:
@@ -639,66 +661,113 @@ class _DesktopSidebar extends StatelessWidget {
                 key: const Key('shell-subject-switcher'),
                 onTap: onSubjectPressed,
                 borderRadius: BorderRadius.circular(10),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: extended && !compactSubject ? 12 : 0,
-                    vertical: 11,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: extended && !compactSubject
-                        ? MainAxisAlignment.start
-                        : MainAxisAlignment.center,
-                    children: [
-                      if (compactSubject)
-                        Text(
-                          subjectSymbol,
-                          key: const Key('shell-compact-subject-symbol'),
-                          style: const TextStyle(fontSize: 20),
-                        )
-                      else
-                        Icon(
-                          key: const Key('shell-storage-status'),
-                          showStorageStatus
-                              ? storageIndicator.icon
-                              : Icons.translate_rounded,
-                          size: 18,
-                          color: showStorageStatus
-                              ? storageIndicator.color(colors)
-                              : colors.primary,
-                        ),
-                      if (extended && !compactSubject) ...[
-                        const SizedBox(width: 9),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                language,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              if (showStorageStatus)
-                                Text(
-                                  storageIndicator.label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                            ],
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minHeight: 44),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: extended && !compactSubject
+                          ? layout.sidebarControlHorizontalPadding
+                          : 0,
+                      vertical: layout.dense ? 8 : 11,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: extended && !compactSubject
+                          ? MainAxisAlignment.start
+                          : MainAxisAlignment.center,
+                      children: [
+                        if (compactSubject)
+                          Text(
+                            subjectSymbol,
+                            key: const Key('shell-compact-subject-symbol'),
+                            style: const TextStyle(fontSize: 20),
+                          )
+                        else
+                          Icon(
+                            key: const Key('shell-storage-status'),
+                            showStorageStatus
+                                ? storageIndicator.icon
+                                : Icons.translate_rounded,
+                            size: 18,
+                            color: showStorageStatus
+                                ? storageIndicator.color(colors)
+                                : colors.primary,
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        const Icon(Icons.unfold_more_rounded, size: 16),
+                        if (extended && !compactSubject) ...[
+                          SizedBox(width: layout.controlGap + 5),
+                          Expanded(
+                            child: Text(
+                              showStorageStatus
+                                  ? '$language · ${storageIndicator.label}'
+                                  : language,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: layout.controlGap),
+                          const Icon(Icons.unfold_more_rounded, size: 16),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SidebarUtilityToolbar extends StatelessWidget {
+  const _SidebarUtilityToolbar({
+    required this.showSearch,
+    required this.showQuickAdd,
+    required this.onSearch,
+    required this.onQuickAdd,
+    required this.onHelp,
+  });
+
+  final bool showSearch;
+  final bool showQuickAdd;
+  final VoidCallback onSearch;
+  final VoidCallback onQuickAdd;
+  final VoidCallback onHelp;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      label: '빠른 도구',
+      child: Row(
+        key: const Key('desktop-sidebar-utility-toolbar'),
+        children: [
+          if (showSearch)
+            IconButton(
+              key: const Key('open-global-search'),
+              tooltip: '전체 검색 · Ctrl+K',
+              onPressed: onSearch,
+              icon: const Icon(Icons.search_rounded),
+            ),
+          if (showQuickAdd) ...[
+            const SizedBox(width: 4),
+            IconButton.filledTonal(
+              key: const Key('shell-quick-add'),
+              tooltip: '빠른 자료 추가 · Ctrl+N',
+              onPressed: onQuickAdd,
+              icon: const Icon(Icons.add_rounded),
+            ),
+          ],
+          const Spacer(),
+          IconButton(
+            key: const Key('open-keyboard-help'),
+            tooltip: '키보드 도움말',
+            onPressed: onHelp,
+            icon: const Icon(Icons.keyboard_alt_outlined),
           ),
         ],
       ),
@@ -729,6 +798,9 @@ class _SidebarDestination extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final layout =
+        Theme.of(context).extension<AppLayoutDensity>() ??
+        AppLayoutDensity.fromPreference(AppDensity.platform, isDesktop: true);
     return Semantics(
       button: true,
       selected: selected,
@@ -741,9 +813,11 @@ class _SidebarDestination extends StatelessWidget {
             onTap: onTap,
             borderRadius: BorderRadius.circular(10),
             child: Container(
-              height: 46,
+              height: layout.sidebarControlHeight,
               padding: EdgeInsets.symmetric(
-                horizontal: extended || alignLeading ? 13 : 0,
+                horizontal: extended || alignLeading
+                    ? layout.sidebarControlHorizontalPadding
+                    : 0,
               ),
               decoration: BoxDecoration(
                 color: selected ? colors.primaryContainer : Colors.transparent,
@@ -762,7 +836,7 @@ class _SidebarDestination extends StatelessWidget {
                         : colors.onSurfaceVariant,
                   ),
                   if (extended) ...[
-                    const SizedBox(width: 12),
+                    SizedBox(width: layout.controlGap + 8),
                     Text(
                       label,
                       style: TextStyle(
@@ -797,6 +871,7 @@ class _SubjectContextBar extends StatelessWidget {
     required this.showSearch,
     required this.showQuickAdd,
     required this.showStorageStatus,
+    required this.showKeyboardHelp,
     required this.compactSubject,
   });
 
@@ -810,15 +885,21 @@ class _SubjectContextBar extends StatelessWidget {
   final bool showSearch;
   final bool showQuickAdd;
   final bool showStorageStatus;
+  final bool showKeyboardHelp;
   final bool compactSubject;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final layout =
+        Theme.of(context).extension<AppLayoutDensity>() ??
+        AppLayoutDensity.fromPreference(AppDensity.platform, isDesktop: false);
     return Container(
       key: const Key('shell-subject-context'),
-      height: 56,
-      padding: const EdgeInsets.fromLTRB(10, 4, 8, 4),
+      height: layout.subjectContextHeight < 54
+          ? 54
+          : layout.subjectContextHeight,
+      padding: layout.subjectContextPadding,
       decoration: BoxDecoration(
         color: colors.surface,
         border: Border(bottom: BorderSide(color: colors.outlineVariant)),
@@ -841,7 +922,9 @@ class _SubjectContextBar extends StatelessWidget {
                       onTap: onPressed,
                       customBorder: const StadiumBorder(),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 11),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: layout.dense ? 8 : 11,
+                        ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -873,7 +956,7 @@ class _SubjectContextBar extends StatelessWidget {
             ),
           ),
           if (showQuickAdd) ...[
-            const SizedBox(width: 4),
+            SizedBox(width: layout.controlGap),
             SizedBox.square(
               dimension: 44,
               child: IconButton(
@@ -885,7 +968,7 @@ class _SubjectContextBar extends StatelessWidget {
             ),
           ],
           if (showSearch) ...[
-            const SizedBox(width: 2),
+            SizedBox(width: layout.controlGap / 2),
             SizedBox.square(
               dimension: 44,
               child: IconButton(
@@ -896,18 +979,20 @@ class _SubjectContextBar extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(width: 2),
-          SizedBox.square(
-            dimension: 44,
-            child: IconButton(
-              key: const Key('open-keyboard-help'),
-              tooltip: '키보드 도움말',
-              onPressed: onHelpPressed,
-              icon: const Icon(Icons.keyboard_alt_outlined),
+          if (showKeyboardHelp) ...[
+            SizedBox(width: layout.controlGap / 2),
+            SizedBox.square(
+              dimension: 44,
+              child: IconButton(
+                key: const Key('open-keyboard-help'),
+                tooltip: '키보드 도움말',
+                onPressed: onHelpPressed,
+                icon: const Icon(Icons.keyboard_alt_outlined),
+              ),
             ),
-          ),
+          ],
           if (showStorageStatus) ...[
-            const SizedBox(width: 2),
+            SizedBox(width: layout.controlGap / 2),
             Semantics(
               container: true,
               label: storageIndicator.label,

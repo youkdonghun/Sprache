@@ -450,7 +450,7 @@ class _PendingSectionsCard extends StatelessWidget {
             const SizedBox(height: 3),
             Text(
               offlineLocked
-                  ? '완전 오프라인 잠금을 해제하면 다시 시도할 수 있습니다.'
+                  ? 'Drive 동기화 일시 중지를 해제하면 다시 시도할 수 있습니다.'
                   : '무결성을 위해 선택한 섹션과 함께 최신 스냅샷 전체를 원자적으로 검증합니다.',
               style: Theme.of(context).textTheme.bodySmall,
             ),

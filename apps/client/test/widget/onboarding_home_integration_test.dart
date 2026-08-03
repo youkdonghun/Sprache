@@ -51,7 +51,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.byKey(const Key('home-rest-day-banner')), findsOneWidget);
-    expect(find.textContaining('다음 학습 8/3'), findsOneWidget);
+    expect(find.text('쉬는 날 · 다음 학습 8/3'), findsOneWidget);
     expect(find.byKey(const Key('home-first-recommendation')), findsOneWidget);
   });
 

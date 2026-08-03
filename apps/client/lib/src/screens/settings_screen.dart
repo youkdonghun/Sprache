@@ -1551,7 +1551,7 @@ class _DeviceNotificationPreferencesCard extends StatelessWidget {
             DropdownButtonFormField<NotificationLockScreenContent>(
               key: const Key('notification-lock-content-picker'),
               initialValue: preferences.lockScreenContent,
-              decoration: const InputDecoration(labelText: '잠금화면 공개 범위'),
+              decoration: const InputDecoration(labelText: '알림 내용 표시'),
               items: [
                 for (final value in NotificationLockScreenContent.values)
                   DropdownMenuItem(
@@ -1920,35 +1920,12 @@ class _DevicePrivacyPreferencesCard extends StatelessWidget {
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('사생활 보호 모드'),
-              subtitle: const Text('원문·뜻·계정 식별자를 화면에서 가립니다.'),
+              subtitle: const Text('이 기기에서 원문·뜻·계정 식별자를 가립니다.'),
               value: preferences.privacyMode,
               onChanged: hydrated
                   ? (value) =>
                         onChanged(preferences.copyWith(privacyMode: value))
                   : null,
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<PrivacyCurtainDelay>(
-              key: const Key('privacy-curtain-delay'),
-              initialValue: preferences.curtainDelay,
-              decoration: const InputDecoration(labelText: '백그라운드 보호 커튼'),
-              items: [
-                for (final value in PrivacyCurtainDelay.values)
-                  DropdownMenuItem(
-                    value: value,
-                    child: Text(_curtainDelayLabel(value)),
-                  ),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  onChanged(preferences.copyWith(curtainDelay: value));
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '보호 시간과 알림·음성 설정은 기기 전용이며 Drive 스냅샷에 포함되지 않습니다.',
-              style: TextStyle(fontSize: 12),
             ),
           ],
         ),
@@ -1977,13 +1954,6 @@ String _feedbackStrengthLabel(DeviceFeedbackStrength value) => switch (value) {
   DeviceFeedbackStrength.light => '약하게',
   DeviceFeedbackStrength.normal => '보통',
   DeviceFeedbackStrength.strong => '강하게',
-};
-
-String _curtainDelayLabel(PrivacyCurtainDelay value) => switch (value) {
-  PrivacyCurtainDelay.disabled => '사용 안 함',
-  PrivacyCurtainDelay.immediate => '즉시',
-  PrivacyCurtainDelay.seconds15 => '15초 뒤',
-  PrivacyCurtainDelay.seconds60 => '60초 뒤',
 };
 
 class _WindowsWorkspaceCard extends StatelessWidget {
@@ -3032,11 +3002,11 @@ class _SyncPolicyPanel extends StatelessWidget {
               value: policy.offlineLock,
               onChanged: (value) =>
                   onChanged(policy.copyWith(offlineLock: value)),
-              title: const Text('완전 오프라인 잠금'),
+              title: const Text('Drive 동기화 일시 중지'),
               subtitle: Text(
                 policy.offlineLock
-                    ? '잠금 해제 전까지 연결·복원·수동/자동 Drive 요청을 모두 막습니다.'
-                    : '필요할 때 기기 밖 네트워크 요청을 명시적으로 잠글 수 있습니다.',
+                    ? '다시 켤 때까지 연결·복원·수동/자동 Drive 요청을 보내지 않습니다.'
+                    : '필요할 때 Drive 연결과 동기화를 이 기기에서 잠시 멈출 수 있습니다.',
               ),
             ),
           ),

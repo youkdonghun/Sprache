@@ -464,7 +464,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Daily language desk'), findsOneWidget);
-      expect(find.text('오늘의 학습'), findsOneWidget);
+      expect(
+        find.byKey(const Key('home-today-plan-summary-row')),
+        findsOneWidget,
+      );
       expect(find.text('복습 예정'), findsOneWidget);
       expect(find.text('새 표현'), findsOneWidget);
       expect(find.text('학습 범위'), findsNothing);
@@ -569,7 +572,14 @@ void main() {
       await tester.tap(find.text('뜻 고르기'));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
-      expect(find.textContaining('사용 가능'), findsOneWidget);
+      final inventory = find.byKey(
+        const Key('practice-launch-inventory-strip'),
+      );
+      expect(inventory, findsOneWidget);
+      expect(
+        find.descendant(of: inventory, matching: find.textContaining('전체 ')),
+        findsOneWidget,
+      );
       final startSession = find.byKey(const Key('start-practice-session'));
       await tester.ensureVisible(startSession);
       await tester.pumpAndSettle();
@@ -1087,7 +1097,8 @@ void main() {
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
 
-      expect(find.text('영어 학습실'), findsOneWidget);
+      expect(find.byKey(const Key('compact-learning-header')), findsOneWidget);
+      expect(find.text('영어 학습'), findsOneWidget);
       await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('실전 상황 미션'));

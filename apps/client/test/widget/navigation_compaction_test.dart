@@ -82,7 +82,7 @@ void main() {
 
       expect(find.byType(CoursePathScreen), findsNothing);
       expect(find.byType(LearningHubScreen), findsOneWidget);
-      expect(find.text('일본어 학습실'), findsOneWidget);
+      expect(find.text('일본어 학습'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
   );
@@ -117,18 +117,20 @@ void main() {
     await pumpApp(tester);
     await tester.tap(find.byKey(const Key('nav-learn')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('quick-practice-quiz')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-practice-quiz')));
     await tester.pumpAndSettle();
-    expect(find.text('이번에 풀 문제 수'), findsOneWidget);
+    expect(find.text('세션 길이'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('nav-library')));
     await tester.pumpAndSettle();
-    expect(find.text('이번에 풀 문제 수'), findsNothing);
+    expect(find.text('세션 길이'), findsNothing);
 
     await tester.tap(find.byKey(const Key('nav-learn')));
     await tester.pumpAndSettle();
     expect(find.byType(LearningHubScreen), findsOneWidget);
-    expect(find.text('이번에 풀 문제 수'), findsNothing);
+    expect(find.text('세션 길이'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -341,6 +343,20 @@ void main() {
     );
 
     expect(find.byKey(const Key('home-pinned-collections')), findsOneWidget);
+    expect(
+      tester
+          .widget<IconButton>(
+            find.byKey(const Key('manage-home-pinned-collections')),
+          )
+          .tooltip,
+      '고정 컬렉션 관리',
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const Key('manage-home-pinned-collections')))
+          .height,
+      greaterThanOrEqualTo(44),
+    );
     final emptyChip = tester.widget<ActionChip>(
       find.byKey(const Key('home-pinned-collection-home-pinned-empty')),
     );

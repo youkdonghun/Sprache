@@ -231,17 +231,10 @@ Future<ProviderContainer> _pumpLearningHub(
 
 Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   expect(finder, findsOneWidget);
-  final center = tester.getCenter(finder, warnIfMissed: false);
-  final viewSize = tester.view.physicalSize / tester.view.devicePixelRatio;
-  if (center.dy < 0 || center.dy > viewSize.height) {
-    final scroll = find.byKey(const Key('learning-hub-scroll'));
-    if (scroll.evaluate().isNotEmpty) {
-      await tester.dragUntilVisible(finder, scroll, const Offset(0, -320));
-    } else {
-      await tester.ensureVisible(finder);
-    }
-  }
+  await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
-  await tester.tap(finder);
+  final hitTestableFinder = finder.hitTestable();
+  expect(hitTestableFinder, findsOneWidget);
+  await tester.tap(hitTestableFinder);
   await tester.pumpAndSettle();
 }

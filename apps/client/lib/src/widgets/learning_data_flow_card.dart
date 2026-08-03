@@ -18,6 +18,7 @@ class LearningDataFlowCard extends StatelessWidget {
     this.localFolderConfigured = false,
     this.localFolderName,
     this.onManageStorage,
+    this.condensed = false,
     super.key,
   });
 
@@ -35,10 +36,87 @@ class LearningDataFlowCard extends StatelessWidget {
   final bool localFolderConfigured;
   final String? localFolderName;
   final VoidCallback? onManageStorage;
+  final bool condensed;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    if (condensed) {
+      final primaryAction = switch (currentStep) {
+        LearningDataStep.add => onAdd,
+        LearningDataStep.organize => onOrganize,
+        LearningDataStep.learn => onLearn,
+        null => null,
+      };
+      final primaryIcon = switch (currentStep) {
+        LearningDataStep.add => Icons.add_rounded,
+        LearningDataStep.organize => Icons.folder_copy_outlined,
+        LearningDataStep.learn => Icons.school_outlined,
+        null => Icons.arrow_forward_rounded,
+      };
+      return Material(
+        key: const Key('learning-data-flow-card'),
+        color: colors.secondaryContainer.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.outlineVariant),
+        ),
+        child: InkWell(
+          onTap: () => _showStorageDetails(context),
+          borderRadius: BorderRadius.circular(12),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 52),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 4, 4, 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.account_tree_outlined,
+                    size: 22,
+                    color: colors.onSecondaryContainer,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _compactFlowLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        Text(
+                          _storageSummaryLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (primaryAction != null)
+                    IconButton(
+                      key: const Key('learning-data-flow-primary'),
+                      onPressed: primaryAction,
+                      icon: Icon(primaryIcon),
+                      tooltip: _recommendedTitle,
+                    ),
+                  IconButton(
+                    key: const Key('open-learning-data-details-condensed'),
+                    onPressed: () => _showStorageDetails(context),
+                    icon: const Icon(Icons.info_outline_rounded),
+                    tooltip: '자료 저장 구조 보기',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Material(
       key: const Key('learning-data-flow-card'),
       color: colors.secondaryContainer.withValues(alpha: 0.38),

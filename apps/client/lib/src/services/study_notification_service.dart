@@ -471,7 +471,7 @@ class FlutterStudyNotificationService
     if (!await _ensureInitialized()) return false;
     final visible = preferences.visibleNotification(
       title: 'Sprache 테스트 알림',
-      body: '알림 표시와 잠금화면 공개 범위를 확인했습니다.',
+      body: '알림 표시와 알림 내용 설정을 확인했습니다.',
     );
     try {
       await _plugin.show(

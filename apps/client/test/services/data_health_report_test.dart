@@ -130,7 +130,7 @@ void main() {
       );
       expect(
         report.sections.singleWhere((value) => value.id == 'drive').summary,
-        '완전 오프라인 잠금',
+        'Drive 동기화 일시 중지',
       );
       expect(
         report.sections.singleWhere((value) => value.id == 'pending').retryable,

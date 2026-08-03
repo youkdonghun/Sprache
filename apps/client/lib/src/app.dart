@@ -44,7 +44,6 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
   bool _initialRestoreScheduled = false;
   Timer? _calendarTimer;
   Timer? _themeScheduleTimer;
-  Timer? _privacyCurtainTimer;
   StreamSubscription<StudyNotificationAction>? _notificationActionSubscription;
   StreamSubscription<String>? _inboundIntentSubscription;
   late final MediaLifecycleCoordinator _mediaLifecycleCoordinator;
@@ -55,7 +54,6 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
   bool _handlingInboundIntent = false;
   final Map<String, DateTime> _recentNotificationActions = {};
   DateTime? _scheduledThemeBoundary;
-  bool _privacyCurtainVisible = false;
 
   @override
   void initState() {
@@ -100,7 +98,6 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
   void dispose() {
     _calendarTimer?.cancel();
     _themeScheduleTimer?.cancel();
-    _privacyCurtainTimer?.cancel();
     unawaited(_notificationActionSubscription?.cancel());
     unawaited(_inboundIntentSubscription?.cancel());
     WidgetsBinding.instance.removeObserver(this);
@@ -266,14 +263,10 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
         _backgroundedAt ??= now;
-        _schedulePrivacyCurtain();
         unawaited(_mediaLifecycleCoordinator.enterBackground());
         _syncForLifecycle(now);
       case AppLifecycleState.resumed:
         _mediaLifecycleCoordinator.resume();
-        _privacyCurtainTimer?.cancel();
-        _privacyCurtainTimer = null;
-        _privacyCurtainVisible = false;
         _refreshCalendarDay();
         _scheduledThemeBoundary = null;
         if (mounted) setState(() {});
@@ -284,25 +277,6 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
           _syncForLifecycle(now);
         }
     }
-  }
-
-  void _schedulePrivacyCurtain() {
-    _privacyCurtainTimer?.cancel();
-    final duration = ref
-        .read(devicePreferencesControllerProvider)
-        .preferences
-        .privacy
-        .curtainDuration;
-    if (duration == null) return;
-    if (duration == Duration.zero) {
-      if (mounted) setState(() => _privacyCurtainVisible = true);
-      return;
-    }
-    _privacyCurtainTimer = Timer(duration, () {
-      if (mounted && _backgroundedAt != null) {
-        setState(() => _privacyCurtainVisible = true);
-      }
-    });
   }
 
   void _refreshCalendarDay() {
@@ -510,12 +484,6 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
         if (devicePrivacy.privacyMode) {
           scaledChild = _PrivacyModeFrame(child: scaledChild);
         }
-        if (_privacyCurtainVisible) {
-          scaledChild = Stack(
-            fit: StackFit.expand,
-            children: [scaledChild, const _PrivacyCurtain()],
-          );
-        }
         final globalBindings = effectiveAccessibilityProfile.globalBindingsFor({
           GlobalShortcutAction.openSearch: () =>
               unawaited(showGlobalSearchPalette(context, ref)),
@@ -607,36 +575,6 @@ class _PrivacyModeFrame extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PrivacyCurtain extends StatelessWidget {
-  const _PrivacyCurtain();
-
-  @override
-  Widget build(BuildContext context) {
-    return ColoredBox(
-      key: const Key('privacy-curtain'),
-      color: Theme.of(context).colorScheme.surface,
-      child: Center(
-        child: Semantics(
-          label: 'Sprache 내용이 보호되었습니다',
-          child: const Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.lock_outline_rounded, size: 52),
-              SizedBox(height: 12),
-              Text(
-                'Sprache 보호 중',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-              SizedBox(height: 5),
-              Text('앱으로 돌아오면 내용이 다시 표시됩니다.'),
-            ],
-          ),
-        ),
       ),
     );
   }

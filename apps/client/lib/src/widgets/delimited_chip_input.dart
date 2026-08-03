@@ -11,6 +11,8 @@ class DelimitedChipInput extends StatelessWidget {
     this.onSubmitted,
     this.focusNode,
     this.textInputAction = TextInputAction.done,
+    this.helperText = '쉼표를 입력하면 각 항목을 답안으로 인식합니다.',
+    this.suffixIcon,
   });
 
   final TextEditingController controller;
@@ -21,6 +23,8 @@ class DelimitedChipInput extends StatelessWidget {
   final ValueChanged<String>? onSubmitted;
   final FocusNode? focusNode;
   final TextInputAction textInputAction;
+  final String? helperText;
+  final Widget? suffixIcon;
 
   static List<String> parse(String value) => value
       .split(RegExp(r'[,;\n]'))
@@ -44,7 +48,8 @@ class DelimitedChipInput extends StatelessWidget {
           decoration: InputDecoration(
             labelText: labelText,
             hintText: hintText,
-            helperText: '쉼표를 입력하면 각 항목을 답안으로 인식합니다.',
+            helperText: helperText,
+            suffixIcon: suffixIcon,
           ),
           validator: required
               ? (value) => value == null || parse(value).isEmpty

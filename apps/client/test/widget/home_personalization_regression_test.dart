@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
@@ -16,11 +17,14 @@ void main() {
     required AppExperiencePreferences experience,
     Iterable<LearningItem> items = const [],
     Size size = const Size(900, 1100),
+    double textScale = 1,
   }) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.android;
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
+    tester.binding.platformDispatcher.textScaleFactorTestValue = textScale;
     addTearDown(() {
+      tester.binding.platformDispatcher.clearTextScaleFactorTestValue();
       tester.view.reset();
     });
 
@@ -53,6 +57,24 @@ void main() {
     expect(find.byKey(const Key('home-header')), findsOneWidget);
     expect(find.byKey(const Key('home-xp-summary')), findsOneWidget);
     expect(find.byKey(const Key('home-today-plan')), findsOneWidget);
+    expect(
+      find.byKey(const Key('home-today-plan-summary-row')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('home-weekly-target-summary-row')),
+      findsOneWidget,
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('home-today-plan'))).height,
+      lessThan(100),
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const Key('home-weekly-target-summary-row')))
+          .height,
+      lessThanOrEqualTo(60),
+    );
     expect(find.byKey(const Key('learning-data-flow-card')), findsOneWidget);
   });
 
@@ -151,5 +173,112 @@ void main() {
       lessThan(tester.getTopLeft(insights).dy),
     );
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('compact density reduces home chrome while preserving actions', (
+    tester,
+  ) async {
+    await pumpHome(
+      tester,
+      experience: const AppExperiencePreferences(density: AppDensity.compact),
+    );
+
+    final pagePadding = tester.widget<SliverPadding>(
+      find.byKey(const Key('home-page-padding')),
+    );
+    expect(pagePadding.padding.resolve(TextDirection.ltr).left, 12);
+    expect(find.text('오늘 체크리스트'), findsOneWidget);
+    expect(find.text('오늘의 영어'), findsNothing);
+    expect(
+      tester.getSize(find.byKey(const Key('home-custom-quick-actions'))).height,
+      lessThanOrEqualTo(56),
+    );
+    expect(
+      tester
+          .getSize(find.byKey(const Key('home-weekly-target-summary-row')))
+          .height,
+      lessThanOrEqualTo(50),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('home-today-plan'))).height,
+      lessThanOrEqualTo(60),
+    );
+    expect(
+      tester.getSize(find.byKey(const Key('home-primary-study-button'))).height,
+      greaterThanOrEqualTo(44),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('320px large text keeps home quick-action labels readable', (
+    tester,
+  ) async {
+    await pumpHome(
+      tester,
+      size: const Size(320, 640),
+      textScale: 1.3,
+      experience: const AppExperiencePreferences(),
+    );
+
+    final actions = [
+      find.byKey(const Key('home-quick-action-0-study')),
+      find.byKey(const Key('home-quick-action-1-quickAdd')),
+      find.byKey(const Key('home-quick-action-2-practice')),
+    ];
+    for (final action in actions) {
+      expect(action, findsOneWidget);
+      expect(tester.getSize(action).height, greaterThanOrEqualTo(44));
+      final label = find.descendant(of: action, matching: find.byType(Text));
+      final paragraph = tester.renderObject<RenderParagraph>(label);
+      expect(paragraph.didExceedMaxLines, isFalse);
+    }
+    expect(
+      tester.getTopLeft(actions[0]).dy,
+      equals(tester.getTopLeft(actions[1]).dy),
+    );
+    expect(
+      tester.getTopLeft(actions[2]).dy,
+      greaterThan(tester.getTopLeft(actions[0]).dy),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('recent additions limits the dashboard preview to three items', (
+    tester,
+  ) async {
+    final items = List.generate(
+      4,
+      (index) => LearningItem(
+        id: 'compact-recent-$index',
+        kind: LearningItemKind.word,
+        learningLanguage: LanguageTag.english,
+        subjectId: 'language:en',
+        text: 'recent $index',
+        translations: ['최근 $index'],
+        acceptedAnswers: ['최근 $index'],
+        updatedAt: DateTime(2026, 8, index + 1),
+      ),
+    );
+    await pumpHome(
+      tester,
+      experience: const AppExperiencePreferences(
+        density: AppDensity.compact,
+        showDataFlow: false,
+      ),
+      items: items,
+    );
+
+    final tray = find.byKey(const Key('recent-additions-tray'));
+    expect(tray, findsOneWidget);
+    expect(
+      find.descendant(of: tray, matching: find.byType(ListTile)),
+      findsNWidgets(3),
+    );
+    expect(
+      find.byKey(const Key('home-view-all-recent-additions')),
+      findsOneWidget,
+    );
+    expect(find.text('recent 0'), findsNothing);
+    expect(find.text('recent 3'), findsOneWidget);
   });
 }

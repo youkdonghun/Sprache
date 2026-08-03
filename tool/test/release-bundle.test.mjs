@@ -16,17 +16,21 @@ const policy = {
   ios: 'MOCK',
   macos: 'MOCK',
 };
+const currentRelease = await readCurrentRelease();
 
 test('creates and verifies a checksummed four-platform manifest', async (t) => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'sprache-release-bundle-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const entries = await writeBundleInputs(root);
   const specPath = path.join(root, 'release-spec.json');
-  const manifestPath = path.join(root, 'release-manifest-1.31.0.json');
+  const manifestPath = path.join(
+    root,
+    `release-manifest-${currentRelease.version}.json`,
+  );
   await writeJson(specPath, {
     format: 'sprache-release-spec-v2',
-    version: '1.31.0',
-    buildNumber: 55,
+    version: currentRelease.version,
+    buildNumber: currentRelease.buildNumber,
     releasePolicy: policy,
     entries,
   });
@@ -55,11 +59,14 @@ test('detects artifact tampering after manifest creation', async (t) => {
   t.after(() => rm(root, { recursive: true, force: true }));
   const entries = await writeBundleInputs(root);
   const specPath = path.join(root, 'release-spec.json');
-  const manifestPath = path.join(root, 'release-manifest-1.31.0.json');
+  const manifestPath = path.join(
+    root,
+    `release-manifest-${currentRelease.version}.json`,
+  );
   await writeJson(specPath, {
     format: 'sprache-release-spec-v2',
-    version: '1.31.0',
-    buildNumber: 55,
+    version: currentRelease.version,
+    buildNumber: currentRelease.buildNumber,
     releasePolicy: policy,
     entries,
   });
@@ -80,8 +87,8 @@ test('rejects path traversal and dishonest runtime evidence', async (t) => {
   const specPath = path.join(root, 'release-spec.json');
   await writeJson(specPath, {
     format: 'sprache-release-spec-v2',
-    version: '1.31.0',
-    buildNumber: 55,
+    version: currentRelease.version,
+    buildNumber: currentRelease.buildNumber,
     releasePolicy: policy,
     entries,
   });
@@ -98,8 +105,8 @@ test('rejects path traversal and dishonest runtime evidence', async (t) => {
   await writeJson(path.join(root, safeEntries[0].evidence), evidence);
   await writeJson(specPath, {
     format: 'sprache-release-spec-v2',
-    version: '1.31.0',
-    buildNumber: 55,
+    version: currentRelease.version,
+    buildNumber: currentRelease.buildNumber,
     releasePolicy: policy,
     entries: safeEntries,
   });
@@ -130,8 +137,8 @@ test('rejects dishonest or unbound Android BUILD_ONLY evidence', async (t) => {
     await writeJson(path.join(root, android.evidence), evidence);
     await writeJson(specPath, {
       format: 'sprache-release-spec-v2',
-      version: '1.31.0',
-      buildNumber: 55,
+      version: currentRelease.version,
+      buildNumber: currentRelease.buildNumber,
       releasePolicy: policy,
       entries,
     });
@@ -148,8 +155,8 @@ test('does not let another platform or a mismatched spec opt into BUILD_ONLY', a
   windows.verification = 'BUILD_ONLY';
   await writeJson(specPath, {
     format: 'sprache-release-spec-v2',
-    version: '1.31.0',
-    buildNumber: 55,
+    version: currentRelease.version,
+    buildNumber: currentRelease.buildNumber,
     releasePolicy: policy,
     entries,
   });
@@ -163,8 +170,8 @@ test('does not let another platform or a mismatched spec opt into BUILD_ONLY', a
   android.verification = 'RUNTIME';
   await writeJson(specPath, {
     format: 'sprache-release-spec-v2',
-    version: '1.31.0',
-    buildNumber: 55,
+    version: currentRelease.version,
+    buildNumber: currentRelease.buildNumber,
     releasePolicy: policy,
     entries,
   });
@@ -176,10 +183,30 @@ test('does not let another platform or a mismatched spec opt into BUILD_ONLY', a
 
 async function writeBundleInputs(root) {
   const definitions = [
-    ['windows', 'REAL', 'RUNTIME', 'Sprache-Windows-Setup-1.31.0.exe'],
-    ['android', 'REAL', 'BUILD_ONLY', 'Sprache-Android-1.31.0.apk'],
-    ['ios', 'MOCK', 'RUNTIME', 'Sprache-iOS-Simulator-1.31.0-mock.zip'],
-    ['macos', 'MOCK', 'RUNTIME', 'Sprache-macOS-1.31.0-mock.zip'],
+    [
+      'windows',
+      'REAL',
+      'RUNTIME',
+      `Sprache-Windows-Setup-${currentRelease.version}.exe`,
+    ],
+    [
+      'android',
+      'REAL',
+      'BUILD_ONLY',
+      `Sprache-Android-${currentRelease.version}.apk`,
+    ],
+    [
+      'ios',
+      'MOCK',
+      'RUNTIME',
+      `Sprache-iOS-Simulator-${currentRelease.version}-mock.zip`,
+    ],
+    [
+      'macos',
+      'MOCK',
+      'RUNTIME',
+      `Sprache-macOS-${currentRelease.version}-mock.zip`,
+    ],
   ];
   const entries = [];
   for (const [platform, mode, verification, artifact] of definitions) {
@@ -189,8 +216,8 @@ async function writeBundleInputs(root) {
     const common = {
       platform,
       mode,
-      version: '1.31.0',
-      buildNumber: 55,
+      version: currentRelease.version,
+      buildNumber: currentRelease.buildNumber,
       checkedAt: '2026-08-03T06:00:00.000Z',
     };
     if (verification === 'RUNTIME') {
@@ -224,6 +251,21 @@ async function writeBundleInputs(root) {
     entries.push({ platform, mode, verification, artifact, evidence });
   }
   return entries;
+}
+
+async function readCurrentRelease() {
+  const pubspec = await readFile(
+    new URL('../../apps/client/pubspec.yaml', import.meta.url),
+    'utf8',
+  );
+  const match = pubspec.match(
+    /^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\+([0-9]+)\s*$/m,
+  );
+  assert.ok(match, 'pubspec.yaml must contain a semantic version and build number');
+  return {
+    version: match[1],
+    buildNumber: Number(match[2]),
+  };
 }
 
 async function writeJson(file, value) {

@@ -76,6 +76,30 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
     );
   }
 
+  void _resetAdvancedSettings() {
+    _setPlan(
+      _plan.copyWith(
+        difficulty: StudyDifficulty.all,
+        queuePriority: StudyQueuePriority.dueFirst,
+        historyFilter: StudyHistoryFilter.all,
+        groupIds: {},
+        tags: {},
+        levels: {},
+        sentenceRatio: _defaultSentenceRatio(_plan),
+        recordProgress: true,
+        answerDirectionOverride: null,
+        gradingStrictness: StudyGradingStrictness.balanced,
+        choiceCount: 4,
+        hintsEnabled: true,
+        autoAdvanceOverride: null,
+        soundEffectsOverride: null,
+        largeControls: false,
+        backlogRecovery: const BacklogRecoverySettings(),
+        examSchedule: null,
+      ),
+    );
+  }
+
   Future<void> _savePlan() async {
     final controller = ref.read(appControllerProvider.notifier);
     final saved = controller.saveSessionPlan(_plan);
@@ -884,8 +908,6 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                         averageSecondsPerItem: averageSecondsPerItem,
                       ),
                       const SizedBox(height: 12),
-                      savedPlans,
-                      const SizedBox(height: 12),
                       _QuickSessionPresets(
                         onSelected: (preset) => _setPlan(
                           preset.copyWith(
@@ -897,6 +919,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                           syncTitle: true,
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      savedPlans,
                       const SizedBox(height: 12),
                       _MobileSessionEditor(
                         plan: _plan,
@@ -911,6 +935,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                         matchingCount: preview.matchingCount,
                         titleController: _titleController,
                         onChanged: _setPlan,
+                        onResetAdvanced: _resetAdvancedSettings,
                         onToggleKind: _toggleKind,
                         onPickSchedule: _pickSchedule,
                         onPickExamTargetDate: _pickExamTargetDate,
@@ -957,53 +982,41 @@ class _MobileSessionSummary extends StatelessWidget {
       margin: EdgeInsets.zero,
       color: colors.primaryContainer.withValues(alpha: 0.72),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 11),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    preview.isEmpty
-                        ? '조건에 맞는 자료가 없어요'
-                        : '${preview.items.length}문제 · 약 $minutes분',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: colors.onPrimaryContainer,
-                      fontWeight: FontWeight.w900,
+            Icon(
+              preview.isEmpty ? Icons.tune_rounded : Icons.check_circle_rounded,
+              size: 21,
+              color: colors.onPrimaryContainer,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: preview.isEmpty
+                          ? '조건에 맞는 자료가 없어요'
+                          : '${preview.items.length}문제 · 약 $minutes분',
+                      style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
-                  ),
+                    TextSpan(
+                      text: preview.isEmpty
+                          ? '\n범위나 문제 수를 조정해 보세요.'
+                          : '\n${plan.mode.label} · ${plan.deck.label} · '
+                                '후보 ${preview.matchingCount}'
+                                '${plan.recordProgress ? '' : ' · 자유 연습'}',
+                    ),
+                  ],
                 ),
-                Icon(
-                  preview.isEmpty
-                      ? Icons.tune_rounded
-                      : Icons.check_circle_rounded,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: colors.onPrimaryContainer,
                 ),
-              ],
-            ),
-            const SizedBox(height: 5),
-            Text(
-              preview.isEmpty
-                  ? '아래 핵심 설정에서 범위나 문제 수를 조정해 보세요.'
-                  : '후보 ${preview.matchingCount}개 · 단어 ${preview.selectedWordCount} · '
-                        '문장 ${preview.selectedSentenceCount}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.onPrimaryContainer.withValues(alpha: 0.82),
               ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: [
-                _PreviewPill(label: plan.mode.label),
-                _PreviewPill(label: plan.deck.label),
-                _PreviewPill(label: plan.difficulty.label),
-                if (plan.groupIds.isNotEmpty)
-                  _PreviewPill(label: '그룹 ${plan.groupIds.length}'),
-                if (!plan.recordProgress) const _PreviewPill(label: '진도 비기록'),
-              ],
             ),
           ],
         ),
@@ -1026,6 +1039,7 @@ class _MobileSessionEditor extends StatelessWidget {
     required this.matchingCount,
     required this.titleController,
     required this.onChanged,
+    required this.onResetAdvanced,
     required this.onToggleKind,
     required this.onPickSchedule,
     required this.onPickExamTargetDate,
@@ -1043,6 +1057,7 @@ class _MobileSessionEditor extends StatelessWidget {
   final int matchingCount;
   final TextEditingController titleController;
   final ValueChanged<StudySessionPlan> onChanged;
+  final VoidCallback onResetAdvanced;
   final void Function({required bool words, required bool selected})
   onToggleKind;
   final Future<bool> Function() onPickSchedule;
@@ -1051,6 +1066,27 @@ class _MobileSessionEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final advancedCount = [
+      plan.difficulty != StudyDifficulty.all,
+      plan.historyFilter != StudyHistoryFilter.all,
+      plan.queuePriority != StudyQueuePriority.dueFirst,
+      plan.groupIds.isNotEmpty,
+      plan.tags.isNotEmpty,
+      plan.levels.isNotEmpty,
+      plan.includeWords &&
+          plan.includeSentences &&
+          (plan.sentenceRatio - _defaultSentenceRatio(plan)).abs() > 0.001,
+      plan.backlogRecovery.enabled,
+      !plan.recordProgress,
+      plan.answerDirectionOverride != null,
+      plan.gradingStrictness != StudyGradingStrictness.balanced,
+      plan.choiceCount != 4,
+      !plan.hintsEnabled,
+      plan.autoAdvanceOverride != null,
+      plan.soundEffectsOverride != null,
+      plan.largeControls,
+      plan.examSchedule != null,
+    ].where((active) => active).length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1213,11 +1249,22 @@ class _MobileSessionEditor extends StatelessWidget {
           child: ExpansionTile(
             key: const Key('session-advanced-settings'),
             leading: const Icon(Icons.tune_rounded),
-            title: const Text(
-              '세부 조건',
-              style: TextStyle(fontWeight: FontWeight.w900),
+            title: Text(
+              advancedCount == 0 ? '세부 조건' : '세부 조건 · $advancedCount개 적용',
+              style: const TextStyle(fontWeight: FontWeight.w900),
             ),
-            subtitle: const Text('난이도 · 회복 · 필터 · 진도 · 목표일'),
+            subtitle: Text(
+              advancedCount == 0
+                  ? '기본값 사용 · 필요할 때만 펼치세요'
+                  : '난이도 · 회복 · 필터 · 진도 설정을 사용 중',
+            ),
+            trailing: advancedCount == 0
+                ? null
+                : TextButton(
+                    key: const Key('reset-session-advanced-settings'),
+                    onPressed: onResetAdvanced,
+                    child: const Text('초기화'),
+                  ),
             childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
             children: [
               Align(
@@ -1591,36 +1638,34 @@ class _QuickSessionPresets extends StatelessWidget {
       key: const Key('quick-session-presets'),
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        child: Row(
           children: [
+            const Icon(Icons.bolt_rounded, size: 19),
+            const SizedBox(width: 6),
             Text(
               '빠른 설정',
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 3),
-            Text(
-              '원하는 구성을 한 번 고른 뒤 바로 미리보기에서 시작하세요.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 10),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final (index, preset) in presets.indexed) ...[
-                    if (index > 0) const SizedBox(width: 8),
-                    ActionChip(
-                      key: Key('quick-session-preset-$index'),
-                      avatar: Icon(preset.icon, size: 18),
-                      label: Text(preset.label),
-                      onPressed: () => onSelected(preset.plan),
-                    ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final (index, preset) in presets.indexed) ...[
+                      if (index > 0) const SizedBox(width: 7),
+                      ActionChip(
+                        key: Key('quick-session-preset-$index'),
+                        avatar: Icon(preset.icon, size: 17),
+                        label: Text(preset.label),
+                        onPressed: () => onSelected(preset.plan),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ],
@@ -1638,6 +1683,13 @@ String _formatSchedule(DateTime value) {
   final minute = local.minute.toString().padLeft(2, '0');
   return '${local.year}.$month.$day $hour:$minute';
 }
+
+double _defaultSentenceRatio(StudySessionPlan plan) =>
+    switch ((plan.includeWords, plan.includeSentences)) {
+      (true, false) => 0,
+      (false, true) => 1,
+      _ => 0.3,
+    };
 
 String _sessionDirectionLabel(StudyAnswerDirection direction) =>
     switch (direction) {
@@ -2708,66 +2760,73 @@ class _BottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Material(
       key: const Key('session-actions-bottom'),
-      elevation: 8,
-      color: Theme.of(context).colorScheme.surface,
-      child: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    preview.isEmpty
-                        ? '조건을 조정해 주세요'
-                        : '준비 완료 · ${preview.items.length}문제',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                IconButton(
-                  key: const Key('session-save-bottom'),
-                  onPressed: onSave,
-                  icon: const Icon(Icons.bookmark_add_outlined),
-                  tooltip: '현재 설정만 저장',
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Expanded(
-                  flex: 6,
-                  child: FilledButton.icon(
-                    key: const Key('session-start-bottom'),
-                    onPressed: preview.isEmpty ? null : onStart,
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: Text('지금 ${preview.items.length}문제'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 5,
-                  child: OutlinedButton.icon(
-                    key: const Key('session-schedule-bottom'),
-                    onPressed: onSchedule,
-                    icon: const Icon(Icons.event_rounded),
-                    label: Text(
-                      scheduledAt == null ? '나중에 학습' : '일정 저장',
+      elevation: 1,
+      color: colors.surface,
+      child: DecoratedBox(
+        key: const Key('session-actions-border'),
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: colors.outlineVariant)),
+        ),
+        child: SafeArea(
+          top: false,
+          minimum: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      preview.isEmpty
+                          ? '조건을 조정해 주세요'
+                          : '준비 완료 · ${preview.items.length}문제',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  IconButton(
+                    key: const Key('session-save-bottom'),
+                    onPressed: onSave,
+                    icon: const Icon(Icons.bookmark_add_outlined),
+                    tooltip: '현재 설정만 저장',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Expanded(
+                    flex: 6,
+                    child: FilledButton.icon(
+                      key: const Key('session-start-bottom'),
+                      onPressed: preview.isEmpty ? null : onStart,
+                      icon: const Icon(Icons.play_arrow_rounded),
+                      label: Text('지금 ${preview.items.length}문제'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 5,
+                    child: OutlinedButton.icon(
+                      key: const Key('session-schedule-bottom'),
+                      onPressed: onSchedule,
+                      icon: const Icon(Icons.event_rounded),
+                      label: Text(
+                        scheduledAt == null ? '나중에 학습' : '일정 저장',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

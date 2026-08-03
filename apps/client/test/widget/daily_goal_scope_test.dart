@@ -46,13 +46,16 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.textContaining('오늘 10/50 XP · 계정 레벨'), findsOneWidget);
-        expect(find.textContaining('누적 400 XP'), findsOneWidget);
+        expect(find.textContaining('오늘 10/50 XP · Lv.1'), findsOneWidget);
+        expect(find.textContaining('누적 400'), findsOneWidget);
         expect(
           find.byKey(const Key('home-weekly-target-summary')),
           findsOneWidget,
         );
-        expect(find.text('0/3일 · 0/60분'), findsOneWidget);
+        expect(
+          find.textContaining('0/3일 · 0/60분', findRichText: true),
+          findsOneWidget,
+        );
 
         final container = ProviderScope.containerOf(
           tester.element(find.byType(SpracheApp)),
@@ -60,8 +63,8 @@ void main() {
         final controller = container.read(appControllerProvider.notifier);
         controller.selectLanguage(LanguageTag.japanese);
         await tester.pumpAndSettle();
-        expect(find.textContaining('오늘 15/200 XP · 계정 레벨'), findsOneWidget);
-        expect(find.textContaining('누적 400 XP'), findsOneWidget);
+        expect(find.textContaining('오늘 15/200 XP · Lv.1'), findsOneWidget);
+        expect(find.textContaining('누적 400'), findsOneWidget);
 
         await tester.tap(find.byKey(const Key('home-settings')));
         await tester.pumpAndSettle();
@@ -138,7 +141,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('오늘 0/20 XP'), findsOneWidget);
-      expect(find.textContaining('누적 40 XP'), findsOneWidget);
+      expect(find.textContaining('누적 40'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

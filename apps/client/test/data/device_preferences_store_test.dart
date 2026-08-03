@@ -36,10 +36,7 @@ void main() {
           quietEndMinutes: 8 * 60,
           lockScreenContent: NotificationLockScreenContent.hidden,
         ),
-        privacy: DevicePrivacyPreferences(
-          privacyMode: true,
-          curtainDelay: PrivacyCurtainDelay.seconds60,
-        ),
+        privacy: DevicePrivacyPreferences(privacyMode: true),
       );
       try {
         await store.saveDevicePreferences(preferences);

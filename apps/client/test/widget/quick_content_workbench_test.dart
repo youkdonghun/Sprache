@@ -89,6 +89,13 @@ Future<void> _expandWorkbench(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
+  await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _enterRequired(
   WidgetTester tester,
   String text,
@@ -108,6 +115,37 @@ Future<void> _enterRequired(
 
 void main() {
   testWidgets(
+    'required fields lead while groups and workbench stay collapsed',
+    (tester) async {
+      await _openQuickWord(tester, MemoryStudyStore());
+
+      expect(find.byKey(const Key('quick-content-text')), findsOneWidget);
+      expect(find.byKey(const Key('quick-content-meaning')), findsOneWidget);
+      expect(
+        find.byKey(const Key('quick-content-group-options')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('quick-content-workbench')), findsOneWidget);
+      expect(find.byKey(const Key('quick-content-new-group')), findsNothing);
+
+      await tester.ensureVisible(
+        find.byKey(const Key('quick-content-group-options')),
+      );
+      await tester.tap(find.byKey(const Key('quick-content-group-options')));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('quick-content-show-new-group')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('quick-content-new-group')), findsNothing);
+      await tester.tap(find.byKey(const Key('quick-content-show-new-group')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('quick-content-new-group')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'template applies metadata, preserves source fields, and can be created',
     (tester) async {
       final store = MemoryStudyStore(
@@ -121,10 +159,10 @@ void main() {
       await _enterRequired(tester, 'untouched source', '유지할 뜻');
       await _expandWorkbench(tester);
 
-      await tester.tap(
+      await _tapVisible(
+        tester,
         find.byKey(const Key('quick-content-template-travel-template')),
       );
-      await tester.pumpAndSettle();
 
       expect(find.text('untouched source'), findsOneWidget);
       expect(find.text('유지할 뜻'), findsWidgets);
@@ -177,10 +215,10 @@ void main() {
     await _openQuickWord(tester, store);
     await _expandWorkbench(tester);
 
-    await tester.tap(
+    await _tapVisible(
+      tester,
       find.byKey(const Key('quick-content-template-menu-travel-template')),
     );
-    await tester.pumpAndSettle();
     await tester.tap(find.text('이름 변경'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -193,19 +231,19 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('출장 설정'), findsOneWidget);
 
-    await tester.tap(
+    await _tapVisible(
+      tester,
       find.byKey(const Key('quick-content-template-menu-travel-template')),
     );
-    await tester.pumpAndSettle();
     await tester.tap(find.text('고정 해제'));
     await tester.pumpAndSettle();
     var preferences = await store.loadQuickContentLocalPreferences();
     expect(preferences.templatesBySubject[_subjectId]!.single.pinned, isFalse);
 
-    await tester.tap(
+    await _tapVisible(
+      tester,
       find.byKey(const Key('quick-content-template-menu-travel-template')),
     );
-    await tester.pumpAndSettle();
     await tester.tap(find.text('복제'));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -222,10 +260,10 @@ void main() {
     final copied = preferences.templatesBySubject[_subjectId]!.firstWhere(
       (template) => template.id != 'travel-template',
     );
-    await tester.tap(
+    await _tapVisible(
+      tester,
       find.byKey(Key('quick-content-template-menu-${copied.id}')),
     );
-    await tester.pumpAndSettle();
     await tester.tap(find.text('삭제'));
     await tester.pumpAndSettle();
     await tester.tap(
@@ -354,6 +392,16 @@ void main() {
     );
     await tester.enterText(find.byKey(const Key('quick-content-tags')), '새 태그');
     await tester.pump();
+    expect(
+      find.byKey(const Key('quick-content-duplicate-details')),
+      findsNothing,
+    );
+    final detailsToggle = find.byKey(
+      const Key('quick-content-duplicate-details-toggle'),
+    );
+    await tester.ensureVisible(detailsToggle);
+    await tester.tap(detailsToggle);
+    await tester.pumpAndSettle();
 
     expect(
       find.byKey(const Key('quick-content-duplicate-side-기존 자료')),

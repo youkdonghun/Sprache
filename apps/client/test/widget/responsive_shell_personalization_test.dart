@@ -12,11 +12,12 @@ void main() {
   Future<void> verifyWindowsShell(
     WidgetTester tester,
     AppExperiencePreferences experience,
-    Future<void> Function() verify,
-  ) async {
+    Future<void> Function() verify, {
+    Size size = const Size(1280, 800),
+  }) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(1280, 800);
+    tester.view.physicalSize = size;
     try {
       await tester.pumpWidget(
         ProviderScope(
@@ -102,7 +103,7 @@ void main() {
         try {
           expect(
             tester.getSize(find.byKey(const Key('desktop-sidebar'))).width,
-            78,
+            72,
           );
           expect(visibleNavigationLabel('home', '오늘'), findsNothing);
           expect(visibleNavigationLabel('learn', '학습'), findsNothing);
@@ -117,6 +118,42 @@ void main() {
       },
     );
   });
+
+  testWidgets(
+    'compact density narrows desktop chrome without shrinking hit targets',
+    (tester) async {
+      await verifyWindowsShell(
+        tester,
+        const AppExperiencePreferences(density: AppDensity.compact),
+        () async {
+          expect(
+            tester.getSize(find.byKey(const Key('desktop-sidebar'))).width,
+            200,
+          );
+          expect(
+            tester.getSize(find.byKey(const Key('nav-home'))).height,
+            greaterThanOrEqualTo(44),
+          );
+          expect(
+            tester
+                .getSize(find.byKey(const Key('shell-subject-switcher')))
+                .height,
+            greaterThanOrEqualTo(44),
+          );
+          for (final key in const [
+            'open-global-search',
+            'shell-quick-add',
+            'open-keyboard-help',
+          ]) {
+            final size = tester.getSize(find.byKey(Key(key)));
+            expect(size.width, greaterThanOrEqualTo(44));
+            expect(size.height, greaterThanOrEqualTo(44));
+          }
+          expect(tester.takeException(), isNull);
+        },
+      );
+    },
+  );
 
   testWidgets('compact subject switcher is symbol-only on desktop', (
     tester,
@@ -229,9 +266,17 @@ void main() {
       tester,
       const AppExperiencePreferences(),
       () async {
+        final utilityBar = find.byKey(
+          const Key('desktop-sidebar-utility-toolbar'),
+        );
+        expect(utilityBar, findsOneWidget);
+        expect(
+          tester.getCenter(find.byKey(const Key('open-global-search'))).dy,
+          tester.getCenter(find.byKey(const Key('shell-quick-add'))).dy,
+        );
         expect(
           tester.getSize(find.byKey(const Key('desktop-sidebar'))).width,
-          226,
+          212,
         );
         expect(find.byKey(const Key('shell-main-content-width')), findsNothing);
         expect(visibleNavigationLabel('home', '오늘'), findsOneWidget);
@@ -242,16 +287,16 @@ void main() {
 
         final switcher = find.byKey(const Key('shell-subject-switcher'));
         expect(
-          find.descendant(of: switcher, matching: find.text('영어')),
-          findsOneWidget,
-        );
-        expect(
           tester
               .widgetList<Text>(
                 find.descendant(of: switcher, matching: find.byType(Text)),
               )
               .length,
-          greaterThanOrEqualTo(2),
+          1,
+        );
+        expect(
+          find.descendant(of: switcher, matching: find.textContaining('영어 ·')),
+          findsOneWidget,
         );
         expect(tester.takeException(), isNull);
       },
@@ -284,4 +329,61 @@ void main() {
       },
     );
   });
+
+  testWidgets('narrow desktop switches to compact bottom navigation', (
+    tester,
+  ) async {
+    await verifyWindowsShell(
+      tester,
+      const AppExperiencePreferences(),
+      () async {
+        expect(find.byKey(const Key('desktop-sidebar')), findsNothing);
+        expect(find.byType(NavigationBar), findsOneWidget);
+        expect(find.byKey(const Key('shell-subject-context')), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      },
+      size: const Size(820, 800),
+    );
+  });
+
+  testWidgets(
+    'mobile compact navigation keeps 44dp actions without keyboard chrome',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 844);
+      try {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              studyStoreProvider.overrideWithValue(
+                MemoryStudyStore(
+                  preferences: const StudyPreferences(
+                    onboardingCompleted: true,
+                    experience: AppExperiencePreferences(
+                      density: AppDensity.compact,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+            child: const SpracheApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('open-keyboard-help')), findsNothing);
+        for (final key in const ['shell-quick-add', 'open-global-search']) {
+          final size = tester.getSize(find.byKey(Key(key)));
+          expect(size.width, greaterThanOrEqualTo(44));
+          expect(size.height, greaterThanOrEqualTo(44));
+        }
+        expect(tester.getSize(find.byType(NavigationBar)).height, 60);
+        expect(tester.takeException(), isNull);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+        tester.view.reset();
+      }
+    },
+  );
 }

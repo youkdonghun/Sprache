@@ -42,6 +42,23 @@ class PersonalizationScreen extends ConsumerWidget {
         subjectId: subject.id,
         subjectName: subject.name,
         onChanged: controller.updateExperiencePreferences,
+        onApplyCompactWorkspace: (next) {
+          final previousPreferences = state.preferences;
+          controller.updateExperiencePreferences(next);
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: const Text('컴팩트 작업 공간을 적용했습니다.'),
+                action: SnackBarAction(
+                  key: const Key('undo-compact-workspace-preset'),
+                  label: '실행 취소',
+                  onPressed: () =>
+                      controller.updatePreferences(previousPreferences),
+                ),
+              ),
+            );
+        },
       ),
     );
   }
@@ -91,6 +108,7 @@ class PersonalizationPanel extends StatelessWidget {
     required this.subjectId,
     required this.subjectName,
     required this.onChanged,
+    this.onApplyCompactWorkspace,
     super.key,
   });
 
@@ -98,6 +116,7 @@ class PersonalizationPanel extends StatelessWidget {
   final String subjectId;
   final String subjectName;
   final ValueChanged<AppExperiencePreferences> onChanged;
+  final ValueChanged<AppExperiencePreferences>? onApplyCompactWorkspace;
 
   AppAccentPalette get _effectivePalette => preferences.perSubjectAccentEnabled
       ? preferences.accentPaletteBySubject[subjectId] ??
@@ -121,19 +140,21 @@ class PersonalizationPanel extends StatelessWidget {
 
   void _applyPreset(PersonalizationPreset preset) {
     final presetPreferences = preset.applyTo(preferences);
-    if (!preferences.perSubjectAccentEnabled) {
-      onChanged(presetPreferences);
+    final nextPreferences = !preferences.perSubjectAccentEnabled
+        ? presetPreferences
+        : presetPreferences.copyWith(
+            accentPalette: preferences.accentPalette,
+            accentPaletteBySubject: {
+              ...preferences.accentPaletteBySubject,
+              subjectId: presetPreferences.accentPalette,
+            },
+          );
+    if (preset == PersonalizationPreset.compactWorkspace &&
+        onApplyCompactWorkspace != null) {
+      onApplyCompactWorkspace!(nextPreferences);
       return;
     }
-    onChanged(
-      presetPreferences.copyWith(
-        accentPalette: preferences.accentPalette,
-        accentPaletteBySubject: {
-          ...preferences.accentPaletteBySubject,
-          subjectId: presetPreferences.accentPalette,
-        },
-      ),
-    );
+    onChanged(nextPreferences);
   }
 
   @override
@@ -412,6 +433,19 @@ class PersonalizationPanel extends StatelessWidget {
                       onChanged: (value) =>
                           onChanged(preferences.copyWith(textScale: value)),
                     ),
+                    _ChoiceGroup<AppDensity>(
+                      controlKey: const Key('theme-density-group'),
+                      label: '화면 밀도',
+                      value: preferences.density,
+                      values: AppDensity.values,
+                      labelFor: _densityLabel,
+                      onChanged: (value) => onChanged(
+                        preferences.copyWith(
+                          density: value,
+                          activeThemeProfileId: null,
+                        ),
+                      ),
+                    ),
                     _ChoiceGroup<AppStudyTextScale>(
                       controlKey: const Key('theme-study-text-scale-group'),
                       label: '학습 화면만 더 크게',
@@ -522,6 +556,28 @@ class PersonalizationPanel extends StatelessWidget {
                       '${_homeLayoutLabel(preferences.homeLayout)} · '
                       '${_visibleHomeSectionCount(preferences)}개 섹션',
                   children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        key: const Key('apply-compact-home-layout'),
+                        onPressed: () => onChanged(
+                          preferences.copyWith(
+                            homeLayout: AppHomeLayout.focus,
+                            showHomeHeader: false,
+                            showStreak: true,
+                            showXp: true,
+                            showSyncStatus: false,
+                            showTodayPlan: true,
+                            showPinnedCollections: true,
+                            showRecentAdditions: true,
+                            showDataFlow: false,
+                            showSchedules: false,
+                          ),
+                        ),
+                        icon: const Icon(Icons.view_compact_alt_rounded),
+                        label: const Text('컴팩트 홈 적용'),
+                      ),
+                    ),
                     _ChoiceGroup<AppHomeLayout>(
                       label: '홈 레이아웃',
                       value: preferences.homeLayout,
@@ -628,6 +684,27 @@ class PersonalizationPanel extends StatelessWidget {
                   title: '내비게이션',
                   summary: _navigationLabel(preferences.navigationLabelMode),
                   children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: OutlinedButton.icon(
+                        key: const Key('apply-compact-navigation'),
+                        onPressed: () => onChanged(
+                          preferences.copyWith(
+                            navigationLabelMode:
+                                AppNavigationLabelMode.selected,
+                            navigationIconStyle:
+                                AppNavigationIconStyle.adaptive,
+                            subjectSwitcherStyle:
+                                AppSubjectSwitcherStyle.compact,
+                            showQuickAdd: true,
+                            showGlobalSearch: true,
+                            activeThemeProfileId: null,
+                          ),
+                        ),
+                        icon: const Icon(Icons.compress_rounded),
+                        label: const Text('컴팩트 탐색 적용'),
+                      ),
+                    ),
                     _ChoiceGroup<AppNavigationLabelMode>(
                       label: '탭 라벨',
                       value: preferences.navigationLabelMode,
@@ -1828,9 +1905,16 @@ String _enumName(Object? value) => value is Enum ? value.name : '$value';
 
 IconData _presetIcon(PersonalizationPreset preset) => switch (preset) {
   PersonalizationPreset.sprache => Icons.auto_awesome_rounded,
+  PersonalizationPreset.compactWorkspace => Icons.view_compact_alt_rounded,
   PersonalizationPreset.focus => Icons.center_focus_strong_rounded,
   PersonalizationPreset.paper => Icons.article_outlined,
   PersonalizationPreset.oledNight => Icons.bedtime_outlined,
+};
+
+String _densityLabel(AppDensity value) => switch (value) {
+  AppDensity.platform => '기기 기본',
+  AppDensity.comfortable => '여유롭게',
+  AppDensity.compact => '컴팩트',
 };
 
 String _colorModeLabel(AppColorMode value) => switch (value) {

@@ -58,7 +58,10 @@ void main() {
         matchesGoldenFile('goldens/mobile-learning-hub.png'),
       );
 
-      await tester.tap(find.byKey(const Key('quick-practice-quiz')));
+      final quickPractice = find.byKey(const Key('quick-practice-quiz'));
+      await tester.ensureVisible(quickPractice);
+      await tester.pumpAndSettle();
+      await tester.tap(quickPractice);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -614,7 +617,10 @@ void main() {
         matchesGoldenFile('goldens/mobile-learning-hub-dark-v2.png'),
       );
 
-      await tester.tap(find.byKey(const Key('quick-practice-quiz')));
+      final quickPractice = find.byKey(const Key('quick-practice-quiz'));
+      await tester.ensureVisible(quickPractice);
+      await tester.pumpAndSettle();
+      await tester.tap(quickPractice);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),

@@ -54,7 +54,9 @@ class StudyCompletionReceipt {
     StudyCompletionSyncStatus.pending => 'Drive 동기화 대기 $pendingSyncCount건',
     StudyCompletionSyncStatus.synced => 'Drive 반영 완료',
     StudyCompletionSyncStatus.offlineLocked =>
-      pendingSyncCount == 0 ? '오프라인 고정' : '오프라인 고정 · 동기화 대기 $pendingSyncCount건',
+      pendingSyncCount == 0
+          ? 'Drive 동기화 일시 중지'
+          : 'Drive 동기화 일시 중지 · 대기 $pendingSyncCount건',
   };
 
   String get semanticsLabel =>

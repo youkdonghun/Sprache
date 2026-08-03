@@ -1,5 +1,25 @@
 # Sprache
 
+## 1.32.0 컴팩트 작업 공간과 빠른 학습
+
+- 백그라운드 복귀 때 화면을 덮던 보호 커튼과 지연 설정을 제거하고, 알림 내용
+  표시·개인정보 가림·Drive 동기화 중지의 역할을 서로 다른 기능으로 명확히 했다.
+- 공통 화면 밀도 토큰으로 Windows 사이드바, 상단 주제 바, 카드·섹션 간격을
+  줄이면서 모든 주요 조작 영역은 최소 44px을 유지한다.
+- 홈은 이어하기를 먼저 보여 주고 오늘 지표와 주간 목표를 압축한다. 빠른 등록은
+  표현·뜻을 가장 먼저 배치하고 선택 입력, 그룹 도구, 등록 작업대는 필요할 때
+  펼친다.
+- 자료실은 검색·그룹 필터와 결과를 가깝게 모으고 자료 흐름 안내를 요약한다.
+  연습 허브는 최근·즐겨찾기 모드, 3·5·10·15분 프리셋과 예상 문제 수를 한눈에
+  비교할 수 있다.
+- `컴팩트 작업 공간` 프리셋은 화면 밀도, 탐색 레이블, 홈 모듈을 한 번에 정리하며
+  기존 프리셋으로 언제든 되돌릴 수 있다.
+- [컴팩트 UX 80개 목표](docs/compact-ux-80-upgrade-plan-1.32.0.md),
+  [80개 최종 검증](docs/compact-ux-80-verification-1.32.0.md),
+  [1.32.0 릴리스 노트](docs/release-notes-1.32.0.md),
+  [품질·릴리스 게이트](docs/release-quality-gates-1.32.0.md),
+  [릴리스 준비 감사](docs/release-readiness-1.32.0.md)에 범위와 검증 순서를 기록한다.
+
 ## 1.31.0 개인화 스튜디오와 다시 하기 쉬운 학습
 
 - `Sprache 기본`·`집중`·`종이`·`OLED 밤` 원터치 프리셋과 10개 강조색,
@@ -488,13 +508,13 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 ## 바로 실행하기
 
 `npm run build:real`을 실행하면 현재 `pubspec.yaml` 버전에 맞춘 실제
-Google·Railway 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.31.0의 표준
+Google·Railway 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.32.0의 표준
 파일명은 다음과 같다.
 
-- Windows 설치본: `Sprache-Windows-Setup-1.31.0-google-x64.exe`
-- Windows 포터블: `Sprache-Windows-1.31.0-google-x64.zip`
-- Android: `Sprache-Android-1.31.0-google-debug-signed.apk`
-- 무결성: `SHA256SUMS-1.31.0-google.txt`
+- Windows 설치본: `Sprache-Windows-Setup-1.32.0-google-x64.exe`
+- Windows 포터블: `Sprache-Windows-1.32.0-google-x64.zip`
+- Android: `Sprache-Android-1.32.0-google-debug-signed.apk`
+- 무결성: `SHA256SUMS-1.32.0-google.txt`
 
 Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`
 폴더를 함께 유지한다. Android APK는 테스트 기기 또는 에뮬레이터에 직접
@@ -523,6 +543,11 @@ npm run test:client
 
 ## 문서
 
+- [1.32.0 릴리스 노트와 컴팩트 UX 80개 변경](docs/release-notes-1.32.0.md)
+- [1.32.0 컴팩트 UX 80개 목표](docs/compact-ux-80-upgrade-plan-1.32.0.md)
+- [1.32.0 컴팩트 UX 80개 최종 검증](docs/compact-ux-80-verification-1.32.0.md)
+- [1.32.0 품질·릴리스 게이트](docs/release-quality-gates-1.32.0.md)
+- [1.32.0 릴리스 준비 감사](docs/release-readiness-1.32.0.md)
 - [1.31.0 릴리스 노트와 200개 변경](docs/release-notes-1.31.0.md)
 - [1.31.0 개인화 200개 목표 검증 보고서](docs/personalization-200-verification-1.31.0.md)
 - [1.31.0 품질·릴리스 게이트](docs/release-quality-gates-1.31.0.md)

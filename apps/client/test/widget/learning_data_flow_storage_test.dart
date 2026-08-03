@@ -3,6 +3,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/widgets/learning_data_flow_card.dart';
 
 void main() {
+  testWidgets('condensed flow keeps one-line summary and direct next action', (
+    tester,
+  ) async {
+    var organized = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LearningDataFlowCard(
+            condensed: true,
+            totalCount: 12,
+            localCopyCount: 12,
+            groupCount: 0,
+            driveConnected: false,
+            currentStep: LearningDataStep.organize,
+            onOrganize: () => organized = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.byKey(const Key('open-learning-data-details-condensed')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('learning-data-flow-primary')));
+    expect(organized, isTrue);
+    expect(
+      tester.getSize(find.byKey(const Key('learning-data-flow-card'))).height,
+      lessThanOrEqualTo(60),
+    );
+  });
+
   testWidgets('320px always shows the active storage target and DB role', (
     tester,
   ) async {

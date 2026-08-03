@@ -46,7 +46,10 @@ void main() {
         expect(find.byKey(const Key('windows-loopback-note')), findsOneWidget);
         expect(find.textContaining('Cloudflare Tunnel'), findsOneWidget);
 
-        await tester.tap(find.byKey(const Key('connect-google')));
+        final connectGoogle = find.byKey(const Key('connect-google'));
+        await tester.ensureVisible(connectGoogle);
+        await tester.pumpAndSettle();
+        await tester.tap(connectGoogle);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
 

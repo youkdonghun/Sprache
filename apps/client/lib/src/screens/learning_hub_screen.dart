@@ -126,16 +126,16 @@ class LearningHubScreen extends ConsumerWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 720;
-          final padding = compact ? 16.0 : 28.0;
+          final padding = compact ? 12.0 : 24.0;
           return CustomScrollView(
             key: const Key('learning-hub-scroll'),
             slivers: [
               SliverPadding(
                 padding: EdgeInsets.fromLTRB(
                   padding,
-                  compact ? 16 : 22,
+                  compact ? 12 : 18,
                   padding,
-                  compact ? 24 : 36,
+                  compact ? 20 : 30,
                 ),
                 sliver: SliverToBoxAdapter(
                   child: Center(
@@ -145,35 +145,35 @@ class LearningHubScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           if (compact) ...[
-                            Text(
-                              activeSubject.isLanguage
-                                  ? '${activeSubject.name} 학습실'
-                                  : '${activeSubject.symbol} ${activeSubject.name} 학습실',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.headlineSmall,
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              '익히기 · 문제 · 듣기 · 발음을 한곳에서 연습합니다.',
-                              maxLines: 2,
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: 8),
                             Row(
+                              key: const Key('compact-learning-header'),
                               children: [
-                                Flexible(
-                                  child: _CountBadge(
-                                    label: activeSubject.isLanguage
-                                        ? '단어 $wordCount · 문장 $sentenceCount'
-                                        : '개념 $wordCount · 사실 $sentenceCount',
+                                Expanded(
+                                  child: Text(
+                                    activeSubject.isLanguage
+                                        ? '${activeSubject.name} 학습'
+                                        : '${activeSubject.symbol} ${activeSubject.name} 학습',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.headlineSmall,
                                   ),
                                 ),
-                                const Spacer(),
                                 _CourseShortcut(
                                   onPressed: () => context.go('/path'),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 6),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: _CountBadge(
+                                compact: true,
+                                label: activeSubject.isLanguage
+                                    ? '단어 $wordCount · 문장 $sentenceCount'
+                                    : '개념 $wordCount · 사실 $sentenceCount',
+                              ),
                             ),
                           ] else
                             Row(
@@ -213,13 +213,13 @@ class LearningHubScreen extends ConsumerWidget {
                                 ),
                               ],
                             ),
-                          SizedBox(height: compact ? 12 : 18),
+                          SizedBox(height: compact ? 9 : 15),
                           if (recentSession case final session?) ...[
                             _RecentSubjectSessionCard(
                               session: session,
                               onPressed: () => reopenRecentSession(session),
                             ),
-                            SizedBox(height: compact ? 12 : 18),
+                            SizedBox(height: compact ? 9 : 15),
                           ],
                           if (pinnedCollections.isNotEmpty) ...[
                             _PinnedCollectionsRow(
@@ -229,7 +229,7 @@ class LearningHubScreen extends ConsumerWidget {
                                   .length,
                               onOpen: openPinnedCollection,
                             ),
-                            SizedBox(height: compact ? 12 : 18),
+                            SizedBox(height: compact ? 9 : 15),
                           ],
                           _PracticeCatalog(
                             items: items,
@@ -266,36 +266,28 @@ class _PinnedCollectionsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Semantics(
       key: const Key('learning-hub-pinned-collections'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          '고정한 컬렉션',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+      container: true,
+      label: '고정한 컬렉션 ${collections.length}개',
+      child: SizedBox(
+        height: 44,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: collections.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 7),
+          itemBuilder: (context, index) {
+            final collection = collections[index];
+            final count = itemCountFor(collection);
+            return ActionChip(
+              key: Key('pinned-collection-${collection.id}'),
+              avatar: const Icon(Icons.push_pin_rounded, size: 17),
+              label: Text('${collection.name} · $count'),
+              onPressed: count == 0 ? null : () => onOpen(collection),
+            );
+          },
         ),
-        const SizedBox(height: 7),
-        SizedBox(
-          height: 48,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: collections.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 7),
-            itemBuilder: (context, index) {
-              final collection = collections[index];
-              final count = itemCountFor(collection);
-              return ActionChip(
-                key: Key('pinned-collection-${collection.id}'),
-                avatar: const Icon(Icons.push_pin_rounded, size: 18),
-                label: Text('${collection.name} · $count개'),
-                onPressed: count == 0 ? null : () => onOpen(collection),
-              );
-            },
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
@@ -325,11 +317,15 @@ class _RecentSubjectSessionCard extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(13, 10, 8, 10),
+          padding: const EdgeInsets.fromLTRB(11, 7, 6, 7),
           child: Row(
             children: [
-              Icon(Icons.history_rounded, color: colors.onSecondaryContainer),
-              const SizedBox(width: 10),
+              Icon(
+                Icons.history_rounded,
+                size: 20,
+                color: colors.onSecondaryContainer,
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,7 +336,6 @@ class _RecentSubjectSessionCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
-                    const SizedBox(height: 2),
                     Text(
                       '${session.mode.label} · ${session.historyFilter.label}'
                       '${session.recordProgress ? '' : ' · 진도 비기록'}',
@@ -352,11 +347,15 @@ class _RecentSubjectSessionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              IconButton(
+              TextButton.icon(
                 key: const Key('reopen-recent-subject-session'),
-                tooltip: '최근 문제로 맞춤 설정 열기',
                 onPressed: onPressed,
-                icon: const Icon(Icons.arrow_forward_rounded),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(44, 44),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                icon: const Icon(Icons.replay_rounded, size: 18),
+                label: const Text('다시'),
               ),
             ],
           ),
@@ -581,6 +580,8 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           PracticeDurationFilter.threeMinutes,
         PracticeSessionLength.fiveMinutes => PracticeDurationFilter.fiveMinutes,
         PracticeSessionLength.tenMinutes => PracticeDurationFilter.tenMinutes,
+        PracticeSessionLength.fifteenMinutes =>
+          PracticeDurationFilter.tenMinutes,
         PracticeSessionLength.allItems => PracticeDurationFilter.unlimited,
         PracticeSessionLength.fiveItems => PracticeDurationFilter.threeMinutes,
         PracticeSessionLength.tenItems => PracticeDurationFilter.fiveMinutes,
@@ -1469,6 +1470,16 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     final hidden = _allActivities
         .where((activity) => catalog.hiddenActivityIds.contains(activity.id))
         .toList(growable: false);
+    final activeDiscoveryFilterCount = [
+      catalog.durationFilter != PracticeDurationFilter.any,
+      catalog.skillFilter != PracticeSkillFilter.all,
+      catalog.sortOrder != PracticeCatalogSort.recommended,
+    ].where((active) => active).length;
+    final visibleResultCount = _PracticeCategory.values
+        .expand((category) => _visibleActivities(category, catalog))
+        .map((activity) => activity.id)
+        .toSet()
+        .length;
     final planTitle = widget.plan.title.trim();
     final planSummary = planTitle.isEmpty
         ? '맞춤 ${widget.itemCount}문제'
@@ -1544,18 +1555,13 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         if (_hasMissingMaterialCapability && widget.items.isEmpty) ...[
           _MissingMaterialNotice(
             isEmpty: true,
             onAdd: () => context.go('/library/new'),
           ),
-          const SizedBox(height: 14),
-        ],
-        if (categorySection(_PracticeCategory.quiz)
-            case final quizSection?) ...[
-          quizSection,
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
         ],
         _PersonalizedPracticeHub(
           recommendations: recommendations,
@@ -1571,14 +1577,31 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
               _snoozeRecommendation(activity, const Duration(days: 7)),
         ),
         if (dailyChallenge case final activity?) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _DailyChallengeCard(
             activity: activity,
             quickLaunch: catalog.quickLaunchActivityIds.contains(activity.id),
             onPressed: () => _openActivity(activity),
           ),
         ],
-        const SizedBox(height: 14),
+        if (recentActivities.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _RecentPracticeRow(
+            activities: recentActivities,
+            launchCounts: catalog.launchCountByActivityId,
+            onPressed: (activity) =>
+                _openActivity(activity, useSavedRules: true),
+          ),
+        ],
+        if (favorites.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _FavoritePracticeRow(
+            activities: favorites,
+            onPressed: (activity) =>
+                _openActivity(activity, useSavedRules: true),
+          ),
+        ],
+        const SizedBox(height: 10),
         LayoutBuilder(
           builder: (context, constraints) {
             final search = TextField(
@@ -1587,8 +1610,9 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
               textInputAction: TextInputAction.search,
               onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
-                labelText: '게임 검색',
-                hintText: '쓰기, 듣기, 문장, 매치…',
+                isDense: true,
+                constraints: const BoxConstraints(minHeight: 44),
+                hintText: '게임 검색 · 쓰기, 듣기, 문장…',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _query.isEmpty
                     ? null
@@ -1634,19 +1658,43 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
             );
           },
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         _PracticeDiscoveryControls(
           catalog: catalog,
+          activeFilterCount: activeDiscoveryFilterCount,
           onDurationChanged: (value) =>
               _updateCatalog(catalog.copyWith(durationFilter: value)),
           onSkillChanged: (value) =>
               _updateCatalog(catalog.copyWith(skillFilter: value)),
           onSortChanged: (value) =>
               _updateCatalog(catalog.copyWith(sortOrder: value)),
+          onReset: activeDiscoveryFilterCount == 0
+              ? null
+              : () => _updateCatalog(
+                  catalog.copyWith(
+                    durationFilter: PracticeDurationFilter.any,
+                    skillFilter: PracticeSkillFilter.all,
+                    sortOrder: PracticeCatalogSort.recommended,
+                  ),
+                ),
           onClearRecommendationSnoozes:
               catalog.recommendationSnoozedUntilByActivityId.isEmpty
               ? null
               : () => _updateCatalog(catalog.clearRecommendationSnoozes()),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 5),
+          child: Semantics(
+            key: const Key('practice-search-result-summary'),
+            liveRegion: true,
+            label: '현재 조건에 맞는 게임 $visibleResultCount개',
+            child: Text(
+              '${_query.trim().isEmpty && activeDiscoveryFilterCount == 0 ? '전체' : '현재 조건'} · '
+              '$visibleResultCount개 게임',
+              textAlign: TextAlign.end,
+              style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
         ),
         if (_playlistSelection.isNotEmpty || catalog.playlists.isNotEmpty) ...[
           const SizedBox(height: 10),
@@ -1666,53 +1714,23 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
             onClearSelection: () => setState(_playlistSelection.clear),
           ),
         ],
-        if (recentActivities.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          _RecentPracticeRow(
-            activities: recentActivities,
-            launchCounts: catalog.launchCountByActivityId,
-            onPressed: (activity) =>
-                _openActivity(activity, useSavedRules: true),
-          ),
+        const SizedBox(height: 12),
+        if (categorySection(_PracticeCategory.quiz)
+            case final quizSection?) ...[
+          quizSection,
+          const SizedBox(height: 10),
         ],
-        if (favorites.isNotEmpty) ...[
-          const SizedBox(height: 18),
-          const _PracticeSectionHeader(
-            icon: Icons.star_rounded,
-            title: '즐겨찾는 게임',
-            description: '자주 쓰는 게임을 위에 고정했습니다.',
-          ),
-          const SizedBox(height: 8),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final width = constraints.maxWidth >= 620
-                  ? (constraints.maxWidth - 20) / 3
-                  : constraints.maxWidth >= 350
-                  ? (constraints.maxWidth - 10) / 2
-                  : constraints.maxWidth;
-              return Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final activity in favorites)
-                    _activityCard(activity, width),
-                ],
-              );
-            },
-          ),
-        ],
-        const SizedBox(height: 18),
         if (_hasMissingMaterialCapability && widget.items.isNotEmpty) ...[
           _MissingMaterialNotice(
             isEmpty: false,
             onAdd: () => context.go('/library/new'),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
         ],
         for (final category in _PracticeCategory.values)
           if (category != _PracticeCategory.quiz)
             if (categorySection(category) case final section?) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 12),
               section,
             ],
         if (_query.trim().isNotEmpty &&
@@ -1807,6 +1825,7 @@ class _PersonalizedPracticeHub extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.4;
     _PracticeRecommendation? primary;
     for (final recommendation in recommendations) {
       if (availabilityFor(recommendation.activity).enabled) {
@@ -1817,11 +1836,11 @@ class _PersonalizedPracticeHub extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colors.primaryContainer.withValues(alpha: 0.28),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colors.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -1839,17 +1858,15 @@ class _PersonalizedPracticeHub extends StatelessWidget {
                   FilledButton.tonalIcon(
                     key: const Key('start-recommended-practice'),
                     onPressed: () => onPressed(recommendation.activity),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 44),
+                    ),
                     icon: const Icon(Icons.auto_awesome_rounded, size: 18),
                     label: const Text('알아서 추천'),
                   ),
               ],
             ),
-            const SizedBox(height: 3),
-            Text(
-              '복습 기한·최근 오답·새 자료를 기준으로 순서를 정했어요.',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 5),
             Wrap(
               key: const Key('practice-recommendation-basis'),
               spacing: 6,
@@ -1864,9 +1881,9 @@ class _PersonalizedPracticeHub extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             SizedBox(
-              height: 118,
+              height: 88,
               child: ListView.separated(
                 key: const Key('personalized-practice-hub'),
                 scrollDirection: Axis.horizontal,
@@ -1879,121 +1896,144 @@ class _PersonalizedPracticeHub extends StatelessWidget {
                     key: Key(
                       'practice-recommendation-${recommendation.activity.id}',
                     ),
-                    width: 194,
-                    child: Material(
-                      color: colors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: availability.enabled
-                            ? () => onPressed(recommendation.activity)
-                            : null,
-                        child: Padding(
-                          padding: const EdgeInsets.all(11),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(recommendation.activity.icon, size: 20),
-                                  const SizedBox(width: 7),
-                                  Expanded(
-                                    child: Text(
-                                      recommendation.activity.title,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w900,
+                    width: 180,
+                    child: KeyedSubtree(
+                      key: Key(
+                        'practice-recommendation-compact-card-'
+                        '${recommendation.activity.id}',
+                      ),
+                      child: Material(
+                        color: colors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: availability.enabled
+                              ? () => onPressed(recommendation.activity)
+                              : null,
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(9, 3, 4, 5),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      recommendation.activity.icon,
+                                      size: 19,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        recommendation.activity.title,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  _MiniBadge(label: recommendation.basisLabel),
-                                  SizedBox(
-                                    width: 30,
-                                    child: PopupMenuButton<String>(
-                                      key: Key(
-                                        'practice-recommendation-menu-'
-                                        '${recommendation.activity.id}',
+                                    if (!largeText)
+                                      _MiniBadge(
+                                        label: recommendation.basisLabel,
                                       ),
-                                      tooltip: '추천 조정',
-                                      padding: EdgeInsets.zero,
-                                      onSelected: (value) {
-                                        if (value == 'more') {
-                                          onSeeMore(recommendation.activity);
-                                        }
-                                        if (value == 'less') {
-                                          onSeeLess(recommendation.activity);
-                                        }
-                                        if (value == 'today') {
-                                          onHideToday(recommendation.activity);
-                                        }
-                                        if (value == 'week') {
-                                          onHideSevenDays(
-                                            recommendation.activity,
-                                          );
-                                        }
-                                      },
-                                      itemBuilder: (context) => const [
-                                        PopupMenuItem(
-                                          value: 'more',
-                                          child: Text('이런 게임 더 보기'),
+                                    SizedBox.square(
+                                      dimension: 44,
+                                      child: PopupMenuButton<String>(
+                                        key: Key(
+                                          'practice-recommendation-menu-'
+                                          '${recommendation.activity.id}',
                                         ),
-                                        PopupMenuItem(
-                                          value: 'less',
-                                          child: Text('이런 게임 덜 보기'),
+                                        tooltip: '추천 조정',
+                                        padding: EdgeInsets.zero,
+                                        onSelected: (value) {
+                                          if (value == 'more') {
+                                            onSeeMore(recommendation.activity);
+                                          }
+                                          if (value == 'less') {
+                                            onSeeLess(recommendation.activity);
+                                          }
+                                          if (value == 'today') {
+                                            onHideToday(
+                                              recommendation.activity,
+                                            );
+                                          }
+                                          if (value == 'week') {
+                                            onHideSevenDays(
+                                              recommendation.activity,
+                                            );
+                                          }
+                                        },
+                                        itemBuilder: (context) => const [
+                                          PopupMenuItem(
+                                            value: 'more',
+                                            child: Text('이런 게임 더 보기'),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'less',
+                                            child: Text('이런 게임 덜 보기'),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'today',
+                                            child: Text('오늘 추천에서 숨기기'),
+                                          ),
+                                          PopupMenuItem(
+                                            value: 'week',
+                                            child: Text('7일 동안 숨기기'),
+                                          ),
+                                        ],
+                                        icon: const Icon(
+                                          Icons.more_vert_rounded,
+                                          size: 18,
                                         ),
-                                        PopupMenuItem(
-                                          value: 'today',
-                                          child: Text('오늘 추천에서 숨기기'),
-                                        ),
-                                        PopupMenuItem(
-                                          value: 'week',
-                                          child: Text('7일 동안 숨기기'),
-                                        ),
-                                      ],
-                                      icon: const Icon(
-                                        Icons.more_vert_rounded,
-                                        size: 18,
                                       ),
                                     ),
+                                  ],
+                                ),
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          availability.enabled
+                                              ? largeText
+                                                    ? '${recommendation.basisLabel} · ${recommendation.reason}'
+                                                    : recommendation.reason
+                                              : availability.disabledReason ??
+                                                    recommendation.reason,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        (recommendationWeights[recommendation
+                                                        .activity
+                                                        .id] ??
+                                                    0) !=
+                                                0
+                                            ? '${recommendationWeights[recommendation.activity.id]! > 0 ? '+' : ''}'
+                                                  '${recommendationWeights[recommendation.activity.id]}'
+                                            : index == 0 && availability.enabled
+                                            ? '지금 먼저 하기'
+                                            : availability.enabled
+                                            ? '바로 시작'
+                                            : '자료 필요',
+                                        style: TextStyle(
+                                          color: availability.enabled
+                                              ? colors.primary
+                                              : colors.onSurfaceVariant,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Expanded(
-                                child: Text(
-                                  availability.enabled
-                                      ? recommendation.reason
-                                      : availability.disabledReason ??
-                                            recommendation.reason,
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
-                              ),
-                              Text(
-                                (recommendationWeights[recommendation
-                                                .activity
-                                                .id] ??
-                                            0) !=
-                                        0
-                                    ? '추천 선호도 '
-                                          '${recommendationWeights[recommendation.activity.id]! > 0 ? '+' : ''}'
-                                          '${recommendationWeights[recommendation.activity.id]}'
-                                    : index == 0 && availability.enabled
-                                    ? '지금 먼저 하기'
-                                    : availability.enabled
-                                    ? '바로 시작'
-                                    : '자료 필요',
-                                style: TextStyle(
-                                  color: availability.enabled
-                                      ? colors.primary
-                                      : colors.onSurfaceVariant,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -2034,12 +2074,12 @@ class _DailyChallengeCard extends StatelessWidget {
       child: InkWell(
         onTap: onPressed,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(13, 10, 10, 10),
+          padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
                   color: colors.tertiary,
                   borderRadius: BorderRadius.circular(12),
@@ -2049,7 +2089,7 @@ class _DailyChallengeCard extends StatelessWidget {
                   color: colors.onTertiary,
                 ),
               ),
-              const SizedBox(width: 11),
+              const SizedBox(width: 9),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2060,12 +2100,9 @@ class _DailyChallengeCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
-                    const SizedBox(height: 2),
                     Text(
-                      quickLaunch
-                          ? '오늘 날짜와 주제로 선택 · 저장한 설정으로 바로 시작'
-                          : '오늘 날짜와 주제로 선택 · 내일은 다른 게임',
-                      maxLines: 2,
+                      quickLaunch ? '저장한 설정으로 바로 시작' : '내일은 다른 게임',
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
@@ -2085,16 +2122,20 @@ class _DailyChallengeCard extends StatelessWidget {
 class _PracticeDiscoveryControls extends StatelessWidget {
   const _PracticeDiscoveryControls({
     required this.catalog,
+    required this.activeFilterCount,
     required this.onDurationChanged,
     required this.onSkillChanged,
     required this.onSortChanged,
+    required this.onReset,
     required this.onClearRecommendationSnoozes,
   });
 
   final PracticeCatalogPreferences catalog;
+  final int activeFilterCount;
   final ValueChanged<PracticeDurationFilter> onDurationChanged;
   final ValueChanged<PracticeSkillFilter> onSkillChanged;
   final ValueChanged<PracticeCatalogSort> onSortChanged;
+  final VoidCallback? onReset;
   final VoidCallback? onClearRecommendationSnoozes;
 
   @override
@@ -2103,12 +2144,26 @@ class _PracticeDiscoveryControls extends StatelessWidget {
       margin: EdgeInsets.zero,
       child: ExpansionTile(
         key: const Key('practice-discovery-controls'),
-        title: const Text('게임 필터·정렬'),
+        title: Row(
+          children: [
+            const Expanded(child: Text('필터·정렬')),
+            if (activeFilterCount > 0)
+              _MiniBadge(label: '$activeFilterCount개 적용'),
+          ],
+        ),
         subtitle: Text(
           '${_durationLabel(catalog.durationFilter)} · '
           '${_skillLabel(catalog.skillFilter)} · '
           '${_sortLabel(catalog.sortOrder)}',
         ),
+        trailing: onReset == null
+            ? null
+            : IconButton(
+                key: const Key('reset-practice-filters'),
+                tooltip: '필터와 정렬 초기화',
+                onPressed: onReset,
+                icon: const Icon(Icons.filter_alt_off_outlined),
+              ),
         childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
         children: [
           const Align(
@@ -2454,37 +2509,91 @@ class _RecentPracticeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       key: const Key('recent-practice-games'),
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        const Icon(Icons.history_rounded, size: 19),
+        const SizedBox(width: 6),
         Text(
-          '최근 게임 · 마지막 규칙으로 재실행',
+          '최근',
           style: Theme.of(
             context,
           ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 7),
-        SizedBox(
-          height: 44,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: activities.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 7),
-            itemBuilder: (context, index) {
-              final activity = activities[index];
-              return ActionChip(
-                key: Key('recent-practice-${activity.id}'),
-                avatar: Icon(activity.icon, size: 18),
-                label: Text(
-                  '${activity.title} · ${launchCounts[activity.id] ?? 0}회',
-                ),
-                onPressed: () => onPressed(activity),
-              );
-            },
+        const SizedBox(width: 8),
+        Expanded(
+          child: SizedBox(
+            height: 44,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: activities.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 7),
+              itemBuilder: (context, index) {
+                final activity = activities[index];
+                return ActionChip(
+                  key: Key('recent-practice-${activity.id}'),
+                  avatar: Icon(activity.icon, size: 17),
+                  label: Text(
+                    '${activity.title} · ${launchCounts[activity.id] ?? 0}',
+                  ),
+                  onPressed: () => onPressed(activity),
+                );
+              },
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _FavoritePracticeRow extends StatelessWidget {
+  const _FavoritePracticeRow({
+    required this.activities,
+    required this.onPressed,
+  });
+
+  final List<_Activity> activities;
+  final Future<void> Function(_Activity) onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      key: const Key('favorite-practice-games'),
+      container: true,
+      label: '즐겨찾는 게임 ${activities.length}개. 저장한 규칙으로 바로 시작합니다.',
+      child: Row(
+        children: [
+          const Icon(Icons.star_rounded, size: 19),
+          const SizedBox(width: 6),
+          Text(
+            '즐겨찾는 게임',
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: activities.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 7),
+                itemBuilder: (context, index) {
+                  final activity = activities[index];
+                  return ActionChip(
+                    key: Key('favorite-practice-${activity.id}'),
+                    avatar: Icon(activity.icon, size: 17),
+                    label: Text(activity.title),
+                    onPressed: () => onPressed(activity),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2504,12 +2613,13 @@ class _PracticeSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 36,
-          height: 36,
+          width: compact ? 32 : 36,
+          height: compact ? 32 : 36,
           decoration: BoxDecoration(
             color: colors.secondaryContainer,
             borderRadius: BorderRadius.circular(11),
@@ -2527,8 +2637,15 @@ class _PracticeSectionHeader extends StatelessWidget {
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 2),
-              Text(description, style: Theme.of(context).textTheme.bodySmall),
+              if (!compact) ...[
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
             ],
           ),
         ),
@@ -2590,7 +2707,7 @@ class _ActivityCard extends StatelessWidget {
         final textScale = MediaQuery.textScalerOf(context).scale(1);
         final scaleDelta = (textScale - 1).clamp(0.0, 2.0).toDouble();
         final cardHeight = compact
-            ? (enabled ? 108.0 : 128.0) + (scaleDelta * 46)
+            ? (enabled ? 100.0 : 120.0) + (scaleDelta * 46)
             : 72.0 + (scaleDelta * 32);
         final icon = Container(
           width: compact ? 36 : 44,
@@ -2754,7 +2871,7 @@ class _ActivityCard extends StatelessWidget {
                 child: SizedBox(
                   height: cardHeight,
                   child: Padding(
-                    padding: const EdgeInsets.all(11),
+                    padding: EdgeInsets.all(compact ? 8 : 11),
                     child: compact
                         ? Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2776,7 +2893,7 @@ class _ActivityCard extends StatelessWidget {
                                   menu,
                                 ],
                               ),
-                              const SizedBox(height: 7),
+                              const SizedBox(height: 4),
                               copy,
                             ],
                           )
@@ -2853,18 +2970,21 @@ _PracticeLaunchResult _resolvePracticeLaunch(
     PracticeSessionLength.threeMinutes => 7,
     PracticeSessionLength.fiveMinutes => 12,
     PracticeSessionLength.tenMinutes => 24,
+    PracticeSessionLength.fifteenMinutes => 36,
   };
   final itemLimit = requested.clamp(StudyLimits.minSessionItems, safeAvailable);
   final usesTimeBudget = switch (preferences.length) {
     PracticeSessionLength.threeMinutes ||
     PracticeSessionLength.fiveMinutes ||
-    PracticeSessionLength.tenMinutes => true,
+    PracticeSessionLength.tenMinutes ||
+    PracticeSessionLength.fifteenMinutes => true,
     _ => false,
   };
   final timeBudgetMinutes = switch (preferences.length) {
     PracticeSessionLength.threeMinutes => 3,
     PracticeSessionLength.fiveMinutes => 5,
     PracticeSessionLength.tenMinutes => 10,
+    PracticeSessionLength.fifteenMinutes => 15,
     _ => 5,
   };
   return _PracticeLaunchResult(
@@ -2949,6 +3069,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
       PracticeSessionLength.threeMinutes => 7,
       PracticeSessionLength.fiveMinutes => 12,
       PracticeSessionLength.tenMinutes => 24,
+      PracticeSessionLength.fifteenMinutes => 36,
     };
     return requested.clamp(1, widget.availableCount);
   }
@@ -3003,6 +3124,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
       PracticeSessionLength.threeMinutes => 7,
       PracticeSessionLength.fiveMinutes => 12,
       PracticeSessionLength.tenMinutes => 24,
+      PracticeSessionLength.fifteenMinutes => 36,
     };
     setState(() => _preferences = _preferences.copyWith(length: length));
     _setCount(count);
@@ -3013,13 +3135,15 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
     PracticeSessionLength.threeMinutes => 3,
     PracticeSessionLength.fiveMinutes => 5,
     PracticeSessionLength.tenMinutes => 10,
+    PracticeSessionLength.fifteenMinutes => 15,
     _ => 5,
   };
 
   bool get _usesTimeBudget => switch (_preferences.length) {
     PracticeSessionLength.threeMinutes ||
     PracticeSessionLength.fiveMinutes ||
-    PracticeSessionLength.tenMinutes => true,
+    PracticeSessionLength.tenMinutes ||
+    PracticeSessionLength.fifteenMinutes => true,
     _ => false,
   };
 
@@ -3068,6 +3192,55 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
     return options;
   }
 
+  void _resetRules() {
+    setState(() {
+      _queuePriority = StudyQueuePriority.dueFirst;
+      _historyFilter = StudyHistoryFilter.all;
+      _preferences = _preferences.copyWith(
+        difficulty: PracticeDifficultyPreset.balanced,
+        historyScope: PracticeHistoryScope.all,
+        queueOrder: PracticeQueueOrder.dueFirst,
+        answerDirection: StudyAnswerDirection.mixed,
+        gradingStrictness: StudyGradingStrictness.balanced,
+        choiceCount: 4,
+        recordProgress: true,
+        hintsEnabled: true,
+        autoAdvance: false,
+        soundEnabled: false,
+        largeControls: false,
+        challengeScoringEnabled: false,
+      );
+    });
+  }
+
+  void _finish() {
+    _commitCount();
+    Navigator.pop(
+      context,
+      _PracticeLaunchResult(
+        itemLimit: _selectedCount,
+        queuePriority: _queuePriority,
+        historyFilter: _historyFilter,
+        lengthMode: _usesTimeBudget
+            ? StudySessionLengthMode.timeBudget
+            : StudySessionLengthMode.itemCount,
+        timeBudgetMinutes: _timeBudgetMinutes,
+        preferences: _preferences.copyWith(
+          itemCount: _selectedCount,
+          historyScope: switch (_historyFilter) {
+            StudyHistoryFilter.all => PracticeHistoryScope.all,
+            StudyHistoryFilter.excludeCorrect =>
+              PracticeHistoryScope.excludeCorrect,
+            StudyHistoryFilter.wrongOnly => PracticeHistoryScope.wrongOnly,
+          },
+          queueOrder: _queuePriority == StudyQueuePriority.dueFirst
+              ? PracticeQueueOrder.dueFirst
+              : PracticeQueueOrder.newFirst,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -3079,7 +3252,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
         constraints: const BoxConstraints(maxWidth: 680),
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3088,8 +3261,8 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 48,
-                      height: 48,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: colors.primaryContainer,
                         borderRadius: BorderRadius.circular(14),
@@ -3099,7 +3272,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                         color: colors.onPrimaryContainer,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3116,6 +3289,13 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                         ],
                       ),
                     ),
+                    if (widget.availableCount > 0)
+                      TextButton.icon(
+                        key: const Key('practice-launch-use-current-rules'),
+                        onPressed: _finish,
+                        icon: const Icon(Icons.bolt_rounded, size: 18),
+                        label: const Text('바로 시작'),
+                      ),
                     IconButton(
                       tooltip: '닫기',
                       onPressed: () => Navigator.pop(context),
@@ -3123,7 +3303,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 if (widget.availableCount == 0) ...[
                   Container(
                     key: const Key('practice-launch-empty'),
@@ -3149,65 +3329,56 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                     label: const Text('자료실에서 준비하기'),
                   ),
                 ] else ...[
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _LaunchInfoChip(
-                        icon: Icons.inventory_2_outlined,
-                        label: '사용 가능 ${widget.availableCount}개',
-                      ),
-                      _LaunchInfoChip(
-                        icon: Icons.notifications_active_outlined,
-                        label: '복습 예정 ${widget.dueCount}개',
-                      ),
-                      _LaunchInfoChip(
-                        icon: Icons.fiber_new_rounded,
-                        label: '새 자료 ${widget.newCount}개',
-                      ),
-                      _LaunchInfoChip(
-                        icon: Icons.check_circle_outline_rounded,
-                        label: '학습 이력 $studiedCount개',
-                      ),
-                    ],
+                  SizedBox(
+                    key: const Key('practice-launch-inventory-strip'),
+                    height: 44,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        _LaunchInfoChip(
+                          icon: Icons.inventory_2_outlined,
+                          label: '전체 ${widget.availableCount}',
+                        ),
+                        const SizedBox(width: 6),
+                        _LaunchInfoChip(
+                          icon: Icons.notifications_active_outlined,
+                          label: '복습 ${widget.dueCount}',
+                        ),
+                        const SizedBox(width: 6),
+                        _LaunchInfoChip(
+                          icon: Icons.fiber_new_rounded,
+                          label: '새 자료 ${widget.newCount}',
+                        ),
+                        const SizedBox(width: 6),
+                        _LaunchInfoChip(
+                          icon: Icons.check_circle_outline_rounded,
+                          label: '학습함 $studiedCount',
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 10),
                   Text(
-                    '이번에 풀 문제 수',
+                    '세션 길이',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
                   ),
                   Text(
-                    '문제 수 또는 3·5·10분 시간 예산을 선택하세요.',
+                    '짧은 시간 프리셋을 고르거나 문제 수를 직접 조정하세요.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   const SizedBox(height: 8),
                   Wrap(
-                    key: const Key('practice-count-options'),
-                    spacing: 8,
-                    runSpacing: 8,
+                    key: const Key('practice-time-options'),
+                    spacing: 7,
+                    runSpacing: 7,
                     children: [
-                      for (final count in _countOptions)
-                        ChoiceChip(
-                          key: Key('practice-count-$count'),
-                          selected: _selectedCount == count,
-                          label: Text('$count문제'),
-                          onSelected: (_) => _setCount(count),
-                        ),
-                      ChoiceChip(
-                        key: const Key('practice-count-all'),
-                        selected:
-                            _preferences.length ==
-                            PracticeSessionLength.allItems,
-                        label: Text('전체 ${widget.availableCount}개'),
-                        onSelected: (_) =>
-                            _setLength(PracticeSessionLength.allItems),
-                      ),
                       for (final option in const [
                         PracticeSessionLength.threeMinutes,
                         PracticeSessionLength.fiveMinutes,
                         PracticeSessionLength.tenMinutes,
+                        PracticeSessionLength.fifteenMinutes,
                       ])
                         ChoiceChip(
                           key: Key('practice-time-${option.name}'),
@@ -3215,12 +3386,63 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           avatar: const Icon(Icons.timer_outlined, size: 17),
                           label: Text(switch (option) {
                             PracticeSessionLength.threeMinutes => '3분',
-                            PracticeSessionLength.fiveMinutes => '5분',
-                            _ => '10분',
+                            PracticeSessionLength.fiveMinutes => '5분 · 추천',
+                            PracticeSessionLength.tenMinutes => '10분',
+                            _ => '15분',
                           }),
                           onSelected: (_) => _setLength(option),
                         ),
                     ],
+                  ),
+                  if (_usesTimeBudget) ...[
+                    const SizedBox(height: 5),
+                    Semantics(
+                      key: const Key('practice-time-selected-estimate'),
+                      liveRegion: true,
+                      label:
+                          '선택한 시간 프리셋 $_timeBudgetMinutes분, 예상 $_selectedCount문제',
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '선택 · $_timeBudgetMinutes분 · 예상 $_selectedCount문제',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: colors.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 7),
+                  SingleChildScrollView(
+                    key: const Key('practice-count-options'),
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (final count in _countOptions) ...[
+                          ChoiceChip(
+                            key: Key('practice-count-$count'),
+                            selected:
+                                !_usesTimeBudget && _selectedCount == count,
+                            label: Text('$count문제'),
+                            onSelected: (_) => _setCount(count),
+                          ),
+                          const SizedBox(width: 7),
+                        ],
+                        ChoiceChip(
+                          key: const Key('practice-count-all'),
+                          selected:
+                              _preferences.length ==
+                              PracticeSessionLength.allItems,
+                          label: Text('전체 ${widget.availableCount}개'),
+                          onSelected: (_) =>
+                              _setLength(PracticeSessionLength.allItems),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -3308,239 +3530,284 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-                  Text('학습 기록', style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 7),
-                  Wrap(
-                    spacing: 7,
-                    runSpacing: 7,
-                    children: [
-                      for (final filter in StudyHistoryFilter.values)
-                        ChoiceChip(
-                          key: Key('practice-history-${filter.name}'),
-                          label: Text(filter.label),
-                          selected: _historyFilter == filter,
-                          onSelected: (_) => setState(() {
-                            _historyFilter = filter;
-                            _preferences = _preferences.copyWith(
-                              historyScope: switch (filter) {
-                                StudyHistoryFilter.all =>
-                                  PracticeHistoryScope.all,
-                                StudyHistoryFilter.excludeCorrect =>
-                                  PracticeHistoryScope.excludeCorrect,
-                                StudyHistoryFilter.wrongOnly =>
-                                  PracticeHistoryScope.wrongOnly,
-                              },
-                            );
-                          }),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  Text('출제 순서', style: Theme.of(context).textTheme.titleSmall),
-                  const SizedBox(height: 7),
-                  Wrap(
-                    spacing: 7,
-                    runSpacing: 7,
-                    children: [
-                      for (final priority in StudyQueuePriority.values)
-                        ChoiceChip(
-                          key: Key('practice-priority-${priority.name}'),
-                          label: Text(priority.label),
-                          selected: _queuePriority == priority,
-                          onSelected: (_) => setState(() {
-                            _queuePriority = priority;
-                            _preferences = _preferences.copyWith(
-                              queueOrder:
-                                  priority == StudyQueuePriority.dueFirst
-                                  ? PracticeQueueOrder.dueFirst
-                                  : PracticeQueueOrder.newFirst,
-                            );
-                          }),
-                        ),
-                    ],
-                  ),
                   const SizedBox(height: 8),
-                  SwitchListTile.adaptive(
-                    key: const Key('practice-record-progress'),
-                    contentPadding: EdgeInsets.zero,
-                    value: _preferences.recordProgress,
-                    title: const Text('XP·복습 진도 기록'),
-                    subtitle: Text(
-                      _preferences.recordProgress
-                          ? '학습 결과를 로컬 진도에 반영합니다.'
-                          : '자유 연습: XP와 복습 일정을 바꾸지 않습니다.',
-                    ),
-                    onChanged: (value) => setState(
-                      () => _preferences = _preferences.copyWith(
-                        recordProgress: value,
-                      ),
-                    ),
-                  ),
-                  SwitchListTile.adaptive(
-                    key: const Key('practice-challenge-scoring'),
-                    contentPadding: EdgeInsets.zero,
-                    value: _preferences.challengeScoringEnabled,
-                    title: const Text('선택적 도전 점수'),
-                    subtitle: const Text(
-                      '정확도와 완료 시간을 개인 최고 기록에만 저장하며 일반 진도 진행을 막지 않습니다.',
-                    ),
-                    onChanged: (value) => setState(
-                      () => _preferences = _preferences.copyWith(
-                        challengeScoringEnabled: value,
-                      ),
-                    ),
-                  ),
                   ExpansionTile(
-                    key: const Key('practice-quick-rules'),
+                    key: const Key('practice-advanced-settings'),
                     tilePadding: EdgeInsets.zero,
                     childrenPadding: EdgeInsets.zero,
-                    title: const Text('빠른 게임 규칙'),
+                    title: const Text('고급 설정'),
+                    trailing: TextButton(
+                      key: const Key('reset-practice-rules'),
+                      onPressed: _resetRules,
+                      child: const Text('기본값'),
+                    ),
                     subtitle: Text(
+                      '${_preferences.recordProgress ? '진도 기록' : '자유 연습'} · '
                       '${_preferences.choiceCount}지선다 · '
                       '${_preferences.gradingStrictness.koreanLabel} 채점 · '
                       '${_preferences.hintsEnabled ? '힌트 켬' : '힌트 끔'}',
                     ),
                     children: [
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('출제 방향'),
+                      KeyedSubtree(
+                        key: const Key('practice-advanced-history-and-order'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              '학습 기록',
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 7),
+                            Wrap(
+                              spacing: 7,
+                              runSpacing: 7,
+                              children: [
+                                for (final filter in StudyHistoryFilter.values)
+                                  ChoiceChip(
+                                    key: Key('practice-history-${filter.name}'),
+                                    label: Text(filter.label),
+                                    selected: _historyFilter == filter,
+                                    onSelected: (_) => setState(() {
+                                      _historyFilter = filter;
+                                      _preferences = _preferences.copyWith(
+                                        historyScope: switch (filter) {
+                                          StudyHistoryFilter.all =>
+                                            PracticeHistoryScope.all,
+                                          StudyHistoryFilter.excludeCorrect =>
+                                            PracticeHistoryScope.excludeCorrect,
+                                          StudyHistoryFilter.wrongOnly =>
+                                            PracticeHistoryScope.wrongOnly,
+                                        },
+                                      );
+                                    }),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              '출제 순서',
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                            const SizedBox(height: 7),
+                            Wrap(
+                              spacing: 7,
+                              runSpacing: 7,
+                              children: [
+                                for (final priority
+                                    in StudyQueuePriority.values)
+                                  ChoiceChip(
+                                    key: Key(
+                                      'practice-priority-${priority.name}',
+                                    ),
+                                    label: Text(priority.label),
+                                    selected: _queuePriority == priority,
+                                    onSelected: (_) => setState(() {
+                                      _queuePriority = priority;
+                                      _preferences = _preferences.copyWith(
+                                        queueOrder:
+                                            priority ==
+                                                StudyQueuePriority.dueFirst
+                                            ? PracticeQueueOrder.dueFirst
+                                            : PracticeQueueOrder.newFirst,
+                                      );
+                                    }),
+                                  ),
+                              ],
+                            ),
+                            const Divider(height: 20),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 7),
-                      Wrap(
-                        spacing: 7,
-                        runSpacing: 7,
-                        children: [
-                          for (final direction in StudyAnswerDirection.values)
-                            ChoiceChip(
-                              key: Key('practice-direction-${direction.name}'),
-                              selected:
-                                  _preferences.answerDirection == direction,
-                              label: Text(switch (direction) {
-                                StudyAnswerDirection.learningToMeaning =>
-                                  '학습어 → 뜻',
-                                StudyAnswerDirection.meaningToLearning =>
-                                  '뜻 → 학습어',
-                                StudyAnswerDirection.mixed => '혼합',
-                              }),
-                              onSelected: (_) => setState(
+                      KeyedSubtree(
+                        key: const Key('practice-quick-rules'),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            SwitchListTile.adaptive(
+                              key: const Key('practice-record-progress'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _preferences.recordProgress,
+                              title: const Text('XP·복습 진도 기록'),
+                              subtitle: Text(
+                                _preferences.recordProgress
+                                    ? '학습 결과를 로컬 진도에 반영합니다.'
+                                    : '자유 연습: XP와 복습 일정을 바꾸지 않습니다.',
+                              ),
+                              onChanged: (value) => setState(
                                 () => _preferences = _preferences.copyWith(
-                                  answerDirection: direction,
+                                  recordProgress: value,
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('채점'),
-                      ),
-                      const SizedBox(height: 7),
-                      Wrap(
-                        spacing: 7,
-                        runSpacing: 7,
-                        children: [
-                          for (final strictness
-                              in StudyGradingStrictness.values)
-                            ChoiceChip(
-                              key: Key('practice-grading-${strictness.name}'),
-                              selected:
-                                  _preferences.gradingStrictness == strictness,
-                              label: Text(strictness.koreanLabel),
-                              onSelected: (_) => setState(
+                            SwitchListTile.adaptive(
+                              key: const Key('practice-challenge-scoring'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _preferences.challengeScoringEnabled,
+                              title: const Text('선택적 도전 점수'),
+                              subtitle: const Text(
+                                '정확도와 완료 시간을 개인 최고 기록에만 저장합니다.',
+                              ),
+                              onChanged: (value) => setState(
                                 () => _preferences = _preferences.copyWith(
-                                  gradingStrictness: strictness,
+                                  challengeScoringEnabled: value,
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('객관식 선택지'),
-                      ),
-                      const SizedBox(height: 7),
-                      Wrap(
-                        spacing: 7,
-                        children: [
-                          for (final count in const [2, 4, 6])
-                            ChoiceChip(
-                              key: Key('practice-choice-count-$count'),
-                              selected: _preferences.choiceCount == count,
-                              label: Text('$count개'),
-                              onSelected: (_) => setState(
+                            const Divider(height: 20),
+                            const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text('출제 방향'),
+                            ),
+                            const SizedBox(height: 7),
+                            Wrap(
+                              spacing: 7,
+                              runSpacing: 7,
+                              children: [
+                                for (final direction
+                                    in StudyAnswerDirection.values)
+                                  ChoiceChip(
+                                    key: Key(
+                                      'practice-direction-${direction.name}',
+                                    ),
+                                    selected:
+                                        _preferences.answerDirection ==
+                                        direction,
+                                    label: Text(switch (direction) {
+                                      StudyAnswerDirection.learningToMeaning =>
+                                        '학습어 → 뜻',
+                                      StudyAnswerDirection.meaningToLearning =>
+                                        '뜻 → 학습어',
+                                      StudyAnswerDirection.mixed => '혼합',
+                                    }),
+                                    onSelected: (_) => setState(
+                                      () => _preferences = _preferences
+                                          .copyWith(answerDirection: direction),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text('채점'),
+                            ),
+                            const SizedBox(height: 7),
+                            Wrap(
+                              spacing: 7,
+                              runSpacing: 7,
+                              children: [
+                                for (final strictness
+                                    in StudyGradingStrictness.values)
+                                  ChoiceChip(
+                                    key: Key(
+                                      'practice-grading-${strictness.name}',
+                                    ),
+                                    selected:
+                                        _preferences.gradingStrictness ==
+                                        strictness,
+                                    label: Text(strictness.koreanLabel),
+                                    onSelected: (_) => setState(
+                                      () =>
+                                          _preferences = _preferences.copyWith(
+                                            gradingStrictness: strictness,
+                                          ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text('객관식 선택지'),
+                            ),
+                            const SizedBox(height: 7),
+                            Wrap(
+                              spacing: 7,
+                              runSpacing: 7,
+                              children: [
+                                for (final count in const [2, 4, 6])
+                                  ChoiceChip(
+                                    key: Key('practice-choice-count-$count'),
+                                    selected: _preferences.choiceCount == count,
+                                    label: Text('$count개'),
+                                    onSelected: (_) => setState(
+                                      () => _preferences = _preferences
+                                          .copyWith(choiceCount: count),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            SwitchListTile.adaptive(
+                              key: const Key('practice-time-budget-toggle'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _usesTimeBudget,
+                              title: const Text('시간 예산 모드'),
+                              subtitle: const Text(
+                                '문제 수 대신 3·5·10·15분 프리셋으로 학습량을 맞춥니다.',
+                              ),
+                              onChanged: (value) {
+                                if (value) {
+                                  _setLength(PracticeSessionLength.fiveMinutes);
+                                } else {
+                                  _setCount(_selectedCount);
+                                }
+                              },
+                            ),
+                            SwitchListTile.adaptive(
+                              key: const Key('practice-hints-toggle'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _preferences.hintsEnabled,
+                              title: const Text('힌트 허용'),
+                              onChanged: (value) => setState(
                                 () => _preferences = _preferences.copyWith(
-                                  choiceCount: count,
+                                  hintsEnabled: value,
                                 ),
                               ),
                             ),
-                        ],
-                      ),
-                      SwitchListTile.adaptive(
-                        key: const Key('practice-time-budget-toggle'),
-                        contentPadding: EdgeInsets.zero,
-                        value: _usesTimeBudget,
-                        title: const Text('시간 예산 모드'),
-                        subtitle: const Text(
-                          '문제 수 대신 3·5·10분 프리셋으로 학습량을 맞춥니다.',
-                        ),
-                        onChanged: (value) {
-                          if (value) {
-                            _setLength(PracticeSessionLength.fiveMinutes);
-                          } else {
-                            _setCount(_selectedCount);
-                          }
-                        },
-                      ),
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        value: _preferences.hintsEnabled,
-                        title: const Text('힌트 허용'),
-                        onChanged: (value) => setState(
-                          () => _preferences = _preferences.copyWith(
-                            hintsEnabled: value,
-                          ),
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        value: _preferences.autoAdvance,
-                        title: const Text('정답 뒤 자동 진행'),
-                        onChanged: (value) => setState(
-                          () => _preferences = _preferences.copyWith(
-                            autoAdvance: value,
-                          ),
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        value: _preferences.soundEnabled,
-                        title: const Text('게임 효과음'),
-                        onChanged: (value) => setState(
-                          () => _preferences = _preferences.copyWith(
-                            soundEnabled: value,
-                          ),
-                        ),
-                      ),
-                      SwitchListTile.adaptive(
-                        contentPadding: EdgeInsets.zero,
-                        value: _preferences.largeControls,
-                        title: const Text('큰 조작 버튼'),
-                        onChanged: (value) => setState(
-                          () => _preferences = _preferences.copyWith(
-                            largeControls: value,
-                          ),
+                            SwitchListTile.adaptive(
+                              key: const Key('practice-auto-advance-toggle'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _preferences.autoAdvance,
+                              title: const Text('정답 뒤 자동 진행'),
+                              onChanged: (value) => setState(
+                                () => _preferences = _preferences.copyWith(
+                                  autoAdvance: value,
+                                ),
+                              ),
+                            ),
+                            SwitchListTile.adaptive(
+                              key: const Key('practice-sound-toggle'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _preferences.soundEnabled,
+                              title: const Text('게임 효과음'),
+                              onChanged: (value) => setState(
+                                () => _preferences = _preferences.copyWith(
+                                  soundEnabled: value,
+                                ),
+                              ),
+                            ),
+                            SwitchListTile.adaptive(
+                              key: const Key('practice-large-controls-toggle'),
+                              contentPadding: EdgeInsets.zero,
+                              value: _preferences.largeControls,
+                              title: const Text('큰 조작 버튼'),
+                              onChanged: (value) => setState(
+                                () => _preferences = _preferences.copyWith(
+                                  largeControls: value,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   Semantics(
+                    key: const Key('practice-session-estimate'),
                     liveRegion: true,
                     label: _usesTimeBudget
-                        ? '$_timeBudgetMinutes분 자유 학습, 즉시 피드백'
+                        ? '$_timeBudgetMinutes분, 예상 $_selectedCount문제, 즉시 피드백'
                         : '$_selectedCount문제, 예상 $estimatedMinutes분, 즉시 피드백',
                     child: Container(
                       padding: const EdgeInsets.symmetric(
@@ -3557,7 +3824,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${_usesTimeBudget ? '약 $_timeBudgetMinutes분' : '약 $estimatedMinutes분'} · '
+                              '${_usesTimeBudget ? '$_timeBudgetMinutes분 · 약 $_selectedCount문제' : '$_selectedCount문제 · 약 $estimatedMinutes분'} · '
                               '매 문제 즉시 피드백 · '
                               '${_preferences.recordProgress ? '오답은 세션 안에서 다시 출제' : '진도 비기록 자유 연습'}',
                             ),
@@ -3569,36 +3836,7 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                   const SizedBox(height: 16),
                   FilledButton.icon(
                     key: const Key('start-practice-session'),
-                    onPressed: () {
-                      _commitCount();
-                      Navigator.pop(
-                        context,
-                        _PracticeLaunchResult(
-                          itemLimit: _selectedCount,
-                          queuePriority: _queuePriority,
-                          historyFilter: _historyFilter,
-                          lengthMode: _usesTimeBudget
-                              ? StudySessionLengthMode.timeBudget
-                              : StudySessionLengthMode.itemCount,
-                          timeBudgetMinutes: _timeBudgetMinutes,
-                          preferences: _preferences.copyWith(
-                            itemCount: _selectedCount,
-                            historyScope: switch (_historyFilter) {
-                              StudyHistoryFilter.all =>
-                                PracticeHistoryScope.all,
-                              StudyHistoryFilter.excludeCorrect =>
-                                PracticeHistoryScope.excludeCorrect,
-                              StudyHistoryFilter.wrongOnly =>
-                                PracticeHistoryScope.wrongOnly,
-                            },
-                            queueOrder:
-                                _queuePriority == StudyQueuePriority.dueFirst
-                                ? PracticeQueueOrder.dueFirst
-                                : PracticeQueueOrder.newFirst,
-                          ),
-                        ),
-                      );
-                    },
+                    onPressed: _finish,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size.fromHeight(50),
                     ),
@@ -3664,16 +3902,17 @@ class _CourseShortcut extends StatelessWidget {
 }
 
 class _CountBadge extends StatelessWidget {
-  const _CountBadge({required this.label});
+  const _CountBadge({required this.label, this.compact = false});
 
   final String label;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 44),
+      constraints: BoxConstraints(minHeight: compact ? 36 : 44),
       alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 10 : 12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),

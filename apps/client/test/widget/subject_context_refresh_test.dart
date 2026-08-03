@@ -68,7 +68,7 @@ void main() {
 
     expect(find.byType(StudyScreen), findsNothing);
     expect(find.byType(LearningHubScreen), findsOneWidget);
-    expect(find.textContaining('일본어 학습실'), findsOneWidget);
+    expect(find.text('일본어 학습'), findsOneWidget);
     final paused = container.read(appControllerProvider).activeStudySession;
     expect(paused?.sessionId, original?.sessionId);
     expect(paused?.courseId, 'ko-en');
@@ -97,7 +97,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(FlashcardScreen), findsNothing);
-      expect(find.textContaining('일본어 학습실'), findsOneWidget);
+      expect(find.text('일본어 학습'), findsOneWidget);
       expect(store.savedSessions, hasLength(1));
       expect(store.savedSessions.single.courseId, 'ko-en');
       expect(store.savedSessions.single.correctCount, 1);

@@ -114,35 +114,77 @@ foreach ($androidTool in @($aaptPath, $apkSignerPath)) {
     }
 }
 
-$badgingOutput = & $aaptPath dump badging $apkPath 2>&1
-$aaptExitCode = $LASTEXITCODE
-if ($aaptExitCode -ne 0) {
-    throw "aapt failed with exit code $aaptExitCode"
+$nativeApkStagingBase = [IO.Path]::GetFullPath(
+    (Join-Path $env:LOCALAPPDATA 'SpracheVerify')
+)
+foreach ($character in $nativeApkStagingBase.ToCharArray()) {
+    if ([int]$character -gt 127) {
+        throw "Android native-tool staging path must contain ASCII characters only: $nativeApkStagingBase"
+    }
 }
-$badging = ($badgingOutput | Select-Object -First 1) -join "`n"
-$expectedBadging =
-    "package: name='com.youkdonghun.sprache' versionCode='$versionCode' versionName='$Version'"
-if (-not $badging.StartsWith($expectedBadging, [StringComparison]::Ordinal)) {
-    throw "Unexpected Android package metadata: $badging"
+$nativeApkStagingLeaf = "apk-$PID-$([Guid]::NewGuid().ToString('N'))"
+$nativeApkStagingDirectory = [IO.Path]::GetFullPath(
+    (Join-Path $nativeApkStagingBase $nativeApkStagingLeaf)
+)
+$nativeApkStagingPrefix = $nativeApkStagingBase.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+if (-not $nativeApkStagingDirectory.StartsWith(
+        $nativeApkStagingPrefix,
+        [StringComparison]::OrdinalIgnoreCase
+    ) -or
+    -not (Split-Path -Leaf $nativeApkStagingDirectory).Equals(
+        $nativeApkStagingLeaf,
+        [StringComparison]::Ordinal
+    )) {
+    throw "Android native-tool staging path failed containment validation: $nativeApkStagingDirectory"
 }
-
-$previousErrorActionPreference = $ErrorActionPreference
-$ErrorActionPreference = 'Continue'
+New-Item -ItemType Directory -Path $nativeApkStagingDirectory -Force | Out-Null
+$nativeApkPath = Join-Path $nativeApkStagingDirectory (Split-Path -Leaf $apkPath)
 try {
-    $apkSignatureLines = & $apkSignerPath verify --verbose --print-certs $apkPath 2>&1
-    $apkSignerExitCode = $LASTEXITCODE
+    Copy-Item -LiteralPath $apkPath -Destination $nativeApkPath
+    $sourceApkHash = (Get-FileHash -LiteralPath $apkPath -Algorithm SHA256).Hash
+    $nativeApkHash = (Get-FileHash -LiteralPath $nativeApkPath -Algorithm SHA256).Hash
+    if (-not $sourceApkHash.Equals($nativeApkHash, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Android native-tool staging checksum verification failed.'
+    }
+
+    $badgingOutput = & $aaptPath dump badging $nativeApkPath 2>&1
+    $aaptExitCode = $LASTEXITCODE
+    if ($aaptExitCode -ne 0) {
+        throw "aapt failed with exit code $aaptExitCode"
+    }
+    $badging = ($badgingOutput | Select-Object -First 1) -join "`n"
+    $expectedBadging =
+        "package: name='com.youkdonghun.sprache' versionCode='$versionCode' versionName='$Version'"
+    if (-not $badging.StartsWith($expectedBadging, [StringComparison]::Ordinal)) {
+        throw "Unexpected Android package metadata: $badging"
+    }
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $apkSignatureLines = & $apkSignerPath verify --verbose --print-certs $nativeApkPath 2>&1
+        $apkSignerExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+    $apkSignatureOutput = $apkSignatureLines -join "`n"
+    if ($apkSignerExitCode -ne 0) {
+        throw "apksigner failed with exit code $apkSignerExitCode"
+    }
+    if ($apkSignatureOutput -notmatch 'Verified using v2 scheme .*: true') {
+        throw 'Android artifact is not verified with APK Signature Scheme v2.'
+    }
+    $isAndroidDebugSigned = $apkSignatureOutput -match 'CN=Android Debug'
 }
 finally {
-    $ErrorActionPreference = $previousErrorActionPreference
+    if (Test-Path -LiteralPath $nativeApkPath -PathType Leaf) {
+        Remove-Item -LiteralPath $nativeApkPath -Force
+    }
+    if (Test-Path -LiteralPath $nativeApkStagingDirectory -PathType Container) {
+        Remove-Item -LiteralPath $nativeApkStagingDirectory -Force
+    }
 }
-$apkSignatureOutput = $apkSignatureLines -join "`n"
-if ($apkSignerExitCode -ne 0) {
-    throw "apksigner failed with exit code $apkSignerExitCode"
-}
-if ($apkSignatureOutput -notmatch 'Verified using v2 scheme .*: true') {
-    throw 'Android artifact is not verified with APK Signature Scheme v2.'
-}
-$isAndroidDebugSigned = $apkSignatureOutput -match 'CN=Android Debug'
 if ($RequireAndroidReleaseSigning -and $isAndroidDebugSigned) {
     throw 'Android artifact is still signed with the Debug certificate.'
 }

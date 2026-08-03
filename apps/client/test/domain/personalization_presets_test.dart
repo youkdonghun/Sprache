@@ -32,4 +32,27 @@ void main() {
     expect(oled.celebrationLevel, AppCelebrationLevel.off);
     expect(oled.highContrast, isTrue);
   });
+
+  test(
+    'compact workspace changes layout without replacing the color theme',
+    () {
+      const original = AppExperiencePreferences(
+        colorMode: AppColorMode.dark,
+        accentPalette: AppAccentPalette.coral,
+        showRecentAdditions: true,
+        showDataFlow: true,
+      );
+
+      final compact = PersonalizationPreset.compactWorkspace.applyTo(original);
+
+      expect(compact.colorMode, AppColorMode.dark);
+      expect(compact.accentPalette, AppAccentPalette.coral);
+      expect(compact.density, AppDensity.compact);
+      expect(compact.homeLayout, AppHomeLayout.focus);
+      expect(compact.navigationLabelMode, AppNavigationLabelMode.selected);
+      expect(compact.subjectSwitcherStyle, AppSubjectSwitcherStyle.compact);
+      expect(compact.showRecentAdditions, isFalse);
+      expect(compact.showDataFlow, isFalse);
+    },
+  );
 }
