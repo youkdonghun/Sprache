@@ -44,6 +44,9 @@ void main() {
         );
         expect(find.text('학습을 시작할 자료가 없어요'), findsOneWidget);
         expect(find.text('이 주제에 학습 자료가 없어요.'), findsWidgets);
+
+        await tester.tap(find.text('전체 게임'));
+        await tester.pumpAndSettle();
         expect(_activityInkWell(tester, '혼합 퀴즈').onTap, isNull);
         expect(
           tester
@@ -52,6 +55,8 @@ void main() {
           contains('혼합 퀴즈. 사용 불가. 이 주제에 학습 자료가 없어요.'),
         );
 
+        await tester.tap(find.text('추천'));
+        await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('learning-hub-add-content')));
         await tester.pumpAndSettle();
 
@@ -81,6 +86,8 @@ void main() {
     ]);
     final container = await _pumpEmptySubjectApp(tester, store: store);
     container.read(appRouterProvider).go('/learn');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('전체 게임'));
     await tester.pumpAndSettle();
 
     expect(_activityInkWell(tester, '혼합 퀴즈').onTap, isNotNull);

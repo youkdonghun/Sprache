@@ -9,6 +9,7 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart' as widgets show ConnectionState;
 import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as path;
 import 'package:url_launcher/url_launcher.dart';
 
 import '../backup/backup_archive.dart';
@@ -45,8 +46,41 @@ import 'storage_maintenance_dialog.dart';
 
 enum _ExistingLocalChoice { later, keepCurrent, mergeExisting }
 
+enum _SettingsCategory {
+  all,
+  storage,
+  display,
+  learning,
+  windows,
+  privacy,
+  about,
+}
+
+String _settingsCategoryLabel(_SettingsCategory category) => switch (category) {
+  _SettingsCategory.all => '전체',
+  _SettingsCategory.storage => '저장·동기화',
+  _SettingsCategory.display => '화면·편의',
+  _SettingsCategory.learning => '학습',
+  _SettingsCategory.windows => 'Windows',
+  _SettingsCategory.privacy => '데이터',
+  _SettingsCategory.about => '앱 정보',
+};
+
+IconData _settingsCategoryIcon(_SettingsCategory category) =>
+    switch (category) {
+      _SettingsCategory.all => Icons.dashboard_outlined,
+      _SettingsCategory.storage => Icons.cloud_sync_outlined,
+      _SettingsCategory.display => Icons.tune_rounded,
+      _SettingsCategory.learning => Icons.school_outlined,
+      _SettingsCategory.windows => Icons.desktop_windows_outlined,
+      _SettingsCategory.privacy => Icons.privacy_tip_outlined,
+      _SettingsCategory.about => Icons.info_outline_rounded,
+    };
+
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.initialFocus});
+
+  final String? initialFocus;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -81,6 +115,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   );
   Timer? _searchNavigationTimer;
   String _query = '';
+  var _selectedCategory = _SettingsCategory.all;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialFocus == 'storage') {
+      _selectedCategory = _SettingsCategory.storage;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _jumpTo(_storageSectionKey);
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialFocus != widget.initialFocus &&
+        widget.initialFocus == 'storage') {
+      _selectCategory(
+        _SettingsCategory.storage,
+        jumpTarget: _storageSectionKey,
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -97,6 +155,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   bool _matches(String keywords) {
     return _matchesQuery(_query, keywords);
+  }
+
+  bool _showsCategory(_SettingsCategory category) =>
+      _query.trim().isNotEmpty ||
+      _selectedCategory == _SettingsCategory.all ||
+      _selectedCategory == category;
+
+  void _selectCategory(_SettingsCategory category, {GlobalKey? jumpTarget}) {
+    _searchNavigationTimer?.cancel();
+    _searchController.clear();
+    setState(() {
+      _query = '';
+      _selectedCategory = category;
+    });
+    if (jumpTarget != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _jumpTo(jumpTarget);
+      });
+    }
   }
 
   bool _matchesQuery(String value, String keywords) {
@@ -207,19 +284,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       preferences: devicePreferences.notifications,
     );
     final notificationCount = notificationSpecs.length;
-    final showStorage = _matches(
-      '저장 google 구글 drive 드라이브 로컬 폴더 동기화 백업 계정 연결 railway',
-    );
-    final showDisplay = _matches(
-      '화면 학습 편의 테마 색상 다크 라이트 글자 밀도 모션 진동 소리 tts 음성 읽기 발음 퀴즈 접근성 고대비 카드 큰 버튼 단축키 키보드 도움말 ctrl control slash ctrl+/ cmd+/ ⌘+/ 제스처',
-    );
-    final showLearning = _matches('학습 분량 목표 xp 문제 수 세션 복습 새 표현 문장 비율 방식 일정 알림');
+    final showStorage =
+        _showsCategory(_SettingsCategory.storage) &&
+        _matches('저장 google 구글 drive 드라이브 로컬 폴더 동기화 백업 계정 연결 railway');
+    final showDisplay =
+        _showsCategory(_SettingsCategory.display) &&
+        _matches(
+          '화면 학습 편의 테마 색상 다크 라이트 글자 밀도 모션 진동 소리 tts 음성 읽기 발음 퀴즈 접근성 고대비 카드 큰 버튼 단축키 키보드 도움말 ctrl control slash ctrl+/ cmd+/ ⌘+/ 제스처',
+        );
+    final showLearning =
+        _showsCategory(_SettingsCategory.learning) &&
+        _matches('학습 분량 목표 xp 문제 수 세션 복습 새 표현 문장 비율 방식 일정 알림');
     final showWindows =
-        isWindows && _matches('windows 윈도우 창 크기 컴팩트 최소화 항상 위 업무');
-    final showPrivacy = _matches(
-      '데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리 콘텐츠 품질 점검 교정',
-    );
-    final showAbout = _matches('앱 정보 sprache 버전 플랫폼 환경');
+        isWindows &&
+        _showsCategory(_SettingsCategory.windows) &&
+        _matches('windows 윈도우 창 크기 컴팩트 최소화 항상 위 업무');
+    final showPrivacy =
+        _showsCategory(_SettingsCategory.privacy) &&
+        _matches('데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리 콘텐츠 품질 점검 교정');
+    final showAbout =
+        _showsCategory(_SettingsCategory.about) &&
+        _matches('앱 정보 sprache 버전 플랫폼 환경');
     final hasSearchResult =
         showStorage ||
         showDisplay ||
@@ -296,10 +381,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           setState(() => _query = '');
                         },
                         onResetAll: () => _confirmAndResetAll(context, ref),
-                        onJumpStorage: () => _jumpTo(_storageSectionKey),
-                        onJumpDisplay: () => _jumpTo(_displaySectionKey),
-                        onJumpLearning: () => _jumpTo(_learningSectionKey),
-                        onJumpPrivacy: () => _jumpTo(_privacySectionKey),
+                        onJumpStorage: () => _selectCategory(
+                          _SettingsCategory.storage,
+                          jumpTarget: _storageSectionKey,
+                        ),
+                        onJumpDisplay: () => _selectCategory(
+                          _SettingsCategory.display,
+                          jumpTarget: _displaySectionKey,
+                        ),
+                        onJumpLearning: () => _selectCategory(
+                          _SettingsCategory.learning,
+                          jumpTarget: _learningSectionKey,
+                        ),
+                        onJumpPrivacy: () => _selectCategory(
+                          _SettingsCategory.privacy,
+                          jumpTarget: _privacySectionKey,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _SettingsCategoryPicker(
+                        selected: _selectedCategory,
+                        showWindows: isWindows,
+                        onSelected: _selectCategory,
                       ),
                       if (!hasSearchResult) ...[
                         const SizedBox(height: 16),
@@ -337,6 +440,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           onSync: () => ref
                               .read(connectionControllerProvider.notifier)
                               .syncNow(),
+                          onChangeDriveFolder: () =>
+                              _changeDriveFolder(context, ref),
                           onDisconnect: () => ref
                               .read(connectionControllerProvider.notifier)
                               .disconnect(),
@@ -1175,6 +1280,45 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('계정 연결 기록을 삭제하지 못했습니다. 다시 시도해 주세요.')),
+      );
+    }
+  }
+
+  Future<void> _changeDriveFolder(BuildContext context, WidgetRef ref) async {
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        key: const Key('change-drive-folder-dialog'),
+        title: const Text('Drive 저장 폴더를 바꿀까요?'),
+        content: const Text(
+          '현재 WordStudyData 폴더와 파일은 삭제하지 않습니다. '
+          '이 기기의 로컬 데이터도 그대로 유지한 뒤 Google 폴더 선택을 다시 엽니다. '
+          '다른 기기는 다음 실행 때 새 연결을 확인해야 할 수 있습니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('폴더 다시 선택'),
+          ),
+        ],
+      ),
+    );
+    if (approved != true || !context.mounted) return;
+    try {
+      final controller = ref.read(connectionControllerProvider.notifier);
+      await controller.changeDriveFolder();
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('새 Drive 저장 폴더로 연결했습니다.')));
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Drive 폴더를 변경하지 못했습니다. 다시 시도해 주세요.')),
       );
     }
   }
@@ -2541,6 +2685,7 @@ class _ConnectionCard extends ConsumerWidget {
     required this.onClearLocalFolder,
     required this.onConnect,
     required this.onSync,
+    required this.onChangeDriveFolder,
     required this.onDisconnect,
   });
 
@@ -2556,6 +2701,7 @@ class _ConnectionCard extends ConsumerWidget {
   final VoidCallback onClearLocalFolder;
   final VoidCallback onConnect;
   final VoidCallback onSync;
+  final VoidCallback onChangeDriveFolder;
   final VoidCallback onDisconnect;
 
   @override
@@ -2709,23 +2855,55 @@ class _ConnectionCard extends ConsumerWidget {
                   overflow: mobile ? TextOverflow.ellipsis : null,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
-                if (!connected) ...[
+                const SizedBox(height: 10),
+                Container(
+                  key: const Key('active-storage-target'),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 11,
+                    vertical: 9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        connected
+                            ? Icons.cloud_done_outlined
+                            : localStorage.configured
+                            ? Icons.folder_copy_outlined
+                            : Icons.storage_rounded,
+                        size: 19,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '원본: 이 기기 앱 DB · 현재 자동 보관: '
+                          '${connected
+                              ? 'Google Drive'
+                              : localStorage.configured
+                              ? '로컬 폴더'
+                              : '설정 안 됨'}',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (connected) ...[
+                  _DriveFolderStatusPanel(connection: connection),
                   const SizedBox(height: 10),
-                  _LocalFolderStatusPanel(
-                    state: localStorage,
-                    compact: mobile,
-                    onChooseFolder: onChooseLocalFolder,
-                    onRestore: onRestoreLocal,
-                    onClear: onClearLocalFolder,
-                  ),
-                ] else if (localStorage.configured) ...[
-                  const SizedBox(height: 9),
-                  Text(
-                    '로컬 폴더 ${localStorage.settings.displayName}은(는) '
-                    'Drive 연결 해제 시 다시 사용할 대기 위치로 유지됩니다.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
                 ],
+                _LocalFolderStatusPanel(
+                  state: localStorage,
+                  compact: mobile,
+                  onChooseFolder: onChooseLocalFolder,
+                  onRestore: onRestoreLocal,
+                  onClear: onClearLocalFolder,
+                ),
                 if (connected && localStorage.pendingImportCount > 0) ...[
                   const SizedBox(height: 6),
                   Text(
@@ -2897,11 +3075,35 @@ class _ConnectionCard extends ConsumerWidget {
                   label: Text(mockMode ? 'Mock 연결' : 'Google 연결'),
                 );
               }
-              return TextButton(
-                onPressed: connection.busy || connection.policy.offlineLock
-                    ? null
-                    : onDisconnect,
-                child: const Text('이 기기에서 연결 해제'),
+              return MenuAnchor(
+                menuChildren: [
+                  MenuItemButton(
+                    key: const Key('change-drive-folder'),
+                    onPressed: connection.busy || connection.policy.offlineLock
+                        ? null
+                        : onChangeDriveFolder,
+                    leadingIcon: const Icon(Icons.drive_file_move_outline),
+                    child: const Text('Drive 폴더 변경'),
+                  ),
+                  MenuItemButton(
+                    key: const Key('disconnect-google-device'),
+                    onPressed: connection.busy || connection.policy.offlineLock
+                        ? null
+                        : onDisconnect,
+                    leadingIcon: const Icon(Icons.link_off_rounded),
+                    child: const Text('이 기기에서 연결 해제'),
+                  ),
+                ],
+                builder: (context, controller, child) => OutlinedButton.icon(
+                  key: const Key('drive-management-menu'),
+                  onPressed: connection.busy || connection.policy.offlineLock
+                      ? null
+                      : () => controller.isOpen
+                            ? controller.close()
+                            : controller.open(),
+                  icon: const Icon(Icons.settings_outlined),
+                  label: const Text('Drive 관리'),
+                ),
               );
             }
 
@@ -3324,6 +3526,106 @@ String _syncSectionLabel(String section) => switch (section) {
   _ => section,
 };
 
+class _DriveFolderStatusPanel extends StatelessWidget {
+  const _DriveFolderStatusPanel({required this.connection});
+
+  final ConnectionState connection;
+
+  @override
+  Widget build(BuildContext context) {
+    final folderId = connection.folderId;
+    final folderName = connection.folderName ?? 'WordStudyData';
+
+    Future<void> copyFolderId() async {
+      if (folderId == null) return;
+      await Clipboard.setData(ClipboardData(text: folderId));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Drive 폴더 ID를 복사했습니다.')));
+    }
+
+    Future<void> openFolder() async {
+      if (folderId == null) return;
+      final opened = await launchUrl(
+        Uri.https('drive.google.com', '/drive/folders/$folderId'),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Drive 폴더를 열지 못했습니다. 폴더 ID를 복사해 확인해 주세요.'),
+          ),
+        );
+      }
+    }
+
+    return Container(
+      key: const Key('drive-folder-location'),
+      padding: const EdgeInsets.all(11),
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.primaryContainer.withValues(alpha: 0.28),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.add_to_drive_rounded, size: 20),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Google Drive / $folderName',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      folderId == null ? '폴더 ID 확인 중' : '폴더 ID: $folderId',
+                      key: const Key('drive-folder-identifier'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 4,
+            runSpacing: 4,
+            children: [
+              TextButton.icon(
+                key: const Key('open-drive-folder'),
+                onPressed: folderId == null ? null : openFolder,
+                icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                label: const Text('Drive에서 열기'),
+              ),
+              TextButton.icon(
+                key: const Key('copy-drive-folder-id'),
+                onPressed: folderId == null ? null : copyFolderId,
+                icon: const Icon(Icons.copy_rounded, size: 18),
+                label: const Text('폴더 ID 복사'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LocalFolderStatusPanel extends StatelessWidget {
   const _LocalFolderStatusPanel({
     required this.state,
@@ -3350,11 +3652,45 @@ class _LocalFolderStatusPanel extends StatelessWidget {
         : configured
         ? AppTheme.success
         : AppTheme.warning;
+    final rawLocation = state.settings.locationId;
     final locationDetail =
         state.settings.locationKind ==
             LocalStorageLocationKind.androidDocumentTree
         ? 'Android 문서 폴더 · 재실행 후에도 권한 유지'
-        : state.settings.locationId;
+        : rawLocation == null
+        ? null
+        : path.basename(rawLocation).toLowerCase() == 'sprache'
+        ? rawLocation
+        : path.join(rawLocation, 'Sprache');
+
+    Future<void> copyLocation() async {
+      if (locationDetail == null) return;
+      await Clipboard.setData(ClipboardData(text: locationDetail));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('실제 로컬 저장 경로를 복사했습니다.')));
+    }
+
+    Future<void> openLocation() async {
+      if (locationDetail == null ||
+          state.settings.locationKind !=
+              LocalStorageLocationKind.fileSystemPath) {
+        return;
+      }
+      final opened = await launchUrl(
+        Uri.directory(
+          locationDetail,
+          windows: defaultTargetPlatform == TargetPlatform.windows,
+        ),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!opened && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('폴더를 열지 못했습니다. 경로를 복사해 확인해 주세요.')),
+        );
+      }
+    }
 
     return Semantics(
       liveRegion: hasError || state.busy,
@@ -3438,6 +3774,22 @@ class _LocalFolderStatusPanel extends StatelessWidget {
                 spacing: 4,
                 runSpacing: 4,
                 children: [
+                  if (state.settings.locationKind ==
+                      LocalStorageLocationKind.fileSystemPath)
+                    TextButton.icon(
+                      key: const Key('open-local-folder'),
+                      onPressed: state.busy ? null : openLocation,
+                      icon: const Icon(Icons.folder_open_rounded, size: 18),
+                      label: const Text('폴더 열기'),
+                    ),
+                  if (state.settings.locationKind ==
+                      LocalStorageLocationKind.fileSystemPath)
+                    TextButton.icon(
+                      key: const Key('copy-local-folder-path'),
+                      onPressed: state.busy ? null : copyLocation,
+                      icon: const Icon(Icons.copy_rounded, size: 18),
+                      label: const Text('경로 복사'),
+                    ),
                   TextButton.icon(
                     key: const Key('change-local-folder'),
                     onPressed: state.busy ? null : onChooseFolder,
@@ -3915,6 +4267,55 @@ class _ConnectionStatus extends StatelessWidget {
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsCategoryPicker extends StatelessWidget {
+  const _SettingsCategoryPicker({
+    required this.selected,
+    required this.showWindows,
+    required this.onSelected,
+  });
+
+  final _SettingsCategory selected;
+  final bool showWindows;
+  final ValueChanged<_SettingsCategory> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = _SettingsCategory.values
+        .where(
+          (category) => category != _SettingsCategory.windows || showWindows,
+        )
+        .toList(growable: false);
+    return Semantics(
+      container: true,
+      label: '설정 카테고리',
+      child: Material(
+        color: Colors.transparent,
+        child: SingleChildScrollView(
+          key: const Key('settings-category-picker'),
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var index = 0; index < categories.length; index++) ...[
+                if (index > 0) const SizedBox(width: 7),
+                ChoiceChip(
+                  key: Key('settings-category-${categories[index].name}'),
+                  avatar: Icon(
+                    _settingsCategoryIcon(categories[index]),
+                    size: 17,
+                  ),
+                  label: Text(_settingsCategoryLabel(categories[index])),
+                  selected: selected == categories[index],
+                  onSelected: (_) => onSelected(categories[index]),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );

@@ -25,6 +25,7 @@ import '../domain/library_search.dart';
 import '../domain/local_search_query.dart';
 import '../domain/onboarding_profile.dart';
 import '../domain/progress.dart';
+import '../domain/quiz_session_support.dart';
 import '../domain/review_forecast.dart';
 import '../domain/scheduler.dart';
 import '../domain/session_enhancements.dart';
@@ -563,6 +564,26 @@ class AppController extends StateNotifier<AppState> {
     }
   }
 
+  /// Restores the exact queue entry captured before a transactional Drive
+  /// folder change. This is intentionally separate from normal retry handling:
+  /// a failed candidate folder must not consume, replace, or back off the
+  /// user's pre-existing local upload.
+  Future<void> restorePendingSyncAfterFolderRollback(
+    PendingSyncOperation? operation,
+  ) {
+    return _serializePersistenceWrite(() async {
+      final current = state.pendingSync;
+      if (operation == null) {
+        if (current != null) {
+          await _store.deletePendingSync(current.operationId);
+        }
+        if (mounted) state = state.copyWith(pendingSync: null);
+        return;
+      }
+      await _replacePendingSyncSnapshot(operation);
+    });
+  }
+
   List<LearningItem> get courseItems {
     return itemsForSubject(state.activeSubjectId);
   }
@@ -688,20 +709,30 @@ class AppController extends StateNotifier<AppState> {
     return values;
   }
 
-  List<LearningGroupDefinition> get availableLearningGroupDefinitions {
+  List<LearningGroupDefinition> learningGroupDefinitionsForSubject(
+    String subjectId,
+  ) {
+    final normalizedSubjectId = normalizeStudySubjectId(subjectId);
     final definitions = _definitionsIncludingLegacyTags(
       state.preferences.learningGroups.where(
-        (group) => group.subjectId == state.activeSubjectId,
+        (group) => group.subjectId == normalizedSubjectId,
       ),
-      courseItems,
+      itemsForSubject(normalizedSubjectId),
     );
     definitions.sort(_compareLearningGroupDefinitions);
     return List.unmodifiable(definitions);
   }
 
-  List<String> get availableLearningGroups => [
-    for (final group in availableLearningGroupDefinitions) group.name,
+  List<LearningGroupDefinition> get availableLearningGroupDefinitions =>
+      learningGroupDefinitionsForSubject(state.activeSubjectId);
+
+  List<String> learningGroupsForSubject(String subjectId) => [
+    for (final group in learningGroupDefinitionsForSubject(subjectId))
+      group.name,
   ];
+
+  List<String> get availableLearningGroups =>
+      learningGroupsForSubject(state.activeSubjectId);
 
   LearningGroupDefinition? learningGroupDefinition(String groupName) {
     final normalized = normalizeLearningGroupName(groupName);
@@ -2432,6 +2463,7 @@ class AppController extends StateNotifier<AppState> {
     StudyInputCheckpoint? inputCheckpoint,
     bool clearInputCheckpoint = false,
     List<StudyAttemptMetric>? attemptMetrics,
+    List<QuizAttemptReview>? attemptReviews,
     String? expectedSessionId,
   }) {
     final current = state.activeStudySession;
@@ -2458,6 +2490,11 @@ class AppController extends StateNotifier<AppState> {
           : List.unmodifiable(
               attemptMetrics.take(StudyLimits.maxActiveQueueEntries),
             ),
+      attemptReviews: attemptReviews == null
+          ? null
+          : List.unmodifiable(
+              attemptReviews.take(StudyLimits.maxActiveQueueEntries),
+            ),
       currentIndex: currentIndex,
       correctCount: correctCount,
       wrongCount: wrongCount,
@@ -2481,6 +2518,7 @@ class AppController extends StateNotifier<AppState> {
     StudyInputCheckpoint? inputCheckpoint,
     bool clearInputCheckpoint = false,
     List<StudyAttemptMetric>? attemptMetrics,
+    List<QuizAttemptReview>? attemptReviews,
     String? expectedSessionId,
   }) {
     final current = state.activeStudySession;
@@ -2510,6 +2548,11 @@ class AppController extends StateNotifier<AppState> {
           ? null
           : List.unmodifiable(
               attemptMetrics.take(StudyLimits.maxActiveQueueEntries),
+            ),
+      attemptReviews: attemptReviews == null
+          ? null
+          : List.unmodifiable(
+              attemptReviews.take(StudyLimits.maxActiveQueueEntries),
             ),
       updatedAt: occurredAt.toUtc(),
     );
@@ -3092,6 +3135,86 @@ class AppController extends StateNotifier<AppState> {
       if (_contentValidator.identityKey(item) == identityKey) return item;
     }
     return null;
+  }
+
+  List<({LearningItem item, double score})> similarItemsForText({
+    required String subjectId,
+    required String text,
+    int limit = 3,
+  }) {
+    final sourceText = text.trim();
+    if (sourceText.runes.length < 2 || limit <= 0) return const [];
+    final matches = <({LearningItem item, double score})>[];
+    for (final item in itemsForSubject(subjectId)) {
+      final score = _duplicateRepairAnalyzer.textSimilarity(
+        sourceText,
+        item.text,
+      );
+      if (score >= _duplicateRepairAnalyzer.minimumSimilarity && score < 1) {
+        matches.add((item: item, score: score));
+      }
+    }
+    matches.sort((left, right) {
+      final byScore = right.score.compareTo(left.score);
+      return byScore != 0 ? byScore : left.item.text.compareTo(right.item.text);
+    });
+    return List.unmodifiable(matches.take(limit));
+  }
+
+  List<LearningItem> exampleSuggestionsForText({
+    required String subjectId,
+    required String text,
+    int limit = 3,
+  }) {
+    final query = text.trim().toLowerCase();
+    if (query.isEmpty || limit <= 0) return const [];
+    final suggestions = itemsForSubject(subjectId)
+        .where(
+          (item) =>
+              item.kind == LearningItemKind.sentence &&
+              item.text.toLowerCase().contains(query),
+        )
+        .toList(growable: false);
+    suggestions.sort((left, right) {
+      final leftStarts = left.text.toLowerCase().startsWith(query);
+      final rightStarts = right.text.toLowerCase().startsWith(query);
+      if (leftStarts != rightStarts) return leftStarts ? -1 : 1;
+      return left.text.length.compareTo(right.text.length);
+    });
+    return List.unmodifiable(suggestions.take(limit));
+  }
+
+  List<String> contentTagSuggestions({
+    required String subjectId,
+    String query = '',
+    Set<String> excludedTags = const {},
+    int limit = 6,
+  }) {
+    if (limit <= 0) return const [];
+    final normalizedQuery = query.trim().toLowerCase();
+    final counts = <String, int>{};
+    for (final item in itemsForSubject(subjectId)) {
+      for (final tag in item.tags) {
+        if (tag.startsWith('unit-') ||
+            tag.startsWith(learningGroupTagPrefix) ||
+            tag.startsWith(importDistributionTagPrefix) ||
+            excludedTags.contains(tag) ||
+            (normalizedQuery.isNotEmpty &&
+                !tag.toLowerCase().contains(normalizedQuery))) {
+          continue;
+        }
+        counts.update(tag, (value) => value + 1, ifAbsent: () => 1);
+      }
+    }
+    final tags = counts.keys.toList(growable: false)
+      ..sort((left, right) {
+        final leftPrefix = left.toLowerCase().startsWith(normalizedQuery);
+        final rightPrefix = right.toLowerCase().startsWith(normalizedQuery);
+        if (leftPrefix != rightPrefix) return leftPrefix ? -1 : 1;
+        final byCount = counts[right]!.compareTo(counts[left]!);
+        return byCount != 0 ? byCount : left.compareTo(right);
+      });
+    return List.unmodifiable(tags.take(limit));
   }
 
   DuplicateRepairCatalog duplicateRepairCatalog({String? subjectId}) {
@@ -4161,6 +4284,34 @@ class AppController extends StateNotifier<AppState> {
       remoteJson: remotePreferences.interaction.toJson(),
       remoteWhenUndated: remoteSettingsWins,
     );
+    final winningInteraction = remoteInteractionWins
+        ? remotePreferences.interaction
+        : state.preferences.interaction;
+    final otherInteraction = remoteInteractionWins
+        ? state.preferences.interaction
+        : remotePreferences.interaction;
+    final mergedDailyQuestCompletions = <String, String>{
+      ...otherInteraction.practiceCatalog.dailyQuestCompletionDayByScope,
+    };
+    for (final entry
+        in winningInteraction
+            .practiceCatalog
+            .dailyQuestCompletionDayByScope
+            .entries) {
+      final current = mergedDailyQuestCompletions[entry.key];
+      if (current == null || entry.value.compareTo(current) >= 0) {
+        mergedDailyQuestCompletions[entry.key] = entry.value;
+      }
+    }
+    final mergedInteraction = winningInteraction.copyWith(
+      practiceCatalog: winningInteraction.practiceCatalog.copyWith(
+        dailyQuestCompletionDayByScope: mergedDailyQuestCompletions,
+        dailyQuestAssignmentByScope: {
+          ...otherInteraction.practiceCatalog.dailyQuestAssignmentByScope,
+          ...winningInteraction.practiceCatalog.dailyQuestAssignmentByScope,
+        },
+      ),
+    );
     final mergedDailyGoals = _mergeDailyGoals(
       local: state.preferences.dailyGoalsBySubject,
       remote: remotePreferences.dailyGoalsBySubject,
@@ -4269,9 +4420,7 @@ class AppController extends StateNotifier<AppState> {
       experience: remoteExperienceWins
           ? remotePreferences.experience
           : state.preferences.experience,
-      interaction: remoteInteractionWins
-          ? remotePreferences.interaction
-          : state.preferences.interaction,
+      interaction: mergedInteraction,
       ttsRate: remoteInteractionWins
           ? remotePreferences.ttsRate
           : state.preferences.ttsRate,
@@ -4500,6 +4649,7 @@ class AppController extends StateNotifier<AppState> {
   Future<Map<String, Object?>> replaceWithSyncSnapshot(
     Map<String, Object?> snapshot, {
     bool? driveConnected,
+    bool preserveEmptyActiveStudy = false,
   }) async {
     _snapshotValidator.validate(snapshot);
     final schemaVersion = (snapshot['schemaVersion'] as num?)?.toInt() ?? 1;
@@ -4572,8 +4722,10 @@ class AppController extends StateNotifier<AppState> {
       (left, right) => right.startedAt.compareTo(left.startedAt),
     );
     final rawActiveStudy =
-        _activeStudyStateFromJson(snapshot['activeStudy']) ??
-        StoredActiveStudyState(changedAt: DateTime.now().toUtc());
+        snapshot['activeStudy'] == null && preserveEmptyActiveStudy
+        ? const StoredActiveStudyState()
+        : _activeStudyStateFromJson(snapshot['activeStudy']) ??
+              StoredActiveStudyState(changedAt: DateTime.now().toUtc());
     final activeSession = rawActiveStudy.session;
     final activeStudy = activeSession == null
         ? rawActiveStudy
@@ -4657,11 +4809,7 @@ class AppController extends StateNotifier<AppState> {
     );
     await _store.savePreferences(next.preferences);
     await _store.replaceStudySessions(next.recentSessions);
-    if (activeStudy.session case final session?) {
-      await _store.saveActiveStudySession(session);
-    } else {
-      await _store.clearActiveStudySession(activeStudy.changedAt!);
-    }
+    await _store.replaceActiveStudyState(activeStudy);
     if (mounted) {
       state = next;
       unawaited(_reconcileStudyNotifications(next.preferences));

@@ -189,7 +189,10 @@ void main() {
       '복구할 수 있는',
     );
     await tester.pump(const Duration(milliseconds: 700));
-    expect(await store.loadQuickContentDraft(), isNotNull);
+    expect(
+      await store.loadQuickContentDraft(subjectId: 'language:en'),
+      isNotNull,
+    );
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();

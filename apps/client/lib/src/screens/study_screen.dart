@@ -27,6 +27,7 @@ import '../domain/study_completion_receipt.dart';
 import '../domain/study_interaction_preferences.dart';
 import '../domain/study_preferences.dart';
 import '../domain/study_routines.dart';
+import '../domain/study_runtime_modes.dart';
 import '../domain/study_subject.dart';
 import '../services/app_feedback_service.dart';
 import '../services/app_clock.dart';
@@ -42,7 +43,14 @@ import '../widgets/keyboard_help_overlay.dart';
 import '../widgets/quick_content_sheet.dart';
 import '../widgets/privacy_mode_scope.dart';
 
-enum _ExerciseMode { recognition, production, cloze, sentenceOrder, listening }
+enum _ExerciseMode {
+  recognition,
+  production,
+  cloze,
+  sentenceOrder,
+  listening,
+  listeningDiscrimination,
+}
 
 enum _SessionManagementAction {
   options,
@@ -56,6 +64,8 @@ enum _SessionManagementAction {
 }
 
 enum _ExistingSessionAction { cancel, resume, replace }
+
+enum _FeedbackSecondaryAction { quickAdd, memoryHint }
 
 const _memoryHintField = 'memoryHint';
 const _baseContentCorrectionField = 'quizContent';
@@ -82,6 +92,7 @@ class StudyScreen extends ConsumerStatefulWidget {
     this.historyFilter = StudyHistoryFilter.all,
     this.resume = false,
     this.customPlan = false,
+    this.examMode = false,
     this.startMatchSprint = false,
     this.practiceActivityId,
     this.playlistActivityIds = const [],
@@ -96,6 +107,7 @@ class StudyScreen extends ConsumerStatefulWidget {
   final StudyHistoryFilter historyFilter;
   final bool resume;
   final bool customPlan;
+  final bool examMode;
   final bool startMatchSprint;
   final String? practiceActivityId;
   final List<String> playlistActivityIds;
@@ -105,7 +117,8 @@ class StudyScreen extends ConsumerStatefulWidget {
   ConsumerState<StudyScreen> createState() => _StudyScreenState();
 }
 
-class _StudyScreenState extends ConsumerState<StudyScreen> {
+class _StudyScreenState extends ConsumerState<StudyScreen>
+    with WidgetsBindingObserver {
   late final MediaLifecycleRegistry _mediaLifecycleRegistry;
   final _answerController = TextEditingController();
   final _answerFocus = FocusNode(debugLabel: 'study-answer-input');
@@ -121,11 +134,15 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   Timer? _autoAdvanceTimer;
   Timer? _draftCheckpointTimer;
   Timer? _breakReminderTimer;
+  Timer? _examTimer;
   var _questionGeneration = 0;
   var _autoPlayedQuestionGeneration = -1;
   var _speechGeneration = 0;
   var _subjectChangeHandled = false;
   final _adaptiveEngine = const AdaptiveStudySessionEngine();
+  final _liveDifficultyEngine = const LiveDifficultyEngine();
+  final _listeningDiscriminationBuilder =
+      const ListeningDiscriminationBuilder();
 
   late List<LearningItem> _queue;
   late String _subjectIdAtStart;
@@ -173,9 +190,20 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   var _adaptiveSkillByItemId = <String, StudySkill>{};
   var _saveAnnouncement = '';
   DateTime? _sessionSavedAt;
+  var _examSetupComplete = false;
+  var _examTimedOut = false;
+  var _examRemainingSeconds = 0;
+  ExamConfiguration _examConfiguration = const ExamConfiguration();
+  final _liveDifficultyAttempts = <LiveDifficultyAttempt>[];
+  LiveDifficultyLevel _liveDifficulty = LiveDifficultyLevel.standard;
+  LiveDifficultyLevel? _liveDifficultyLock;
+  String _liveDifficultyReason = '초기 문항은 균형 난이도로 시작합니다.';
+  var _showListeningTextFallback = false;
 
   LearningItem get _item => _queue[_index];
   bool get _isPlaylist => widget.playlistActivityIds.length >= 2;
+  bool get _isListeningDiscrimination =>
+      widget.practiceActivityId == 'listening-discrimination';
   String get _returnRoute => _isPlaylist
       ? '/learn'
       : widget.customPlan
@@ -185,6 +213,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       : '/path';
 
   _ExerciseMode get _mode {
+    if (widget.practiceActivityId == 'listening-discrimination') {
+      return _ExerciseMode.listeningDiscrimination;
+    }
     switch (widget.mode) {
       case StudyMode.meaning:
         return _ExerciseMode.recognition;
@@ -208,6 +239,16 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     }
     if (_sessionAnswerDirection != StudyAnswerDirection.mixed) {
       return _ExerciseMode.recognition;
+    }
+    if (!widget.examMode && widget.mode == StudyMode.mixed) {
+      if (_liveDifficulty == LiveDifficultyLevel.supportive &&
+          _item.capabilities.contains(ExerciseCapability.recognition)) {
+        return _ExerciseMode.recognition;
+      }
+      if (_liveDifficulty == LiveDifficultyLevel.challenge &&
+          _item.capabilities.contains(ExerciseCapability.production)) {
+        return _ExerciseMode.production;
+      }
     }
     final recommendedSkill =
         _runtimeOptions.strategy == StudySessionStrategy.custom
@@ -268,7 +309,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _sessionAnswerDirection == StudyAnswerDirection.meaningToLearning;
 
   bool get _isChoiceMode =>
-      _mode == _ExerciseMode.recognition || _mode == _ExerciseMode.cloze;
+      _mode == _ExerciseMode.recognition ||
+      _mode == _ExerciseMode.cloze ||
+      _mode == _ExerciseMode.listeningDiscrimination;
 
   bool get _isTextInputMode =>
       _mode == _ExerciseMode.production || _mode == _ExerciseMode.listening;
@@ -313,11 +356,20 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _ExerciseMode.cloze => _clozeAnswer,
     _ExerciseMode.sentenceOrder => _item.text,
     _ExerciseMode.listening => _item.text,
+    _ExerciseMode.listeningDiscrimination => _item.text,
   };
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _examSetupComplete = !widget.examMode;
+    if (widget.examMode) {
+      _recordProgress = false;
+      _hintsEnabled = false;
+      _autoAdvanceOverride = false;
+      _liveDifficultyLock = LiveDifficultyLevel.standard;
+    }
     _baseTtsService = ref.read(studyTtsServiceProvider);
     _mediaLifecycleRegistry = ref.read(mediaLifecycleRegistryProvider);
     _mediaLifecycleRegistry.register(
@@ -340,6 +392,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       showKoreanReading: initialPreferences.interaction.showKoreanReading,
       showNativeReading: initialPreferences.interaction.showNativeReading,
       ttsRate: initialPreferences.ttsRate,
+      liveDifficultyLock: _liveDifficultyLock,
+      practiceActivityId: widget.practiceActivityId,
+      examSetupPending: widget.examMode,
     );
     if (widget.customPlan) {
       final plan = controller.activeSessionPlan;
@@ -357,6 +412,16 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _backlogRecovery = plan.backlogRecovery.enabled;
     } else if (widget.resume) {
       _backlogRecovery = controller.activeSessionPlan.backlogRecovery.enabled;
+    }
+    // Exam integrity rules are absolute and must win over a saved/custom plan.
+    if (widget.examMode) {
+      _recordProgress = false;
+      _hintsEnabled = false;
+      _autoAdvanceOverride = false;
+      _liveDifficultyLock = LiveDifficultyLevel.standard;
+      _runtimeOptions = _runtimeOptions.copyWith(
+        liveDifficultyLock: LiveDifficultyLevel.standard,
+      );
     }
     if (!widget.mode.allowsAnswerDirectionOverride) {
       _sessionAnswerDirection = widget.mode.effectiveFixedAnswerDirection;
@@ -401,13 +466,45 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     if (active != null) {
       _activeSession = active;
       _runtimeOptions = active.runtimeOptions;
+      _liveDifficultyLock = _runtimeOptions.liveDifficultyLock;
+      _liveDifficultyAttempts
+        ..clear()
+        ..addAll(
+          active.attemptMetrics
+              .skip(max(0, active.attemptMetrics.length - 20))
+              .map(
+                (metric) => LiveDifficultyAttempt(
+                  correct: metric.correct,
+                  responseTime: metric.responseTime,
+                  usedHint: metric.usedHint,
+                ),
+              ),
+        );
+      final restoredDifficulty = _liveDifficultyEngine.decide(
+        attempts: _liveDifficultyAttempts,
+        manualLock: _liveDifficultyLock,
+      );
+      _liveDifficulty = restoredDifficulty.level;
+      _liveDifficultyReason = restoredDifficulty.reason;
       _attemptMetrics.addAll(active.attemptMetrics);
+      _attemptReviews.addAll(active.attemptReviews);
       final byId = {for (final item in controller.courseItems) item.id: item};
       _queue = active.itemIds
           .map((id) => byId[id])
           .whereType<LearningItem>()
           .toList(growable: true);
       _plannedCount = _queue.length;
+      final restoredExamConfiguration = _runtimeOptions.examConfiguration;
+      if (widget.examMode && restoredExamConfiguration != null) {
+        _examConfiguration = restoredExamConfiguration.normalizedFor(
+          _queue.length,
+        );
+        final deadline = _runtimeOptions.examDeadline;
+        if (deadline != null) {
+          _examRemainingSeconds = max(0, deadline.difference(_now).inSeconds);
+          _examSetupComplete = true;
+        }
+      }
       _sessionStartedAt = active.startedAt;
       _sessionId = active.sessionId;
       _sessionCorrect = active.correctCount;
@@ -489,6 +586,23 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
             )
             .toList(growable: true);
       }
+      if (_isListeningDiscrimination) {
+        final candidates = controller.selectedItems;
+        final eligible = _queue
+            .where(
+              (item) => _listeningDiscriminationBuilder.canBuild(
+                target: item,
+                candidates: candidates,
+              ),
+            )
+            .toList(growable: true);
+        _queue = eligible
+            .take(
+              widget.itemLimit ??
+                  ref.read(appControllerProvider).preferences.sessionItemLimit,
+            )
+            .toList(growable: true);
+      }
       _refreshQueueRecommendation(fromIndex: 0, reorder: true);
       _plannedCount = _queue.length;
       _sessionStartedAt = _now;
@@ -536,12 +650,22 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         }
       },
     );
-    if (widget.startMatchSprint && _queue.isNotEmpty) {
+    if (widget.examMode && _queue.isNotEmpty && !_completed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_examSetupComplete) {
+          _startExamCountdown();
+        } else {
+          unawaited(_configureAndStartExam());
+        }
+      });
+    }
+    if (widget.startMatchSprint && _queue.isNotEmpty && !widget.examMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) unawaited(_showMatchSprint());
       });
     }
-    if (_queue.isNotEmpty) {
+    if (_queue.isNotEmpty && !widget.examMode) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _scheduleBreakReminder();
       });
@@ -577,6 +701,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
             inputCheckpoint: inputCheckpoint,
             clearInputCheckpoint: inputCheckpoint == null,
             attemptMetrics: _attemptMetrics,
+            attemptReviews: _attemptReviews,
             expectedSessionId: _sessionId,
           );
       context.go('/learn');
@@ -646,6 +771,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           if (widget.historyFilter != StudyHistoryFilter.all)
             'historyFilter': widget.historyFilter.name,
           if (widget.customPlan) 'custom': 'true',
+          if (widget.examMode) 'exam': 'true',
           'practiceActivityId': ?widget.practiceActivityId,
           if (widget.playlistActivityIds.length >= 2)
             'playlist': widget.playlistActivityIds.join(','),
@@ -664,10 +790,12 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _mediaLifecycleRegistry.unregister(this);
     _autoAdvanceTimer?.cancel();
     _draftCheckpointTimer?.cancel();
     _breakReminderTimer?.cancel();
+    _examTimer?.cancel();
     _questionGeneration++;
     _speechGeneration++;
     _answerController.dispose();
@@ -676,6 +804,164 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _feedbackFocus.dispose();
     unawaited(_baseTtsService.stop());
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!widget.examMode || !_examSetupComplete || _completed) return;
+    switch (state) {
+      case AppLifecycleState.resumed:
+        _startExamCountdown();
+        return;
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.hidden:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        _examTimer?.cancel();
+        return;
+    }
+  }
+
+  Future<void> _configureAndStartExam() async {
+    final configuration = await showFocusRestoringDialog<ExamConfiguration>(
+      context: context,
+      fallbackFocus: _questionFocus,
+      barrierDismissible: false,
+      builder: (context) => _ExamSetupDialog(
+        availableQuestions: _queue.length,
+        initial: _examConfiguration.normalizedFor(_queue.length),
+      ),
+    );
+    if (!mounted) return;
+    if (configuration == null) {
+      ref
+          .read(appControllerProvider.notifier)
+          .clearActiveStudySession(expectedSessionId: _sessionId);
+      context.go(_returnRoute);
+      return;
+    }
+    final normalized = configuration.normalizedFor(_queue.length);
+    final items = _queue.take(normalized.questionCount).toList(growable: true);
+    final startedAt = _now;
+    final deadline = startedAt.add(normalized.timeLimit).toUtc();
+    setState(() {
+      _examConfiguration = normalized;
+      _queue = items;
+      _plannedCount = items.length;
+      _sessionStartedAt = startedAt;
+      _runtimeOptions = _runtimeOptions.copyWith(
+        examSetupPending: false,
+        examConfiguration: normalized,
+        examDeadline: deadline,
+      );
+      _activeSession = _activeSession.copyWith(
+        itemIds: items.map((item) => item.id).toList(growable: false),
+        initialItemIds: items.map((item) => item.id).toList(growable: false),
+        startedAt: startedAt,
+        updatedAt: startedAt,
+        runtimeOptions: _runtimeOptions,
+      );
+      _examRemainingSeconds = normalized.timeLimit.inSeconds;
+      _examSetupComplete = true;
+      _prepareExercise();
+    });
+    _persistActiveSession(0, clearInputCheckpoint: true);
+    _startExamCountdown();
+    _scheduleQuestionAudio();
+  }
+
+  void _startExamCountdown() {
+    _examTimer?.cancel();
+    final initialRemaining = _examSecondsUntilDeadline();
+    if (initialRemaining <= 0) {
+      _finishExamDueToTimeout();
+      return;
+    }
+    if (_examRemainingSeconds != initialRemaining && mounted) {
+      setState(() => _examRemainingSeconds = initialRemaining);
+    }
+    _examTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted || _completed) {
+        timer.cancel();
+        return;
+      }
+      final remaining = min(
+        _examSecondsUntilDeadline(),
+        _examRemainingSeconds - 1,
+      );
+      if (remaining <= 0) {
+        timer.cancel();
+        _finishExamDueToTimeout();
+        return;
+      }
+      if (remaining != _examRemainingSeconds) {
+        setState(() => _examRemainingSeconds = remaining);
+      }
+    });
+  }
+
+  int _examSecondsUntilDeadline() {
+    final deadline = _runtimeOptions.examDeadline;
+    if (deadline == null) return _examRemainingSeconds;
+    final milliseconds = deadline.difference(_now).inMilliseconds;
+    if (milliseconds <= 0) return 0;
+    return (milliseconds + 999) ~/ 1000;
+  }
+
+  void _finishExamDueToTimeout() {
+    if (_completed) return;
+    _completeExam(timedOut: true);
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      '시간이 끝나 시험을 자동 제출했습니다.',
+      Directionality.of(context),
+    );
+  }
+
+  void _completeExam({required bool timedOut}) {
+    if (_completed) return;
+    _examTimer?.cancel();
+    _examTimedOut = timedOut;
+    _speechGeneration++;
+    unawaited(_baseTtsService.stop());
+    ref
+        .read(appControllerProvider.notifier)
+        .clearActiveStudySession(expectedSessionId: _sessionId);
+    if (_sessionCorrect + _sessionWrong == 0) {
+      _saveAnnouncement = '응답한 문항이 없어 진도는 변경하지 않았습니다.';
+    } else {
+      unawaited(_saveSession());
+    }
+    _recordPracticeChallengeResult();
+    setState(() {
+      if (timedOut) _examRemainingSeconds = 0;
+      _completed = true;
+    });
+  }
+
+  Future<void> _confirmExamSubmission() async {
+    final submit = await showFocusRestoringDialog<bool>(
+      context: context,
+      fallbackFocus: _preferredQuestionFocus,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('시험을 지금 제출할까요?'),
+        content: Text(
+          '응답 ${_sessionCorrect + _sessionWrong}/${_examConfiguration.questionCount}문항을 기준으로 채점하며, 미응답은 오답으로 계산합니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('계속 풀기'),
+          ),
+          FilledButton(
+            key: const Key('submit-exam-early'),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('지금 제출'),
+          ),
+        ],
+      ),
+    );
+    if (submit == true && mounted) _completeExam(timedOut: false);
   }
 
   void _prepareExercise() {
@@ -687,6 +973,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _submittedAnswer = null;
     _hintLevel = 0;
     _speechPlayCount = 0;
+    _showListeningTextFallback = false;
     _answerController.clear();
     _orderedTokens = [];
     _remainingTokens = [..._item.sentenceTokens];
@@ -710,6 +997,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           generation != _questionGeneration ||
           generation == _autoPlayedQuestionGeneration ||
           _correct != null ||
+          !_examSetupComplete ||
+          (widget.examMode && _examRemainingSeconds <= 0) ||
           !_interaction.autoPlayQuestionAudio) {
         return;
       }
@@ -754,7 +1043,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       ),
       _ExerciseMode.recognition ||
       _ExerciseMode.cloze ||
-      _ExerciseMode.listening => (
+      _ExerciseMode.listening ||
+      _ExerciseMode.listeningDiscrimination => (
         language: _item.learningLanguage,
         text: _item.text,
       ),
@@ -1058,29 +1348,49 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   List<String> _choices() {
     final controller = ref.read(appControllerProvider.notifier);
     final candidates = controller.selectedItems;
+    final effectiveChoiceCount = _liveDifficulty.choiceCountFor(_choiceCount);
+    if (_mode == _ExerciseMode.listeningDiscrimination) {
+      return _listeningDiscriminationQuestion(
+        choiceCount: effectiveChoiceCount,
+      ).choices;
+    }
     if (_mode == _ExerciseMode.cloze) {
       return _applyChoiceOrder(
         _choiceBuilder.clozeChoices(
           target: _item,
           answer: _clozeAnswer,
           candidates: candidates,
-          count: _choiceCount,
+          count: effectiveChoiceCount,
         ),
       );
     }
     if (_recognitionIsReversed) {
-      return _reverseRecognitionChoices(candidates);
+      return _reverseRecognitionChoices(
+        candidates,
+        choiceCount: effectiveChoiceCount,
+      );
     }
     return _applyChoiceOrder(
       _choiceBuilder.recognitionChoices(
         target: _item,
         candidates: candidates,
-        count: _choiceCount,
+        count: effectiveChoiceCount,
       ),
     );
   }
 
-  List<String> _reverseRecognitionChoices(Iterable<LearningItem> candidates) {
+  ListeningDiscriminationQuestion _listeningDiscriminationQuestion({
+    int? choiceCount,
+  }) => _listeningDiscriminationBuilder.build(
+    target: _item,
+    candidates: ref.read(appControllerProvider.notifier).selectedItems,
+    choiceCount: choiceCount ?? _liveDifficulty.choiceCountFor(_choiceCount),
+  );
+
+  List<String> _reverseRecognitionChoices(
+    Iterable<LearningItem> candidates, {
+    required int choiceCount,
+  }) {
     final alternatives =
         candidates
             .where(
@@ -1096,7 +1406,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _normalizedChoice(_item.text): _item.text,
     };
     for (final candidate in alternatives) {
-      if (byNormalized.length >= _choiceCount) break;
+      if (byNormalized.length >= choiceCount) break;
       byNormalized.putIfAbsent(
         _normalizedChoice(candidate.text),
         () => candidate.text,
@@ -1130,6 +1440,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _ExerciseMode.cloze => QuizHintMode.cloze,
     _ExerciseMode.sentenceOrder => QuizHintMode.sentenceOrder,
     _ExerciseMode.listening => QuizHintMode.listening,
+    _ExerciseMode.listeningDiscrimination => QuizHintMode.listening,
   };
 
   String get _hintText {
@@ -1246,6 +1557,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _ExerciseMode.recognition || _ExerciseMode.cloze => _selectedChoice ?? '',
       _ExerciseMode.production ||
       _ExerciseMode.listening => _answerController.text,
+      _ExerciseMode.listeningDiscrimination => _selectedChoice ?? '',
       _ExerciseMode.sentenceOrder => _joinTokens(
         _orderedTokens,
         _item.learningLanguage,
@@ -1274,6 +1586,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       widget.mode == StudyMode.pronunciation
           ? StudySkill.pronunciation
           : StudySkill.listening,
+    _ExerciseMode.listeningDiscrimination => StudySkill.listening,
   };
 
   void _recordResponse(String answer, {bool forceWrong = false}) {
@@ -1286,6 +1599,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _ExerciseMode.cloze => <String>[_clozeAnswer],
       _ExerciseMode.sentenceOrder => <String>[_item.text],
       _ExerciseMode.listening => <String>[_item.text],
+      _ExerciseMode.listeningDiscrimination => <String>[_item.text],
     };
     final correct =
         !forceWrong &&
@@ -1349,8 +1663,13 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _pendingResponse = pending;
       _applyPendingOutcome(pending);
       _submittedAnswer = answer;
-      _correct = correct;
+      if (!widget.examMode) _correct = correct;
     });
+    if (widget.examMode) {
+      _commitPendingResponse();
+      _next();
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _correct != null) _feedbackFocus.requestFocus();
     });
@@ -1386,11 +1705,34 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _wrongItemIds.add(pending.item.id);
     _finalCorrectItemIds.remove(pending.item.id);
     _failureCountByItemId[pending.item.id] = pending.previousFailureCount + 1;
-    if (_queue.where((candidate) => candidate.id == pending.item.id).length <
-        3) {
+    if (!widget.examMode &&
+        _queue.where((candidate) => candidate.id == pending.item.id).length <
+            3) {
       _queue.add(pending.item);
       pending.retryAppended = true;
     }
+  }
+
+  void _updateLiveDifficulty(StudyAttemptMetric metric) {
+    _liveDifficultyAttempts.add(
+      LiveDifficultyAttempt(
+        correct: metric.correct,
+        responseTime: metric.responseTime,
+        usedHint: metric.usedHint,
+      ),
+    );
+    if (_liveDifficultyAttempts.length > 20) {
+      _liveDifficultyAttempts.removeRange(
+        0,
+        _liveDifficultyAttempts.length - 20,
+      );
+    }
+    final decision = _liveDifficultyEngine.decide(
+      attempts: _liveDifficultyAttempts,
+      manualLock: _liveDifficultyLock,
+    );
+    _liveDifficulty = decision.level;
+    _liveDifficultyReason = decision.reason;
   }
 
   void _restorePendingBaseline(_PendingQuizResponse pending) {
@@ -1505,9 +1847,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     }
     _attemptReviews.add(attempt);
     if (_attemptMetrics.length < 300) _attemptMetrics.add(metric);
+    if (!widget.examMode) _updateLiveDifficulty(metric);
     _pendingResponse = null;
     final nextIndex = (_index + 1).clamp(0, _queue.length);
-    if (nextIndex < _queue.length) {
+    if (!widget.examMode && nextIndex < _queue.length) {
       _refreshQueueRecommendation(fromIndex: nextIndex, reorder: true);
     }
     _persistActiveSession(nextIndex, clearInputCheckpoint: true);
@@ -1539,6 +1882,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     unawaited(_baseTtsService.stop());
     _commitPendingResponse();
     if (_index + 1 >= _queue.length) {
+      _examTimer?.cancel();
       ref
           .read(appControllerProvider.notifier)
           .clearActiveStudySession(expectedSessionId: _sessionId);
@@ -1561,7 +1905,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _persistActiveSession(_index);
     if (_mode == _ExerciseMode.production) {
       _answerFocus.requestFocus();
-    } else if (_mode == _ExerciseMode.listening) {
+    } else if (_mode == _ExerciseMode.listening ||
+        _mode == _ExerciseMode.listeningDiscrimination) {
       unawaited(_speak());
     }
   }
@@ -1636,27 +1981,36 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     if (_practiceResultSaved) return;
     final activityId = widget.practiceActivityId;
     if (activityId == null || activityId.trim().isEmpty) return;
-    final state = ref.read(appControllerProvider);
-    final interaction = state.preferences.interaction;
-    final launch = interaction.practiceCatalog.launchFor(activityId);
-    if (!launch.challengeScoringEnabled) return;
     final attempts = _sessionCorrect + _sessionWrong;
     if (attempts == 0) return;
     _practiceResultSaved = true;
-    final elapsedMs = max(1, _now.difference(_sessionStartedAt).inMilliseconds);
-    final challengeScore = PracticeChallengeScore.calculate(
-      correctCount: _sessionCorrect,
-      wrongCount: _sessionWrong,
-      elapsed: Duration(milliseconds: elapsedMs),
-      attemptMetrics: _attemptMetrics,
+    final state = ref.read(appControllerProvider);
+    final interaction = state.preferences.interaction;
+    final launch = interaction.practiceCatalog.launchFor(activityId);
+    var catalog = interaction.practiceCatalog.recordDailyQuestCompletion(
+      activityId: activityId,
+      subjectId: state.activeSubjectId,
+      completedAt: _now,
     );
-    _challengeScore = challengeScore;
-    final catalog = interaction.practiceCatalog.recordBest(
-      activityId,
-      score: challengeScore.total,
-      elapsedMs: elapsedMs,
-      at: _now,
-    );
+    if (launch.challengeScoringEnabled) {
+      final elapsedMs = max(
+        1,
+        _now.difference(_sessionStartedAt).inMilliseconds,
+      );
+      final challengeScore = PracticeChallengeScore.calculate(
+        correctCount: _sessionCorrect,
+        wrongCount: _sessionWrong,
+        elapsed: Duration(milliseconds: elapsedMs),
+        attemptMetrics: _attemptMetrics,
+      );
+      _challengeScore = challengeScore;
+      catalog = catalog.recordBest(
+        activityId,
+        score: challengeScore.total,
+        elapsedMs: elapsedMs,
+        at: _now,
+      );
+    }
     ref
         .read(appControllerProvider.notifier)
         .updateInteractionPreferences(
@@ -1686,6 +2040,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   }
 
   void _pauseAndExit() {
+    if (widget.examMode) {
+      unawaited(_confirmExamSubmission());
+      return;
+    }
     _draftCheckpointTimer?.cancel();
     final inputCheckpoint = _currentInputCheckpoint();
     _commitPendingResponse();
@@ -1705,6 +2063,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           inputCheckpoint: inputCheckpoint,
           clearInputCheckpoint: inputCheckpoint == null,
           attemptMetrics: _attemptMetrics,
+          attemptReviews: _attemptReviews,
           expectedSessionId: _sessionId,
         );
     if (paused != null) _activeSession = paused;
@@ -1740,6 +2099,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           inputCheckpoint: inputCheckpoint,
           clearInputCheckpoint: clearInputCheckpoint,
           attemptMetrics: _attemptMetrics,
+          attemptReviews: _attemptReviews,
           updatedAt: _now,
           expectedSessionId: _sessionId,
         );
@@ -1820,7 +2180,16 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       _correct = null;
       _wrongItemIds.clear();
       _finalCorrectItemIds.clear();
+      _failureCountByItemId.clear();
       _attemptMetrics.clear();
+      _attemptReviews.clear();
+      _liveDifficultyAttempts.clear();
+      final resetDifficulty = _liveDifficultyEngine.decide(
+        attempts: const [],
+        manualLock: _liveDifficultyLock,
+      );
+      _liveDifficulty = resetDifficulty.level;
+      _liveDifficultyReason = resetDifficulty.reason;
       _adaptiveReasonByItemId.clear();
       _adaptiveSkillByItemId.clear();
       _sessionStartedAt = startedAt;
@@ -1836,7 +2205,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _persistActiveSession(0, clearInputCheckpoint: true);
     _breakRemindersShown = 0;
     _scheduleBreakReminder();
-    if (_mode == _ExerciseMode.listening) unawaited(_speak());
+    if (_mode == _ExerciseMode.listening ||
+        _mode == _ExerciseMode.listeningDiscrimination) {
+      unawaited(_speak());
+    }
   }
 
   Future<void> _finishCurrentSession() async {
@@ -1876,6 +2248,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           showKoreanReading: _runtimeOptions.showKoreanReading,
           showNativeReading: _runtimeOptions.showNativeReading,
           ttsRate: _runtimeOptions.ttsRate,
+          liveDifficultyLock: _liveDifficultyLock,
         ),
       ),
     );
@@ -1891,7 +2264,22 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           : requestedDirection;
       _gradingStrength = options.gradingStrength;
       _inputProfile = options.inputProfile;
-      _runtimeOptions = options.runtimeOptions;
+      _liveDifficultyLock = options.liveDifficultyLock;
+      final difficulty = _liveDifficultyEngine.decide(
+        attempts: _liveDifficultyAttempts,
+        manualLock: _liveDifficultyLock,
+      );
+      _liveDifficulty = difficulty.level;
+      _liveDifficultyReason = difficulty.reason;
+      final selectedRuntime = options.runtimeOptions;
+      _runtimeOptions = _runtimeOptions.copyWith(
+        strategy: selectedRuntime.strategy,
+        breakReminderMinutes: selectedRuntime.breakReminderMinutes,
+        showKoreanReading: selectedRuntime.showKoreanReading,
+        showNativeReading: selectedRuntime.showNativeReading,
+        ttsRate: selectedRuntime.ttsRate,
+        liveDifficultyLock: selectedRuntime.liveDifficultyLock,
+      );
       _refreshQueueRecommendation(fromIndex: _index, reorder: false);
       if (_index + 1 < _queue.length) {
         _refreshQueueRecommendation(fromIndex: _index + 1, reorder: true);
@@ -1939,12 +2327,18 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     if (!mounted || result == null) return;
     final state = ref.read(appControllerProvider);
     final interaction = state.preferences.interaction;
-    final catalog = interaction.practiceCatalog.recordBest(
-      'match-sprint',
-      score: result.score,
-      elapsedMs: result.elapsedMs,
-      at: _now,
-    );
+    final catalog = interaction.practiceCatalog
+        .recordBest(
+          'match-sprint',
+          score: result.score,
+          elapsedMs: result.elapsedMs,
+          at: _now,
+        )
+        .recordDailyQuestCompletion(
+          activityId: 'match-sprint',
+          subjectId: state.activeSubjectId,
+          completedAt: _now,
+        );
     ref
         .read(appControllerProvider.notifier)
         .updateInteractionPreferences(
@@ -2186,8 +2580,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                 defaultTargetPlatform == TargetPlatform.windows ||
                 defaultTargetPlatform == TargetPlatform.macOS ||
                 defaultTargetPlatform == TargetPlatform.linux,
-            canChangeOptions: _correct == null,
-            canStartMatch: MatchSprintDeck.fromItems(_queue).canStart,
+            canChangeOptions: _correct == null && !widget.examMode,
+            canStartMatch:
+                !widget.examMode && MatchSprintDeck.fromItems(_queue).canStart,
+            canDeriveSession: !widget.examMode,
           ),
         );
     if (!mounted || action == null) return;
@@ -2201,16 +2597,23 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       case _SessionManagementAction.matchSprint:
         await _showMatchSprint();
       case _SessionManagementAction.restart:
+        if (widget.examMode) return;
         await _deriveSession(
           StudySessionOrigin.restarted,
           _activeSession.originalItemIds,
         );
       case _SessionManagementAction.wrongAnswers:
+        if (widget.examMode) return;
         await _deriveSession(StudySessionOrigin.wrongAnswers, wrongIds);
       case _SessionManagementAction.remaining:
+        if (widget.examMode) return;
         await _deriveSession(StudySessionOrigin.remaining, remainingIds);
       case _SessionManagementAction.finish:
-        await _finishCurrentSession();
+        if (widget.examMode) {
+          await _confirmExamSubmission();
+        } else {
+          await _finishCurrentSession();
+        }
     }
   }
 
@@ -2234,6 +2637,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
   }
 
   Future<void> _requestSystemBack() async {
+    if (widget.examMode) {
+      await _confirmExamSubmission();
+      return;
+    }
     final leave = await showFocusRestoringDialog<bool>(
       context: context,
       fallbackFocus: _isTextInputMode ? _answerFocus : _questionFocus,
@@ -2311,7 +2718,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    widget.customPlan
+                    _isListeningDiscrimination
+                        ? '소리 구별에 필요한 표현이 부족해요'
+                        : widget.customPlan
                         ? _isPlaylist
                               ? '이 게임에 맞는 표현이 없어요'
                               : '조건에 맞는 표현이 없어요'
@@ -2322,7 +2731,9 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    widget.customPlan
+                    _isListeningDiscrimination
+                        ? '현재 학습 조건 안에 듣기 가능한 표현과 서로 구별되는 후보가 최소 3개 필요해요. 그전에는 받아쓰기를 이용할 수 있어요.'
+                        : widget.customPlan
                         ? _isPlaylist
                               ? '플레이리스트로 돌아가 다른 게임을 이어서 선택해 주세요.'
                               : '세션 빌더에서 덱·난이도·태그 조건을 조금 넓혀 보세요.'
@@ -2335,17 +2746,23 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                   const SizedBox(height: 20),
                   FilledButton.icon(
                     onPressed: () => context.go(
-                      widget.mode == StudyMode.favorites
+                      _isListeningDiscrimination
+                          ? '/study?mode=listening'
+                          : widget.mode == StudyMode.favorites
                           ? '/library'
                           : _returnRoute,
                     ),
                     icon: Icon(
-                      widget.mode == StudyMode.favorites
+                      _isListeningDiscrimination
+                          ? Icons.headphones_rounded
+                          : widget.mode == StudyMode.favorites
                           ? Icons.star_border_rounded
                           : Icons.arrow_back_rounded,
                     ),
                     label: Text(
-                      widget.mode == StudyMode.favorites
+                      _isListeningDiscrimination
+                          ? '받아쓰기 열기'
+                          : widget.mode == StudyMode.favorites
                           ? '자료실에서 표현 저장'
                           : widget.customPlan
                           ? _isPlaylist
@@ -2368,9 +2785,17 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       final completionState = ref.watch(appControllerProvider);
       final completionConnection = ref.watch(connectionControllerProvider);
       final attempts = _sessionCorrect + _sessionWrong;
-      final accuracy = attempts == 0
-          ? 0
-          : (_sessionCorrect / attempts * 100).round();
+      final examReport = widget.examMode
+          ? ExamReport.evaluate(
+              configuration: _examConfiguration,
+              correctCount: _sessionCorrect,
+              answeredCount: attempts,
+              timedOut: _examTimedOut,
+            )
+          : null;
+      final accuracy =
+          examReport?.score ??
+          (attempts == 0 ? 0 : (_sessionCorrect / attempts * 100).round());
       final elapsed = max(1, _now.difference(_sessionStartedAt).inMinutes);
       final completionSummary = StudySessionSummary(
         sessionId: _sessionId,
@@ -2416,12 +2841,13 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
           attempts: List.unmodifiable(_attemptReviews),
           attemptMetrics: List.unmodifiable(_attemptMetrics),
           challengeScore: _challengeScore,
+          examReport: examReport,
           saveStatus: _saveAnnouncement.isEmpty
               ? '학습 결과를 기기에 저장하고 있습니다.'
               : _saveAnnouncement,
           receipt: receipt,
           recordProgress: _recordProgress,
-          onRetryMistakes: _retryMistakes,
+          onRetryMistakes: widget.examMode ? null : _retryMistakes,
           onScheduleNext: () => context.push('/session-builder'),
           timeRecommendation: timeRecommendation,
           onApplyRoutineTime: timeRecommendation == null
@@ -2443,8 +2869,12 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                     ),
                   );
                 },
-          onReplaySame: () => _replayCompletedSession(shuffle: false),
-          onReplayShuffled: () => _replayCompletedSession(shuffle: true),
+          onReplaySame: widget.examMode
+              ? null
+              : () => _replayCompletedSession(shuffle: false),
+          onReplayShuffled: widget.examMode
+              ? null
+              : () => _replayCompletedSession(shuffle: true),
           onOpenItem: _openReviewItem,
           onNextPlaylist:
               widget.playlistActivityIds.length >= 2 &&
@@ -2565,10 +2995,15 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
               leading: IconButton(
                 key: const Key('pause-study-session'),
                 onPressed: _pauseAndExit,
-                icon: const Icon(Icons.pause_rounded),
-                tooltip:
-                    '일시정지하고 홈으로 '
-                    '(${accessibilityProfile.shortcutFor(StudyShortcutAction.pause).displayLabel})',
+                icon: Icon(
+                  widget.examMode
+                      ? Icons.stop_circle_outlined
+                      : Icons.pause_rounded,
+                ),
+                tooltip: widget.examMode
+                    ? '시험 제출'
+                    : '일시정지하고 홈으로 '
+                          '(${accessibilityProfile.shortcutFor(StudyShortcutAction.pause).displayLabel})',
               ),
               titleSpacing: 4,
               title: _CompactStudyHud(
@@ -2580,6 +3015,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                 comboGoal: min(3, _plannedCount),
                 xp: _sessionXp,
                 showTimer: experience.showStudyTimer,
+                hideResults: widget.examMode,
+                timeLabelOverride: widget.examMode
+                    ? _formatExamRemaining(_examRemainingSeconds)
+                    : null,
                 showQuestionCounter: experience.showQuestionCounter,
                 progressStyle: experience.progressStyle,
               ),
@@ -2646,6 +3085,32 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                                       ],
                                     ),
                                     const SizedBox(height: 12),
+                                  ],
+                                  if (!widget.examMode &&
+                                      (_liveDifficultyAttempts.length >= 3 ||
+                                          _liveDifficultyLock != null)) ...[
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Tooltip(
+                                        message: _liveDifficultyReason,
+                                        child: Chip(
+                                          key: const Key(
+                                            'live-difficulty-indicator',
+                                          ),
+                                          avatar: Icon(
+                                            _liveDifficultyLock == null
+                                                ? Icons.auto_graph_rounded
+                                                : Icons.lock_outline_rounded,
+                                            size: 17,
+                                          ),
+                                          label: Text(
+                                            '난이도 ${_liveDifficultyLock == null ? '자동' : '고정'} · '
+                                            '${_liveDifficulty.koreanLabel}',
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
                                   ],
                                   if (_adaptiveReasonByItemId[_item.id]
                                       case final reason?) ...[
@@ -2802,7 +3267,11 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                                                       ),
                                                     ),
                                                     if (_mode ==
-                                                        _ExerciseMode.listening)
+                                                            _ExerciseMode
+                                                                .listening ||
+                                                        _mode ==
+                                                            _ExerciseMode
+                                                                .listeningDiscrimination)
                                                       OutlinedButton.icon(
                                                         key: const Key(
                                                           'slow-listening-playback',
@@ -2818,8 +3287,45 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                                                           '느리게',
                                                         ),
                                                       ),
+                                                    if (_mode ==
+                                                        _ExerciseMode
+                                                            .listeningDiscrimination)
+                                                      TextButton.icon(
+                                                        key: const Key(
+                                                          'listening-text-fallback',
+                                                        ),
+                                                        onPressed: () => setState(
+                                                          () => _showListeningTextFallback =
+                                                              !_showListeningTextFallback,
+                                                        ),
+                                                        icon: const Icon(
+                                                          Icons
+                                                              .subtitles_outlined,
+                                                          size: 20,
+                                                        ),
+                                                        label: Text(
+                                                          _showListeningTextFallback
+                                                              ? '소리 문제로 돌아가기'
+                                                              : '텍스트 대체 단서',
+                                                        ),
+                                                      ),
                                                   ],
                                                 ),
+                                                if (_mode ==
+                                                    _ExerciseMode
+                                                        .listeningDiscrimination) ...[
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    '${_listeningDiscriminationQuestion().selectionBasisLabel} · '
+                                                    '정답 포함 서로 다른 선택지 3개 이상',
+                                                    key: const Key(
+                                                      'listening-choice-basis',
+                                                    ),
+                                                    style: Theme.of(
+                                                      context,
+                                                    ).textTheme.labelSmall,
+                                                  ),
+                                                ],
                                                 if (experience
                                                         .showShortcutHints ||
                                                     _speechPlayCount > 0) ...[
@@ -2992,6 +3498,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _ExerciseMode.cloze => '빈칸에 들어갈 표현을 고르세요',
     _ExerciseMode.sentenceOrder => '단어를 순서대로 배열하세요',
     _ExerciseMode.listening => '소리를 듣고 받아쓰세요',
+    _ExerciseMode.listeningDiscrimination => '들은 표현을 고르세요',
   };
 
   IconData get _modeIcon => switch (_mode) {
@@ -3000,6 +3507,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _ExerciseMode.cloze => Icons.space_bar_rounded,
     _ExerciseMode.sentenceOrder => Icons.reorder_rounded,
     _ExerciseMode.listening => Icons.headphones_rounded,
+    _ExerciseMode.listeningDiscrimination => Icons.hearing_rounded,
   };
 
   String get _prompt => switch (_mode) {
@@ -3009,6 +3517,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     _ExerciseMode.production ||
     _ExerciseMode.sentenceOrder => _item.primaryTranslation,
     _ExerciseMode.listening => '재생 버튼을 눌러 듣고 입력하세요',
+    _ExerciseMode.listeningDiscrimination =>
+      _showListeningTextFallback
+          ? '소리 대체 단서: ${_item.primaryTranslation}'
+          : '소리를 듣고 가장 가까운 표현을 고르세요',
     _ExerciseMode.cloze => _joinTokens([
       for (var index = 0; index < _item.sentenceTokens.length; index++)
         index == _item.sentenceTokens.length ~/ 2
@@ -3039,7 +3551,10 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
               ? (constraints.maxWidth - spacing) / 2
               : constraints.maxWidth;
           return Semantics(
-            label: useGrid
+            label: _mode == _ExerciseMode.listeningDiscrimination
+                ? '듣기 구별 선택지 ${choices.length}개. '
+                      '${_showListeningTextFallback ? '텍스트 대체 단서를 사용 중입니다.' : '재생 후 선택하세요.'}'
+                : useGrid
                 ? '선택지 ${choices.length}개, 두 열 배치'
                 : '선택지 ${choices.length}개, 한 열 배치',
             container: true,
@@ -3123,6 +3638,7 @@ class _SessionManagementSheet extends StatelessWidget {
     required this.showKeyboardHelp,
     required this.canChangeOptions,
     required this.canStartMatch,
+    required this.canDeriveSession,
   });
 
   final ActiveStudySession session;
@@ -3136,6 +3652,7 @@ class _SessionManagementSheet extends StatelessWidget {
   final bool showKeyboardHelp;
   final bool canChangeOptions;
   final bool canStartMatch;
+  final bool canDeriveSession;
 
   @override
   Widget build(BuildContext context) {
@@ -3222,9 +3739,15 @@ class _SessionManagementSheet extends StatelessWidget {
                   key: const Key('restart-study-session'),
                   icon: Icons.restart_alt_rounded,
                   title: '처음 문제 묶음으로 다시 시작',
-                  subtitle: '현재 시도는 기록하고 최초 문제 순서로 새 세션을 만듭니다.',
-                  onTap: () =>
-                      Navigator.pop(context, _SessionManagementAction.restart),
+                  subtitle: canDeriveSession
+                      ? '현재 시도는 기록하고 최초 문제 순서로 새 세션을 만듭니다.'
+                      : '시험 중에는 문제 묶음과 점수 기준을 바꿀 수 없습니다.',
+                  onTap: canDeriveSession
+                      ? () => Navigator.pop(
+                          context,
+                          _SessionManagementAction.restart,
+                        )
+                      : null,
                 ),
                 const SizedBox(height: 8),
                 _SessionManagementTile(
@@ -3234,7 +3757,7 @@ class _SessionManagementSheet extends StatelessWidget {
                   subtitle: wrongCount == 0
                       ? '아직 틀린 문제가 없습니다.'
                       : '지금까지 틀린 표현만 모아 짧은 분기 세션을 만듭니다.',
-                  onTap: wrongCount == 0
+                  onTap: !canDeriveSession || wrongCount == 0
                       ? null
                       : () => Navigator.pop(
                           context,
@@ -3249,7 +3772,7 @@ class _SessionManagementSheet extends StatelessWidget {
                   subtitle: remainingCount == 0
                       ? '남은 문제가 없습니다.'
                       : '이미 푼 문제는 빼고 남은 표현으로 새 세션을 만듭니다.',
-                  onTap: remainingCount == 0
+                  onTap: !canDeriveSession || remainingCount == 0
                       ? null
                       : () => Navigator.pop(
                           context,
@@ -3358,6 +3881,8 @@ class _CompactStudyHud extends StatelessWidget {
     required this.showTimer,
     required this.showQuestionCounter,
     required this.progressStyle,
+    this.hideResults = false,
+    this.timeLabelOverride,
   });
 
   final int current;
@@ -3370,6 +3895,8 @@ class _CompactStudyHud extends StatelessWidget {
   final bool showTimer;
   final bool showQuestionCounter;
   final AppProgressStyle progressStyle;
+  final bool hideResults;
+  final String? timeLabelOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -3380,17 +3907,21 @@ class _CompactStudyHud extends StatelessWidget {
         : colors.onSurfaceVariant;
     final remainingQuestions = (total - current + 1).clamp(0, total);
     final remainingSeconds = remainingQuestions * 25;
-    final timeLabel = remainingSeconds < 60
+    final estimatedTimeLabel = remainingSeconds < 60
         ? '1분 이내'
         : '약 ${(remainingSeconds / 60).ceil()}분';
+    final timeLabel = timeLabelOverride ?? estimatedTimeLabel;
     final description = [
       if (showQuestionCounter) '$current/$total 문제',
-      '정답 $correct개',
-      '오답 $wrong개',
-      '현재 $combo콤보',
-      '연속 목표 $comboGoal개',
-      '획득 $xp XP',
-      if (showTimer) '예상 남은 학습 시간 $timeLabel',
+      if (!hideResults) ...[
+        '정답 $correct개',
+        '오답 $wrong개',
+        '현재 $combo콤보',
+        '연속 목표 $comboGoal개',
+        '획득 $xp XP',
+      ],
+      if (showTimer || timeLabelOverride != null)
+        '${timeLabelOverride == null ? '예상 남은 학습 시간' : '시험 남은 시간'} $timeLabel',
     ].join(', ');
     return Semantics(
       key: const Key('compact-study-hud'),
@@ -3399,9 +3930,8 @@ class _CompactStudyHud extends StatelessWidget {
       child: Tooltip(
         message:
             '${showQuestionCounter ? '$current/$total · ' : ''}'
-            '정답 $correct · 오답 $wrong · '
-            '$combo/$comboGoal콤보 · $xp XP'
-            '${showTimer ? ' · 예상 남은 학습 시간 $timeLabel' : ''}',
+            '${hideResults ? '시험 진행 중' : '정답 $correct · 오답 $wrong · $combo/$comboGoal콤보 · $xp XP'}'
+            '${showTimer || timeLabelOverride != null ? ' · 남은 시간 $timeLabel' : ''}',
         child: ExcludeSemantics(
           child: MediaQuery.withClampedTextScaling(
             maxScaleFactor: 1,
@@ -3425,16 +3955,18 @@ class _CompactStudyHud extends StatelessWidget {
                   _HudText('$current/$total'),
                   const SizedBox(width: 6),
                 ],
-                _HudMetric(icon: Icons.check_rounded, value: '$correct'),
-                const SizedBox(width: 4),
-                _HudMetric(icon: Icons.close_rounded, value: '$wrong'),
-                const SizedBox(width: 4),
-                _HudMetric(
-                  icon: Icons.local_fire_department_rounded,
-                  value: '$combo/$comboGoal',
-                  color: comboColor,
-                ),
-                if (showTimer) ...[
+                if (!hideResults) ...[
+                  _HudMetric(icon: Icons.check_rounded, value: '$correct'),
+                  const SizedBox(width: 4),
+                  _HudMetric(icon: Icons.close_rounded, value: '$wrong'),
+                  const SizedBox(width: 4),
+                  _HudMetric(
+                    icon: Icons.local_fire_department_rounded,
+                    value: '$combo/$comboGoal',
+                    color: comboColor,
+                  ),
+                ],
+                if (showTimer || timeLabelOverride != null) ...[
                   const SizedBox(width: 4),
                   _HudMetric(
                     key: const Key('study-time-estimate'),
@@ -3914,28 +4446,6 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                           : '교정 메모',
                                     ),
                                   ),
-                                  OutlinedButton.icon(
-                                    key: const Key(
-                                      'quick-add-from-study-feedback',
-                                    ),
-                                    onPressed: onQuickAdd,
-                                    style: compactControlStyle,
-                                    icon: const Icon(
-                                      Icons.add_circle_outline_rounded,
-                                      size: 18,
-                                    ),
-                                    label: const Text('빠른 추가로 복사'),
-                                  ),
-                                  OutlinedButton.icon(
-                                    key: const Key('edit-memory-hint'),
-                                    onPressed: onEditMemoryHint,
-                                    style: compactControlStyle,
-                                    icon: const Icon(
-                                      Icons.lightbulb_outline_rounded,
-                                      size: 18,
-                                    ),
-                                    label: const Text('암기 단서'),
-                                  ),
                                   if (onMarkTypo case final action?)
                                     OutlinedButton.icon(
                                       key: const Key('correct-as-typo'),
@@ -3980,6 +4490,69 @@ class _StudyFeedbackOverlay extends StatelessWidget {
                                       ),
                                       label: const Text('이 문제 수선'),
                                     ),
+                                  PopupMenuButton<_FeedbackSecondaryAction>(
+                                    key: const Key('feedback-more-actions'),
+                                    tooltip: '자료와 암기 도구',
+                                    onSelected: (action) => switch (action) {
+                                      _FeedbackSecondaryAction.quickAdd =>
+                                        onQuickAdd(),
+                                      _FeedbackSecondaryAction.memoryHint =>
+                                        onEditMemoryHint(),
+                                    },
+                                    itemBuilder: (context) => [
+                                      const PopupMenuItem(
+                                        key: Key(
+                                          'quick-add-from-study-feedback',
+                                        ),
+                                        value:
+                                            _FeedbackSecondaryAction.quickAdd,
+                                        child: ListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          leading: Icon(
+                                            Icons.add_circle_outline_rounded,
+                                          ),
+                                          title: Text('빠른 추가로 복사'),
+                                        ),
+                                      ),
+                                      const PopupMenuItem(
+                                        key: Key('edit-memory-hint'),
+                                        value:
+                                            _FeedbackSecondaryAction.memoryHint,
+                                        child: ListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          leading: Icon(
+                                            Icons.lightbulb_outline_rounded,
+                                          ),
+                                          title: Text('암기 단서'),
+                                        ),
+                                      ),
+                                    ],
+                                    child: Container(
+                                      constraints: BoxConstraints(
+                                        minHeight: minimumControlHeight,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: colors.outline,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.more_horiz_rounded,
+                                            size: 18,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text('더보기'),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: 14),
@@ -4012,6 +4585,13 @@ class _StudyFeedbackOverlay extends StatelessWidget {
 String _joinTokens(List<String> tokens, LanguageTag language) {
   final separator = LanguageProfile.of(language).usesSpaces ? ' ' : '';
   return tokens.join(separator);
+}
+
+String _formatExamRemaining(int seconds) {
+  final safe = max(0, seconds);
+  final minutes = safe ~/ 60;
+  final remainder = safe % 60;
+  return '$minutes:${remainder.toString().padLeft(2, '0')}';
 }
 
 String _normalizedChoice(String value) =>
@@ -4055,6 +4635,182 @@ class _ExercisePill extends StatelessWidget {
   }
 }
 
+class _ExamSetupDialog extends StatefulWidget {
+  const _ExamSetupDialog({
+    required this.availableQuestions,
+    required this.initial,
+  });
+
+  final int availableQuestions;
+  final ExamConfiguration initial;
+
+  @override
+  State<_ExamSetupDialog> createState() => _ExamSetupDialogState();
+}
+
+class _ExamSetupDialogState extends State<_ExamSetupDialog> {
+  late int _questionCount;
+  late int _timeLimitMinutes;
+  late int _passScore;
+
+  @override
+  void initState() {
+    super.initState();
+    _questionCount = widget.initial.questionCount;
+    _timeLimitMinutes = widget.initial.timeLimit.inMinutes;
+    _passScore = widget.initial.passScore;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final countOptions = <int>{
+      min(5, widget.availableQuestions),
+      min(10, widget.availableQuestions),
+      min(20, widget.availableQuestions),
+      widget.availableQuestions,
+    }.where((value) => value > 0).toList()..sort();
+    return AlertDialog(
+      key: const Key('exam-setup-dialog'),
+      title: const Text('시험 모드 설정'),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                '시험 중에는 정답을 바로 보여주지 않고, 제출 후 문항별 결과를 공개합니다. 복습 일정과 XP는 바뀌지 않습니다.',
+              ),
+              const SizedBox(height: 18),
+              Text('문항 수', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 7),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final count in countOptions)
+                    ChoiceChip(
+                      key: Key('exam-question-count-$count'),
+                      label: Text('$count문항'),
+                      selected: _questionCount == count,
+                      onSelected: (_) => setState(() => _questionCount = count),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('시간 제한', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 7),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final minutes in const [5, 10, 20, 30])
+                    ChoiceChip(
+                      key: Key('exam-time-limit-$minutes'),
+                      label: Text('$minutes분'),
+                      selected: _timeLimitMinutes == minutes,
+                      onSelected: (_) =>
+                          setState(() => _timeLimitMinutes = minutes),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('통과 점수', style: Theme.of(context).textTheme.titleSmall),
+              const SizedBox(height: 7),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final score in const [60, 70, 80, 90])
+                    ChoiceChip(
+                      key: Key('exam-pass-score-$score'),
+                      label: Text('$score점'),
+                      selected: _passScore == score,
+                      onSelected: (_) => setState(() => _passScore = score),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          key: const Key('cancel-exam-mode'),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton.icon(
+          key: const Key('start-exam-mode'),
+          onPressed: () => Navigator.pop(
+            context,
+            ExamConfiguration(
+              questionCount: _questionCount,
+              timeLimit: Duration(minutes: _timeLimitMinutes),
+              passScore: _passScore,
+            ),
+          ),
+          icon: const Icon(Icons.timer_outlined),
+          label: const Text('시험 시작'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExamReportCard extends StatelessWidget {
+  const _ExamReportCard({required this.report});
+
+  final ExamReport report;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Semantics(
+      key: const Key('exam-report-card'),
+      container: true,
+      label:
+          '시험 ${report.passed ? '통과' : '미통과'}. ${report.score}점. '
+          '정답 ${report.correctCount}개. 미응답 ${report.unansweredCount}개.',
+      child: Card(
+        color: report.passed ? colors.primaryContainer : colors.errorContainer,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Icon(
+                report.passed
+                    ? Icons.workspace_premium_rounded
+                    : Icons.fact_check_outlined,
+                size: 36,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      report.passed ? '통과했어요' : '통과 기준을 다시 도전해 보세요',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      '${report.score}점 / 통과 ${report.configuration.passScore}점 · '
+                      '정답 ${report.correctCount} · 오답 ${report.answeredCount - report.correctCount} · '
+                      '미응답 ${report.unansweredCount}'
+                      '${report.timedOut ? ' · 시간 종료' : ''}',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _CompletionScreen extends StatelessWidget {
   const _CompletionScreen({
     required this.correct,
@@ -4068,6 +4824,7 @@ class _CompletionScreen extends StatelessWidget {
     required this.attempts,
     required this.attemptMetrics,
     required this.challengeScore,
+    required this.examReport,
     required this.saveStatus,
     required this.receipt,
     required this.recordProgress,
@@ -4099,15 +4856,16 @@ class _CompletionScreen extends StatelessWidget {
   final List<QuizAttemptReview> attempts;
   final List<StudyAttemptMetric> attemptMetrics;
   final PracticeChallengeScore? challengeScore;
+  final ExamReport? examReport;
   final String saveStatus;
   final StudyCompletionReceipt receipt;
   final bool recordProgress;
-  final VoidCallback onRetryMistakes;
+  final VoidCallback? onRetryMistakes;
   final VoidCallback onScheduleNext;
   final LocalStudyTimeRecommendation? timeRecommendation;
   final VoidCallback? onApplyRoutineTime;
-  final VoidCallback onReplaySame;
-  final VoidCallback onReplayShuffled;
+  final VoidCallback? onReplaySame;
+  final VoidCallback? onReplayShuffled;
   final ValueChanged<String> onOpenItem;
   final VoidCallback? onNextPlaylist;
   final String? playlistProgressLabel;
@@ -4124,11 +4882,11 @@ class _CompletionScreen extends StatelessWidget {
     final reduceTransparency = StudyAccessibilityTheme.of(
       context,
     ).reduceTransparency;
-    final excellent = accuracy >= 80;
+    final excellent = examReport?.passed ?? accuracy >= 80;
     final accent = excellent
         ? const Color(0xFF238B57)
         : const Color(0xFFD97706);
-    final title = switch (encouragementTone) {
+    final standardTitle = switch (encouragementTone) {
       AppEncouragementTone.calm =>
         excellent ? '오늘 학습, 멋지게 완료!' : '한 걸음 더 기억했어요',
       AppEncouragementTone.playful
@@ -4138,6 +4896,11 @@ class _CompletionScreen extends StatelessWidget {
         excellent ? '🎉 완벽한 학습 흐름이에요!' : '🚀 오늘도 기억력이 자랐어요!',
       AppEncouragementTone.minimal => '학습 완료',
     };
+    final title = examReport == null
+        ? standardTitle
+        : examReport!.passed
+        ? '시험 통과 · ${examReport!.score}점'
+        : '시험 완료 · ${examReport!.score}점';
     return Scaffold(
       body: SafeArea(
         child: LayoutBuilder(
@@ -4217,15 +4980,24 @@ class _CompletionScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 7),
                       Text(
-                        '$plannedCount개로 시작한 세션의 결과예요. '
-                        '최고 $bestCombo콤보 · $minutes분. '
-                        '${recordProgress ? '' : '진도 비기록 연습 · '}'
-                        '${hasMistakes ? '틀린 표현은 바로 다시 다질 수 있어요.' : '모든 표현을 정확히 기억했어요.'}',
+                        examReport == null
+                            ? '$plannedCount개로 시작한 세션의 결과예요. '
+                                  '최고 $bestCombo콤보 · $minutes분. '
+                                  '${recordProgress ? '' : '진도 비기록 연습 · '}'
+                                  '${hasMistakes ? '틀린 표현은 바로 다시 다질 수 있어요.' : '모든 표현을 정확히 기억했어요.'}'
+                            : '정답은 시험 중에 공개하지 않았습니다. '
+                                  '${examReport!.configuration.questionCount}문항 기준 · '
+                                  '통과 ${examReport!.configuration.passScore}점 · '
+                                  '미응답 ${examReport!.unansweredCount}개.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: colors.onSurfaceVariant,
                         ),
                       ),
+                      if (examReport case final report?) ...[
+                        const SizedBox(height: 14),
+                        _ExamReportCard(report: report),
+                      ],
                       const SizedBox(height: 26),
                       Card(
                         child: Padding(
@@ -4382,7 +5154,7 @@ class _CompletionScreen extends StatelessWidget {
                           },
                         ),
                       ],
-                      if (wrong > 0) ...[
+                      if (wrong > 0 && examReport == null) ...[
                         const SizedBox(height: 12),
                         Text(
                           '오답 $wrong회는 복습 일정에 자동 반영됐습니다.',
@@ -4401,7 +5173,7 @@ class _CompletionScreen extends StatelessWidget {
                               label: const Text('종료'),
                               onPressed: onHome,
                             ),
-                            if (hasMistakes) ...[
+                            if (hasMistakes && onRetryMistakes != null) ...[
                               const SizedBox(width: 8),
                               ActionChip(
                                 key: const Key('completion-action-wrong'),
@@ -4459,7 +5231,7 @@ class _CompletionScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      if (hasMistakes) ...[
+                      if (hasMistakes && onRetryMistakes != null) ...[
                         SizedBox(
                           width: double.infinity,
                           child: FilledButton.icon(
@@ -4471,27 +5243,28 @@ class _CompletionScreen extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              key: const Key('completion-replay-same'),
-                              onPressed: onReplaySame,
-                              icon: const Icon(Icons.replay_rounded),
-                              label: const Text('같은 순서'),
+                      if (onReplaySame != null && onReplayShuffled != null)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                key: const Key('completion-replay-same'),
+                                onPressed: onReplaySame,
+                                icon: const Icon(Icons.replay_rounded),
+                                label: const Text('같은 순서'),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: OutlinedButton.icon(
-                              key: const Key('completion-replay-shuffled'),
-                              onPressed: onReplayShuffled,
-                              icon: const Icon(Icons.shuffle_rounded),
-                              label: const Text('새로 섞기'),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                key: const Key('completion-replay-shuffled'),
+                                onPressed: onReplayShuffled,
+                                icon: const Icon(Icons.shuffle_rounded),
+                                label: const Text('새로 섞기'),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                       if (onNextPlaylist case final onNextGame?) ...[
                         const SizedBox(height: 10),
                         SizedBox(
@@ -5351,6 +6124,36 @@ class _SessionQuizOptionsSheetState extends State<_SessionQuizOptionsSheet> {
                 ),
                 const SizedBox(height: 16),
                 _OptionSection(
+                  title: '실시간 난이도',
+                  description: _options.liveDifficultyLock == null
+                      ? '최근 5문항의 정확도·속도·힌트 사용을 반영해 다음 문제를 조절합니다.'
+                      : '${_options.liveDifficultyLock!.koreanLabel} 난이도를 이 세션에 고정합니다.',
+                  children: [
+                    ChoiceChip(
+                      key: const Key('session-difficulty-auto'),
+                      label: const Text('자동'),
+                      selected: _options.liveDifficultyLock == null,
+                      onSelected: (_) => setState(
+                        () => _options = _options.copyWith(
+                          liveDifficultyLock: null,
+                        ),
+                      ),
+                    ),
+                    for (final level in LiveDifficultyLevel.values)
+                      ChoiceChip(
+                        key: Key('session-difficulty-${level.name}'),
+                        label: Text(level.koreanLabel),
+                        selected: _options.liveDifficultyLock == level,
+                        onSelected: (_) => setState(
+                          () => _options = _options.copyWith(
+                            liveDifficultyLock: level,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _OptionSection(
                   title: '읽기 표시',
                   description: '현재 세션에서만 보조 읽기 표기를 켜거나 끕니다.',
                   children: [
@@ -5561,16 +6364,25 @@ class _MatchSprintDialog extends StatefulWidget {
 class _MatchSprintDialogState extends State<_MatchSprintDialog> {
   late final List<MatchSprintPair> _learningPairs;
   late final List<MatchSprintPair> _meaningPairs;
-  final _matchedIds = <String>{};
-  MatchSprintPair? _selectedLearning;
-  MatchSprintPair? _selectedMeaning;
+  var _matchState = const SequentialMatchState();
+  String _matchAnnouncement = '먼저 표현을 하나 선택하세요.';
   MatchSprintMode _mode = MatchSprintMode.tenPairs;
   Timer? _timer;
   var _remainingSeconds = 60;
-  var _mistakes = 0;
   var _started = false;
   var _finished = false;
   DateTime? _startedAt;
+
+  Set<String> get _matchedIds => _matchState.matchedIds;
+  int get _mistakes => _matchState.mistakes;
+  MatchSprintPair? get _selectedLearning {
+    final id = _matchState.selectedLearningId;
+    if (id == null) return null;
+    for (final pair in _learningPairs) {
+      if (pair.itemId == id) return pair;
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -5609,33 +6421,39 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
 
   void _selectLearning(MatchSprintPair pair) {
     if (_finished || _matchedIds.contains(pair.itemId)) return;
-    setState(() => _selectedLearning = pair);
-    _evaluatePair();
+    final transition = _matchState.selectLearning(pair.itemId);
+    setState(() {
+      _matchState = transition.state;
+      _matchAnnouncement = '“${pair.learningText}” 표현을 골랐습니다. 이제 맞는 뜻을 선택하세요.';
+    });
   }
 
   void _selectMeaning(MatchSprintPair pair) {
-    if (_finished || _matchedIds.contains(pair.itemId)) return;
-    setState(() => _selectedMeaning = pair);
-    _evaluatePair();
-  }
-
-  void _evaluatePair() {
-    final learning = _selectedLearning;
-    final meaning = _selectedMeaning;
-    if (learning == null || meaning == null) return;
+    if (_finished ||
+        !_matchState.awaitingMeaning ||
+        _matchedIds.contains(pair.itemId)) {
+      return;
+    }
+    final selected = _selectedLearning;
+    final transition = _matchState.selectMeaning(pair.itemId);
     setState(() {
-      if (learning.itemId == meaning.itemId) {
-        _matchedIds.add(learning.itemId);
+      _matchState = transition.state;
+      if (transition.outcome == SequentialMatchOutcome.matched) {
+        _matchAnnouncement = '정답입니다. 다음 표현을 선택하세요.';
         if (_matchedIds.length == widget.deck.pairs.length) {
           _finished = true;
           _timer?.cancel();
         }
       } else {
-        _mistakes++;
+        _matchAnnouncement =
+            '“${selected?.learningText ?? ''}”와 “${pair.meaningText}”은 짝이 아닙니다. 표현부터 다시 선택하세요.';
       }
-      _selectedLearning = null;
-      _selectedMeaning = null;
     });
+    SemanticsService.sendAnnouncement(
+      View.of(context),
+      _matchAnnouncement,
+      Directionality.of(context),
+    );
   }
 
   _MatchSprintResult get _result {
@@ -5737,6 +6555,29 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
                   ],
                 ),
                 const SizedBox(height: 12),
+                if (!_finished) ...[
+                  Semantics(
+                    key: const Key('match-sequence-status'),
+                    liveRegion: true,
+                    container: true,
+                    label: _matchAnnouncement,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primaryContainer,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        _matchAnnouncement,
+                        style: TextStyle(color: colors.onPrimaryContainer),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
                 if (_finished)
                   Expanded(
                     child: Center(
@@ -5781,6 +6622,10 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
                               pairs: _learningPairs,
                               matchedIds: _matchedIds,
                               selectedId: _selectedLearning?.itemId,
+                              enabled: true,
+                              semanticRole: '표현',
+                              keyPrefix: 'learning',
+                              traversalOrder: 1,
                               labelOf: (pair) => pair.learningText,
                               onSelect: _selectLearning,
                             ),
@@ -5791,7 +6636,11 @@ class _MatchSprintDialogState extends State<_MatchSprintDialog> {
                               title: '뜻',
                               pairs: _meaningPairs,
                               matchedIds: _matchedIds,
-                              selectedId: _selectedMeaning?.itemId,
+                              selectedId: null,
+                              enabled: _matchState.awaitingMeaning,
+                              semanticRole: '뜻',
+                              keyPrefix: 'meaning',
+                              traversalOrder: 2,
                               labelOf: (pair) => pair.meaningText,
                               onSelect: _selectMeaning,
                             ),
@@ -5815,6 +6664,10 @@ class _MatchColumn extends StatelessWidget {
     required this.pairs,
     required this.matchedIds,
     required this.selectedId,
+    required this.enabled,
+    required this.semanticRole,
+    required this.keyPrefix,
+    required this.traversalOrder,
     required this.labelOf,
     required this.onSelect,
   });
@@ -5823,40 +6676,61 @@ class _MatchColumn extends StatelessWidget {
   final List<MatchSprintPair> pairs;
   final Set<String> matchedIds;
   final String? selectedId;
+  final bool enabled;
+  final String semanticRole;
+  final String keyPrefix;
+  final double traversalOrder;
   final String Function(MatchSprintPair pair) labelOf;
   final ValueChanged<MatchSprintPair> onSelect;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          title,
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        const SizedBox(height: 8),
-        for (final pair in pairs) ...[
-          OutlinedButton(
-            onPressed: matchedIds.contains(pair.itemId)
-                ? null
-                : () => onSelect(pair),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(52),
-              backgroundColor: selectedId == pair.itemId
-                  ? Theme.of(context).colorScheme.primaryContainer
-                  : null,
-              alignment: Alignment.center,
-            ),
-            child: Text(
-              matchedIds.contains(pair.itemId) ? '✓' : labelOf(pair),
+    return FocusTraversalOrder(
+      order: NumericFocusOrder(traversalOrder),
+      child: Semantics(
+        container: true,
+        label: '$semanticRole 선택 단계${enabled ? '' : '. 표현을 먼저 선택하세요'}',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
               textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleSmall,
             ),
-          ),
-          const SizedBox(height: 7),
-        ],
-      ],
+            const SizedBox(height: 8),
+            for (final pair in pairs) ...[
+              Semantics(
+                selected: selectedId == pair.itemId,
+                label:
+                    '$semanticRole ${labelOf(pair)}. ${matchedIds.contains(pair.itemId)
+                        ? '연결 완료'
+                        : enabled
+                        ? '선택 가능'
+                        : '현재 단계에서 선택할 수 없음'}',
+                child: OutlinedButton(
+                  key: Key('match-$keyPrefix-${pair.itemId}'),
+                  onPressed: !enabled || matchedIds.contains(pair.itemId)
+                      ? null
+                      : () => onSelect(pair),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    backgroundColor: selectedId == pair.itemId
+                        ? Theme.of(context).colorScheme.primaryContainer
+                        : null,
+                    alignment: Alignment.center,
+                  ),
+                  child: Text(
+                    matchedIds.contains(pair.itemId) ? '✓' : labelOf(pair),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 7),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

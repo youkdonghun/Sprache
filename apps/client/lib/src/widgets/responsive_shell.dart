@@ -18,6 +18,7 @@ import '../state/navigation_guard_state.dart';
 import '../state/pending_import_state.dart';
 import '../sync/sync_policy.dart';
 import '../services/app_feedback_service.dart';
+import '../services/window_workspace_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/study_accessibility_theme.dart';
 import 'course_picker.dart';
@@ -123,7 +124,7 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
           label: '자료',
           menus: [
             PlatformMenuItem(
-              label: '검색',
+              label: '명령 팔레트',
               shortcut: const SingleActivator(
                 LogicalKeyboardKey.keyK,
                 meta: true,
@@ -338,6 +339,21 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
         .activeSubject;
     final connection = ref.watch(connectionControllerProvider);
     final storageIndicator = _StorageIndicator.from(localStorage, connection);
+    ref.listen<String?>(
+      windowWorkspaceControllerProvider.select((state) => state.errorMessage),
+      (previous, next) {
+        if (next == null || next == previous) return;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(
+              key: const Key('window-workspace-error'),
+              content: Text(next),
+            ),
+          );
+        });
+      },
+    );
     final layout =
         Theme.of(context).extension<AppLayoutDensity>() ??
         AppLayoutDensity.fromPreference(
@@ -589,9 +605,9 @@ class _DesktopSidebar extends StatelessWidget {
                 key: const Key('open-global-search'),
                 extended: false,
                 selected: false,
-                icon: Icons.search_rounded,
-                label: '전체 검색',
-                tooltip: '전체 검색 · Ctrl+K',
+                icon: Icons.manage_search_rounded,
+                label: '명령·검색',
+                tooltip: '명령 팔레트 · Ctrl+K',
                 onTap: onSearchPressed,
               ),
               SizedBox(height: sidebarItemGap),
@@ -742,29 +758,46 @@ class _SidebarUtilityToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      container: true,
-      label: '빠른 도구',
-      child: Row(
-        key: const Key('desktop-sidebar-utility-toolbar'),
-        children: [
-          if (showSearch)
-            IconButton(
-              key: const Key('open-global-search'),
-              tooltip: '전체 검색 · Ctrl+K',
-              onPressed: onSearch,
-              icon: const Icon(Icons.search_rounded),
-            ),
-          if (showQuickAdd) ...[
-            const SizedBox(width: 4),
-            IconButton.filledTonal(
-              key: const Key('shell-quick-add'),
-              tooltip: '빠른 자료 추가 · Ctrl+N',
-              onPressed: onQuickAdd,
-              icon: const Icon(Icons.add_rounded),
-            ),
+    final commandShortcut = defaultTargetPlatform == TargetPlatform.macOS
+        ? '⌘ K'
+        : 'Ctrl K';
+    return FocusTraversalGroup(
+      policy: WidgetOrderTraversalPolicy(),
+      child: Semantics(
+        container: true,
+        label: '빠른 도구',
+        child: Row(
+          key: const Key('desktop-sidebar-utility-toolbar'),
+          children: [
+            if (showSearch)
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: OutlinedButton.icon(
+                    key: const Key('open-global-search'),
+                    onPressed: onSearch,
+                    icon: const Icon(Icons.manage_search_rounded, size: 18),
+                    label: Text('명령 · $commandShortcut'),
+                    style: const ButtonStyle(
+                      minimumSize: WidgetStatePropertyAll(Size.fromHeight(44)),
+                      padding: WidgetStatePropertyAll(
+                        EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            if (showQuickAdd) ...[
+              const SizedBox(width: 4),
+              IconButton.filledTonal(
+                key: const Key('shell-quick-add'),
+                tooltip: '빠른 자료 추가 · Ctrl+N',
+                onPressed: onQuickAdd,
+                icon: const Icon(Icons.add_rounded),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -964,9 +997,9 @@ class _SubjectContextBar extends StatelessWidget {
               dimension: 44,
               child: IconButton(
                 key: const Key('open-global-search'),
-                tooltip: '전체 검색',
+                tooltip: '명령 팔레트 · Ctrl/⌘+K',
                 onPressed: onSearchPressed,
-                icon: const Icon(Icons.search_rounded),
+                icon: const Icon(Icons.manage_search_rounded),
               ),
             ),
           ],

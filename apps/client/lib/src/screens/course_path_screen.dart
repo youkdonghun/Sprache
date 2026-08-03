@@ -36,6 +36,10 @@ class CoursePathScreen extends ConsumerWidget {
     }
     final path = controller.coursePath;
     final recommendedIndex = path.recommendedUnit.index;
+    final otherUnits = path.units
+        .where((unit) => unit.index != recommendedIndex)
+        .toList(growable: false);
+    final recommendedCheckpoint = path.recommendedUnit.masteryCheckpoint;
 
     return SafeArea(
       child: LayoutBuilder(
@@ -84,11 +88,18 @@ class CoursePathScreen extends ConsumerWidget {
                           _PathOverview(
                             unit: path.recommendedUnit,
                             totalProgress: path.progress,
+                            onGuide: () => context.push(
+                              '/unit/${path.recommendedUnit.index}',
+                            ),
                             onContinue: () => context.push(
-                              courseLessonRoute(
-                                path.recommendedUnit.nextLesson,
-                                path.recommendedUnit.index,
-                              ),
+                              recommendedCheckpoint.available
+                                  ? unitMasteryCheckpointRoute(
+                                      path.recommendedUnit,
+                                    )
+                                  : courseLessonRoute(
+                                      path.recommendedUnit.nextLesson,
+                                      path.recommendedUnit.index,
+                                    ),
                             ),
                           ),
                           const SizedBox(height: 24),
@@ -101,23 +112,27 @@ class CoursePathScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                '추천 순서로 배우되, 모든 단원을 자유롭게 미리 볼 수 있어요.',
+                                '현재 추천 단원은 위에서 이어 하고, 나머지 단원은 자유롭게 골라 보세요.',
                                 style: Theme.of(context).textTheme.bodySmall,
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
-                          for (final unit in path.units) ...[
+                          for (final unit in otherUnits) ...[
                             _CourseUnitCard(
                               unit: unit,
-                              current: unit.index == recommendedIndex,
                               onGuide: () =>
                                   context.push('/unit/${unit.index}'),
                               onStart: () => context.push(
-                                courseLessonRoute(unit.nextLesson, unit.index),
+                                unit.masteryCheckpoint.available
+                                    ? unitMasteryCheckpointRoute(unit)
+                                    : courseLessonRoute(
+                                        unit.nextLesson,
+                                        unit.index,
+                                      ),
                               ),
                             ),
-                            if (unit.index != path.units.last.index)
+                            if (unit != otherUnits.last)
                               _PathConnector(completed: unit.completed),
                           ],
                         ],
@@ -326,16 +341,35 @@ class _PathOverview extends StatelessWidget {
   const _PathOverview({
     required this.unit,
     required this.totalProgress,
+    required this.onGuide,
     required this.onContinue,
   });
 
   final CourseUnitSnapshot unit;
   final double totalProgress;
+  final VoidCallback onGuide;
   final VoidCallback onContinue;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final checkpoint = unit.masteryCheckpoint;
+    final checkpointAction = checkpoint.available;
+    final eyebrow = checkpoint.achieved
+        ? '코스 숙련도 유지'
+        : checkpointAction
+        ? '단원 마무리'
+        : '지금 이어서 할 학습';
+    final description = checkpointAction
+        ? checkpoint.achieved
+              ? '혼합 문제로 이 단원의 숙련도를 다시 확인해 보세요.'
+              : '표현을 넓게 익혔어요. ${checkpoint.questionCount}문제로 뜻·쓰기·듣기를 함께 확인해 보세요.'
+        : unit.nextLesson.description;
+    final actionLabel = checkpointAction
+        ? checkpoint.achieved
+              ? '숙련도 다시 확인'
+              : '숙련도 확인'
+        : unit.nextLesson.label;
     return Card(
       color: colors.primaryContainer,
       child: Padding(
@@ -347,21 +381,28 @@ class _PathOverview extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '지금 이어서 할 학습',
+                  eyebrow,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: colors.onPrimaryContainer,
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  'Unit ${unit.index + 1} · ${unit.title}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    color: colors.onPrimaryContainer,
+                Semantics(
+                  label: 'Unit ${unit.index + 1} ${unit.title} 학습 진행률',
+                  value:
+                      '${unit.studiedCount} / ${unit.items.length}, '
+                      '${unit.items.isEmpty ? 0 : (unit.studiedCount / unit.items.length * 100).round()}퍼센트',
+                  child: ExcludeSemantics(
+                    child: Text(
+                      'Unit ${unit.index + 1} · ${unit.title}',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(color: colors.onPrimaryContainer),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  unit.nextLesson.description,
+                  description,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.onPrimaryContainer.withValues(alpha: 0.8),
                   ),
@@ -384,28 +425,47 @@ class _PathOverview extends StatelessWidget {
                 ),
               ],
             );
-            final button = FilledButton.icon(
-              key: const Key('continue-course-lesson'),
-              onPressed: onContinue,
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.onPrimaryContainer,
-                foregroundColor: colors.primaryContainer,
-                minimumSize: const Size(170, 48),
-              ),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: Text(unit.nextLesson.label),
+            final actions = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                FilledButton.icon(
+                  key: const Key('continue-course-lesson'),
+                  onPressed: onContinue,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: colors.onPrimaryContainer,
+                    foregroundColor: colors.primaryContainer,
+                    minimumSize: const Size(170, 48),
+                  ),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text(actionLabel),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  key: const Key('recommended-unit-guide'),
+                  onPressed: onGuide,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: colors.onPrimaryContainer,
+                    side: BorderSide(
+                      color: colors.onPrimaryContainer.withValues(alpha: 0.5),
+                    ),
+                    minimumSize: const Size(170, 44),
+                  ),
+                  icon: const Icon(Icons.menu_book_outlined),
+                  label: const Text('단원 가이드'),
+                ),
+              ],
             );
             if (compact) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [copy, const SizedBox(height: 18), button],
+                children: [copy, const SizedBox(height: 18), actions],
               );
             }
             return Row(
               children: [
                 Expanded(child: copy),
                 const SizedBox(width: 24),
-                button,
+                SizedBox(width: 190, child: actions),
               ],
             );
           },
@@ -418,32 +478,27 @@ class _PathOverview extends StatelessWidget {
 class _CourseUnitCard extends StatelessWidget {
   const _CourseUnitCard({
     required this.unit,
-    required this.current,
     required this.onGuide,
     required this.onStart,
   });
 
   final CourseUnitSnapshot unit;
-  final bool current;
   final VoidCallback onGuide;
   final VoidCallback onStart;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final accent = unit.completed
-        ? AppTheme.success
-        : current
-        ? colors.primary
-        : colors.outline;
+    final accent = unit.completed ? AppTheme.success : colors.outline;
+    final checkpoint = unit.masteryCheckpoint;
     return Card(
       key: Key('course-unit-${unit.index}'),
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(
-          color: current ? accent : colors.outlineVariant,
-          width: current ? 1.5 : 1,
+          color: unit.completed ? accent : colors.outlineVariant,
+          width: unit.completed ? 1.5 : 1,
         ),
       ),
       child: Padding(
@@ -486,9 +541,7 @@ class _CourseUnitCard extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                           ),
-                          if (current)
-                            _StatusPill(label: '현재 단원', color: accent)
-                          else if (unit.completed)
+                          if (unit.completed)
                             _StatusPill(label: '완료', color: accent),
                         ],
                       ),
@@ -535,6 +588,15 @@ class _CourseUnitCard extends StatelessWidget {
               '표현 ${unit.items.length}개 · 학습 ${unit.studiedCount}개 · 다음: ${unit.nextLesson.label}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
+            const SizedBox(height: 4),
+            Text(
+              checkpoint.statusLabel(studiedCount: unit.studiedCount),
+              key: Key('unit-mastery-status-${unit.index}'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: checkpoint.available ? colors.primary : null,
+                fontWeight: checkpoint.available ? FontWeight.w700 : null,
+              ),
+            ),
             const SizedBox(height: 14),
             Row(
               children: [
@@ -549,8 +611,18 @@ class _CourseUnitCard extends StatelessWidget {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: onStart,
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    label: const Text('학습 시작'),
+                    icon: Icon(
+                      checkpoint.available
+                          ? Icons.verified_outlined
+                          : Icons.play_arrow_rounded,
+                    ),
+                    label: Text(
+                      checkpoint.achieved
+                          ? '숙련도 다시 확인'
+                          : checkpoint.available
+                          ? '숙련도 확인'
+                          : '학습 시작',
+                    ),
                   ),
                 ),
               ],

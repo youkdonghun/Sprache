@@ -5,6 +5,35 @@ import 'progress.dart';
 
 enum CourseLessonKind { cards, meaning, writing, sentence, listening, speaking }
 
+enum UnitMasteryCheckpointState { locked, ready, achieved }
+
+class UnitMasteryCheckpoint {
+  const UnitMasteryCheckpoint({
+    required this.state,
+    required this.requiredStudyCount,
+    required this.questionCount,
+    required this.accuracy,
+    required this.masteredCount,
+  });
+
+  final UnitMasteryCheckpointState state;
+  final int requiredStudyCount;
+  final int questionCount;
+  final double accuracy;
+  final int masteredCount;
+
+  bool get available => state != UnitMasteryCheckpointState.locked;
+  bool get achieved => state == UnitMasteryCheckpointState.achieved;
+
+  String statusLabel({required int studiedCount}) => switch (state) {
+    UnitMasteryCheckpointState.locked =>
+      '숙련도 확인 · 학습 $studiedCount/$requiredStudyCount',
+    UnitMasteryCheckpointState.ready => '숙련도 확인 준비 완료 · $questionCount문제',
+    UnitMasteryCheckpointState.achieved =>
+      '숙련도 달성 · 정확도 ${(accuracy * 100).round()}%',
+  };
+}
+
 extension CourseLessonKindLabel on CourseLessonKind {
   String get label => switch (this) {
     CourseLessonKind.cards => '카드로 익히기',
@@ -36,6 +65,7 @@ class CourseUnitSnapshot {
     required this.masteredCount,
     required this.accuracy,
     required this.nextLesson,
+    required this.masteryCheckpoint,
   });
 
   final int index;
@@ -47,9 +77,10 @@ class CourseUnitSnapshot {
   final int masteredCount;
   final double accuracy;
   final CourseLessonKind nextLesson;
+  final UnitMasteryCheckpoint masteryCheckpoint;
 
   bool get started => studiedCount > 0;
-  bool get completed => progress >= 0.85;
+  bool get completed => masteryCheckpoint.achieved;
   int get progressPercent => (progress * 100).round();
 
   List<LearningItem> get words => items
@@ -150,6 +181,13 @@ class CoursePathBuilder {
                 ) /
                 unitItems.length;
       final accuracy = attempts == 0 ? 0.0 : correct / attempts;
+      final masteryCheckpoint = _masteryCheckpoint(
+        itemCount: unitItems.length,
+        studiedCount: studiedCount,
+        masteredCount: masteredCount,
+        progress: unitProgress,
+        accuracy: accuracy,
+      );
       final definition = _definitions[index];
       units.add(
         CourseUnitSnapshot(
@@ -168,6 +206,7 @@ class CoursePathBuilder {
               (item) => item.kind == LearningItemKind.sentence,
             ),
           ),
+          masteryCheckpoint: masteryCheckpoint,
         ),
       );
     }
@@ -224,6 +263,42 @@ class CoursePathBuilder {
     if (progress < 0.78) return CourseLessonKind.listening;
     return CourseLessonKind.speaking;
   }
+
+  UnitMasteryCheckpoint _masteryCheckpoint({
+    required int itemCount,
+    required int studiedCount,
+    required int masteredCount,
+    required double progress,
+    required double accuracy,
+  }) {
+    if (itemCount <= 0) {
+      return const UnitMasteryCheckpoint(
+        state: UnitMasteryCheckpointState.locked,
+        requiredStudyCount: 0,
+        questionCount: 0,
+        accuracy: 0,
+        masteredCount: 0,
+      );
+    }
+    final requiredStudyCount = max(1, (itemCount * 0.65).ceil());
+    final requiredMasteredCount = max(1, (itemCount * 0.4).ceil());
+    final achieved =
+        progress >= 0.85 &&
+        accuracy >= 0.75 &&
+        masteredCount >= requiredMasteredCount;
+    final ready = studiedCount >= requiredStudyCount && progress >= 0.6;
+    return UnitMasteryCheckpoint(
+      state: achieved
+          ? UnitMasteryCheckpointState.achieved
+          : ready
+          ? UnitMasteryCheckpointState.ready
+          : UnitMasteryCheckpointState.locked,
+      requiredStudyCount: requiredStudyCount,
+      questionCount: min(10, max(3, itemCount)),
+      accuracy: accuracy.clamp(0, 1),
+      masteredCount: masteredCount,
+    );
+  }
 }
 
 String courseLessonRoute(CourseLessonKind lesson, int unitIndex) {
@@ -237,3 +312,6 @@ String courseLessonRoute(CourseLessonKind lesson, int unitIndex) {
     CourseLessonKind.speaking => '/pronunciation?$unitQuery',
   };
 }
+
+String unitMasteryCheckpointRoute(CourseUnitSnapshot unit) =>
+    '/study?mode=mixed&unit=${unit.index}&limit=${unit.masteryCheckpoint.questionCount}';

@@ -61,6 +61,97 @@ void main() {
     app.dispose();
   });
 
+  test(
+    'Drive folder reselection swaps only after selection succeeds',
+    () async {
+      final app = AppController(MemoryStudyStore());
+      await Future<void>.delayed(Duration.zero);
+      final service = _ReselectableGoogleService();
+      final controller = ConnectionController(service, app);
+
+      await controller.connect();
+      expect(controller.state.folderId, 'drive-old');
+      expect(controller.state.folderName, 'WordStudyData old');
+
+      await controller.changeDriveFolder();
+      expect(controller.state.phase, ConnectionPhase.connected);
+      expect(controller.state.folderId, 'drive-new');
+      expect(controller.state.folderName, 'WordStudyData new');
+      expect(service.boundFolderId, 'drive-new');
+      expect(service.commitCalls, 1);
+      expect(service.rollbackCalls, 0);
+      expect(app.state.pendingSync, isNull);
+
+      service.failReselection = true;
+      await expectLater(controller.changeDriveFolder(), throwsStateError);
+      expect(controller.state.phase, ConnectionPhase.connected);
+      expect(controller.state.folderId, 'drive-new');
+      expect(controller.state.folderName, 'WordStudyData new');
+      expect(app.state.driveConnected, isTrue);
+
+      controller.dispose();
+      app.dispose();
+    },
+  );
+
+  for (final failure in _FolderReselectionFailure.values) {
+    test(
+      'Drive folder reselection rolls back atomically after ${failure.name} failure',
+      () async {
+        final app = AppController(MemoryStudyStore());
+        await Future<void>.delayed(Duration.zero);
+        final service = _ReselectableGoogleService();
+        final controller = ConnectionController(service, app);
+
+        await controller.connect();
+        final pendingBefore = await app.queueSyncSnapshot(
+          now: DateTime.utc(2026, 8, 3, 12),
+        );
+        final localBefore = app.exportSyncSnapshot()..remove('updatedAt');
+        final candidateSnapshot = app.exportSyncSnapshot();
+        final profile = Map<String, Object?>.from(
+          candidateSnapshot['profile']! as Map,
+        );
+        candidateSnapshot['profile'] = {
+          ...profile,
+          'totalXp': 900,
+          'xpByReplica': const {'remote-replica': 900},
+        };
+        if (failure == _FolderReselectionFailure.merge) {
+          candidateSnapshot['schemaVersion'] = 999;
+        }
+        service.snapshotsByFolder['drive-new'] = candidateSnapshot;
+        service.failure = failure;
+
+        await expectLater(controller.changeDriveFolder(), throwsStateError);
+
+        final localAfter = app.exportSyncSnapshot()..remove('updatedAt');
+        expect(controller.state.phase, ConnectionPhase.connected);
+        expect(controller.state.folderId, 'drive-old');
+        expect(controller.state.folderName, 'WordStudyData old');
+        expect(service.activeFolderId, 'drive-old');
+        expect(service.boundFolderId, 'drive-old');
+        expect(service.rollbackCalls, 1);
+        expect(
+          service.commitCalls,
+          failure == _FolderReselectionFailure.commit ? 1 : 0,
+        );
+        expect(app.state.driveConnected, isTrue);
+        expect(app.state.pendingSync?.operationId, pendingBefore.operationId);
+        expect(app.state.pendingSync?.attempts, pendingBefore.attempts);
+        expect(
+          app.state.pendingSync?.nextAttemptAt,
+          pendingBefore.nextAttemptAt,
+        );
+        expect(app.state.pendingSync?.payload, pendingBefore.payload);
+        expect(localAfter, localBefore);
+
+        controller.dispose();
+        app.dispose();
+      },
+    );
+  }
+
   test('unavailable lightweight sign-in keeps the saved local link', () async {
     final app = AppController(MemoryStudyStore());
     await Future<void>.delayed(Duration.zero);
@@ -380,6 +471,91 @@ class _RestorableGoogleService
   @override
   Future<void> disconnect() async {}
 }
+
+class _ReselectableGoogleService
+    implements GoogleConnectionService, DriveFolderReselectionService {
+  bool failReselection = false;
+  _FolderReselectionFailure? failure;
+  String activeFolderId = 'drive-old';
+  String boundFolderId = 'drive-old';
+  String? _previousFolderId;
+  int commitCalls = 0;
+  int rollbackCalls = 0;
+  final Map<String, Map<String, Object?>?> snapshotsByFolder = {};
+
+  @override
+  Future<GoogleConnectionResult> connect({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    activeFolderId = boundFolderId;
+    return const GoogleConnectionResult(
+      folderId: 'drive-old',
+      folderName: 'WordStudyData old',
+      mock: false,
+    );
+  }
+
+  @override
+  Future<GoogleConnectionResult> reselectDriveFolder({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    onStage?.call(GoogleConnectionStage.folderSelection);
+    if (failReselection) {
+      throw StateError('picker cancelled');
+    }
+    _previousFolderId = activeFolderId;
+    activeFolderId = 'drive-new';
+    return const GoogleConnectionResult(
+      folderId: 'drive-new',
+      folderName: 'WordStudyData new',
+      mock: false,
+    );
+  }
+
+  @override
+  Future<void> commitDriveFolderReselection() async {
+    commitCalls++;
+    boundFolderId = activeFolderId;
+    if (failure == _FolderReselectionFailure.commit) {
+      throw StateError('candidate binding commit result is unknown');
+    }
+    _previousFolderId = null;
+  }
+
+  @override
+  Future<void> rollbackDriveFolderReselection() async {
+    rollbackCalls++;
+    final previousFolderId = _previousFolderId;
+    if (previousFolderId != null) {
+      activeFolderId = previousFolderId;
+      boundFolderId = previousFolderId;
+    }
+    _previousFolderId = null;
+  }
+
+  @override
+  Future<void> disconnect() async {}
+
+  @override
+  Future<Map<String, Object?>?> pullSnapshot() async {
+    if (activeFolderId == 'drive-new' &&
+        failure == _FolderReselectionFailure.pull) {
+      throw StateError('candidate pull failed');
+    }
+    return snapshotsByFolder[activeFolderId];
+  }
+
+  @override
+  Future<void> pushSnapshot(Map<String, Object?> value) async {
+    if (activeFolderId == 'drive-new' &&
+        failure == _FolderReselectionFailure.push) {
+      throw StateError('candidate push failed');
+    }
+    snapshotsByFolder[activeFolderId] = value;
+  }
+}
+
+enum _FolderReselectionFailure { pull, merge, push, commit }
 
 class _OAuthFailureService implements GoogleConnectionService {
   @override

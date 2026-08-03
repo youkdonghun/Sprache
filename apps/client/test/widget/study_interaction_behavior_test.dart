@@ -438,10 +438,7 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
 
       expect(find.byKey(const Key('study-feedback-popup')), findsOneWidget);
-      expect(
-        find.byKey(const Key('quick-add-from-study-feedback')),
-        findsOneWidget,
-      );
+      expect(find.byKey(const Key('feedback-more-actions')), findsOneWidget);
       expect(find.byKey(const Key('correct-as-hard')), findsOneWidget);
       expect(find.byKey(const Key('feedback-celebration-full')), findsNothing);
       expect(

@@ -1,17 +1,47 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/study_store.dart';
+import 'package:sprache/src/domain/language.dart';
+import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/session_enhancements.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
+import 'package:sprache/src/domain/study_subject.dart';
 import 'package:sprache/src/routing/app_router.dart';
 import 'package:sprache/src/screens/study_screen.dart';
 import 'package:sprache/src/services/app_clock.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 void main() {
+  testWidgets('hub tabs separate recommendations, games, and missions', (
+    tester,
+  ) async {
+    await _pumpPracticeHub(tester, openGames: false);
+
+    expect(find.byKey(const Key('practice-hub-tabs')), findsOneWidget);
+    expect(find.byKey(const Key('personalized-practice-hub')), findsOneWidget);
+    expect(find.byKey(const Key('practice-game-search')), findsNothing);
+
+    await tester.tap(find.text('전체 게임'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('personalized-practice-hub')), findsNothing);
+    expect(find.byKey(const Key('practice-game-search')), findsOneWidget);
+    expect(find.byKey(const Key('practice-activity-시험 시뮬레이터')), findsOneWidget);
+    expect(find.byKey(const Key('practice-activity-소리 구별')), findsOneWidget);
+
+    await tester.tap(find.text('미션'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('practice-game-search')), findsNothing);
+    expect(find.byKey(const Key('practice-mission-hub')), findsOneWidget);
+    expect(find.byKey(const Key('open-situation-missions')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('game search filters the catalog and keeps match discoverable', (
     tester,
   ) async {
@@ -19,7 +49,7 @@ void main() {
 
     expect(find.byKey(const Key('practice-game-search')), findsOneWidget);
     expect(find.byKey(const Key('practice-surprise-game')), findsOneWidget);
-    expect(find.byKey(const Key('start-recommended-practice')), findsOneWidget);
+    expect(find.byKey(const Key('start-recommended-practice')), findsNothing);
     expect(find.byKey(const Key('practice-activity-매치 스프린트')), findsOneWidget);
 
     final search = find.byKey(const Key('practice-game-search'));
@@ -37,6 +67,63 @@ void main() {
     await tester.tap(find.byTooltip('검색 지우기'));
     await tester.pump();
     expect(find.byKey(const Key('practice-activity-혼합 퀴즈')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('sound discrimination stays disabled until three choices exist', (
+    tester,
+  ) async {
+    final harness = await _pumpPracticeHub(tester);
+    final controller = harness.container.read(appControllerProvider.notifier);
+    const subjectId = 'general:listening-readiness';
+    await controller.upsertStudySubject(
+      const StudySubject(
+        id: subjectId,
+        kind: StudySubjectKind.general,
+        name: '듣기 준비도',
+        description: '후보 수 검증',
+        symbol: '🎧',
+        contentLanguage: LanguageTag.english,
+      ),
+    );
+    for (final item in const [
+      LearningItem(
+        id: 'sound-ship',
+        subjectId: subjectId,
+        kind: LearningItemKind.word,
+        learningLanguage: LanguageTag.english,
+        text: 'ship',
+        translations: ['배'],
+        acceptedAnswers: ['배'],
+        capabilities: {ExerciseCapability.listening},
+      ),
+      LearningItem(
+        id: 'sound-sheep',
+        subjectId: subjectId,
+        kind: LearningItemKind.word,
+        learningLanguage: LanguageTag.english,
+        text: 'sheep',
+        translations: ['양'],
+        acceptedAnswers: ['양'],
+        capabilities: {ExerciseCapability.listening},
+      ),
+    ]) {
+      await controller.upsertCustomItem(item);
+    }
+    controller.selectSubject(subjectId);
+    await tester.pumpAndSettle();
+    if (find.byKey(const Key('practice-game-search')).evaluate().isEmpty) {
+      await tester.tap(find.text('전체 게임'));
+      await tester.pumpAndSettle();
+    }
+
+    final card = find.byKey(const Key('practice-activity-소리 구별'));
+    expect(card, findsOneWidget);
+    expect(find.text('듣기 가능한 표현과 서로 구별되는 후보가 최소 3개 필요해요.'), findsOneWidget);
+    final material = tester.widget<Material>(card);
+    expect(material.child, isA<InkWell>());
+    final inkWell = material.child! as InkWell;
+    expect(inkWell.onTap, isNull);
     expect(tester.takeException(), isNull);
   });
 
@@ -110,8 +197,19 @@ void main() {
     await _pumpPracticeHub(
       tester,
       now: () => DateTime.fromMicrosecondsSinceEpoch(0),
+      openGames: false,
     );
 
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('start-recommended-practice')),
+    );
+    expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
+    await tester.tap(find.byTooltip('닫기').last);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('전체 게임'));
+    await tester.pumpAndSettle();
     await _tapVisible(tester, find.byKey(const Key('practice-surprise-game')));
     expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
     expect(find.byKey(const Key('practice-advanced-settings')), findsOneWidget);
@@ -121,20 +219,27 @@ void main() {
     await tester.tap(find.byTooltip('닫기').last);
     await tester.pumpAndSettle();
 
-    await _tapVisible(
-      tester,
-      find.byKey(const Key('start-recommended-practice')),
-    );
-    expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
   testWidgets(
     'practice hub explains recommendation inputs and daily challenge',
     (tester) async {
-      final harness = await _pumpPracticeHub(tester);
+      final harness = await _pumpPracticeHub(tester, openGames: false);
 
       expect(find.byKey(const Key('practice-daily-challenge')), findsOneWidget);
+      expect(find.byKey(const Key('practice-daily-quest-0')), findsOneWidget);
+      expect(find.byKey(const Key('practice-daily-quest-1')), findsOneWidget);
+      expect(find.byKey(const Key('practice-daily-quest-2')), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const Key('practice-daily-quest-progress')),
+            )
+            .data,
+        '0/3 완료',
+      );
+      expect(find.text('오늘의 3가지 도전'), findsOneWidget);
       final challengeTitle = tester
           .widget<Text>(find.textContaining('오늘의 도전 ·').first)
           .data!;
@@ -144,7 +249,7 @@ void main() {
         tester
             .getSize(find.byKey(const Key('personalized-practice-hub')))
             .height,
-        88,
+        100,
       );
       expect(
         find.descendant(of: basis, matching: find.text('복습 0')),
@@ -164,6 +269,74 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(challengeTitle), findsOneWidget);
       expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'Windows practice recommendations expose controls and keyboard scrolling',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      try {
+        await _pumpPracticeHub(
+          tester,
+          openGames: false,
+          size: const Size(320, 720),
+        );
+
+        final listFinder = find.byKey(const Key('personalized-practice-hub'));
+        final previousFinder = find.byKey(
+          const Key('practice-hub-scroll-previous'),
+        );
+        final nextFinder = find.byKey(const Key('practice-hub-scroll-next'));
+        final controller = tester.widget<ListView>(listFinder).controller!;
+
+        expect(find.byKey(const Key('practice-hub-scrollbar')), findsOneWidget);
+        expect(previousFinder, findsOneWidget);
+        expect(nextFinder, findsOneWidget);
+        expect(tester.widget<IconButton>(previousFinder).onPressed, isNull);
+        expect(tester.widget<IconButton>(nextFinder).onPressed, isNotNull);
+        expect(controller.offset, 0);
+
+        await tester.tap(nextFinder);
+        await tester.pumpAndSettle();
+        expect(controller.offset, greaterThan(0));
+        expect(tester.widget<IconButton>(previousFinder).onPressed, isNotNull);
+
+        final scrollFocus = tester.widget<Focus>(
+          find.byKey(const Key('practice-hub-scroll-focus')),
+        );
+        scrollFocus.focusNode!.requestFocus();
+        await tester.pump();
+        await tester.sendKeyEvent(LogicalKeyboardKey.end);
+        await tester.pumpAndSettle();
+        expect(controller.offset, controller.position.maxScrollExtent);
+        expect(tester.widget<IconButton>(nextFinder).onPressed, isNull);
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.home);
+        await tester.pumpAndSettle();
+        await tester.drag(
+          listFinder,
+          const Offset(-120, 0),
+          kind: PointerDeviceKind.mouse,
+        );
+        await tester.pumpAndSettle();
+        expect(controller.offset, greaterThan(0));
+
+        await tester.sendKeyEvent(LogicalKeyboardKey.home);
+        await tester.pumpAndSettle();
+        await tester.sendEventToBinding(
+          PointerScrollEvent(
+            position: tester.getCenter(listFinder),
+            scrollDelta: const Offset(0, 90),
+            kind: PointerDeviceKind.mouse,
+          ),
+        );
+        await tester.pump();
+        expect(controller.offset, greaterThan(0));
+        expect(tester.takeException(), isNull);
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
     },
   );
 
@@ -249,7 +422,7 @@ void main() {
   testWidgets('recommendation-only games remain reachable from recent games', (
     tester,
   ) async {
-    final harness = await _pumpPracticeHub(tester);
+    final harness = await _pumpPracticeHub(tester, openGames: false);
 
     await _tapVisible(
       tester,
@@ -584,7 +757,7 @@ void main() {
   testWidgets('recent wrong practice keeps the queue scoped to wrong items', (
     tester,
   ) async {
-    final harness = await _pumpPracticeHub(tester);
+    final harness = await _pumpPracticeHub(tester, openGames: false);
     final controller = harness.container.read(appControllerProvider.notifier);
     final items = controller.selectedItems;
     expect(items.length, greaterThan(1));
@@ -731,9 +904,11 @@ DateTime _fixedNow() => DateTime(2026, 8, 2, 12);
 Future<_PracticeHarness> _pumpPracticeHub(
   WidgetTester tester, {
   DateTime Function()? now,
+  bool openGames = true,
+  Size size = const Size(412, 915),
 }) async {
   tester.view.devicePixelRatio = 1;
-  tester.view.physicalSize = const Size(412, 915);
+  tester.view.physicalSize = size;
   addTearDown(tester.view.reset);
   final store = MemoryStudyStore(
     preferences: const StudyPreferences(onboardingCompleted: true),
@@ -750,6 +925,10 @@ Future<_PracticeHarness> _pumpPracticeHub(
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('nav-learn')));
   await tester.pumpAndSettle();
+  if (openGames) {
+    await tester.tap(find.text('전체 게임'));
+    await tester.pumpAndSettle();
+  }
   final container = ProviderScope.containerOf(
     tester.element(find.byType(SpracheApp)),
   );

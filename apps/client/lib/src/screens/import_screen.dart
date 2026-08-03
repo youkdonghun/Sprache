@@ -829,7 +829,15 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           issues: [
             ...parsed.preview.issues,
             for (final issue in quick.issues)
-              ImportIssue(row: issue.line, message: issue.message),
+              ImportIssue(
+                row: issue.line,
+                message: issue.message,
+                sourceFields:
+                    issue.kind == BulkPasteIssueKind.duplicate ||
+                        issue.source.trim().isEmpty
+                    ? const {}
+                    : {'term': issue.source, 'meaning': ''},
+              ),
           ],
           duplicates: parsed.preview.duplicates,
           notices: parsed.preview.notices,
@@ -953,6 +961,169 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
       _showMessage('${entry.row}행을 다시 검증했습니다.');
     } on FormatException catch (error) {
       _showMessage(error.message.toString());
+    }
+  }
+
+  Future<void> _editRejectedIssue(ImportIssue issue) async {
+    if (!issue.canEdit) return;
+    final edited = await showDialog<_RejectedRowEdit>(
+      context: context,
+      builder: (context) => _RejectedRowEditDialog(issue: issue),
+    );
+    if (edited == null || !mounted) return;
+
+    final values = <String, Object?>{...issue.sourceFields};
+    void replaceAliases(List<String> aliases, String value, String fallback) {
+      var replaced = false;
+      for (final alias in aliases) {
+        if (!values.containsKey(alias)) continue;
+        values[alias] = value;
+        replaced = true;
+      }
+      if (!replaced) values[fallback] = value;
+    }
+
+    replaceAliases(const ['text', 'term', 'prompt'], edited.text, 'term');
+    replaceAliases(
+      const ['translations', 'translation', 'meaning', 'answer', 'answers'],
+      edited.meaning,
+      'meaning',
+    );
+    if (edited.id.isEmpty) {
+      values.remove('id');
+    } else {
+      values['id'] = edited.id;
+    }
+    if (edited.languageCode.isEmpty) {
+      values.remove('language');
+      values.remove('language_code');
+    } else {
+      replaceAliases(
+        const ['language', 'language_code'],
+        edited.languageCode,
+        'language',
+      );
+    }
+
+    try {
+      final appController = ref.read(appControllerProvider.notifier);
+      final activeSubject = appController.activeSubject;
+      final routeSubjectId = _routeSubjectId ?? activeSubject.id;
+      final routeSubject = appController.allSubjects.firstWhere(
+        (subject) => subject.id == routeSubjectId,
+        orElse: () => activeSubject,
+      );
+      final rawDistributionKey = _distributionKeyController.text.trim();
+      final distributionKey = rawDistributionKey.isEmpty
+          ? null
+          : normalizeImportDistributionKey(rawDistributionKey);
+      final distributionGroup = _distributionGroupController.text.trim();
+      final subjectsById = {
+        for (final subject in appController.allSubjects) subject.id: subject,
+      };
+      final savedRules = ref
+          .read(appControllerProvider)
+          .preferences
+          .importDistributionRules;
+      final subjectIdByDistributionKey = {
+        for (final route in fallbackImportDistributionRoutes)
+          route.key: route.subjectId,
+        for (final rule in savedRules) rule.key: rule.subjectId,
+      };
+      final groupByDistributionKey = <String, String>{};
+      for (final rule in savedRules) {
+        final group = rule.groupName;
+        if (group != null) groupByDistributionKey[rule.key] = group;
+      }
+      final languageCodeByDistributionKey = <String, String>{
+        for (final route in fallbackImportDistributionRoutes)
+          route.key: route.languageCode,
+      };
+      for (final rule in savedRules) {
+        final subject = subjectsById[rule.subjectId];
+        if (subject != null) {
+          languageCodeByDistributionKey[rule.key] =
+              subject.contentLanguage.code;
+        }
+      }
+      final parsed = const ContentImportParser().parseEditableRow(
+        row: issue.row,
+        values: values,
+        defaultLanguage: routeSubject.contentLanguage,
+        defaultSubjectId: routeSubject.isLanguage ? null : routeSubject.id,
+        distributionKey: distributionKey,
+        distributionGroup: distributionGroup.isEmpty ? null : distributionGroup,
+        routeSubjectId: distributionKey == null ? null : routeSubject.id,
+        routeLanguageCode: distributionKey == null
+            ? null
+            : routeSubject.contentLanguage.code,
+        subjectIdByDistributionKey: subjectIdByDistributionKey,
+        groupByDistributionKey: groupByDistributionKey,
+        languageCodeByDistributionKey: languageCodeByDistributionKey,
+      );
+      final preview = _preview;
+      if (preview == null) return;
+      final entries = [...preview.entries];
+      final duplicates = [...preview.duplicates, ...parsed.duplicates];
+      const validator = LearningContentValidator();
+      var addedCount = 0;
+      for (final candidate in parsed.entries) {
+        ParsedImportEntry? first;
+        var kind = ImportDuplicateKind.semantic;
+        for (final current in entries) {
+          if (current.item.id == candidate.item.id) {
+            first = current;
+            kind = ImportDuplicateKind.id;
+            break;
+          }
+          if (validator.duplicateKey(current.item) ==
+              validator.duplicateKey(candidate.item)) {
+            first = current;
+            break;
+          }
+        }
+        if (first == null) {
+          entries.add(candidate);
+          addedCount++;
+        } else {
+          duplicates.add(
+            ImportDuplicate(
+              row: candidate.row,
+              firstRow: first.row,
+              item: candidate.item,
+              kind: kind,
+            ),
+          );
+        }
+      }
+      final remainingIssues = [
+        for (final current in preview.issues)
+          if (!identical(current, issue)) current,
+        ...parsed.issues,
+      ];
+      setState(() {
+        _preview = ImportPreview(
+          entries: entries,
+          issues: remainingIssues,
+          duplicates: duplicates,
+          notices: [...preview.notices, ...parsed.notices],
+        );
+        _committed = false;
+        _filter = addedCount == 0 ? _ReviewFilter.problems : _ReviewFilter.all;
+        _visibleLimit = 50;
+      });
+      _saveReviewDraft();
+      if (addedCount > 0) {
+        _showMessage('${issue.row}행을 수정하고 다시 검증했습니다.');
+      } else if (parsed.issues.isNotEmpty) {
+        _showMessage(parsed.issues.first.message);
+      } else {
+        _showMessage('${issue.row}행은 다른 행과 중복되어 제외했습니다.');
+      }
+    } on FormatException catch (error) {
+      _showMessage(error.message.toString());
+    } on LearningContentValidationException catch (error) {
+      _showMessage(error.toString());
     }
   }
 
@@ -1681,6 +1852,9 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                       _ReviewSummary(
                         fileName: _fileName ?? '미리보기 파일',
                         review: review,
+                        sourceSummary: _sourceSummary,
+                        selectedCount: selectedCount,
+                        destinationCount: destinations.length,
                       ),
                       if (_sourceSummary case final summary?) ...[
                         const SizedBox(height: 8),
@@ -1762,7 +1936,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                       if (review.duplicates.isNotEmpty ||
                           review.issues.isNotEmpty) ...[
                         const SizedBox(height: 4),
-                        _RejectedRows(review: review),
+                        _RejectedRows(
+                          review: review,
+                          onEditIssue: _busy ? null : _editRejectedIssue,
+                        ),
                       ],
                       if (review.blockedCount > 0 ||
                           review.issues.isNotEmpty ||
@@ -2141,6 +2318,161 @@ class _BlockedEntryEditDialogState extends State<_BlockedEntryEditDialog> {
             );
           },
           child: const Text('수정하고 재검증'),
+        ),
+      ],
+    );
+  }
+}
+
+class _RejectedRowEdit {
+  const _RejectedRowEdit({
+    required this.id,
+    required this.text,
+    required this.meaning,
+    required this.languageCode,
+  });
+
+  final String id;
+  final String text;
+  final String meaning;
+  final String languageCode;
+}
+
+class _RejectedRowEditDialog extends StatefulWidget {
+  const _RejectedRowEditDialog({required this.issue});
+
+  final ImportIssue issue;
+
+  @override
+  State<_RejectedRowEditDialog> createState() => _RejectedRowEditDialogState();
+}
+
+class _RejectedRowEditDialogState extends State<_RejectedRowEditDialog> {
+  String _firstValue(List<String> keys) {
+    for (final key in keys) {
+      final raw = widget.issue.sourceFields[key];
+      final value = switch (raw) {
+        String value => value.trim(),
+        num value => value.toString(),
+        bool value => value.toString(),
+        List<Object?> values => values
+            .whereType<Object>()
+            .map((value) => value.toString().trim())
+            .where((value) => value.isNotEmpty)
+            .join('|'),
+        _ => '',
+      };
+      if (value.isNotEmpty) return value;
+    }
+    return '';
+  }
+
+  late final TextEditingController _id = TextEditingController(
+    text: _firstValue(const ['id']),
+  );
+  late final TextEditingController _text = TextEditingController(
+    text: _firstValue(const ['text', 'term', 'prompt']),
+  );
+  late final TextEditingController _meaning = TextEditingController(
+    text: _firstValue(const [
+      'translations',
+      'translation',
+      'meaning',
+      'answer',
+      'answers',
+    ]),
+  );
+  late final TextEditingController _language = TextEditingController(
+    text: _firstValue(const ['language', 'language_code']),
+  );
+  String? _error;
+
+  @override
+  void dispose() {
+    _id.dispose();
+    _text.dispose();
+    _meaning.dispose();
+    _language.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      key: const Key('rejected-import-edit-dialog'),
+      title: Text('${widget.issue.row}행 오류 수정'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.issue.message,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('rejected-import-text'),
+                controller: _text,
+                autofocus: true,
+                decoration: const InputDecoration(labelText: '문제·표현'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('rejected-import-meaning'),
+                controller: _meaning,
+                decoration: const InputDecoration(labelText: '정답·뜻'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('rejected-import-id'),
+                controller: _id,
+                decoration: const InputDecoration(labelText: '고유 ID (선택)'),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                key: const Key('rejected-import-language'),
+                controller: _language,
+                decoration: const InputDecoration(
+                  labelText: '언어 코드 (선택)',
+                  hintText: 'en, ja, de, fr, es, zh-Hans',
+                ),
+              ),
+              if (_error case final error?) ...[
+                const SizedBox(height: 8),
+                Text(error, style: const TextStyle(color: AppTheme.danger)),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          key: const Key('confirm-rejected-import-edit'),
+          onPressed: () {
+            final text = _text.text.trim();
+            final meaning = _meaning.text.trim();
+            if (text.isEmpty || meaning.isEmpty) {
+              setState(() => _error = '문제와 뜻을 모두 입력해 주세요.');
+              return;
+            }
+            Navigator.pop(
+              context,
+              _RejectedRowEdit(
+                id: _id.text.trim(),
+                text: text,
+                meaning: meaning,
+                languageCode: _language.text.trim(),
+              ),
+            );
+          },
+          child: const Text('수정하고 재검토'),
         ),
       ],
     );
@@ -2615,7 +2947,7 @@ class _BulkPasteDialogState extends State<_BulkPasteDialog> {
                   Navigator.pop(context, _controller.text);
                 }
               : null,
-          child: const Text('검토 화면 만들기'),
+          child: const Text('검토 작업대로 보내기'),
         ),
       ],
     );
@@ -3388,77 +3720,116 @@ class _FormatGuide extends StatelessWidget {
 }
 
 class _ReviewSummary extends StatelessWidget {
-  const _ReviewSummary({required this.fileName, required this.review});
+  const _ReviewSummary({
+    required this.fileName,
+    required this.review,
+    required this.selectedCount,
+    required this.destinationCount,
+    this.sourceSummary,
+  });
 
   final String fileName;
   final ImportReview review;
+  final String? sourceSummary;
+  final int selectedCount;
+  final int destinationCount;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      key: const Key('import-review-summary'),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '가져오기 전 변경점 검토',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        fileName,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+    return Container(
+      key: const Key('import-review-workbench'),
+      child: Card(
+        key: const Key('import-review-summary'),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '가져오기 전 변경점 검토',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          fileName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(Icons.fact_check_rounded),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 9,
-              runSpacing: 9,
-              children: [
-                _ReviewMetric(
-                  label: '신규',
-                  value: review.newCount,
-                  color: AppTheme.success,
-                ),
-                _ReviewMetric(
-                  label: '변경',
-                  value: review.changedCount,
-                  color: AppTheme.warning,
-                ),
-                _ReviewMetric(
-                  label: '동일',
-                  value: review.unchangedCount,
-                  color: AppTheme.desktopPrimary,
-                ),
-                _ReviewMetric(
-                  label: '차단',
-                  value: review.blockedCount,
-                  color: AppTheme.danger,
-                ),
-                _ReviewMetric(
-                  label: '행 오류',
-                  value: review.issues.length + review.duplicates.length,
-                  color: review.issues.isEmpty && review.duplicates.isEmpty
-                      ? const Color(0xFF64748B)
-                      : AppTheme.danger,
-                ),
-              ],
-            ),
-          ],
+                  const Icon(Icons.fact_check_rounded),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 9,
+                runSpacing: 9,
+                children: [
+                  _ReviewMetric(
+                    label: '신규',
+                    value: review.newCount,
+                    color: AppTheme.success,
+                  ),
+                  _ReviewMetric(
+                    label: '변경',
+                    value: review.changedCount,
+                    color: AppTheme.warning,
+                  ),
+                  _ReviewMetric(
+                    label: '동일',
+                    value: review.unchangedCount,
+                    color: AppTheme.desktopPrimary,
+                  ),
+                  _ReviewMetric(
+                    label: '차단',
+                    value: review.blockedCount,
+                    color: AppTheme.danger,
+                  ),
+                  _ReviewMetric(
+                    label: '행 오류',
+                    value: review.issues.length + review.duplicates.length,
+                    color: review.issues.isEmpty && review.duplicates.isEmpty
+                        ? const Color(0xFF64748B)
+                        : AppTheme.danger,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '붙여넣기·CSV·Excel 모두 같은 검증, 중복 판정, 목적지 규칙으로 검토합니다.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 7,
+                runSpacing: 7,
+                children: [
+                  Chip(
+                    key: const Key('import-workbench-source'),
+                    avatar: const Icon(Icons.source_rounded, size: 17),
+                    label: Text(sourceSummary ?? '파일 원본'),
+                  ),
+                  Chip(
+                    key: const Key('import-workbench-selected'),
+                    avatar: const Icon(Icons.task_alt_rounded, size: 17),
+                    label: Text('반영 후보 $selectedCount개'),
+                  ),
+                  Chip(
+                    key: const Key('import-workbench-destinations'),
+                    avatar: const Icon(Icons.route_rounded, size: 17),
+                    label: Text('목적지 $destinationCount곳'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -3991,9 +4362,10 @@ class _ImportNotices extends StatelessWidget {
 }
 
 class _RejectedRows extends StatelessWidget {
-  const _RejectedRows({required this.review});
+  const _RejectedRows({required this.review, this.onEditIssue});
 
   final ImportReview review;
+  final ValueChanged<ImportIssue>? onEditIssue;
 
   @override
   Widget build(BuildContext context) {
@@ -4035,6 +4407,14 @@ class _RejectedRows extends StatelessWidget {
                 ),
               ),
               title: Text(issue.message),
+              trailing: issue.canEdit && onEditIssue != null
+                  ? IconButton(
+                      key: Key('edit-rejected-import-${issue.row}'),
+                      onPressed: () => onEditIssue!(issue),
+                      icon: const Icon(Icons.edit_note_rounded),
+                      tooltip: '오류 행 수정하고 재검토',
+                    )
+                  : null,
             ),
         ],
       ),

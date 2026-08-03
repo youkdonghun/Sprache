@@ -1,6 +1,7 @@
 import 'learning_item.dart';
 import 'progress.dart';
 import 'study_preferences.dart';
+import 'study_runtime_modes.dart';
 
 enum StudySkill { meaning, writing, listening, sentence, pronunciation }
 
@@ -599,13 +600,30 @@ class StudySessionRuntimeOptions {
     this.showKoreanReading = true,
     this.showNativeReading = true,
     this.ttsRate = 0.45,
-  });
+    this.liveDifficultyLock,
+    this.practiceActivityId,
+    this.examSetupPending = false,
+    this.examConfiguration,
+    this.examDeadline,
+  }) : assert(
+         (examConfiguration == null && examDeadline == null) ||
+             (examConfiguration != null && examDeadline != null),
+       ),
+       assert(
+         !examSetupPending ||
+             (examConfiguration == null && examDeadline == null),
+       );
 
   final StudySessionStrategy strategy;
   final int breakReminderMinutes;
   final bool showKoreanReading;
   final bool showNativeReading;
   final double ttsRate;
+  final LiveDifficultyLevel? liveDifficultyLock;
+  final String? practiceActivityId;
+  final bool examSetupPending;
+  final ExamConfiguration? examConfiguration;
+  final DateTime? examDeadline;
 
   StudySessionRuntimeOptions copyWith({
     StudySessionStrategy? strategy,
@@ -613,12 +631,30 @@ class StudySessionRuntimeOptions {
     bool? showKoreanReading,
     bool? showNativeReading,
     double? ttsRate,
+    Object? liveDifficultyLock = _runtimeOptionNotProvided,
+    Object? practiceActivityId = _runtimeOptionNotProvided,
+    bool? examSetupPending,
+    Object? examConfiguration = _runtimeOptionNotProvided,
+    Object? examDeadline = _runtimeOptionNotProvided,
   }) => StudySessionRuntimeOptions(
     strategy: strategy ?? this.strategy,
     breakReminderMinutes: breakReminderMinutes ?? this.breakReminderMinutes,
     showKoreanReading: showKoreanReading ?? this.showKoreanReading,
     showNativeReading: showNativeReading ?? this.showNativeReading,
     ttsRate: ttsRate ?? this.ttsRate,
+    liveDifficultyLock: identical(liveDifficultyLock, _runtimeOptionNotProvided)
+        ? this.liveDifficultyLock
+        : liveDifficultyLock as LiveDifficultyLevel?,
+    practiceActivityId: identical(practiceActivityId, _runtimeOptionNotProvided)
+        ? this.practiceActivityId
+        : practiceActivityId as String?,
+    examSetupPending: examSetupPending ?? this.examSetupPending,
+    examConfiguration: identical(examConfiguration, _runtimeOptionNotProvided)
+        ? this.examConfiguration
+        : examConfiguration as ExamConfiguration?,
+    examDeadline: identical(examDeadline, _runtimeOptionNotProvided)
+        ? this.examDeadline
+        : examDeadline as DateTime?,
   );
 
   Map<String, Object?> toJson() => {
@@ -627,6 +663,14 @@ class StudySessionRuntimeOptions {
     'showKoreanReading': showKoreanReading,
     'showNativeReading': showNativeReading,
     'ttsRate': ttsRate.clamp(0.2, 0.8),
+    if (liveDifficultyLock != null)
+      'liveDifficultyLock': liveDifficultyLock!.name,
+    if (practiceActivityId != null) 'practiceActivityId': practiceActivityId,
+    if (examSetupPending) 'examSetupPending': true,
+    if (examConfiguration != null)
+      'examConfiguration': examConfiguration!.toJson(),
+    if (examDeadline != null)
+      'examDeadline': examDeadline!.toUtc().toIso8601String(),
   };
 
   factory StudySessionRuntimeOptions.fromJson(Map<String, Object?> json) {
@@ -635,6 +679,42 @@ class StudySessionRuntimeOptions {
     final showKorean = json['showKoreanReading'];
     final showNative = json['showNativeReading'];
     final rate = json['ttsRate'];
+    final rawDifficultyLock = json['liveDifficultyLock'];
+    final difficultyLock = rawDifficultyLock == null
+        ? null
+        : _enumByName(LiveDifficultyLevel.values, rawDifficultyLock);
+    final rawPracticeActivityId = json['practiceActivityId'];
+    final practiceActivityId =
+        rawPracticeActivityId is String &&
+            _validPracticeActivityId(rawPracticeActivityId)
+        ? rawPracticeActivityId
+        : null;
+    final rawExamSetupPending = json['examSetupPending'];
+    final examSetupPending = rawExamSetupPending == true;
+    final rawExamConfiguration = json['examConfiguration'];
+    ExamConfiguration? examConfiguration;
+    var invalidExamConfiguration = false;
+    if (rawExamConfiguration != null) {
+      if (rawExamConfiguration is! Map) {
+        invalidExamConfiguration = true;
+      } else {
+        try {
+          examConfiguration = ExamConfiguration.fromJson(
+            Map<String, Object?>.from(rawExamConfiguration),
+          );
+        } on FormatException {
+          invalidExamConfiguration = true;
+        }
+      }
+    }
+    final rawExamDeadline = json['examDeadline'];
+    final examDeadline = rawExamDeadline is String
+        ? DateTime.tryParse(rawExamDeadline)?.toUtc()
+        : null;
+    final invalidExamPair =
+        invalidExamConfiguration ||
+        (rawExamDeadline != null && examDeadline == null) ||
+        ((examConfiguration == null) != (examDeadline == null));
     if (strategy == null ||
         breakMinutes == null ||
         !const {0, 10, 20, 30}.contains(breakMinutes) ||
@@ -643,7 +723,13 @@ class StudySessionRuntimeOptions {
         rate is! num ||
         !rate.isFinite ||
         rate < 0.2 ||
-        rate > 0.8) {
+        rate > 0.8 ||
+        (rawDifficultyLock != null && difficultyLock == null) ||
+        (rawPracticeActivityId != null && practiceActivityId == null) ||
+        (rawExamSetupPending != null && rawExamSetupPending is! bool) ||
+        (examSetupPending &&
+            (examConfiguration != null || examDeadline != null)) ||
+        invalidExamPair) {
       throw const FormatException('Invalid study session runtime options');
     }
     return StudySessionRuntimeOptions(
@@ -652,9 +738,19 @@ class StudySessionRuntimeOptions {
       showKoreanReading: showKorean,
       showNativeReading: showNative,
       ttsRate: rate.toDouble(),
+      liveDifficultyLock: difficultyLock,
+      practiceActivityId: practiceActivityId,
+      examSetupPending: examSetupPending,
+      examConfiguration: examConfiguration,
+      examDeadline: examDeadline,
     );
   }
 }
+
+const _runtimeOptionNotProvided = Object();
+
+bool _validPracticeActivityId(String value) =>
+    RegExp(r'^[a-z0-9][a-z0-9-]{0,63}$').hasMatch(value);
 
 class StudyInputCheckpoint {
   const StudyInputCheckpoint({

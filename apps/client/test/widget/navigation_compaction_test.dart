@@ -31,6 +31,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> openAllGames(WidgetTester tester) async {
+    await tester.tap(find.text('전체 게임'));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('active tab reselect returns its branch to the root screen', (
     tester,
   ) async {
@@ -117,6 +122,7 @@ void main() {
     await pumpApp(tester);
     await tester.tap(find.byKey(const Key('nav-learn')));
     await tester.pumpAndSettle();
+    await openAllGames(tester);
     await tester.ensureVisible(find.byKey(const Key('quick-practice-quiz')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('quick-practice-quiz')));
@@ -206,6 +212,10 @@ void main() {
     expect(find.byKey(const Key('personalized-practice-hub')), findsOneWidget);
     expect(find.text('오늘의 Practice Hub'), findsOneWidget);
     expect(find.byKey(const Key('open-session-builder')), findsOneWidget);
+    expect(find.byKey(const Key('practice-category-퀴즈')), findsNothing);
+
+    await openAllGames(tester);
+    expect(find.byKey(const Key('personalized-practice-hub')), findsNothing);
     expect(find.byKey(const Key('practice-category-퀴즈')), findsOneWidget);
     expect(find.byKey(const Key('practice-activity-혼합 퀴즈')), findsOneWidget);
     expect(find.byKey(const Key('practice-category-퀴즈')), findsOneWidget);

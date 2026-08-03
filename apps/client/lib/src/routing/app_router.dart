@@ -207,8 +207,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                pageBuilder: (context, state) =>
-                    _topLevelTabPage(state, const SettingsScreen()),
+                pageBuilder: (context, state) => _topLevelTabPage(
+                  state,
+                  SettingsScreen(
+                    initialFocus: state.uri.queryParameters['focus'],
+                  ),
+                ),
               ),
               GoRoute(
                 path: '/settings/personalize',
@@ -283,8 +287,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             historyFilter: historyFilter,
             resume: activeSession != null,
             customPlan: state.uri.queryParameters['custom'] == 'true',
+            examMode:
+                activeSession?.runtimeOptions.examSetupPending == true ||
+                activeSession?.runtimeOptions.practiceActivityId ==
+                    'exam-simulator' ||
+                activeSession?.runtimeOptions.examConfiguration != null ||
+                state.uri.queryParameters['exam'] == 'true',
             startMatchSprint: state.uri.queryParameters['match'] == 'true',
-            practiceActivityId: state.uri.queryParameters['practiceActivityId'],
+            practiceActivityId:
+                activeSession?.runtimeOptions.practiceActivityId ??
+                state.uri.queryParameters['practiceActivityId'],
             playlistActivityIds: playlistActivityIds,
             playlistIndex:
                 int.tryParse(

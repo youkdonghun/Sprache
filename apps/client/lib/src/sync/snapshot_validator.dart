@@ -1135,6 +1135,8 @@ class SyncSnapshotValidator {
       path,
       issues,
     );
+    _validatePracticeDailyQuestMap(catalog, path, issues);
+    _validatePracticeDailyQuestAssignments(catalog, path, issues);
     _validatePracticeBestRecords(catalog, path, issues);
     _validatePracticePlaylists(catalog, path, issues);
     _validatePracticeLaunches(catalog, path, issues);
@@ -1227,6 +1229,83 @@ class SyncSnapshotValidator {
           entry.value is! String ||
           DateTime.tryParse(entry.value! as String) == null) {
         _add(issues, fieldPath, '안전한 활동 ID와 ISO 날짜만 사용할 수 있습니다.');
+      }
+    }
+  }
+
+  void _validatePracticeDailyQuestMap(
+    Map<String, Object?> catalog,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'dailyQuestCompletionDayByScope';
+    if (!catalog.containsKey(field)) return;
+    final values = catalog[field];
+    final fieldPath = '$path.$field';
+    if (values is! Map) {
+      _add(issues, fieldPath, '주제·활동 범위와 완료 날짜로 구성된 객체여야 합니다.');
+      return;
+    }
+    if (values.length > 100) {
+      _add(issues, fieldPath, '일일 도전 완료 기록은 최대 100개까지 허용합니다.');
+      return;
+    }
+    for (final entry in values.entries) {
+      final key = entry.key;
+      final day = entry.value;
+      final separator = key is String ? key.indexOf('|') : -1;
+      final parsed = day is String ? DateTime.tryParse(day) : null;
+      final canonicalDay = parsed == null
+          ? null
+          : '${parsed.year.toString().padLeft(4, '0')}-'
+                '${parsed.month.toString().padLeft(2, '0')}-'
+                '${parsed.day.toString().padLeft(2, '0')}';
+      if (key is! String ||
+          !_isSafePreferenceScopeKey(key, maximumLength: 91) ||
+          separator <= 0 ||
+          separator >= key.length - 1 ||
+          day is! String ||
+          day.length != 10 ||
+          canonicalDay != day) {
+        _add(issues, fieldPath, '안전한 주제·활동 범위와 YYYY-MM-DD 날짜만 사용할 수 있습니다.');
+      }
+    }
+  }
+
+  void _validatePracticeDailyQuestAssignments(
+    Map<String, Object?> catalog,
+    String path,
+    List<SnapshotValidationIssue> issues,
+  ) {
+    const field = 'dailyQuestAssignmentByScope';
+    if (!catalog.containsKey(field)) return;
+    final values = catalog[field];
+    final fieldPath = '$path.$field';
+    if (values is! Map || values.length > 60) {
+      _add(issues, fieldPath, '날짜·주제별 일일 도전은 최대 60개 객체여야 합니다.');
+      return;
+    }
+    for (final entry in values.entries) {
+      final key = entry.key;
+      final ids = entry.value;
+      final separator = key is String ? key.indexOf('|') : -1;
+      final day = separator > 0 ? key!.substring(0, separator) : '';
+      final parsed = DateTime.tryParse(day);
+      final canonicalDay = parsed == null
+          ? null
+          : '${parsed.year.toString().padLeft(4, '0')}-'
+                '${parsed.month.toString().padLeft(2, '0')}-'
+                '${parsed.day.toString().padLeft(2, '0')}';
+      if (key is! String ||
+          !_isSafePreferenceScopeKey(key, maximumLength: 241) ||
+          separator != 10 ||
+          separator >= key.length - 1 ||
+          canonicalDay != day ||
+          ids is! List<Object?> ||
+          ids.isEmpty ||
+          ids.length > 3 ||
+          ids.any((id) => id is! String || !_isSafePreferenceId(id))) {
+        _add(issues, fieldPath, 'YYYY-MM-DD·주제 키와 최대 3개의 안전한 활동 ID가 필요합니다.');
       }
     }
   }
@@ -1354,6 +1433,12 @@ class SyncSnapshotValidator {
       value.isNotEmpty &&
       value == value.trim() &&
       value.runes.length <= 160 &&
+      !value.runes.any((rune) => rune < 0x20 || rune == 0x7f);
+
+  bool _isSafePreferenceScopeKey(String value, {required int maximumLength}) =>
+      value.isNotEmpty &&
+      value == value.trim() &&
+      value.runes.length <= maximumLength &&
       !value.runes.any((rune) => rune < 0x20 || rune == 0x7f);
 
   void _validateSessionPlan(
@@ -1845,6 +1930,57 @@ class SyncSnapshotValidator {
     }
   }
 
+  void _validateAttemptReviews(
+    Object? raw, {
+    required String sessionPath,
+    required Set<String> knownItemIds,
+    required List<SnapshotValidationIssue> issues,
+  }) {
+    if (raw == null) return;
+    if (raw is! List<Object?>) {
+      _add(issues, '$sessionPath.attemptReviews', '문항별 결과는 배열이어야 합니다.');
+      return;
+    }
+    if (raw.length > StudyLimits.maxActiveQueueEntries) {
+      _add(
+        issues,
+        '$sessionPath.attemptReviews',
+        '문항별 결과는 최대 ${StudyLimits.maxActiveQueueEntries}개까지 저장할 수 있습니다.',
+      );
+      return;
+    }
+    const allowedKeys = {
+      'sequence',
+      'itemId',
+      'prompt',
+      'expectedAnswer',
+      'userAnswer',
+      'exerciseType',
+      'correct',
+      'rating',
+      'usedHint',
+      'correctionLabel',
+    };
+    final sequences = <int>{};
+    for (final (index, value) in raw.indexed) {
+      final path = '$sessionPath.attemptReviews[$index]';
+      final review = _map(value, path, issues);
+      if (review == null) continue;
+      final unknown = review.keys.where((key) => !allowedKeys.contains(key));
+      if (unknown.isNotEmpty) {
+        _add(issues, path, '문항별 결과에는 알 수 없는 필드를 저장할 수 없습니다.');
+      }
+      final sequence = _integer(review['sequence']);
+      if (sequence == null || sequence < 1 || !sequences.add(sequence)) {
+        _add(issues, '$path.sequence', '문항 순번은 중복되지 않는 양의 정수여야 합니다.');
+      }
+      final itemId = review['itemId'];
+      if (itemId is! String || !knownItemIds.contains(itemId)) {
+        _add(issues, '$path.itemId', '문항 ID는 현재 세션 문제 목록에 있어야 합니다.');
+      }
+    }
+  }
+
   void _validateActiveStudy(Object? raw, List<SnapshotValidationIssue> issues) {
     if (raw == null) return;
     final active = _map(raw, r'$.activeStudy', issues);
@@ -1890,6 +2026,12 @@ class SyncSnapshotValidator {
         );
       }
     }
+    _validateAttemptReviews(
+      sessionMap['attemptReviews'],
+      sessionPath: r'$.activeStudy.session',
+      knownItemIds: {...?rawItemIds, ...?rawInitialItemIds},
+      issues: issues,
+    );
     try {
       final session = ActiveStudySession.fromJson(sessionMap);
       if (!isSupportedCourseId(session.courseId)) {

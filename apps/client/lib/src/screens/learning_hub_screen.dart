@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import '../domain/study_history.dart';
 import '../domain/study_interaction_preferences.dart';
 import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
+import '../domain/study_runtime_modes.dart';
 import '../services/app_clock.dart';
 import '../state/app_state.dart';
 
@@ -367,6 +369,8 @@ class _RecentSubjectSessionCard extends StatelessWidget {
 
 enum _PracticeCategory { quiz, memorize, apply }
 
+enum _PracticeHubTab { recommended, games, missions }
+
 class _PracticeCatalog extends ConsumerStatefulWidget {
   const _PracticeCatalog({
     required this.items,
@@ -392,12 +396,47 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
   final _searchController = TextEditingController();
   final _playlistSelection = <String>[];
   var _query = '';
+  var _selectedTab = _PracticeHubTab.recommended;
   String? _handledPlaylistToken;
+  String? _handledLaunchToken;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final uri = GoRouterState.of(context).uri;
+    final launchId = uri.queryParameters['launch']?.trim();
+    if (launchId != null && launchId.isNotEmpty) {
+      final launchToken = '$launchId|${uri.queryParameters['request'] ?? ''}';
+      if (_handledLaunchToken != launchToken) {
+        _handledLaunchToken = launchToken;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final activity = _allActivities.cast<_Activity?>().firstWhere(
+            (candidate) => candidate?.id == launchId,
+            orElse: () => null,
+          );
+          final hidden = _catalog.hiddenActivityIds.contains(launchId);
+          final availability = activity == null
+              ? null
+              : _availabilityFor(activity);
+          if (activity == null || hidden || !(availability?.enabled ?? false)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  hidden
+                      ? '숨긴 학습 방식입니다. 전체 게임에서 다시 표시한 뒤 시작해 주세요.'
+                      : availability?.disabledReason ??
+                            '이 학습 방식을 지금 시작할 수 없어요.',
+                ),
+              ),
+            );
+            context.go('/learn');
+            return;
+          }
+          unawaited(_openActivity(activity, useSavedRules: true));
+        });
+      }
+    }
     final rawIds = uri.queryParameters['playlist'];
     final index = int.tryParse(uri.queryParameters['playlistIndex'] ?? '');
     if (rawIds == null || index == null) return;
@@ -607,6 +646,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     return {
       if ({
         'mixed-quiz',
+        'exam-simulator',
         'meaning-choice',
         'match-sprint',
         'word-cards',
@@ -619,6 +659,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         PracticeSkillFilter.recognition,
       if ({
         'mixed-quiz',
+        'exam-simulator',
         'production-writing',
         'sentence-cloze',
         'sentence-order',
@@ -629,6 +670,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         PracticeSkillFilter.recall,
       if ({
         'listening-dictation',
+        'listening-discrimination',
         'pronunciation',
         'situation-missions',
       }.contains(id))
@@ -750,22 +792,65 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     ];
   }
 
-  _Activity? _dailyChallenge(PracticeCatalogPreferences catalog) {
+  List<_Activity> _dailyChallenges(PracticeCatalogPreferences catalog) {
     final candidates =
         _allActivities
             .where(
               (activity) => !catalog.hiddenActivityIds.contains(activity.id),
             )
+            .where((activity) => activity.route.startsWith('/study'))
             .where((activity) => _availabilityFor(activity).enabled)
             .toList(growable: false)
           ..sort((left, right) => left.id.compareTo(right.id));
-    if (candidates.isEmpty) return null;
+    if (candidates.isEmpty) return const [];
     final now = ref.read(appClockProvider)().toLocal();
     final subjectId = ref.read(appControllerProvider).activeSubjectId;
-    final seed =
-        '${now.year}-${now.month}-${now.day}|$subjectId|'
-        '${candidates.map((activity) => activity.id).join('|')}';
-    return candidates[_stablePracticeHash(seed) % candidates.length];
+    final assigned = catalog.ensureDailyQuestAssignment(
+      day: now,
+      subjectId: subjectId,
+      activityIds: candidates.map((activity) => activity.id),
+    );
+    if (!catalog.hasDailyQuestAssignment(day: now, subjectId: subjectId)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final current = _catalog;
+        _updateCatalog(
+          current.ensureDailyQuestAssignment(
+            day: now,
+            subjectId: subjectId,
+            activityIds: candidates.map((activity) => activity.id),
+          ),
+        );
+      });
+    }
+    final byId = {for (final activity in _allActivities) activity.id: activity};
+    return [
+      for (final activityId in assigned.dailyQuestActivityIds(
+        day: now,
+        subjectId: subjectId,
+        activityIds: candidates.map((activity) => activity.id),
+      ))
+        ?byId[activityId],
+    ];
+  }
+
+  Future<void> _openDailyChallenge(_Activity activity) async {
+    final catalog = _catalog;
+    final hidden = catalog.hiddenActivityIds.contains(activity.id);
+    final availability = _availabilityFor(activity);
+    if (hidden || !availability.enabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            hidden
+                ? '오늘 배정된 게임을 숨김 해제하면 이어서 완료할 수 있어요.'
+                : availability.disabledReason ?? '이 도전은 지금 시작할 수 없어요.',
+          ),
+        ),
+      );
+      return;
+    }
+    await _openActivity(activity);
   }
 
   _PracticeRecommendationBasis _recommendationBasis() {
@@ -918,6 +1003,13 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
 
   _ActivityAvailability _availabilityFor(_Activity activity) {
     final items = widget.items;
+    if (activity.id == 'listening-discrimination') {
+      final readiness = ListeningDiscriminationReadiness.evaluate(items);
+      return _ActivityAvailability(
+        availableCount: readiness.canStart ? readiness.eligibleTargetCount : 0,
+        disabledReason: readiness.canStart ? null : readiness.reason,
+      );
+    }
     if (activity.route.contains('match=true')) {
       final learning = <String>{};
       final meanings = <String>{};
@@ -1234,12 +1326,29 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           badge: '듣기',
         ),
         _Activity(
+          id: 'listening-discrimination',
+          icon: Icons.hearing_rounded,
+          title: '소리 구별',
+          description: '발음 표기 또는 철자 유사도를 바탕으로 소리를 듣고 표현 선택',
+          route:
+              '/study?mode=listening&practiceActivityId=listening-discrimination',
+          badge: '듣기',
+        ),
+        _Activity(
           id: 'match-sprint',
           icon: Icons.grid_view_rounded,
           title: '매치 스프린트',
           description: '표현과 뜻을 빠르게 연결',
           route: '/study?mode=mixed&match=true',
           badge: '매치',
+        ),
+        _Activity(
+          id: 'exam-simulator',
+          icon: Icons.assignment_turned_in_rounded,
+          title: '시험 시뮬레이터',
+          description: '시간·문항·합격선을 정해 실전 점검',
+          route: '/study?mode=mixed&exam=true',
+          badge: '시험',
         ),
       ],
       _PracticeCategory.memorize => [
@@ -1466,7 +1575,16 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       catalog,
     );
     final recentActivities = _recentActivities(catalog, recommendations);
-    final dailyChallenge = _dailyChallenge(catalog);
+    final dailyChallenges = _dailyChallenges(catalog);
+    final dailyChallengeDay = ref.read(appClockProvider)().toLocal();
+    final dailyChallengeSubjectId = ref.read(
+      appControllerProvider.select((state) => state.activeSubjectId),
+    );
+    final completedDailyChallengeIds = catalog.completedDailyQuestActivityIds(
+      day: dailyChallengeDay,
+      subjectId: dailyChallengeSubjectId,
+      activityIds: dailyChallenges.map((activity) => activity.id),
+    );
     final hidden = _allActivities
         .where((activity) => catalog.hiddenActivityIds.contains(activity.id))
         .toList(growable: false);
@@ -1556,35 +1674,69 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           ],
         ),
         const SizedBox(height: 10),
-        if (_hasMissingMaterialCapability && widget.items.isEmpty) ...[
+        SegmentedButton<_PracticeHubTab>(
+          key: const Key('practice-hub-tabs'),
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(
+              value: _PracticeHubTab.recommended,
+              icon: Icon(Icons.auto_awesome_outlined),
+              label: Text('추천'),
+            ),
+            ButtonSegment(
+              value: _PracticeHubTab.games,
+              icon: Icon(Icons.sports_esports_outlined),
+              label: Text('전체 게임'),
+            ),
+            ButtonSegment(
+              value: _PracticeHubTab.missions,
+              icon: Icon(Icons.explore_outlined),
+              label: Text('미션'),
+            ),
+          ],
+          selected: {_selectedTab},
+          onSelectionChanged: (selection) {
+            if (selection.isNotEmpty) {
+              setState(() => _selectedTab = selection.first);
+            }
+          },
+        ),
+        const SizedBox(height: 10),
+        if (_selectedTab == _PracticeHubTab.recommended &&
+            _hasMissingMaterialCapability &&
+            widget.items.isEmpty) ...[
           _MissingMaterialNotice(
             isEmpty: true,
             onAdd: () => context.go('/library/new'),
           ),
           const SizedBox(height: 10),
         ],
-        _PersonalizedPracticeHub(
-          recommendations: recommendations,
-          basis: recommendationBasis,
-          recommendationWeights: catalog.recommendationWeightByActivityId,
-          availabilityFor: _availabilityFor,
-          onPressed: _openActivity,
-          onSeeMore: (activity) => _adjustRecommendationWeight(activity, 1),
-          onSeeLess: (activity) => _adjustRecommendationWeight(activity, -1),
-          onHideToday: (activity) =>
-              _snoozeRecommendation(activity, const Duration(days: 1)),
-          onHideSevenDays: (activity) =>
-              _snoozeRecommendation(activity, const Duration(days: 7)),
-        ),
-        if (dailyChallenge case final activity?) ...[
+        if (_selectedTab == _PracticeHubTab.recommended)
+          _PersonalizedPracticeHub(
+            recommendations: recommendations,
+            basis: recommendationBasis,
+            recommendationWeights: catalog.recommendationWeightByActivityId,
+            availabilityFor: _availabilityFor,
+            onPressed: _openActivity,
+            onSeeMore: (activity) => _adjustRecommendationWeight(activity, 1),
+            onSeeLess: (activity) => _adjustRecommendationWeight(activity, -1),
+            onHideToday: (activity) =>
+                _snoozeRecommendation(activity, const Duration(days: 1)),
+            onHideSevenDays: (activity) =>
+                _snoozeRecommendation(activity, const Duration(days: 7)),
+          ),
+        if (_selectedTab == _PracticeHubTab.recommended &&
+            dailyChallenges.isNotEmpty) ...[
           const SizedBox(height: 8),
-          _DailyChallengeCard(
-            activity: activity,
-            quickLaunch: catalog.quickLaunchActivityIds.contains(activity.id),
-            onPressed: () => _openActivity(activity),
+          _DailyQuestBoard(
+            activities: dailyChallenges,
+            completedActivityIds: completedDailyChallengeIds,
+            quickLaunchActivityIds: catalog.quickLaunchActivityIds,
+            onPressed: _openDailyChallenge,
           ),
         ],
-        if (recentActivities.isNotEmpty) ...[
+        if (_selectedTab != _PracticeHubTab.missions &&
+            recentActivities.isNotEmpty) ...[
           const SizedBox(height: 10),
           _RecentPracticeRow(
             activities: recentActivities,
@@ -1593,7 +1745,8 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
                 _openActivity(activity, useSavedRules: true),
           ),
         ],
-        if (favorites.isNotEmpty) ...[
+        if (_selectedTab != _PracticeHubTab.missions &&
+            favorites.isNotEmpty) ...[
           const SizedBox(height: 8),
           _FavoritePracticeRow(
             activities: favorites,
@@ -1601,172 +1754,258 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
                 _openActivity(activity, useSavedRules: true),
           ),
         ],
-        const SizedBox(height: 10),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final search = TextField(
-              key: const Key('practice-game-search'),
-              controller: _searchController,
-              textInputAction: TextInputAction.search,
-              onChanged: (value) => setState(() => _query = value),
-              decoration: InputDecoration(
-                isDense: true,
-                constraints: const BoxConstraints(minHeight: 44),
-                hintText: '게임 검색 · 쓰기, 듣기, 문장…',
-                prefixIcon: const Icon(Icons.search_rounded),
-                suffixIcon: _query.isEmpty
-                    ? null
-                    : IconButton(
-                        tooltip: '검색 지우기',
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _query = '');
-                        },
-                        icon: const Icon(Icons.close_rounded),
-                      ),
-              ),
-            );
-            final surprise = Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                FilledButton.tonalIcon(
-                  key: const Key('practice-surprise-game'),
-                  onPressed: _openSurpriseGame,
-                  icon: const Icon(Icons.casino_outlined),
-                  label: const Text('깜짝 게임'),
+        if (_selectedTab == _PracticeHubTab.missions)
+          _MissionHubPanel(
+            recommendedUnitIndex: widget.recommendedUnitIndex,
+            onOpenMissions: () => context.go('/missions'),
+            onOpenPath: () => context.go('/path'),
+          ),
+        if (_selectedTab == _PracticeHubTab.games) ...[
+          const SizedBox(height: 10),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final search = TextField(
+                key: const Key('practice-game-search'),
+                controller: _searchController,
+                textInputAction: TextInputAction.search,
+                onChanged: (value) => setState(() => _query = value),
+                decoration: InputDecoration(
+                  isDense: true,
+                  constraints: const BoxConstraints(minHeight: 44),
+                  hintText: '게임 검색 · 쓰기, 듣기, 문장…',
+                  prefixIcon: const Icon(Icons.search_rounded),
+                  suffixIcon: _query.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: '검색 지우기',
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _query = '');
+                          },
+                          icon: const Icon(Icons.close_rounded),
+                        ),
                 ),
-                IconButton(
-                  key: const Key('practice-surprise-settings'),
-                  tooltip: '깜짝 게임 조건',
-                  onPressed: _showSurpriseSettings,
-                  icon: const Icon(Icons.tune_rounded),
-                ),
-              ],
-            );
-            if (constraints.maxWidth < 560) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [search, const SizedBox(height: 8), surprise],
               );
-            }
-            return Row(
-              children: [
-                Expanded(child: search),
-                const SizedBox(width: 10),
-                surprise,
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 6),
-        _PracticeDiscoveryControls(
-          catalog: catalog,
-          activeFilterCount: activeDiscoveryFilterCount,
-          onDurationChanged: (value) =>
-              _updateCatalog(catalog.copyWith(durationFilter: value)),
-          onSkillChanged: (value) =>
-              _updateCatalog(catalog.copyWith(skillFilter: value)),
-          onSortChanged: (value) =>
-              _updateCatalog(catalog.copyWith(sortOrder: value)),
-          onReset: activeDiscoveryFilterCount == 0
-              ? null
-              : () => _updateCatalog(
-                  catalog.copyWith(
-                    durationFilter: PracticeDurationFilter.any,
-                    skillFilter: PracticeSkillFilter.all,
-                    sortOrder: PracticeCatalogSort.recommended,
+              final surprise = Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FilledButton.tonalIcon(
+                    key: const Key('practice-surprise-game'),
+                    onPressed: _openSurpriseGame,
+                    icon: const Icon(Icons.casino_outlined),
+                    label: const Text('깜짝 게임'),
                   ),
-                ),
-          onClearRecommendationSnoozes:
-              catalog.recommendationSnoozedUntilByActivityId.isEmpty
-              ? null
-              : () => _updateCatalog(catalog.clearRecommendationSnoozes()),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(top: 5),
-          child: Semantics(
-            key: const Key('practice-search-result-summary'),
-            liveRegion: true,
-            label: '현재 조건에 맞는 게임 $visibleResultCount개',
-            child: Text(
-              '${_query.trim().isEmpty && activeDiscoveryFilterCount == 0 ? '전체' : '현재 조건'} · '
-              '$visibleResultCount개 게임',
-              textAlign: TextAlign.end,
-              style: Theme.of(context).textTheme.labelSmall,
+                  IconButton(
+                    key: const Key('practice-surprise-settings'),
+                    tooltip: '깜짝 게임 조건',
+                    onPressed: _showSurpriseSettings,
+                    icon: const Icon(Icons.tune_rounded),
+                  ),
+                ],
+              );
+              if (constraints.maxWidth < 560) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [search, const SizedBox(height: 8), surprise],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: search),
+                  const SizedBox(width: 10),
+                  surprise,
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 6),
+          _PracticeDiscoveryControls(
+            catalog: catalog,
+            activeFilterCount: activeDiscoveryFilterCount,
+            onDurationChanged: (value) =>
+                _updateCatalog(catalog.copyWith(durationFilter: value)),
+            onSkillChanged: (value) =>
+                _updateCatalog(catalog.copyWith(skillFilter: value)),
+            onSortChanged: (value) =>
+                _updateCatalog(catalog.copyWith(sortOrder: value)),
+            onReset: activeDiscoveryFilterCount == 0
+                ? null
+                : () => _updateCatalog(
+                    catalog.copyWith(
+                      durationFilter: PracticeDurationFilter.any,
+                      skillFilter: PracticeSkillFilter.all,
+                      sortOrder: PracticeCatalogSort.recommended,
+                    ),
+                  ),
+            onClearRecommendationSnoozes:
+                catalog.recommendationSnoozedUntilByActivityId.isEmpty
+                ? null
+                : () => _updateCatalog(catalog.clearRecommendationSnoozes()),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Semantics(
+              key: const Key('practice-search-result-summary'),
+              liveRegion: true,
+              label: '현재 조건에 맞는 게임 $visibleResultCount개',
+              child: Text(
+                '${_query.trim().isEmpty && activeDiscoveryFilterCount == 0 ? '전체' : '현재 조건'} · '
+                '$visibleResultCount개 게임',
+                textAlign: TextAlign.end,
+                style: Theme.of(context).textTheme.labelSmall,
+              ),
             ),
           ),
-        ),
-        if (_playlistSelection.isNotEmpty || catalog.playlists.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          _PracticePlaylistPanel(
-            selectedIds: _playlistSelection,
-            titleForId: (id) => _allActivities
-                .cast<_Activity?>()
-                .firstWhere(
-                  (activity) => activity?.id == id,
-                  orElse: () => null,
-                )
-                ?.title,
-            playlists: catalog.playlists,
-            onSave: _savePlaylist,
-            onStart: _startPlaylist,
-            onRemove: _removePlaylist,
-            onClearSelection: () => setState(_playlistSelection.clear),
-          ),
-        ],
-        const SizedBox(height: 12),
-        if (categorySection(_PracticeCategory.quiz)
-            case final quizSection?) ...[
-          quizSection,
-          const SizedBox(height: 10),
-        ],
-        if (_hasMissingMaterialCapability && widget.items.isNotEmpty) ...[
-          _MissingMaterialNotice(
-            isEmpty: false,
-            onAdd: () => context.go('/library/new'),
-          ),
+          if (_playlistSelection.isNotEmpty ||
+              catalog.playlists.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _PracticePlaylistPanel(
+              selectedIds: _playlistSelection,
+              titleForId: (id) => _allActivities
+                  .cast<_Activity?>()
+                  .firstWhere(
+                    (activity) => activity?.id == id,
+                    orElse: () => null,
+                  )
+                  ?.title,
+              playlists: catalog.playlists,
+              onSave: _savePlaylist,
+              onStart: _startPlaylist,
+              onRemove: _removePlaylist,
+              onClearSelection: () => setState(_playlistSelection.clear),
+            ),
+          ],
           const SizedBox(height: 12),
-        ],
-        for (final category in _PracticeCategory.values)
-          if (category != _PracticeCategory.quiz)
-            if (categorySection(category) case final section?) ...[
-              const SizedBox(height: 12),
-              section,
-            ],
-        if (_query.trim().isNotEmpty &&
-            _PracticeCategory.values.every(
-              (category) => _visibleActivities(category, catalog).isEmpty,
-            )) ...[
-          const SizedBox(height: 18),
-          const Center(child: Text('검색 조건에 맞는 게임이 없습니다.')),
-        ],
-        if (hidden.isNotEmpty) ...[
-          const SizedBox(height: 18),
-          ExpansionTile(
-            key: const Key('hidden-practice-games'),
-            tilePadding: EdgeInsets.zero,
-            title: Text('숨긴 게임 ${hidden.length}개'),
-            subtitle: const Text('원할 때 언제든 다시 표시할 수 있습니다.'),
-            children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final activity in hidden)
-                      ActionChip(
-                        avatar: const Icon(Icons.visibility_outlined, size: 18),
-                        label: Text('${activity.title} 복원'),
-                        onPressed: () => _restoreActivity(activity),
-                      ),
-                  ],
+          if (categorySection(_PracticeCategory.quiz)
+              case final quizSection?) ...[
+            quizSection,
+            const SizedBox(height: 10),
+          ],
+          if (_hasMissingMaterialCapability && widget.items.isNotEmpty) ...[
+            _MissingMaterialNotice(
+              isEmpty: false,
+              onAdd: () => context.go('/library/new'),
+            ),
+            const SizedBox(height: 12),
+          ],
+          for (final category in _PracticeCategory.values)
+            if (category != _PracticeCategory.quiz)
+              if (categorySection(category) case final section?) ...[
+                const SizedBox(height: 12),
+                section,
+              ],
+          if (_query.trim().isNotEmpty &&
+              _PracticeCategory.values.every(
+                (category) => _visibleActivities(category, catalog).isEmpty,
+              )) ...[
+            const SizedBox(height: 18),
+            const Center(child: Text('검색 조건에 맞는 게임이 없습니다.')),
+          ],
+          if (hidden.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            ExpansionTile(
+              key: const Key('hidden-practice-games'),
+              tilePadding: EdgeInsets.zero,
+              title: Text('숨긴 게임 ${hidden.length}개'),
+              subtitle: const Text('원할 때 언제든 다시 표시할 수 있습니다.'),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final activity in hidden)
+                        ActionChip(
+                          avatar: const Icon(
+                            Icons.visibility_outlined,
+                            size: 18,
+                          ),
+                          label: Text('${activity.title} 복원'),
+                          onPressed: () => _restoreActivity(activity),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ],
+    );
+  }
+}
+
+class _MissionHubPanel extends StatelessWidget {
+  const _MissionHubPanel({
+    required this.recommendedUnitIndex,
+    required this.onOpenMissions,
+    required this.onOpenPath,
+  });
+
+  final int recommendedUnitIndex;
+  final VoidCallback onOpenMissions;
+  final VoidCallback onOpenPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      key: const Key('practice-mission-hub'),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: colors.tertiaryContainer,
+                  foregroundColor: colors.onTertiaryContainer,
+                  child: const Icon(Icons.explore_rounded),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '상황 미션',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
+                      ),
+                      Text(
+                        '추천 Unit ${recommendedUnitIndex + 1} · 선택에 따라 대화와 결말이 달라집니다.',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              alignment: WrapAlignment.end,
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('open-course-path-from-missions'),
+                  onPressed: onOpenPath,
+                  icon: const Icon(Icons.route_outlined),
+                  label: const Text('학습 경로'),
+                ),
+                FilledButton.icon(
+                  key: const Key('open-situation-missions'),
+                  onPressed: onOpenMissions,
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: const Text('미션 선택'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1799,7 +2038,7 @@ class _PracticeRecommendationBasis {
   final int? recentAccuracy;
 }
 
-class _PersonalizedPracticeHub extends StatelessWidget {
+class _PersonalizedPracticeHub extends StatefulWidget {
   const _PersonalizedPracticeHub({
     required this.recommendations,
     required this.basis,
@@ -1823,12 +2062,134 @@ class _PersonalizedPracticeHub extends StatelessWidget {
   final ValueChanged<_Activity> onHideSevenDays;
 
   @override
+  State<_PersonalizedPracticeHub> createState() =>
+      _PersonalizedPracticeHubState();
+}
+
+class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
+  static const _cardWidth = 180.0;
+  static const _cardGap = 8.0;
+
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _scrollFocusNode = FocusNode(
+    debugLabel: 'Practice Hub recommendations',
+  );
+  bool _canScrollBackward = false;
+  bool _canScrollForward = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_refreshNavigationState);
+    _queueNavigationRefresh();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PersonalizedPracticeHub oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.recommendations.length != widget.recommendations.length) {
+      _queueNavigationRefresh();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_refreshNavigationState)
+      ..dispose();
+    _scrollFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _queueNavigationRefresh() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _refreshNavigationState();
+    });
+  }
+
+  void _refreshNavigationState() {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    final canScrollBackward = position.pixels > position.minScrollExtent + 0.5;
+    final canScrollForward = position.pixels < position.maxScrollExtent - 0.5;
+    if (canScrollBackward == _canScrollBackward &&
+        canScrollForward == _canScrollForward) {
+      return;
+    }
+    setState(() {
+      _canScrollBackward = canScrollBackward;
+      _canScrollForward = canScrollForward;
+    });
+  }
+
+  double get _navigationStep {
+    if (!_scrollController.hasClients) return _cardWidth + _cardGap;
+    return (_scrollController.position.viewportDimension * 0.82)
+        .clamp(_cardWidth + _cardGap, (_cardWidth + _cardGap) * 2)
+        .toDouble();
+  }
+
+  Future<void> _scrollBy(double delta) async {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    final target = (position.pixels + delta)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    await _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _jumpBy(double delta) {
+    if (!_scrollController.hasClients || delta == 0) return;
+    final position = _scrollController.position;
+    _scrollController.jumpTo(
+      (position.pixels + delta)
+          .clamp(position.minScrollExtent, position.maxScrollExtent)
+          .toDouble(),
+    );
+  }
+
+  KeyEventResult _handleScrollKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowLeft) {
+      _scrollBy(-_navigationStep);
+    } else if (key == LogicalKeyboardKey.arrowRight) {
+      _scrollBy(_navigationStep);
+    } else if (key == LogicalKeyboardKey.pageUp) {
+      _scrollBy(-_navigationStep * 2);
+    } else if (key == LogicalKeyboardKey.pageDown) {
+      _scrollBy(_navigationStep * 2);
+    } else if (key == LogicalKeyboardKey.home) {
+      _scrollController.animateTo(
+        _scrollController.position.minScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    } else if (key == LogicalKeyboardKey.end) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      return KeyEventResult.ignored;
+    }
+    return KeyEventResult.handled;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.4;
     _PracticeRecommendation? primary;
-    for (final recommendation in recommendations) {
-      if (availabilityFor(recommendation.activity).enabled) {
+    for (final recommendation in widget.recommendations) {
+      if (widget.availabilityFor(recommendation.activity).enabled) {
         primary = recommendation;
         break;
       }
@@ -1857,7 +2218,7 @@ class _PersonalizedPracticeHub extends StatelessWidget {
                 if (primary case final recommendation?)
                   FilledButton.tonalIcon(
                     key: const Key('start-recommended-practice'),
-                    onPressed: () => onPressed(recommendation.activity),
+                    onPressed: () => widget.onPressed(recommendation.activity),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(0, 44),
                     ),
@@ -1872,174 +2233,267 @@ class _PersonalizedPracticeHub extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                _MiniBadge(label: '복습 ${basis.dueCount}'),
-                _MiniBadge(label: '오답 ${basis.wrongCount}'),
+                _MiniBadge(label: '복습 ${widget.basis.dueCount}'),
+                _MiniBadge(label: '오답 ${widget.basis.wrongCount}'),
                 _MiniBadge(
-                  label: basis.recentAccuracy == null
+                  label: widget.basis.recentAccuracy == null
                       ? '최근 정확도 -'
-                      : '최근 정확도 ${basis.recentAccuracy}%',
+                      : '최근 정확도 ${widget.basis.recentAccuracy}%',
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            SizedBox(
-              height: 88,
-              child: ListView.separated(
-                key: const Key('personalized-practice-hub'),
-                scrollDirection: Axis.horizontal,
-                itemCount: recommendations.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 8),
-                itemBuilder: (context, index) {
-                  final recommendation = recommendations[index];
-                  final availability = availabilityFor(recommendation.activity);
-                  return SizedBox(
-                    key: Key(
-                      'practice-recommendation-${recommendation.activity.id}',
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '추천 ${widget.recommendations.length}개 · 휠·드래그 또는 ← →',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: colors.onSurfaceVariant,
+                      fontWeight: FontWeight.w700,
                     ),
-                    width: 180,
-                    child: KeyedSubtree(
-                      key: Key(
-                        'practice-recommendation-compact-card-'
-                        '${recommendation.activity.id}',
-                      ),
-                      child: Material(
-                        color: colors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        clipBehavior: Clip.antiAlias,
-                        child: InkWell(
-                          onTap: availability.enabled
-                              ? () => onPressed(recommendation.activity)
-                              : null,
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(9, 3, 4, 5),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      recommendation.activity.icon,
-                                      size: 19,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                IconButton.outlined(
+                  key: const Key('practice-hub-scroll-previous'),
+                  onPressed: _canScrollBackward
+                      ? () => _scrollBy(-_navigationStep)
+                      : null,
+                  tooltip: '이전 추천 카드',
+                  icon: const Icon(Icons.chevron_left_rounded),
+                ),
+                const SizedBox(width: 4),
+                IconButton.filledTonal(
+                  key: const Key('practice-hub-scroll-next'),
+                  onPressed: _canScrollForward
+                      ? () => _scrollBy(_navigationStep)
+                      : null,
+                  tooltip: '다음 추천 카드',
+                  icon: const Icon(Icons.chevron_right_rounded),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            SizedBox(
+              height: 100,
+              child: Focus(
+                key: const Key('practice-hub-scroll-focus'),
+                focusNode: _scrollFocusNode,
+                onKeyEvent: _handleScrollKey,
+                child: Listener(
+                  onPointerDown: (_) => _scrollFocusNode.requestFocus(),
+                  onPointerSignal: (event) {
+                    if (event is! PointerScrollEvent) return;
+                    final delta =
+                        event.scrollDelta.dx.abs() > event.scrollDelta.dy.abs()
+                        ? event.scrollDelta.dx
+                        : event.scrollDelta.dy;
+                    _jumpBy(delta);
+                  },
+                  child: ScrollConfiguration(
+                    behavior: const _PracticeHubScrollBehavior(),
+                    child: Scrollbar(
+                      key: const Key('practice-hub-scrollbar'),
+                      controller: _scrollController,
+                      thumbVisibility: true,
+                      trackVisibility:
+                          defaultTargetPlatform == TargetPlatform.windows,
+                      interactive: true,
+                      scrollbarOrientation: ScrollbarOrientation.bottom,
+                      child: ListView.separated(
+                        key: const Key('personalized-practice-hub'),
+                        controller: _scrollController,
+                        padding: const EdgeInsets.only(bottom: 12),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: widget.recommendations.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final recommendation = widget.recommendations[index];
+                          final availability = widget.availabilityFor(
+                            recommendation.activity,
+                          );
+                          return SizedBox(
+                            key: Key(
+                              'practice-recommendation-${recommendation.activity.id}',
+                            ),
+                            width: 180,
+                            child: KeyedSubtree(
+                              key: Key(
+                                'practice-recommendation-compact-card-'
+                                '${recommendation.activity.id}',
+                              ),
+                              child: Material(
+                                color: colors.surface,
+                                borderRadius: BorderRadius.circular(14),
+                                clipBehavior: Clip.antiAlias,
+                                child: InkWell(
+                                  onTap: availability.enabled
+                                      ? () => widget.onPressed(
+                                          recommendation.activity,
+                                        )
+                                      : null,
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      9,
+                                      3,
+                                      4,
+                                      5,
                                     ),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        recommendation.activity.title,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w900,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              recommendation.activity.icon,
+                                              size: 19,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              child: Text(
+                                                recommendation.activity.title,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w900,
+                                                ),
+                                              ),
+                                            ),
+                                            if (!largeText)
+                                              _MiniBadge(
+                                                label:
+                                                    recommendation.basisLabel,
+                                              ),
+                                            SizedBox.square(
+                                              dimension: 44,
+                                              child: PopupMenuButton<String>(
+                                                key: Key(
+                                                  'practice-recommendation-menu-'
+                                                  '${recommendation.activity.id}',
+                                                ),
+                                                tooltip: '추천 조정',
+                                                padding: EdgeInsets.zero,
+                                                onSelected: (value) {
+                                                  if (value == 'more') {
+                                                    widget.onSeeMore(
+                                                      recommendation.activity,
+                                                    );
+                                                  }
+                                                  if (value == 'less') {
+                                                    widget.onSeeLess(
+                                                      recommendation.activity,
+                                                    );
+                                                  }
+                                                  if (value == 'today') {
+                                                    widget.onHideToday(
+                                                      recommendation.activity,
+                                                    );
+                                                  }
+                                                  if (value == 'week') {
+                                                    widget.onHideSevenDays(
+                                                      recommendation.activity,
+                                                    );
+                                                  }
+                                                },
+                                                itemBuilder: (context) =>
+                                                    const [
+                                                      PopupMenuItem(
+                                                        value: 'more',
+                                                        child: Text(
+                                                          '이런 게임 더 보기',
+                                                        ),
+                                                      ),
+                                                      PopupMenuItem(
+                                                        value: 'less',
+                                                        child: Text(
+                                                          '이런 게임 덜 보기',
+                                                        ),
+                                                      ),
+                                                      PopupMenuItem(
+                                                        value: 'today',
+                                                        child: Text(
+                                                          '오늘 추천에서 숨기기',
+                                                        ),
+                                                      ),
+                                                      PopupMenuItem(
+                                                        value: 'week',
+                                                        child: Text(
+                                                          '7일 동안 숨기기',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                icon: const Icon(
+                                                  Icons.more_vert_rounded,
+                                                  size: 18,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  availability.enabled
+                                                      ? largeText
+                                                            ? '${recommendation.basisLabel} · ${recommendation.reason}'
+                                                            : recommendation
+                                                                  .reason
+                                                      : availability
+                                                                .disabledReason ??
+                                                            recommendation
+                                                                .reason,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: Theme.of(
+                                                    context,
+                                                  ).textTheme.bodySmall,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                (widget.recommendationWeights[recommendation
+                                                                .activity
+                                                                .id] ??
+                                                            0) !=
+                                                        0
+                                                    ? '${widget.recommendationWeights[recommendation.activity.id]! > 0 ? '+' : ''}'
+                                                          '${widget.recommendationWeights[recommendation.activity.id]}'
+                                                    : index == 0 &&
+                                                          availability.enabled
+                                                    ? '지금 먼저 하기'
+                                                    : availability.enabled
+                                                    ? '바로 시작'
+                                                    : '자료 필요',
+                                                style: TextStyle(
+                                                  color: availability.enabled
+                                                      ? colors.primary
+                                                      : colors.onSurfaceVariant,
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    if (!largeText)
-                                      _MiniBadge(
-                                        label: recommendation.basisLabel,
-                                      ),
-                                    SizedBox.square(
-                                      dimension: 44,
-                                      child: PopupMenuButton<String>(
-                                        key: Key(
-                                          'practice-recommendation-menu-'
-                                          '${recommendation.activity.id}',
-                                        ),
-                                        tooltip: '추천 조정',
-                                        padding: EdgeInsets.zero,
-                                        onSelected: (value) {
-                                          if (value == 'more') {
-                                            onSeeMore(recommendation.activity);
-                                          }
-                                          if (value == 'less') {
-                                            onSeeLess(recommendation.activity);
-                                          }
-                                          if (value == 'today') {
-                                            onHideToday(
-                                              recommendation.activity,
-                                            );
-                                          }
-                                          if (value == 'week') {
-                                            onHideSevenDays(
-                                              recommendation.activity,
-                                            );
-                                          }
-                                        },
-                                        itemBuilder: (context) => const [
-                                          PopupMenuItem(
-                                            value: 'more',
-                                            child: Text('이런 게임 더 보기'),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'less',
-                                            child: Text('이런 게임 덜 보기'),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'today',
-                                            child: Text('오늘 추천에서 숨기기'),
-                                          ),
-                                          PopupMenuItem(
-                                            value: 'week',
-                                            child: Text('7일 동안 숨기기'),
-                                          ),
-                                        ],
-                                        icon: const Icon(
-                                          Icons.more_vert_rounded,
-                                          size: 18,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Expanded(
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          availability.enabled
-                                              ? largeText
-                                                    ? '${recommendation.basisLabel} · ${recommendation.reason}'
-                                                    : recommendation.reason
-                                              : availability.disabledReason ??
-                                                    recommendation.reason,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodySmall,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        (recommendationWeights[recommendation
-                                                        .activity
-                                                        .id] ??
-                                                    0) !=
-                                                0
-                                            ? '${recommendationWeights[recommendation.activity.id]! > 0 ? '+' : ''}'
-                                                  '${recommendationWeights[recommendation.activity.id]}'
-                                            : index == 0 && availability.enabled
-                                            ? '지금 먼저 하기'
-                                            : availability.enabled
-                                            ? '바로 시작'
-                                            : '자료 필요',
-                                        style: TextStyle(
-                                          color: availability.enabled
-                                              ? colors.primary
-                                              : colors.onSurfaceVariant,
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                    ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
             ),
           ],
@@ -2049,16 +2503,28 @@ class _PersonalizedPracticeHub extends StatelessWidget {
   }
 }
 
-class _DailyChallengeCard extends StatelessWidget {
-  const _DailyChallengeCard({
-    required this.activity,
-    required this.quickLaunch,
+class _PracticeHubScrollBehavior extends MaterialScrollBehavior {
+  const _PracticeHubScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+  };
+}
+
+class _DailyQuestBoard extends StatelessWidget {
+  const _DailyQuestBoard({
+    required this.activities,
+    required this.completedActivityIds,
+    required this.quickLaunchActivityIds,
     required this.onPressed,
   });
 
-  final _Activity activity;
-  final bool quickLaunch;
-  final VoidCallback onPressed;
+  final List<_Activity> activities;
+  final Set<String> completedActivityIds;
+  final Set<String> quickLaunchActivityIds;
+  final ValueChanged<_Activity> onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -2070,49 +2536,115 @@ class _DailyChallengeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(color: colors.outlineVariant),
       ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onPressed,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 6, 8, 6),
-          child: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: colors.tertiary,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 9),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(
                   Icons.local_fire_department_rounded,
-                  color: colors.onTertiary,
+                  color: colors.tertiary,
+                  size: 20,
+                ),
+                const SizedBox(width: 6),
+                const Expanded(
+                  child: Text(
+                    '오늘의 3가지 도전',
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+                Text(
+                  '${completedActivityIds.length}/${activities.length} 완료',
+                  key: const Key('practice-daily-quest-progress'),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            for (final (index, activity) in activities.indexed) ...[
+              if (index == 0) ...[
+                Text(
+                  '각 방식을 한 번 완료하세요. 학습 결과와 XP는 평소처럼 기록됩니다.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 6),
+              ],
+              if (index > 0) const SizedBox(height: 5),
+              Material(
+                key: Key('practice-daily-quest-$index'),
+                color: colors.surface.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(11),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () => onPressed(activity),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(9, 7, 7, 7),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 13,
+                          backgroundColor: colors.tertiaryContainer,
+                          foregroundColor: colors.onTertiaryContainer,
+                          child: completedActivityIds.contains(activity.id)
+                              ? const Icon(Icons.check_rounded, size: 17)
+                              : Text(
+                                  '${index + 1}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${completedActivityIds.contains(activity.id) ? '완료' : '오늘의 도전'} · ${activity.title}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                completedActivityIds.contains(activity.id)
+                                    ? '완료됨 · 다시 연습할 수 있어요'
+                                    : quickLaunchActivityIds.contains(
+                                        activity.id,
+                                      )
+                                    ? '저장한 설정으로 바로 시작'
+                                    : switch (index) {
+                                        0 => '가볍게 몸풀기',
+                                        1 => '다른 방식으로 집중 훈련',
+                                        _ => '새 게임으로 마무리',
+                                      },
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          completedActivityIds.contains(activity.id)
+                              ? Icons.replay_rounded
+                              : Icons.play_arrow_rounded,
+                          color: colors.tertiary,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '오늘의 도전 · ${activity.title}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    Text(
-                      quickLaunch ? '저장한 설정으로 바로 시작' : '내일은 다른 게임',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 6),
-              Icon(Icons.play_arrow_rounded, color: colors.tertiary),
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -3004,14 +3536,6 @@ _PracticeLaunchResult _resolvePracticeLaunch(
     timeBudgetMinutes: timeBudgetMinutes,
     preferences: preferences.copyWith(itemCount: itemLimit),
   );
-}
-
-int _stablePracticeHash(String value) {
-  var hash = 0x811C9DC5;
-  for (final codeUnit in value.codeUnits) {
-    hash = ((hash ^ codeUnit) * 0x01000193) & 0x7FFFFFFF;
-  }
-  return hash;
 }
 
 class _PracticeLaunchSheet extends StatefulWidget {

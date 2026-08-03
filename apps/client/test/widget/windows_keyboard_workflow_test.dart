@@ -7,6 +7,11 @@ import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/state/app_state.dart';
 
+Future<void> _openAllGames(WidgetTester tester) async {
+  await tester.tap(find.text('전체 게임'));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('F6 moves Windows navigation focus to the main content', (
     tester,
@@ -99,6 +104,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _openAllGames(tester);
       await tester.ensureVisible(find.text('직접 쓰기'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('직접 쓰기'));
@@ -148,6 +154,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _openAllGames(tester);
       await tester.ensureVisible(find.text('뜻 고르기'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('뜻 고르기'));
@@ -196,6 +203,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _openAllGames(tester);
       await tester.ensureVisible(find.text('단어 카드'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('단어 카드'));

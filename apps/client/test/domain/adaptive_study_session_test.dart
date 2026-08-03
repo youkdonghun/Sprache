@@ -6,6 +6,7 @@ import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/progress.dart';
 import 'package:sprache/src/domain/study_history.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
+import 'package:sprache/src/domain/study_runtime_modes.dart';
 
 void main() {
   final now = DateTime.utc(2026, 8, 3, 12);
@@ -241,12 +242,25 @@ void main() {
             showKoreanReading: false,
             showNativeReading: true,
             ttsRate: 0.7,
+            liveDifficultyLock: LiveDifficultyLevel.challenge,
+            practiceActivityId: 'listening-discrimination',
+            examConfiguration: const ExamConfiguration(
+              questionCount: 20,
+              timeLimit: Duration(minutes: 30),
+              passScore: 90,
+            ),
+            examDeadline: DateTime.utc(2026, 8, 3, 12, 30),
           );
           final restored = StudySessionRuntimeOptions.fromJson(
             options.toJson(),
           );
           expect(restored.breakReminderMinutes, minutes);
           expect(restored.ttsRate, 0.7);
+          expect(restored.liveDifficultyLock, LiveDifficultyLevel.challenge);
+          expect(restored.practiceActivityId, 'listening-discrimination');
+          expect(restored.examConfiguration?.questionCount, 20);
+          expect(restored.examConfiguration?.passScore, 90);
+          expect(restored.examDeadline, DateTime.utc(2026, 8, 3, 12, 30));
         }
         expect(
           () => StudySessionRuntimeOptions.fromJson({
@@ -258,8 +272,46 @@ void main() {
           }),
           throwsFormatException,
         );
+        expect(
+          () => StudySessionRuntimeOptions.fromJson({
+            'strategy': 'adaptive',
+            'breakReminderMinutes': 20,
+            'showKoreanReading': true,
+            'showNativeReading': true,
+            'ttsRate': 0.45,
+            'practiceActivityId': '../unsafe',
+          }),
+          throwsFormatException,
+        );
       },
     );
+
+    test('pending exam setup is persisted and cannot carry a deadline', () {
+      const pending = StudySessionRuntimeOptions(
+        practiceActivityId: 'exam-simulator',
+        examSetupPending: true,
+      );
+      final restored = StudySessionRuntimeOptions.fromJson(pending.toJson());
+
+      expect(restored.examSetupPending, isTrue);
+      expect(restored.examConfiguration, isNull);
+      expect(restored.examDeadline, isNull);
+      expect(
+        () => StudySessionRuntimeOptions.fromJson({
+          ...pending.toJson(),
+          'examConfiguration': const ExamConfiguration().toJson(),
+          'examDeadline': DateTime.utc(2026, 8, 3, 12, 10).toIso8601String(),
+        }),
+        throwsFormatException,
+      );
+      expect(
+        () => StudySessionRuntimeOptions.fromJson({
+          ...pending.toJson(),
+          'examSetupPending': 'true',
+        }),
+        throwsFormatException,
+      );
+    });
 
     test('break schedule advances safely after each shown reminder', () {
       const schedule = StudyBreakSchedule(10);

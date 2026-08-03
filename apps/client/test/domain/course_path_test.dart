@@ -106,6 +106,54 @@ void main() {
     expect(path.recommendedUnit.index, 1);
   });
 
+  test('opens and achieves a unit mastery checkpoint from local progress', () {
+    final items = englishItems();
+    final emptyPath = builder.build(items: items, progress: const {});
+    final firstUnit = emptyPath.units.first;
+    expect(
+      firstUnit.masteryCheckpoint.state,
+      UnitMasteryCheckpointState.locked,
+    );
+
+    final readyProgress = {
+      for (final item in firstUnit.items)
+        item.id: ProgressRecord(
+          itemId: item.id,
+          status: LearningStatus.review,
+          correctCount: 4,
+          wrongCount: 1,
+        ),
+    };
+    final readyUnit = builder
+        .build(items: items, progress: readyProgress)
+        .units
+        .first;
+    expect(readyUnit.masteryCheckpoint.state, UnitMasteryCheckpointState.ready);
+    expect(readyUnit.completed, isFalse);
+    expect(
+      unitMasteryCheckpointRoute(readyUnit),
+      '/study?mode=mixed&unit=0&limit=${readyUnit.masteryCheckpoint.questionCount}',
+    );
+
+    final achievedProgress = {
+      for (final item in firstUnit.items)
+        item.id: ProgressRecord(
+          itemId: item.id,
+          status: LearningStatus.mastered,
+          correctCount: 5,
+        ),
+    };
+    final achievedUnit = builder
+        .build(items: items, progress: achievedProgress)
+        .units
+        .first;
+    expect(
+      achievedUnit.masteryCheckpoint.state,
+      UnitMasteryCheckpointState.achieved,
+    );
+    expect(achievedUnit.completed, isTrue);
+  });
+
   test('generates unit-scoped routes for every lesson type', () {
     expect(
       courseLessonRoute(CourseLessonKind.cards, 2),

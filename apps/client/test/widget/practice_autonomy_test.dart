@@ -13,7 +13,39 @@ void main() {
   testWidgets(
     'game discovery filters, sorting, recommendation controls, and surprise rules persist',
     (tester) async {
-      final container = await _pumpLearningHub(tester);
+      final container = await _pumpLearningHub(tester, openGames: false);
+
+      final menu = find.byKey(
+        const Key('practice-recommendation-menu-words-review'),
+      );
+      await _tapVisible(tester, menu);
+      await tester.tap(find.text('이런 게임 더 보기'));
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(appControllerProvider)
+            .preferences
+            .interaction
+            .practiceCatalog
+            .recommendationWeightByActivityId['words-review'],
+        1,
+      );
+
+      await _tapVisible(tester, menu);
+      await tester.tap(find.text('오늘 추천에서 숨기기'));
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(appControllerProvider)
+            .preferences
+            .interaction
+            .practiceCatalog
+            .recommendationSnoozedUntilByActivityId,
+        contains('words-review'),
+      );
+
+      await tester.tap(find.text('전체 게임'));
+      await tester.pumpAndSettle();
 
       await _tapVisible(
         tester,
@@ -82,35 +114,6 @@ void main() {
       expect(catalog.surpriseSkillFilter, PracticeSkillFilter.speaking);
       expect(catalog.surpriseFavoritesOnly, isTrue);
       expect(catalog.surpriseAvoidRecent, isFalse);
-
-      final menu = find.byKey(
-        const Key('practice-recommendation-menu-words-review'),
-      );
-      await _tapVisible(tester, menu);
-      await tester.tap(find.text('이런 게임 더 보기'));
-      await tester.pumpAndSettle();
-      expect(
-        container
-            .read(appControllerProvider)
-            .preferences
-            .interaction
-            .practiceCatalog
-            .recommendationWeightByActivityId['words-review'],
-        1,
-      );
-
-      await _tapVisible(tester, menu);
-      await tester.tap(find.text('오늘 추천에서 숨기기'));
-      await tester.pumpAndSettle();
-      expect(
-        container
-            .read(appControllerProvider)
-            .preferences
-            .interaction
-            .practiceCatalog
-            .recommendationSnoozedUntilByActivityId,
-        contains('words-review'),
-      );
     },
   );
 
@@ -201,6 +204,7 @@ void main() {
 
 Future<ProviderContainer> _pumpLearningHub(
   WidgetTester tester, {
+  bool openGames = true,
   StudyPreferences preferences = const StudyPreferences(
     onboardingCompleted: true,
   ),
@@ -226,6 +230,10 @@ Future<ProviderContainer> _pumpLearningHub(
   );
   container.read(appRouterProvider).go('/learn');
   await tester.pumpAndSettle();
+  if (openGames) {
+    await tester.tap(find.text('전체 게임'));
+    await tester.pumpAndSettle();
+  }
   return container;
 }
 

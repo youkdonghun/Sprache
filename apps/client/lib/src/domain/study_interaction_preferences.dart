@@ -1,4 +1,5 @@
 import 'session_enhancements.dart';
+import 'daily_practice_quests.dart';
 
 enum StudyAnswerDirection { learningToMeaning, meaningToLearning, mixed }
 
@@ -312,6 +313,8 @@ class PracticeCatalogPreferences {
     this.surpriseAvoidRecent = true,
     this.bestRecordsByActivityId = const {},
     this.playlists = const [],
+    this.dailyQuestCompletionDayByScope = const {},
+    this.dailyQuestAssignmentByScope = const {},
   });
 
   final Set<String> favoriteActivityIds;
@@ -332,6 +335,65 @@ class PracticeCatalogPreferences {
   final bool surpriseAvoidRecent;
   final Map<String, PracticeBestRecord> bestRecordsByActivityId;
   final List<PracticePlaylist> playlists;
+  final Map<String, String> dailyQuestCompletionDayByScope;
+  final Map<String, List<String>> dailyQuestAssignmentByScope;
+
+  bool hasDailyQuestAssignment({
+    required DateTime day,
+    required String subjectId,
+  }) => dailyQuestAssignmentByScope.containsKey(
+    _dailyQuestAssignmentScopeKey(day, subjectId),
+  );
+
+  List<String> dailyQuestActivityIds({
+    required DateTime day,
+    required String subjectId,
+    required Iterable<String> activityIds,
+    int questCount = 3,
+  }) {
+    final scope = _dailyQuestAssignmentScopeKey(day, subjectId);
+    final saved = dailyQuestAssignmentByScope[scope];
+    if (saved != null && saved.isNotEmpty) return List.unmodifiable(saved);
+    return List.unmodifiable(
+      buildDailyPracticeQuests(
+        day: day,
+        subjectId: subjectId,
+        activityIds: activityIds,
+        questCount: questCount,
+      ).map((quest) => quest.activityId),
+    );
+  }
+
+  PracticeCatalogPreferences ensureDailyQuestAssignment({
+    required DateTime day,
+    required String subjectId,
+    required Iterable<String> activityIds,
+    int questCount = 3,
+  }) {
+    final scope = _dailyQuestAssignmentScopeKey(day, subjectId);
+    if (scope.isEmpty || dailyQuestAssignmentByScope.containsKey(scope)) {
+      return copyWith();
+    }
+    final ids = dailyQuestActivityIds(
+      day: day,
+      subjectId: subjectId,
+      activityIds: activityIds,
+      questCount: questCount,
+    );
+    if (ids.isEmpty) return copyWith();
+    final next = <String, List<String>>{
+      ...dailyQuestAssignmentByScope,
+      scope: ids,
+    };
+    if (next.length > 60) {
+      final ordered = next.entries.toList()
+        ..sort((left, right) => right.key.compareTo(left.key));
+      next
+        ..clear()
+        ..addEntries(ordered.take(60));
+    }
+    return copyWith(dailyQuestAssignmentByScope: next);
+  }
 
   PracticeLaunchPreferences launchFor(String activityId) {
     final normalizedId = _canonicalPracticeActivityId(activityId);
@@ -364,6 +426,51 @@ class PracticeCatalogPreferences {
         normalizedId: nextCount,
       },
     );
+  }
+
+  Set<String> completedDailyQuestActivityIds({
+    required DateTime day,
+    required String subjectId,
+    required Iterable<String> activityIds,
+  }) {
+    final dayKey = _practiceLocalDayKey(day);
+    return {
+      for (final rawId in activityIds)
+        if (_canonicalPracticeActivityId(rawId) case final activityId)
+          if (_isSafePracticeActivityId(activityId) &&
+              dailyQuestCompletionDayByScope[_dailyQuestScopeKey(
+                    subjectId,
+                    activityId,
+                  )] ==
+                  dayKey)
+            activityId,
+    };
+  }
+
+  PracticeCatalogPreferences recordDailyQuestCompletion({
+    required String activityId,
+    required String subjectId,
+    required DateTime completedAt,
+  }) {
+    final id = _canonicalPracticeActivityId(activityId);
+    final scope = _dailyQuestScopeKey(subjectId, id);
+    if (!_isSafePracticeActivityId(id) || scope.isEmpty) return copyWith();
+    final dayKey = _practiceLocalDayKey(completedAt);
+    final next = <String, String>{
+      ...dailyQuestCompletionDayByScope,
+      scope: dayKey,
+    };
+    if (next.length > 100) {
+      final sorted = next.entries.toList()
+        ..sort((left, right) {
+          final byDay = right.value.compareTo(left.value);
+          return byDay != 0 ? byDay : left.key.compareTo(right.key);
+        });
+      next
+        ..clear()
+        ..addEntries(sorted.take(100));
+    }
+    return copyWith(dailyQuestCompletionDayByScope: next);
   }
 
   PracticeCatalogPreferences snoozeRecommendation(
@@ -461,6 +568,8 @@ class PracticeCatalogPreferences {
     bool? surpriseAvoidRecent,
     Map<String, PracticeBestRecord>? bestRecordsByActivityId,
     List<PracticePlaylist>? playlists,
+    Map<String, String>? dailyQuestCompletionDayByScope,
+    Map<String, List<String>>? dailyQuestAssignmentByScope,
   }) {
     final hidden = _normalizePracticeActivitySet(
       hiddenActivityIds ?? this.hiddenActivityIds,
@@ -531,6 +640,16 @@ class PracticeCatalogPreferences {
         ),
       ),
       playlists: List.unmodifiable(safePlaylists),
+      dailyQuestCompletionDayByScope: Map.unmodifiable(
+        _normalizeDailyQuestCompletionMap(
+          dailyQuestCompletionDayByScope ?? this.dailyQuestCompletionDayByScope,
+        ),
+      ),
+      dailyQuestAssignmentByScope: Map.unmodifiable(
+        _normalizeDailyQuestAssignmentMap(
+          dailyQuestAssignmentByScope ?? this.dailyQuestAssignmentByScope,
+        ),
+      ),
     );
   }
 
@@ -584,6 +703,18 @@ class PracticeCatalogPreferences {
       'playlists': [
         for (final playlist in normalized.playlists) playlist.toJson(),
       ],
+      'dailyQuestCompletionDayByScope': {
+        for (final entry
+            in (normalized.dailyQuestCompletionDayByScope.entries.toList()
+              ..sort((left, right) => left.key.compareTo(right.key))))
+          entry.key: entry.value,
+      },
+      'dailyQuestAssignmentByScope': {
+        for (final entry
+            in (normalized.dailyQuestAssignmentByScope.entries.toList()
+              ..sort((left, right) => left.key.compareTo(right.key))))
+          entry.key: entry.value,
+      },
     };
   }
 
@@ -669,6 +800,26 @@ class PracticeCatalogPreferences {
         if (playlist != null) playlists.add(playlist);
       }
     }
+    final dailyQuestCompletions = <String, String>{};
+    final rawDailyQuestCompletions = json['dailyQuestCompletionDayByScope'];
+    if (rawDailyQuestCompletions is Map) {
+      for (final entry in rawDailyQuestCompletions.entries.take(100)) {
+        if (entry.key is String && entry.value is String) {
+          dailyQuestCompletions[entry.key! as String] = entry.value! as String;
+        }
+      }
+    }
+    final dailyQuestAssignments = <String, List<String>>{};
+    final rawDailyQuestAssignments = json['dailyQuestAssignmentByScope'];
+    if (rawDailyQuestAssignments is Map) {
+      for (final entry in rawDailyQuestAssignments.entries.take(60)) {
+        if (entry.key is String && entry.value is List<Object?>) {
+          dailyQuestAssignments[entry.key! as String] = (entry.value! as List)
+              .whereType<String>()
+              .toList(growable: false);
+        }
+      }
+    }
     return PracticeCatalogPreferences(
       favoriteActivityIds: safeIds(json['favoriteActivityIds'])
         ..removeAll(hidden),
@@ -715,8 +866,100 @@ class PracticeCatalogPreferences {
       surpriseAvoidRecent: _boolOr(json['surpriseAvoidRecent'], true),
       bestRecordsByActivityId: bestRecords,
       playlists: playlists,
+      dailyQuestCompletionDayByScope: dailyQuestCompletions,
+      dailyQuestAssignmentByScope: dailyQuestAssignments,
     ).copyWith();
   }
+}
+
+String _practiceLocalDayKey(DateTime value) {
+  final local = value.toLocal();
+  String twoDigits(int number) => number.toString().padLeft(2, '0');
+  return '${local.year}-${twoDigits(local.month)}-${twoDigits(local.day)}';
+}
+
+String _dailyQuestScopeKey(String subjectId, String activityId) {
+  final subject = subjectId.trim();
+  if (!_isSafeDailyQuestSubject(subject)) return '';
+  return '$subject|$activityId';
+}
+
+String _dailyQuestAssignmentScopeKey(DateTime day, String subjectId) {
+  final subject = subjectId.trim();
+  if (!_isSafeDailyQuestSubject(subject)) return '';
+  return '${_practiceLocalDayKey(day)}|$subject';
+}
+
+bool _isSafeDailyQuestSubject(String value) =>
+    value.isNotEmpty &&
+    value.runes.length <= 80 &&
+    RegExp(r'^[A-Za-z0-9._:-]+$').hasMatch(value);
+
+String _decodeDailyQuestSubject(String value) {
+  try {
+    return Uri.decodeComponent(value);
+  } on FormatException {
+    return '';
+  }
+}
+
+Map<String, List<String>> _normalizeDailyQuestAssignmentMap(
+  Map<String, List<String>> source,
+) {
+  final result = <String, List<String>>{};
+  for (final entry in source.entries) {
+    final separator = entry.key.indexOf('|');
+    final day = separator <= 0 ? '' : entry.key.substring(0, separator);
+    final parsedDay = DateTime.tryParse(day);
+    final safeDay =
+        parsedDay != null &&
+        day.length == 10 &&
+        _practiceLocalDayKey(parsedDay) == day;
+    final rawSubject = separator < 0 ? '' : entry.key.substring(separator + 1);
+    final subject = _decodeDailyQuestSubject(rawSubject);
+    final ids = _normalizePracticeActivityOrder(
+      entry.value,
+      maximumEntries: 3,
+    );
+    if (safeDay &&
+        _isSafeDailyQuestSubject(subject) &&
+        ids.isNotEmpty) {
+      result['$day|$subject'] = List.unmodifiable(ids);
+    }
+  }
+  final ordered = result.entries.toList()
+    ..sort((left, right) => right.key.compareTo(left.key));
+  return Map.fromEntries(ordered.take(60));
+}
+
+Map<String, String> _normalizeDailyQuestCompletionMap(
+  Map<String, String> source,
+) {
+  final entries = <MapEntry<String, String>>[];
+  for (final entry in source.entries) {
+    final separator = entry.key.indexOf('|');
+    final rawSubject = separator < 0 ? '' : entry.key.substring(0, separator);
+    final subject = _decodeDailyQuestSubject(rawSubject);
+    final activityId = separator < 0
+        ? ''
+        : _canonicalPracticeActivityId(entry.key.substring(separator + 1));
+    final parsedDay = DateTime.tryParse(entry.value);
+    final safeDay =
+        parsedDay != null &&
+        entry.value.length == 10 &&
+        _practiceLocalDayKey(parsedDay) == entry.value;
+    if (separator > 0 &&
+        _isSafeDailyQuestSubject(subject) &&
+        _isSafePracticeActivityId(activityId) &&
+        safeDay) {
+      entries.add(MapEntry('$subject|$activityId', entry.value));
+    }
+  }
+  entries.sort((left, right) {
+    final byDay = right.value.compareTo(left.value);
+    return byDay != 0 ? byDay : left.key.compareTo(right.key);
+  });
+  return Map.fromEntries(entries.take(100));
 }
 
 Set<String> _normalizePracticeActivitySet(Iterable<String> source) {
@@ -861,6 +1104,10 @@ String? practiceRouteForActivityId(String activityId) {
     'sentence-cloze' => '/study?mode=cloze',
     'sentence-order' => '/study?mode=sentenceOrder',
     'listening-dictation' => '/study?mode=listening',
+    'listening-discrimination' =>
+      '/study?mode=listening&practiceActivityId=listening-discrimination',
+    'exam-simulator' =>
+      '/study?mode=mixed&exam=true&practiceActivityId=exam-simulator',
     'match-sprint' => '/study?mode=mixed&match=true',
     'due-review' => '/study?mode=review',
     'recent-wrong' => '/study?mode=weak&historyFilter=wrongOnly',
@@ -878,6 +1125,11 @@ String _canonicalPracticeActivityId(String raw) {
   if (uri == null) return value;
   if (uri.path == '/study') {
     final mode = uri.queryParameters['mode'];
+    if (uri.queryParameters['exam'] == 'true') return 'exam-simulator';
+    if (uri.queryParameters['practiceActivityId'] ==
+        'listening-discrimination') {
+      return 'listening-discrimination';
+    }
     if (mode == 'weak' && uri.queryParameters['historyFilter'] == 'wrongOnly') {
       return 'recent-wrong';
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/sample_content.dart';
@@ -14,6 +15,16 @@ import 'package:sprache/src/services/window_workspace_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 DateTime _goldenNow() => DateTime(2026, 7, 27, 10);
+
+Future<void> _selectPracticeHubTab(WidgetTester tester, String label) async {
+  final tab = find.descendant(
+    of: find.byKey(const Key('practice-hub-tabs')),
+    matching: find.text(label),
+  );
+  await tester.ensureVisible(tab);
+  await tester.tap(tab);
+  await tester.pumpAndSettle();
+}
 
 void main() {
   testWidgets('mobile core screens stay visually stable', (tester) async {
@@ -58,6 +69,7 @@ void main() {
         matchesGoldenFile('goldens/mobile-learning-hub.png'),
       );
 
+      await _selectPracticeHubTab(tester, '전체 게임');
       final quickPractice = find.byKey(const Key('quick-practice-quiz'));
       await tester.ensureVisible(quickPractice);
       await tester.pumpAndSettle();
@@ -550,7 +562,11 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('window-compact-toggle')));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -617,6 +633,7 @@ void main() {
         matchesGoldenFile('goldens/mobile-learning-hub-dark-v2.png'),
       );
 
+      await _selectPracticeHubTab(tester, '전체 게임');
       final quickPractice = find.byKey(const Key('quick-practice-quiz'));
       await tester.ensureVisible(quickPractice);
       await tester.pumpAndSettle();
@@ -671,6 +688,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectPracticeHubTab(tester, '전체 게임');
       await tester.ensureVisible(find.byKey(const Key('start-flashcards')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('start-flashcards')));
@@ -688,11 +706,12 @@ void main() {
 
       await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
+      final pronunciation = find.byKey(
+        const Key('quick-practice-pronunciation'),
+      );
+      await tester.ensureVisible(pronunciation);
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('발음 따라하기'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('발음 따라하기'));
+      await tester.tap(pronunciation);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -810,6 +829,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectPracticeHubTab(tester, '전체 게임');
       await tester.ensureVisible(find.byKey(const Key('start-flashcards')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('start-flashcards')));
@@ -863,7 +883,9 @@ void main() {
         matchesGoldenFile('goldens/mobile-course-path.png'),
       );
 
-      await tester.tap(find.text('단원 가이드').first);
+      final recommendedGuide = find.byKey(const Key('recommended-unit-guide'));
+      await tester.ensureVisible(recommendedGuide);
+      await tester.tap(recommendedGuide);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -913,7 +935,9 @@ void main() {
         matchesGoldenFile('goldens/mobile-course-path-dark.png'),
       );
 
-      await tester.tap(find.text('단원 가이드').first);
+      final recommendedGuide = find.byKey(const Key('recommended-unit-guide'));
+      await tester.ensureVisible(recommendedGuide);
+      await tester.tap(recommendedGuide);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -953,11 +977,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('실전 상황 미션'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('실전 상황 미션'));
+      await _selectPracticeHubTab(tester, '미션');
+      final openMissions = find.byKey(const Key('open-situation-missions'));
+      await tester.ensureVisible(openMissions);
+      await tester.tap(openMissions);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -998,11 +1021,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('실전 상황 미션'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('실전 상황 미션'));
+      await _selectPracticeHubTab(tester, '미션');
+      final openMissions = find.byKey(const Key('open-situation-missions'));
+      await tester.ensureVisible(openMissions);
+      await tester.tap(openMissions);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('start-recommended-mission')));
       await tester.pumpAndSettle();
@@ -1035,11 +1057,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('실전 상황 미션'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('실전 상황 미션'));
+      await _selectPracticeHubTab(tester, '미션');
+      final openMissions = find.byKey(const Key('open-situation-missions'));
+      await tester.ensureVisible(openMissions);
+      await tester.tap(openMissions);
       await tester.pumpAndSettle();
       await expectLater(
         find.byType(MaterialApp),
@@ -1073,7 +1094,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-course-path')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('단원 가이드').first);
+      final recommendedGuide = find.byKey(const Key('recommended-unit-guide'));
+      await tester.ensureVisible(recommendedGuide);
+      await tester.tap(recommendedGuide);
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-unit-notes')));
       await tester.pumpAndSettle();

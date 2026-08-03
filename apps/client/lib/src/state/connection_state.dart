@@ -165,6 +165,7 @@ class ReconnectSyncSummary {
 class ConnectionState {
   const ConnectionState({
     required this.phase,
+    this.folderId,
     this.folderName,
     this.diagnostic,
     this.mock = false,
@@ -184,6 +185,7 @@ class ConnectionState {
 
   const ConnectionState.disconnected()
     : phase = ConnectionPhase.disconnected,
+      folderId = null,
       folderName = null,
       diagnostic = null,
       mock = false,
@@ -201,6 +203,7 @@ class ConnectionState {
       reconnectSummary = null;
 
   final ConnectionPhase phase;
+  final String? folderId;
   final String? folderName;
   final ConnectionDiagnostic? diagnostic;
   final bool mock;
@@ -240,6 +243,7 @@ class ConnectionState {
 
   ConnectionState copyWith({
     ConnectionPhase? phase,
+    Object? folderId = _keepConnectionValue,
     Object? folderName = _keepConnectionValue,
     Object? diagnostic = _keepConnectionValue,
     bool? mock,
@@ -258,6 +262,9 @@ class ConnectionState {
   }) {
     return ConnectionState(
       phase: phase ?? this.phase,
+      folderId: identical(folderId, _keepConnectionValue)
+          ? this.folderId
+          : folderId as String?,
       folderName: identical(folderName, _keepConnectionValue)
           ? this.folderName
           : folderName as String?,
@@ -769,6 +776,21 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     return _establishConnection();
   }
 
+  Future<void> changeDriveFolder() async {
+    if (state.policy.offlineLock) return;
+    final reselectionService = _service is DriveFolderReselectionService
+        ? _service as DriveFolderReselectionService
+        : null;
+    if (reselectionService == null) {
+      throw StateError('이 환경에서는 Drive 폴더를 다시 선택할 수 없습니다.');
+    }
+    await _establishConnection(
+      connectionOperation: reselectionService.reselectDriveFolder,
+      preserveExistingUntilSelected: true,
+      folderReselectionService: reselectionService,
+    );
+  }
+
   Future<void> restoreSavedConnection() async {
     if (state.policy.offlineLock ||
         state.busy ||
@@ -798,10 +820,20 @@ class ConnectionController extends StateNotifier<ConnectionState> {
 
   Future<void> _establishConnection({
     RestorableGoogleConnectionService? restorableService,
+    Future<GoogleConnectionResult?> Function({
+      GoogleConnectionStageCallback? onStage,
+    })?
+    connectionOperation,
+    bool preserveExistingUntilSelected = false,
+    DriveFolderReselectionService? folderReselectionService,
   }) async {
     if (state.busy || state.policy.offlineLock) return;
+    final previousState = state;
     final startedAt = DateTime.now().toUtc();
     final localBefore = _appController.exportSyncSnapshot();
+    final pendingBefore = _appController.state.pendingSync;
+    final mergeReportBefore = _appController.lastMergeReport;
+    final deviceSettingsBefore = _deviceSettings;
     final hadQueuedLocalChanges =
         state.pendingChanges || _appController.state.pendingSync != null;
     state = state.copyWith(
@@ -813,17 +845,27 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     PendingSyncOperation? attemptedOperation;
     final wasDriveConnected = _appController.state.driveConnected;
     try {
-      connectionResult = restorableService == null
+      connectionResult = connectionOperation != null
+          ? await connectionOperation(onStage: _setStage)
+          : restorableService == null
           ? await _service.connect(onStage: _setStage)
           : await restorableService.restoreConnection(onStage: _setStage);
       if (connectionResult == null) {
+        if (preserveExistingUntilSelected) {
+          state = previousState;
+          throw StateError('Google Picker did not return a folder ID');
+        }
         state = state.copyWith(
           phase: ConnectionPhase.disconnected,
+          folderId: null,
           folderName: null,
           runtimeReady: false,
           stage: null,
         );
         return;
+      }
+      if (folderReselectionService != null) {
+        _setStage(GoogleConnectionStage.linkingAccount);
       }
       attemptedOperation =
           _appController.state.pendingSync ??
@@ -853,11 +895,15 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         merged: merged,
         comparisons: comparisons,
       );
+      if (folderReselectionService != null) {
+        await folderReselectionService.commitDriveFolderReselection();
+      }
       _resetRetry();
       final completedAt = DateTime.now();
       final report = _appController.lastMergeReport;
       state = state.copyWith(
         phase: ConnectionPhase.connected,
+        folderId: connectionResult.folderId,
         folderName: connectionResult.folderName,
         mock: connectionResult.mock,
         runtimeReady: true,
@@ -878,7 +924,43 @@ class ConnectionController extends StateNotifier<ConnectionState> {
             : state.reconnectSummary,
       );
       _scheduleRemainingOperation();
-    } catch (error) {
+    } catch (error, stackTrace) {
+      if (preserveExistingUntilSelected && connectionResult == null) {
+        state = previousState;
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      if (preserveExistingUntilSelected && connectionResult != null) {
+        await _quarantineRemoteValidation(error);
+        Object? rollbackFailure;
+        StackTrace? rollbackStackTrace;
+        try {
+          await folderReselectionService?.rollbackDriveFolderReselection();
+        } catch (rollbackError, rollbackStack) {
+          rollbackFailure = rollbackError;
+          rollbackStackTrace = rollbackStack;
+        }
+        try {
+          await _appController.replaceWithSyncSnapshot(
+            localBefore,
+            driveConnected: wasDriveConnected,
+            preserveEmptyActiveStudy: true,
+          );
+          _appController.lastMergeReport = mergeReportBefore;
+          _deviceSettings = deviceSettingsBefore;
+          await _persistDeviceSettings();
+          await _appController.restorePendingSyncAfterFolderRollback(
+            pendingBefore,
+          );
+        } catch (rollbackError, rollbackStack) {
+          rollbackFailure ??= rollbackError;
+          rollbackStackTrace ??= rollbackStack;
+        }
+        state = previousState;
+        if (rollbackFailure != null) {
+          Error.throwWithStackTrace(rollbackFailure, rollbackStackTrace!);
+        }
+        Error.throwWithStackTrace(error, stackTrace);
+      }
       final failedStage = state.stage;
       final quarantine = await _quarantineRemoteValidation(error);
       final failedOperation = attemptedOperation == null
@@ -895,6 +977,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       );
       state = state.copyWith(
         phase: ConnectionPhase.failed,
+        folderId: connectionResult?.folderId,
         folderName: connectionResult?.folderName,
         diagnostic: diagnostic,
         mock: connectionResult?.mock ?? false,
@@ -910,6 +993,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       } else if (_shouldRetry(error) && restorableService != null) {
         _scheduleConnectionRestore(_minimumRetryDelay(error));
       }
+      if (preserveExistingUntilSelected) rethrow;
     }
   }
 
@@ -1068,6 +1152,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       await _service.disconnect();
       state = state.copyWith(
         phase: ConnectionPhase.disconnected,
+        folderId: null,
         folderName: null,
         diagnostic: null,
         runtimeReady: false,
@@ -1104,6 +1189,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       _appController.setDriveConnected(false);
       state = state.copyWith(
         phase: ConnectionPhase.disconnected,
+        folderId: null,
         folderName: null,
         diagnostic: null,
         runtimeReady: false,

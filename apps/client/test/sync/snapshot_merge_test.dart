@@ -114,6 +114,66 @@ void main() {
     controller.dispose();
   });
 
+  test('Drive merge unions daily quest progress from both devices', () async {
+    final localUpdatedAt = DateTime.utc(2026, 8, 3, 10);
+    final remoteUpdatedAt = DateTime.utc(2026, 8, 3, 11);
+    final local = StudyPreferences(
+      interaction: StudyInteractionPreferences(
+        updatedAt: localUpdatedAt,
+        practiceCatalog: const PracticeCatalogPreferences(
+          dailyQuestCompletionDayByScope: {
+            'language:en|meaning-choice': '2026-08-03',
+            'language:en|match-sprint': '2026-08-02',
+          },
+          dailyQuestAssignmentByScope: {
+            '2026-08-03|language:en': [
+              'meaning-choice',
+              'production-writing',
+              'match-sprint',
+            ],
+          },
+        ),
+      ),
+    );
+    final remote = StudyPreferences(
+      interaction: StudyInteractionPreferences(
+        updatedAt: remoteUpdatedAt,
+        practiceCatalog: const PracticeCatalogPreferences(
+          dailyQuestCompletionDayByScope: {
+            'language:en|production-writing': '2026-08-03',
+            'language:en|match-sprint': '2026-08-04',
+          },
+          dailyQuestAssignmentByScope: {
+            '2026-08-04|language:en': [
+              'exam-simulator',
+              'recent-wrong',
+              'sentence-order',
+            ],
+          },
+        ),
+      ),
+    );
+    final controller = AppController(MemoryStudyStore(preferences: local));
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.mergeRemoteSnapshot({
+      'schemaVersion': 1,
+      'settings': remote.toJson(),
+    });
+
+    final catalog = controller.state.preferences.interaction.practiceCatalog;
+    expect(catalog.dailyQuestCompletionDayByScope, {
+      'language:en|meaning-choice': '2026-08-03',
+      'language:en|production-writing': '2026-08-03',
+      'language:en|match-sprint': '2026-08-04',
+    });
+    expect(
+      catalog.dailyQuestAssignmentByScope.keys,
+      containsAll(<String>['2026-08-03|language:en', '2026-08-04|language:en']),
+    );
+    controller.dispose();
+  });
+
   test(
     'remote snapshot merges newer progress and account-wide totals',
     () async {

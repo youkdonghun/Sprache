@@ -16,10 +16,17 @@ import 'import_column_mapping.dart';
 import 'xlsx_import_reader.dart';
 
 class ImportIssue {
-  const ImportIssue({required this.row, required this.message});
+  const ImportIssue({
+    required this.row,
+    required this.message,
+    this.sourceFields = const {},
+  });
 
   final int row;
   final String message;
+  final Map<String, Object?> sourceFields;
+
+  bool get canEdit => sourceFields.isNotEmpty;
 }
 
 class ImportNotice {
@@ -89,6 +96,34 @@ class ContentImportParser {
   final ImportLimits limits;
 
   void validateFileSize(int byteLength) => limits.ensureFileSize(byteLength);
+
+  /// Re-runs the regular import validation for a single user-corrected row.
+  /// The same destination and distribution rules used by file and paste
+  /// imports are applied, so correction never bypasses import validation.
+  ImportPreview parseEditableRow({
+    required int row,
+    required Map<String, Object?> values,
+    required LanguageTag defaultLanguage,
+    String? defaultSubjectId,
+    String? distributionKey,
+    String? distributionGroup,
+    String? routeSubjectId,
+    String? routeLanguageCode,
+    Map<String, String> subjectIdByDistributionKey = const {},
+    Map<String, String> groupByDistributionKey = const {},
+    Map<String, String> languageCodeByDistributionKey = const {},
+  }) => _parseRows(
+    [_ImportRow(row, values)],
+    defaultLanguage: defaultLanguage,
+    defaultSubjectId: defaultSubjectId,
+    distributionKey: distributionKey,
+    distributionGroup: distributionGroup,
+    routeSubjectId: routeSubjectId,
+    routeLanguageCode: routeLanguageCode,
+    subjectIdByDistributionKey: subjectIdByDistributionKey,
+    groupByDistributionKey: groupByDistributionKey,
+    languageCodeByDistributionKey: languageCodeByDistributionKey,
+  );
 
   ImportPreview parseCsv(
     String input, {
@@ -445,10 +480,22 @@ class ContentImportParser {
         rethrow;
       } on FormatException catch (error) {
         notices.removeRange(noticeStart, notices.length);
-        issues.add(ImportIssue(row: row.number, message: error.message));
+        issues.add(
+          ImportIssue(
+            row: row.number,
+            message: error.message,
+            sourceFields: _editableSourceFields(row.value),
+          ),
+        );
       } on LearningContentValidationException catch (error) {
         notices.removeRange(noticeStart, notices.length);
-        issues.add(ImportIssue(row: row.number, message: error.toString()));
+        issues.add(
+          ImportIssue(
+            row: row.number,
+            message: error.toString(),
+            sourceFields: _editableSourceFields(row.value),
+          ),
+        );
       }
     }
     return ImportPreview(
@@ -470,6 +517,7 @@ class ContentImportParser {
     final pairs =
         <
           ({
+            String id,
             String text,
             String translation,
             List<String> tokens,
@@ -479,6 +527,7 @@ class ContentImportParser {
 
     void addPair({
       required String label,
+      String id = '',
       required String text,
       required String translation,
       List<String> tokens = const [],
@@ -495,6 +544,7 @@ class ContentImportParser {
         return;
       }
       pairs.add((
+        id: id,
         text: text,
         translation: translation,
         tokens: tokens,
@@ -504,6 +554,7 @@ class ContentImportParser {
 
     addPair(
       label: '첫 번째 예문',
+      id: _string(row, ['example_id', 'example_1_id']),
       text: _string(row, ['example_en', 'example']),
       translation: _string(row, ['example_ko', 'example_translation']),
       tokens: _split(_string(row, ['example_tokens', 'example_1_tokens'])),
@@ -517,6 +568,7 @@ class ContentImportParser {
     for (var index = 2; index <= 10; index++) {
       addPair(
         label: '$index번째 예문',
+        id: _string(row, ['example_${index}_id', 'example${index}_id']),
         text: _string(row, [
           'example_$index',
           'example${index}_en',
@@ -546,12 +598,14 @@ class ContentImportParser {
     final pronunciations = _splitExampleList(
       _string(row, ['example_pronunciations']),
     );
+    final ids = _splitExampleList(_string(row, ['example_ids']));
     final listLength = examples.length > translations.length
         ? examples.length
         : translations.length;
     for (var index = 0; index < listLength; index++) {
       addPair(
         label: 'examples ${index + 1}번',
+        id: index < ids.length ? ids[index] : '',
         text: index < examples.length ? examples[index] : '',
         translation: index < translations.length ? translations[index] : '',
         koreanPronunciation: index < pronunciations.length
@@ -564,6 +618,7 @@ class ContentImportParser {
         <
               String,
               ({
+                String id,
                 String text,
                 String translation,
                 List<String> tokens,
@@ -588,6 +643,7 @@ class ContentImportParser {
   LearningItem _exampleSentence({
     required LearningItem parent,
     required ({
+      String id,
       String text,
       String translation,
       List<String> tokens,
@@ -634,7 +690,9 @@ class ContentImportParser {
     }
     return validator.ensureValid(
       LearningItem(
-        id: const Uuid().v5(Namespace.url.value, 'sprache:$stableName'),
+        id: pair.id.trim().isNotEmpty
+            ? pair.id.trim()
+            : const Uuid().v5(Namespace.url.value, 'sprache:$stableName'),
         kind: LearningItemKind.sentence,
         learningLanguage: parent.learningLanguage,
         subjectId: parent.effectiveSubjectId,
@@ -987,9 +1045,18 @@ class ContentImportParser {
   }) {
     for (final key in keys) {
       final value = row[key];
-      if (value != null && value.toString().trim().isNotEmpty) {
-        return value.toString().trim();
-      }
+      final normalized = switch (value) {
+        String value => value.trim(),
+        num value => value.toString(),
+        bool value => value.toString(),
+        List<Object?> values => values
+            .where((value) => value != null)
+            .map((value) => value.toString().trim())
+            .where((value) => value.isNotEmpty)
+            .join('|'),
+        _ => '',
+      };
+      if (normalized.isNotEmpty) return normalized;
     }
     return fallback;
   }
@@ -1057,3 +1124,8 @@ class _ImportRow {
   final int number;
   final Map<String, Object?> value;
 }
+
+Map<String, Object?> _editableSourceFields(Map<String, Object?> source) => {
+  for (final entry in source.entries.take(80))
+    entry.key: entry.value,
+};

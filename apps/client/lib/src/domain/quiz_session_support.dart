@@ -5,6 +5,7 @@ import 'progress.dart';
 import 'session_enhancements.dart';
 import 'study_interaction_preferences.dart';
 import 'study_preferences.dart';
+import 'study_runtime_modes.dart';
 
 extension StudyModeAnswerDirectionSupport on StudyMode {
   bool get allowsAnswerDirectionOverride => switch (this) {
@@ -98,6 +99,7 @@ class QuizSessionOptions {
     this.showKoreanReading = true,
     this.showNativeReading = true,
     this.ttsRate = 0.45,
+    this.liveDifficultyLock,
   });
 
   final StudyAnswerDirection answerDirection;
@@ -108,6 +110,7 @@ class QuizSessionOptions {
   final bool showKoreanReading;
   final bool showNativeReading;
   final double ttsRate;
+  final LiveDifficultyLevel? liveDifficultyLock;
 
   StudySessionRuntimeOptions get runtimeOptions => StudySessionRuntimeOptions(
     strategy: strategy,
@@ -115,6 +118,7 @@ class QuizSessionOptions {
     showKoreanReading: showKoreanReading,
     showNativeReading: showNativeReading,
     ttsRate: ttsRate,
+    liveDifficultyLock: liveDifficultyLock,
   );
 
   QuizSessionOptions copyWith({
@@ -126,6 +130,7 @@ class QuizSessionOptions {
     bool? showKoreanReading,
     bool? showNativeReading,
     double? ttsRate,
+    Object? liveDifficultyLock = _quizOptionNotProvided,
   }) {
     return QuizSessionOptions(
       answerDirection: answerDirection ?? this.answerDirection,
@@ -136,9 +141,14 @@ class QuizSessionOptions {
       showKoreanReading: showKoreanReading ?? this.showKoreanReading,
       showNativeReading: showNativeReading ?? this.showNativeReading,
       ttsRate: ttsRate ?? this.ttsRate,
+      liveDifficultyLock: identical(liveDifficultyLock, _quizOptionNotProvided)
+          ? this.liveDifficultyLock
+          : liveDifficultyLock as LiveDifficultyLevel?,
     );
   }
 }
+
+const _quizOptionNotProvided = Object();
 
 class QuizAttemptReview {
   const QuizAttemptReview({
@@ -164,6 +174,66 @@ class QuizAttemptReview {
   final ReviewRating rating;
   final bool usedHint;
   final String? correctionLabel;
+
+  Map<String, Object?> toJson() => {
+    'sequence': sequence,
+    'itemId': itemId,
+    'prompt': prompt,
+    'expectedAnswer': expectedAnswer,
+    'userAnswer': userAnswer,
+    'exerciseType': exerciseType,
+    'correct': correct,
+    'rating': rating.name,
+    'usedHint': usedHint,
+    if (correctionLabel != null) 'correctionLabel': correctionLabel,
+  };
+
+  factory QuizAttemptReview.fromJson(Map<String, Object?> json) {
+    final sequence = _quizReviewInteger(json['sequence']);
+    final itemId = json['itemId'];
+    final prompt = json['prompt'];
+    final expectedAnswer = json['expectedAnswer'];
+    final userAnswer = json['userAnswer'];
+    final exerciseType = json['exerciseType'];
+    final correct = json['correct'];
+    final ratingName = json['rating'];
+    final usedHint = json['usedHint'];
+    final correctionLabel = json['correctionLabel'];
+    final rating = ratingName is String
+        ? ReviewRating.values
+              .where((candidate) => candidate.name == ratingName)
+              .firstOrNull
+        : null;
+    if (sequence == null ||
+        sequence < 1 ||
+        sequence > 1000000 ||
+        !_validQuizReviewText(itemId, maximumLength: 160) ||
+        !_validQuizReviewText(prompt, maximumLength: 4000) ||
+        !_validQuizReviewText(expectedAnswer, maximumLength: 4000) ||
+        userAnswer is! String ||
+        userAnswer.runes.length > 4000 ||
+        !_validQuizReviewText(exerciseType, maximumLength: 80) ||
+        correct is! bool ||
+        rating == null ||
+        usedHint is! bool ||
+        (correctionLabel != null &&
+            (correctionLabel is! String ||
+                correctionLabel.runes.length > 400))) {
+      throw const FormatException('Invalid quiz attempt review');
+    }
+    return QuizAttemptReview(
+      sequence: sequence,
+      itemId: itemId as String,
+      prompt: prompt as String,
+      expectedAnswer: expectedAnswer as String,
+      userAnswer: userAnswer,
+      exerciseType: exerciseType as String,
+      correct: correct,
+      rating: rating,
+      usedHint: usedHint,
+      correctionLabel: correctionLabel as String?,
+    );
+  }
 
   QuizAttemptReview copyWith({
     bool? correct,
@@ -195,6 +265,14 @@ class QuizAttemptReview {
 }
 
 const _keepCorrectionLabel = Object();
+
+int? _quizReviewInteger(Object? raw) {
+  if (raw is! num || !raw.isFinite || raw != raw.round()) return null;
+  return raw.toInt();
+}
+
+bool _validQuizReviewText(Object? raw, {required int maximumLength}) =>
+    raw is String && raw.trim().isNotEmpty && raw.runes.length <= maximumLength;
 
 class QuizRepairAdvisor {
   const QuizRepairAdvisor({this.failureThreshold = 2});

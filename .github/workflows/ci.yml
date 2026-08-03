@@ -59,10 +59,10 @@ jobs:
       - working-directory: apps/client
         run: >-
           flutter build apk --release
-          --build-name=1.32.0
-          --build-number=56
+          --build-name=1.33.0
+          --build-number=57
           --dart-define=ENABLE_MOCK_MODE=true
-          --dart-define=APP_VERSION=1.32.0
+          --dart-define=APP_VERSION=1.33.0
       - name: Verify Android release output
         working-directory: apps/client
         run: test -s build/app/outputs/flutter-apk/app-release.apk
@@ -71,7 +71,7 @@ jobs:
         shell: bash
         run: |
           artifact_dir="$RUNNER_TEMP/sprache-ci-artifacts"
-          artifact_name="Sprache-1.32.0-ci-android-mock.apk"
+          artifact_name="Sprache-1.33.0-ci-android-mock.apk"
           mkdir -p "$artifact_dir"
           cp build/app/outputs/flutter-apk/app-release.apk "$artifact_dir/$artifact_name"
           (
@@ -81,10 +81,10 @@ jobs:
       - name: Upload Android CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Sprache-1.32.0-ci-android-mock
+          name: Sprache-1.33.0-ci-android-mock
           path: |
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.32.0-ci-android-mock.apk
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.32.0-ci-android-mock.apk.sha256
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.33.0-ci-android-mock.apk
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.33.0-ci-android-mock.apk.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -95,8 +95,8 @@ jobs:
     env:
       ANDROID_BUILD_TOOLS: "36.0.0"
       ANDROID_SYSTEM_IMAGE: "system-images;android-35;google_apis;x86_64"
-      SPRACHE_VERSION: "1.32.0"
-      SPRACHE_BUILD_NUMBER: "56"
+      SPRACHE_VERSION: "1.33.0"
+      SPRACHE_BUILD_NUMBER: "57"
       SPRACHE_PACKAGE: com.youkdonghun.sprache
       SPRACHE_API_BASE_URL: https://sprache-api-production.up.railway.app
       SPRACHE_PRIVACY_POLICY_URL: https://sprache-api-production.up.railway.app/privacy
@@ -464,8 +464,8 @@ jobs:
               "format": "sprache-runtime-evidence-v1",
               "platform": "android",
               "mode": "REAL",
-              "version": "1.32.0",
-              "buildNumber": 56,
+              "version": "1.33.0",
+              "buildNumber": 57,
               "launched": True,
               "firstFrameRendered": True,
               "firstFrameMillis": first_frame_ms,
@@ -487,8 +487,8 @@ jobs:
           assert value["format"] == "sprache-runtime-evidence-v1"
           assert value["platform"] == "android"
           assert value["mode"] == "REAL"
-          assert value["version"] == "1.32.0"
-          assert value["buildNumber"] == 56
+          assert value["version"] == "1.33.0"
+          assert value["buildNumber"] == 57
           assert value["launched"] is True
           assert value["firstFrameRendered"] is True
           assert 0 <= value["firstFrameMillis"] <= 60000
@@ -503,10 +503,10 @@ jobs:
       - name: Upload exact Android REAL runtime artifact set
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Sprache-Android-1.32.0-real-runtime
+          name: Sprache-Android-1.33.0-real-runtime
           path: |
-            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.32.0-google-debug-signed.apk
-            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.32.0-google-debug-signed.apk.sha256
+            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.33.0-google-debug-signed.apk
+            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.33.0-google-debug-signed.apk.sha256
             ${{ runner.temp }}/sprache-android-real-runtime/runtime-android.json
             ${{ runner.temp }}/sprache-android-real-runtime/runtime-android-first-frame.png
             ${{ runner.temp }}/sprache-android-real-runtime/android-signing-certificate.txt
@@ -518,7 +518,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Sprache-Android-1.32.0-real-runtime-diagnostics
+          name: Sprache-Android-1.33.0-real-runtime-diagnostics
           path: |
             ${{ runner.temp }}/sprache-android-real-runtime/android-emulator.log
             ${{ runner.temp }}/sprache-android-real-runtime/android-logcat.txt
@@ -548,10 +548,10 @@ jobs:
       - working-directory: apps/client
         run: >-
           flutter build windows --release
-          --build-name=1.32.0
-          --build-number=56
+          --build-name=1.33.0
+          --build-number=57
           --dart-define=ENABLE_MOCK_MODE=true
-          --dart-define=APP_VERSION=1.32.0
+          --dart-define=APP_VERSION=1.33.0
       - name: Verify Windows release output
         working-directory: apps/client
         shell: pwsh
@@ -571,7 +571,7 @@ jobs:
         shell: pwsh
         run: |
           $artifactDirectory = Join-Path $env:RUNNER_TEMP 'sprache-ci-artifacts'
-          $artifactName = 'Sprache-1.32.0-ci-windows-x64-mock.zip'
+          $artifactName = 'Sprache-1.33.0-ci-windows-x64-mock.zip'
           $artifactPath = Join-Path $artifactDirectory $artifactName
           New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
           Compress-Archive `
@@ -584,10 +584,10 @@ jobs:
       - name: Upload Windows CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Sprache-1.32.0-ci-windows-x64-mock
+          name: Sprache-1.33.0-ci-windows-x64-mock
           path: |
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.32.0-ci-windows-x64-mock.zip
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.32.0-ci-windows-x64-mock.zip.sha256
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.33.0-ci-windows-x64-mock.zip
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.33.0-ci-windows-x64-mock.zip.sha256
           if-no-files-found: error
           retention-days: 14
 
@@ -606,14 +606,14 @@ jobs:
         working-directory: apps/client
         run: >-
           flutter build ios --simulator --debug
-          --build-name=1.32.0
-          --build-number=56
+          --build-name=1.33.0
+          --build-number=57
           --dart-define=APP_ENV=ci
           --dart-define=ENABLE_MOCK_MODE=true
-          --dart-define=APP_VERSION=1.32.0
+          --dart-define=APP_VERSION=1.33.0
           --dart-define=ENABLE_RELEASE_PROBE=true
           --dart-define=RELEASE_PROBE_MODE=MOCK
-          --dart-define=RELEASE_BUILD_NUMBER=56
+          --dart-define=RELEASE_BUILD_NUMBER=57
           --dart-define=RELEASE_PROBE_KIND=simulator-runtime
       - name: Verify iOS simulator output
         working-directory: apps/client
@@ -624,8 +624,8 @@ jobs:
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app_path/Info.plist")" = "com.youkdonghun.sprache"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$app_path/Info.plist")" = "Sprache"
           test "$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$app_path/Info.plist")" = "13.0"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Info.plist")" = "1.32.0"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app_path/Info.plist")" = "56"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_path/Info.plist")" = "1.33.0"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$app_path/Info.plist")" = "57"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes:0' "$app_path/Info.plist")" = "sprache"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleDocumentTypes:0:LSItemContentTypes' "$app_path/Info.plist" |
             grep -q 'com.youkdonghun.sprache.json-lines'
@@ -687,8 +687,8 @@ jobs:
           assert value['format'] == 'sprache-runtime-evidence-v1'
           assert value['platform'] == 'ios'
           assert value['mode'] == 'MOCK'
-          assert value['version'] == '1.32.0'
-          assert value['buildNumber'] == 56
+          assert value['version'] == '1.33.0'
+          assert value['buildNumber'] == 57
           assert value['launched'] is True
           assert value['firstFrameRendered'] is True
           assert value['probe'] == 'simulator-runtime'
@@ -702,7 +702,7 @@ jobs:
         shell: bash
         run: |
           artifact_dir="$RUNNER_TEMP/sprache-ci-artifacts"
-          artifact_name="Sprache-iOS-Simulator-1.32.0-mock.zip"
+          artifact_name="Sprache-iOS-Simulator-1.33.0-mock.zip"
           mkdir -p "$artifact_dir"
           ditto -c -k --sequesterRsrc --keepParent \
             build/ios/iphonesimulator/Runner.app \
@@ -714,10 +714,10 @@ jobs:
       - name: Upload iOS simulator CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Sprache-iOS-Simulator-1.32.0-mock
+          name: Sprache-iOS-Simulator-1.33.0-mock
           path: |
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-iOS-Simulator-1.32.0-mock.zip
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-iOS-Simulator-1.32.0-mock.zip.sha256
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-iOS-Simulator-1.33.0-mock.zip
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-iOS-Simulator-1.33.0-mock.zip.sha256
             ${{ runner.temp }}/sprache-ci-artifacts/runtime-ios.json
             ${{ runner.temp }}/sprache-ci-artifacts/runtime-ios-first-frame.png
           if-no-files-found: error
@@ -746,14 +746,14 @@ jobs:
         working-directory: apps/client
         run: >-
           flutter build macos --release
-          --build-name=1.32.0
-          --build-number=56
+          --build-name=1.33.0
+          --build-number=57
           --dart-define=APP_ENV=ci
           --dart-define=ENABLE_MOCK_MODE=true
-          --dart-define=APP_VERSION=1.32.0
+          --dart-define=APP_VERSION=1.33.0
           --dart-define=ENABLE_RELEASE_PROBE=true
           --dart-define=RELEASE_PROBE_MODE=MOCK
-          --dart-define=RELEASE_BUILD_NUMBER=56
+          --dart-define=RELEASE_BUILD_NUMBER=57
           --dart-define=RELEASE_PROBE_KIND=native-runtime
       - name: Verify macOS release output
         working-directory: apps/client
@@ -779,8 +779,8 @@ jobs:
           test "$bundle_id" = "com.youkdonghun.sprache"
           test "$bundle_name" = "Sprache"
           test "$minimum_version" = "12.0"
-          test "$short_version" = "1.32.0"
-          test "$build_version" = "56"
+          test "$short_version" = "1.33.0"
+          test "$build_version" = "57"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleURLTypes:0:CFBundleURLSchemes:0' "$app_path/Contents/Info.plist")" = "sprache"
           /usr/libexec/PlistBuddy -c 'Print :CFBundleDocumentTypes:0:LSItemContentTypes' "$app_path/Contents/Info.plist" |
             grep -q 'com.youkdonghun.sprache.json-lines'
@@ -835,8 +835,8 @@ jobs:
           assert value['format'] == 'sprache-runtime-evidence-v1'
           assert value['platform'] == 'macos'
           assert value['mode'] == 'MOCK'
-          assert value['version'] == '1.32.0'
-          assert value['buildNumber'] == 56
+          assert value['version'] == '1.33.0'
+          assert value['buildNumber'] == 57
           assert value['launched'] is True
           assert value['firstFrameRendered'] is True
           assert value['probe'] == 'native-runtime'
@@ -848,7 +848,7 @@ jobs:
         shell: bash
         run: |
           artifact_dir="$RUNNER_TEMP/sprache-ci-artifacts"
-          artifact_name="Sprache-macOS-1.32.0-mock.zip"
+          artifact_name="Sprache-macOS-1.33.0-mock.zip"
           mkdir -p "$artifact_dir"
           ditto -c -k --sequesterRsrc --keepParent \
             build/macos/Build/Products/Release/Sprache.app \
@@ -860,10 +860,10 @@ jobs:
       - name: Upload macOS CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Sprache-macOS-1.32.0-mock
+          name: Sprache-macOS-1.33.0-mock
           path: |
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-macOS-1.32.0-mock.zip
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-macOS-1.32.0-mock.zip.sha256
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-macOS-1.33.0-mock.zip
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-macOS-1.33.0-mock.zip.sha256
             ${{ runner.temp }}/sprache-ci-artifacts/runtime-macos.json
           if-no-files-found: error
           retention-days: 14

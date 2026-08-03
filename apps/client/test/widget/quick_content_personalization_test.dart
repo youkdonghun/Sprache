@@ -65,11 +65,13 @@ class _DelayedQuickLoadStore extends MemoryStudyStore {
   }
 
   @override
-  Future<QuickContentDraft?> loadQuickContentDraft() {
+  Future<QuickContentDraft?> loadQuickContentDraft({
+    required String subjectId,
+  }) {
     _draftLoadCount++;
     return _draftLoadCount == 1
         ? _draftGate.future
-        : super.loadQuickContentDraft();
+        : super.loadQuickContentDraft(subjectId: subjectId);
   }
 
   @override
@@ -420,7 +422,9 @@ void main() {
         findsNothing,
       );
       expect(_selectedKind(tester), LearningItemKind.word);
-      final savedDraft = await store.loadQuickContentDraft();
+      final savedDraft = await store.loadQuickContentDraft(
+        subjectId: _subjectId,
+      );
       expect(savedDraft?.text, 'fresh early input');
       expect(savedDraft?.meanings, const ['사용자 조기 입력']);
 
@@ -450,10 +454,10 @@ void main() {
     );
 
     await tester.pump(const Duration(milliseconds: 700));
-    expect(await store.loadQuickContentDraft(), isNull);
+    expect(await store.loadQuickContentDraft(subjectId: _subjectId), isNull);
     await tester.pump(const Duration(milliseconds: 550));
     await tester.pump();
-    final saved = await store.loadQuickContentDraft();
+    final saved = await store.loadQuickContentDraft(subjectId: _subjectId);
     expect(saved?.text, 'draft delay audit');
     expect(saved?.meanings, const ['초안 간격 감사']);
   });

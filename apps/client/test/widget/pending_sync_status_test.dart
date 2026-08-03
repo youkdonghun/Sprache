@@ -105,6 +105,14 @@ void main() {
         await tester.tap(find.byKey(const Key('home-settings')));
         await tester.pumpAndSettle();
 
+        expect(find.byKey(const Key('active-storage-target')), findsOneWidget);
+        expect(find.byKey(const Key('local-folder-status')), findsOneWidget);
+        expect(find.byKey(const Key('drive-management-menu')), findsOneWidget);
+        final driveMenu = find.byKey(const Key('drive-management-menu'));
+        await tester.ensureVisible(driveMenu);
+        await tester.pumpAndSettle();
+        await tester.tap(driveMenu);
+        await tester.pumpAndSettle();
         expect(find.text('이 기기에서 연결 해제'), findsOneWidget);
         await tester.tap(find.text('이 기기에서 연결 해제'));
         await tester.pumpAndSettle();

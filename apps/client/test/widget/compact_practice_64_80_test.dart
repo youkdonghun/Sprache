@@ -15,6 +15,7 @@ void main() {
     (tester) async {
       final harness = await _pumpApp(
         tester,
+        openGames: false,
         preferences: const StudyPreferences(
           onboardingCompleted: true,
           interaction: StudyInteractionPreferences(
@@ -38,20 +39,15 @@ void main() {
       expect(recommendations, findsOneWidget);
       expect(recent, findsOneWidget);
       expect(favorites, findsOneWidget);
-      expect(quizCatalog, findsOneWidget);
-      expect(
-        tester.getTopLeft(recommendations).dy,
-        lessThan(tester.getTopLeft(quizCatalog).dy),
-      );
-      expect(
-        tester.getTopLeft(recent).dy,
-        lessThan(tester.getTopLeft(quizCatalog).dy),
-      );
-      expect(
-        tester.getTopLeft(favorites).dy,
-        lessThan(tester.getTopLeft(quizCatalog).dy),
-      );
+      expect(quizCatalog, findsNothing);
       expect(find.text('짧게 풀고 바로 피드백을 받아요.'), findsNothing);
+
+      await tester.tap(find.text('전체 게임'));
+      await tester.pumpAndSettle();
+      expect(recommendations, findsNothing);
+      expect(recent, findsOneWidget);
+      expect(favorites, findsOneWidget);
+      expect(quizCatalog, findsOneWidget);
       expect(
         find.byKey(const Key('practice-search-result-summary')),
         findsOneWidget,
@@ -297,6 +293,7 @@ void main() {
 
 Future<ProviderContainer> _pumpApp(
   WidgetTester tester, {
+  bool openGames = true,
   StudyPreferences preferences = const StudyPreferences(
     onboardingCompleted: true,
   ),
@@ -317,6 +314,10 @@ Future<ProviderContainer> _pumpApp(
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('nav-learn')));
   await tester.pumpAndSettle();
+  if (openGames) {
+    await tester.tap(find.text('전체 게임'));
+    await tester.pumpAndSettle();
+  }
   return ProviderScope.containerOf(tester.element(find.byType(SpracheApp)));
 }
 

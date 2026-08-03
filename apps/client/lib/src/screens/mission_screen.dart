@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/course_path.dart';
 import '../domain/learning_item.dart';
+import '../domain/mission_script.dart';
 import '../services/media_lifecycle_coordinator.dart';
 import '../services/tts_service.dart';
 import '../state/app_state.dart';
@@ -20,6 +21,9 @@ class MissionCatalogScreen extends ConsumerWidget {
     final controller = ref.read(appControllerProvider.notifier);
     final path = controller.coursePath;
     final recommended = path.recommendedUnit;
+    final otherUnits = path.units
+        .where((unit) => unit.index != recommended.index)
+        .toList(growable: false);
 
     return SafeArea(
       child: LayoutBuilder(
@@ -84,7 +88,7 @@ class MissionCatalogScreen extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            '순서대로 진행하거나 지금 필요한 상황부터 골라도 됩니다.',
+                            '추천 미션은 위에서 시작하고, ${otherUnits.length}개 다른 상황은 필요할 때 바로 골라 연습하세요.',
                             style: Theme.of(context).textTheme.bodyMedium,
                           ),
                           const SizedBox(height: 12),
@@ -101,15 +105,13 @@ class MissionCatalogScreen extends ConsumerWidget {
                                 spacing: 12,
                                 runSpacing: 12,
                                 children: [
-                                  for (final unit in path.units)
+                                  for (final unit in otherUnits)
                                     SizedBox(
                                       width: width,
                                       child: _MissionCard(
                                         unit: unit,
                                         definition:
                                             missionDefinitions[unit.index],
-                                        recommended:
-                                            unit.index == recommended.index,
                                         completed: controller
                                             .hasCompletedMission(unit.index),
                                         onTap: () => context.push(
@@ -154,8 +156,9 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
   late final MediaLifecycleRegistry _mediaLifecycleRegistry;
   late final TtsService _tts;
   var _phraseIndex = 0;
-  var _meaningVisible = false;
   var _completed = false;
+  var _coachedTurns = 0;
+  MissionDecision? _decision;
   String? _lastAutoPlayedQuestionId;
 
   @override
@@ -227,48 +230,52 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
     });
   }
 
-  void _toggleMeaning(LearningItem item) {
-    final willShow = !_meaningVisible;
-    setState(() => _meaningVisible = willShow);
-    if (willShow &&
-        ref
-            .read(appControllerProvider)
-            .preferences
-            .interaction
-            .autoPlayAnswerAudio) {
-      unawaited(_speak(item));
+  void _choose(MissionDecision decision) {
+    if (_decision != null) return;
+    setState(() {
+      _decision = decision;
+      if (decision.usedCoaching) _coachedTurns++;
+    });
+    if (ref
+        .read(appControllerProvider)
+        .preferences
+        .interaction
+        .autoPlayAnswerAudio) {
+      unawaited(_speak(decision.target));
     }
   }
 
   void _nextPhrase(int phraseCount) {
+    if (_decision == null) return;
     if (_phraseIndex + 1 >= phraseCount) {
       ref
           .read(appControllerProvider.notifier)
           .completeMission(widget.unitIndex);
       setState(() {
         _completed = true;
-        _meaningVisible = false;
+        _decision = null;
       });
       return;
     }
     setState(() {
       _phraseIndex += 1;
-      _meaningVisible = false;
+      _decision = null;
     });
   }
 
   void _restart() {
     setState(() {
       _phraseIndex = 0;
-      _meaningVisible = false;
       _completed = false;
+      _coachedTurns = 0;
+      _decision = null;
       _lastAutoPlayedQuestionId = null;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(appControllerProvider);
+    final state = ref.watch(appControllerProvider);
     final controller = ref.read(appControllerProvider.notifier);
     final path = controller.coursePath;
     if (widget.unitIndex < 0 || widget.unitIndex >= path.units.length) {
@@ -284,8 +291,13 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
 
     final unit = path.units[widget.unitIndex];
     final definition = missionDefinitions[widget.unitIndex];
-    final phrases = missionPhrasesFor(unit);
-    if (phrases.isEmpty) {
+    final script = const MissionScriptBuilder().build(
+      unit: unit,
+      setting: definition.setting,
+      goal: definition.briefing,
+      progress: state.progress,
+    );
+    if (script.isEmpty) {
       return Scaffold(
         body: SafeArea(
           child: Center(
@@ -331,12 +343,13 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
         ),
       );
     }
-    final phrase = phrases[_phraseIndex.clamp(0, phrases.length - 1)];
-    if (!_completed) _scheduleQuestionAudio(phrase);
+    final scene =
+        script.scenes[_phraseIndex.clamp(0, script.scenes.length - 1)];
+    if (!_completed) _scheduleQuestionAudio(scene.target);
     final interaction = ref.watch(
       appControllerProvider.select((state) => state.preferences.interaction),
     );
-    final readingAidsLabel = phrase.readingAidsLabelFor(
+    final readingAidsLabel = scene.target.readingAidsLabelFor(
       showKoreanReading: interaction.showKoreanReading,
       showNativeReading: interaction.showNativeReading,
     );
@@ -367,7 +380,7 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
                             const SizedBox(height: 18),
                             _MissionBriefing(
                               definition: definition,
-                              phraseCount: phrases.length,
+                              phraseCount: script.scenes.length,
                               unitIndex: unit.index,
                               onGuide: () =>
                                   context.push('/unit/${unit.index}'),
@@ -376,7 +389,10 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
                             if (_completed)
                               _MissionCompleteCard(
                                 definition: definition,
-                                phraseCount: phrases.length,
+                                phraseCount: script.scenes.length,
+                                ending: script.endingFor(
+                                  coachedTurns: _coachedTurns,
+                                ),
                                 onRestart: _restart,
                                 onPronunciation: () => context.push(
                                   '/pronunciation?unit=${unit.index}',
@@ -386,15 +402,17 @@ class _MissionPracticeScreenState extends ConsumerState<MissionPracticeScreen> {
                                 ),
                               )
                             else
-                              _PhrasePracticeCard(
-                                phrase: phrase,
+                              _BranchingMissionCard(
+                                scene: scene,
                                 phraseIndex: _phraseIndex,
-                                phraseCount: phrases.length,
-                                meaningVisible: _meaningVisible,
+                                phraseCount: script.scenes.length,
                                 readingAidsLabel: readingAidsLabel,
-                                onSpeak: () => _speak(phrase),
-                                onReveal: () => _toggleMeaning(phrase),
-                                onNext: () => _nextPhrase(phrases.length),
+                                decision: _decision,
+                                onSpeak: () => _speak(scene.target),
+                                onChoose: (option) =>
+                                    _choose(scene.choose(option.id)),
+                                onCoach: () => _choose(scene.requestCoaching()),
+                                onNext: () => _nextPhrase(script.scenes.length),
                               ),
                           ],
                         ),
@@ -494,14 +512,12 @@ class _MissionCard extends StatelessWidget {
   const _MissionCard({
     required this.unit,
     required this.definition,
-    required this.recommended,
     required this.completed,
     required this.onTap,
   });
 
   final CourseUnitSnapshot unit;
   final MissionDefinition definition;
-  final bool recommended;
   final bool completed;
   final VoidCallback onTap;
 
@@ -510,12 +526,13 @@ class _MissionCard extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final accent = completed ? const Color(0xFF2E7D78) : colors.primary;
     return Material(
+      key: Key('mission-card-${unit.index}'),
       color: colors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(17),
         side: BorderSide(
-          color: completed || recommended ? accent : colors.outlineVariant,
-          width: completed || recommended ? 1.5 : 1,
+          color: completed ? accent : colors.outlineVariant,
+          width: completed ? 1.5 : 1,
         ),
       ),
       child: InkWell(
@@ -553,9 +570,7 @@ class _MissionCard extends StatelessWidget {
                           const _MissionPill(
                             label: '완료',
                             icon: Icons.check_rounded,
-                          )
-                        else if (recommended)
-                          const _MissionPill(label: '추천'),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 3),
@@ -726,25 +741,27 @@ class _MissionBriefing extends StatelessWidget {
   }
 }
 
-class _PhrasePracticeCard extends StatelessWidget {
-  const _PhrasePracticeCard({
-    required this.phrase,
+class _BranchingMissionCard extends StatelessWidget {
+  const _BranchingMissionCard({
+    required this.scene,
     required this.phraseIndex,
     required this.phraseCount,
-    required this.meaningVisible,
     required this.readingAidsLabel,
+    required this.decision,
     required this.onSpeak,
-    required this.onReveal,
+    required this.onChoose,
+    required this.onCoach,
     required this.onNext,
   });
 
-  final LearningItem phrase;
+  final MissionScene scene;
   final int phraseIndex;
   final int phraseCount;
-  final bool meaningVisible;
   final String readingAidsLabel;
+  final MissionDecision? decision;
   final VoidCallback onSpeak;
-  final VoidCallback onReveal;
+  final ValueChanged<MissionOption> onChoose;
+  final VoidCallback onCoach;
   final VoidCallback onNext;
 
   @override
@@ -766,7 +783,7 @@ class _PhrasePracticeCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  '듣기 → 이해 → 말하기',
+                  '상황 → 선택 → 말하기',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -783,81 +800,130 @@ class _PhrasePracticeCard extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 28),
-            Text(
-              phrase.text,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineMedium,
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colors.primaryContainer,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '지금 장면',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: colors.onPrimaryContainer,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    scene.situationPrompt,
+                    key: const Key('mission-scene-prompt'),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: colors.onPrimaryContainer,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            if (readingAidsLabel.isNotEmpty) ...[
-              const SizedBox(height: 7),
-              Text(
-                readingAidsLabel,
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(height: 1.4),
+            const SizedBox(height: 14),
+            if (decision == null) ...[
+              for (final (index, option) in scene.options.indexed) ...[
+                OutlinedButton(
+                  key: Key('mission-choice-$index'),
+                  onPressed: () => onChoose(option),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(52),
+                    alignment: Alignment.centerLeft,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: Text(
+                    option.item.text,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (index + 1 < scene.options.length) const SizedBox(height: 8),
+              ],
+              const SizedBox(height: 10),
+              TextButton.icon(
+                key: const Key('mission-reveal'),
+                onPressed: onCoach,
+                icon: const Icon(Icons.lightbulb_outline_rounded),
+                label: const Text('도움받아 계속'),
+              ),
+            ] else ...[
+              Semantics(
+                liveRegion: true,
+                label: decision!.usedCoaching ? '도움 경로' : '자연스러운 경로',
+                child: Container(
+                  key: const Key('mission-branch-feedback'),
+                  padding: const EdgeInsets.all(15),
+                  decoration: BoxDecoration(
+                    color: decision!.usedCoaching
+                        ? colors.tertiaryContainer
+                        : colors.secondaryContainer,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        decision!.usedCoaching ? '도움 경로' : '대화가 이어졌어요',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(decision!.feedback),
+                      const SizedBox(height: 12),
+                      Text(
+                        scene.target.text,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      if (readingAidsLabel.isNotEmpty) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          readingAidsLabel,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                      Text(
+                        scene.target.primaryTranslation,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
-            const SizedBox(height: 22),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              constraints: const BoxConstraints(minHeight: 62),
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: meaningVisible
-                    ? colors.secondaryContainer
-                    : colors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: colors.outlineVariant),
-              ),
-              child: Text(
-                meaningVisible ? phrase.primaryTranslation : '뜻을 떠올려 보세요',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: meaningVisible
-                      ? colors.onSecondaryContainer
-                      : colors.onSurfaceVariant,
-                ),
-              ),
-            ),
             const SizedBox(height: 14),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  key: const Key('mission-listen'),
-                  onPressed: onSpeak,
-                  icon: const Icon(Icons.volume_up_rounded),
-                  label: const Text('발음 듣기'),
-                ),
-                OutlinedButton.icon(
-                  key: const Key('mission-reveal'),
-                  onPressed: onReveal,
-                  icon: Icon(
-                    meaningVisible
-                        ? Icons.visibility_off_rounded
-                        : Icons.visibility_rounded,
-                  ),
-                  label: Text(meaningVisible ? '뜻 가리기' : '뜻 보기'),
-                ),
-              ],
+            OutlinedButton.icon(
+              key: const Key('mission-listen'),
+              onPressed: onSpeak,
+              icon: const Icon(Icons.volume_up_rounded),
+              label: const Text('목표 표현 듣기'),
             ),
-            const SizedBox(height: 14),
+            if (decision != null) const SizedBox(height: 10),
             FilledButton.icon(
               key: const Key('mission-next-phrase'),
-              onPressed: onNext,
+              onPressed: decision == null ? null : onNext,
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
               ),
               icon: const Icon(Icons.record_voice_over_rounded),
               label: Text(
                 phraseIndex + 1 == phraseCount
-                    ? '소리 내어 말했어요 · 완료'
-                    : '소리 내어 말했어요 · 다음',
+                    ? '표현을 말했어요 · 미션 완료'
+                    : '표현을 말했어요 · 다음 장면',
               ),
             ),
           ],
@@ -871,6 +937,7 @@ class _MissionCompleteCard extends StatelessWidget {
   const _MissionCompleteCard({
     required this.definition,
     required this.phraseCount,
+    required this.ending,
     required this.onRestart,
     required this.onPronunciation,
     required this.onSentence,
@@ -878,6 +945,7 @@ class _MissionCompleteCard extends StatelessWidget {
 
   final MissionDefinition definition;
   final int phraseCount;
+  final MissionEnding ending;
   final VoidCallback onRestart;
   final VoidCallback onPronunciation;
   final VoidCallback onSentence;
@@ -907,13 +975,20 @@ class _MissionCompleteCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               '실전 미션 완료',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: colors.onSecondaryContainer,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              ending.title,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: colors.onSecondaryContainer,
               ),
             ),
             const SizedBox(height: 5),
             Text(
-              '${definition.setting}에서 쓸 $phraseCount개 표현을 직접 말했습니다.',
+              '${definition.setting}에서 $phraseCount개 장면을 끝냈어요. ${ending.description}',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colors.onSecondaryContainer.withValues(alpha: 0.8),
@@ -1065,9 +1140,5 @@ const missionDefinitions = [
 ];
 
 List<LearningItem> missionPhrasesFor(CourseUnitSnapshot unit) {
-  final phrases = unit.sentences.take(4).toList(growable: true);
-  if (phrases.length < 3) {
-    phrases.addAll(unit.words.take(3 - phrases.length));
-  }
-  return phrases.toList(growable: false);
+  return const MissionScriptBuilder().selectItems(unit);
 }

@@ -90,13 +90,13 @@ void main() {
       );
       expect(
         word.translations,
-        containsAll(['출루율과 장타율의 합', '타자의 공격력을 나타내는 지표']),
+        containsAll(['출루율과 장타율의 합', '출루율과 장타율을 더한 공격 지표']),
       );
       expect(
         learningGroupsOf(word),
         containsAll(['타격 지표', '이번 주 암기', 'Android에서 복습']),
       );
-      expect(sentence.text, 'OPS가 0.900을 넘었다.');
+      expect(sentence.text, 'OPS는 출루율과 장타율을 더해 계산한다.');
 
       final savedPlan = windowsApp.saveSessionPlan(
         StudySessionPlan(

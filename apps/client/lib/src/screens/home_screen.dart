@@ -20,7 +20,6 @@ import '../domain/study_interaction_preferences.dart';
 import '../domain/study_preferences.dart';
 import '../domain/study_routines.dart';
 import '../domain/study_subject.dart';
-import '../services/window_workspace_service.dart';
 import '../services/app_clock.dart';
 import '../services/study_notification_service.dart';
 import '../state/app_state.dart';
@@ -59,7 +58,7 @@ class HomeScreen extends ConsumerWidget {
             duration: const Duration(seconds: 6),
             action: SnackBarAction(
               label: '상세',
-              onPressed: () => context.go('/settings'),
+              onPressed: () => context.go('/settings?focus=storage'),
             ),
           ),
         );
@@ -104,19 +103,6 @@ class HomeScreen extends ConsumerWidget {
         isWindows ||
         defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.linux;
-    final supportsWindowWorkspace =
-        isWindows || defaultTargetPlatform == TargetPlatform.macOS;
-    final windowWorkspace = ref.watch(windowWorkspaceControllerProvider);
-    if (supportsWindowWorkspace) {
-      ref.listen(windowWorkspaceControllerProvider, (previous, next) {
-        if (next.errorMessage != null &&
-            next.errorMessage != previous?.errorMessage) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(next.errorMessage!)));
-        }
-      });
-    }
     final forecast = controller.reviewForecast(now);
     final weeklyInsights = LearningInsights.build(
       sessions: state.recentSessions,
@@ -611,7 +597,8 @@ class HomeScreen extends ConsumerWidget {
                         onLearn: () => context.go('/learn'),
                         localFolderConfigured: localStorage.configured,
                         localFolderName: localStorage.settings.displayName,
-                        onManageStorage: () => context.go('/settings'),
+                        onManageStorage: () =>
+                            context.go('/settings?focus=storage'),
                         syncLabel: state.driveConnected
                             ? 'Drive 연결됨'
                             : localStorage.configured
@@ -680,29 +667,6 @@ class HomeScreen extends ConsumerWidget {
                               connected: state.driveConnected,
                               showStreak: experience.showStreak,
                               showSyncStatus: experience.showSyncStatus,
-                              windowWorkspace: supportsWindowWorkspace
-                                  ? windowWorkspace
-                                  : null,
-                              onToggleCompact: supportsWindowWorkspace
-                                  ? () => unawaited(
-                                      ref
-                                          .read(
-                                            windowWorkspaceControllerProvider
-                                                .notifier,
-                                          )
-                                          .toggleCompact(),
-                                    )
-                                  : null,
-                              onMinimize: supportsWindowWorkspace
-                                  ? () => unawaited(
-                                      ref
-                                          .read(
-                                            windowWorkspaceControllerProvider
-                                                .notifier,
-                                          )
-                                          .minimize(),
-                                    )
-                                  : null,
                               onSettings: () => context.go('/settings'),
                             ),
                           if (!state.preferences.onboardingCompleted) ...[
@@ -881,7 +845,8 @@ class HomeScreen extends ConsumerWidget {
                             _LocalStoragePromptCard(
                               compact: homeCompact,
                               errorMessage: localStorage.errorMessage,
-                              onPressed: () => context.go('/settings'),
+                              onPressed: () =>
+                                  context.go('/settings?focus=storage'),
                             ),
                           ],
                         ],
@@ -1999,9 +1964,6 @@ class _HomeHeader extends StatelessWidget {
     required this.showStreak,
     required this.showSyncStatus,
     required this.onSettings,
-    this.windowWorkspace,
-    this.onToggleCompact,
-    this.onMinimize,
   });
 
   final bool compact;
@@ -2015,9 +1977,6 @@ class _HomeHeader extends StatelessWidget {
   final bool showStreak;
   final bool showSyncStatus;
   final VoidCallback onSettings;
-  final WindowWorkspaceState? windowWorkspace;
-  final VoidCallback? onToggleCompact;
-  final VoidCallback? onMinimize;
 
   @override
   Widget build(BuildContext context) {
@@ -2070,34 +2029,6 @@ class _HomeHeader extends StatelessWidget {
                 tooltip: '연속 학습 $streakDays일',
                 showLabel: !narrow,
               ),
-            if (windowWorkspace != null && onToggleCompact != null) ...[
-              const SizedBox(width: 8),
-              _HeaderBadge(
-                key: const Key('window-compact-toggle'),
-                icon: windowWorkspace!.compact
-                    ? Icons.open_in_full_rounded
-                    : Icons.picture_in_picture_alt_rounded,
-                label: windowWorkspace!.compact ? '확장' : '집중',
-                color: Theme.of(context).colorScheme.primary,
-                tooltip: windowWorkspace!.compact
-                    ? '기본 창으로 복원 (Ctrl+Shift+F)'
-                    : '집중 창으로 전환 (Ctrl+Shift+F)',
-                showLabel: !compact,
-                onTap: windowWorkspace!.busy ? null : onToggleCompact,
-              ),
-            ],
-            if (windowWorkspace != null && onMinimize != null) ...[
-              const SizedBox(width: 8),
-              _HeaderBadge(
-                key: const Key('window-quick-minimize'),
-                icon: Icons.minimize_rounded,
-                label: '최소화',
-                color: Theme.of(context).colorScheme.outline,
-                tooltip: '빠르게 최소화 (Ctrl+Shift+M)',
-                showLabel: false,
-                onTap: windowWorkspace!.busy ? null : onMinimize,
-              ),
-            ],
             const SizedBox(width: 8),
             _HeaderBadge(
               key: const Key('home-settings'),

@@ -53,6 +53,39 @@ abstract interface class RestorableGoogleConnectionService {
   });
 }
 
+/// Selects a new Drive destination without deleting the account-wide binding
+/// first. Implementations must keep the current runtime connection usable until
+/// the new folder has been selected and initialized successfully.
+abstract interface class DriveFolderReselectionService {
+  Future<GoogleConnectionResult> reselectDriveFolder({
+    GoogleConnectionStageCallback? onStage,
+  });
+
+  /// Persists the staged folder as the account-wide binding only after the
+  /// controller has completed pull, validation, merge, and push successfully.
+  Future<void> commitDriveFolderReselection();
+
+  /// Restores the runtime connection (and, when a commit may have reached the
+  /// broker, the previous account-wide binding) without deleting either
+  /// folder.
+  Future<void> rollbackDriveFolderReselection();
+}
+
+class _PendingDriveFolderReselection {
+  _PendingDriveFolderReselection({
+    required this.idToken,
+    required this.previousDrive,
+    required this.previousBootstrap,
+    required this.candidateBootstrap,
+  });
+
+  final String idToken;
+  final GoogleDriveClient? previousDrive;
+  final DriveBootstrapResult? previousBootstrap;
+  final DriveBootstrapResult candidateBootstrap;
+  bool bindingCommitAttempted = false;
+}
+
 abstract interface class RemoteSnapshotQuarantineService {
   Future<DriveQuarantineRecord?> quarantineLastPulledSnapshot({
     required String reasonCode,
@@ -77,6 +110,7 @@ class MockGoogleConnectionService
     implements
         GoogleConnectionService,
         RestorableGoogleConnectionService,
+        DriveFolderReselectionService,
         AccountBindingDeletionService {
   Map<String, Object?>? _snapshot;
 
@@ -97,6 +131,17 @@ class MockGoogleConnectionService
 
   @override
   Future<void> disconnect() async {}
+
+  @override
+  Future<GoogleConnectionResult> reselectDriveFolder({
+    GoogleConnectionStageCallback? onStage,
+  }) => connect(onStage: onStage);
+
+  @override
+  Future<void> commitDriveFolderReselection() async {}
+
+  @override
+  Future<void> rollbackDriveFolderReselection() async {}
 
   @override
   Future<void> deleteAccountBinding() async {
@@ -155,6 +200,7 @@ class DesktopGoogleConnectionService
     implements
         GoogleConnectionService,
         RestorableGoogleConnectionService,
+        DriveFolderReselectionService,
         RemoteSnapshotQuarantineService,
         RemoteStorageRetentionService,
         AccountBindingDeletionService {
@@ -177,6 +223,7 @@ class DesktopGoogleConnectionService
   final SpracheApiClient _api;
   GoogleDriveClient? _drive;
   DriveBootstrapResult? _bootstrap;
+  _PendingDriveFolderReselection? _pendingFolderReselection;
 
   @override
   Future<GoogleConnectionResult> connect({
@@ -215,6 +262,74 @@ class DesktopGoogleConnectionService
       folderName: bootstrap.appRootFolderName,
       mock: false,
     );
+  }
+
+  @override
+  Future<GoogleConnectionResult> reselectDriveFolder({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    onStage?.call(GoogleConnectionStage.checkingConnection);
+    await _oauth.ensureReady();
+    final idToken = await _oauth.identityToken();
+    onStage?.call(GoogleConnectionStage.folderSelection);
+    final driveAuthorization = await _oauth.selectDriveFolder();
+    final selectedFolderId = driveAuthorization.pickedFolderId;
+    if (selectedFolderId == null) {
+      throw StateError('Google Picker did not return a folder ID');
+    }
+    onStage?.call(GoogleConnectionStage.preparingDrive);
+    final drive = GoogleDriveClient(
+      accessTokenProvider: () => _oauth.accessToken(GoogleTokenKind.drive),
+    );
+    final bootstrap = await drive.ensureAppRoot(selectedFolderId);
+    _pendingFolderReselection = _PendingDriveFolderReselection(
+      idToken: idToken,
+      previousDrive: _drive,
+      previousBootstrap: _bootstrap,
+      candidateBootstrap: bootstrap,
+    );
+    _drive = drive;
+    _bootstrap = bootstrap;
+    return GoogleConnectionResult(
+      folderId: bootstrap.appRootFolderId,
+      folderName: bootstrap.appRootFolderName,
+      mock: false,
+    );
+  }
+
+  @override
+  Future<void> commitDriveFolderReselection() async {
+    final pending = _pendingFolderReselection;
+    if (pending == null) {
+      throw StateError('No Drive folder reselection is pending');
+    }
+    pending.bindingCommitAttempted = true;
+    await _api.storeDriveRoot(
+      idToken: pending.idToken,
+      folderId: pending.candidateBootstrap.appRootFolderId,
+      folderName: pending.candidateBootstrap.appRootFolderName,
+    );
+    _pendingFolderReselection = null;
+  }
+
+  @override
+  Future<void> rollbackDriveFolderReselection() async {
+    final pending = _pendingFolderReselection;
+    if (pending == null) return;
+    _drive = pending.previousDrive;
+    _bootstrap = pending.previousBootstrap;
+    try {
+      final previous = pending.previousBootstrap;
+      if (pending.bindingCommitAttempted && previous != null) {
+        await _api.storeDriveRoot(
+          idToken: pending.idToken,
+          folderId: previous.appRootFolderId,
+          folderName: previous.appRootFolderName,
+        );
+      }
+    } finally {
+      _pendingFolderReselection = null;
+    }
   }
 
   @override
@@ -267,6 +382,7 @@ class DesktopGoogleConnectionService
     await _oauth.disconnect();
     _drive = null;
     _bootstrap = null;
+    _pendingFolderReselection = null;
   }
 
   @override
@@ -335,6 +451,7 @@ class AndroidGoogleConnectionService
     implements
         GoogleConnectionService,
         RestorableGoogleConnectionService,
+        DriveFolderReselectionService,
         RemoteSnapshotQuarantineService,
         RemoteStorageRetentionService,
         AccountBindingDeletionService {
@@ -351,6 +468,7 @@ class AndroidGoogleConnectionService
   bool _initialized = false;
   GoogleDriveClient? _drive;
   DriveBootstrapResult? _bootstrap;
+  _PendingDriveFolderReselection? _pendingFolderReselection;
 
   @override
   Future<GoogleConnectionResult> connect({
@@ -421,6 +539,94 @@ class AndroidGoogleConnectionService
       bootstrap: bootstrap,
       onStage: onStage,
     );
+  }
+
+  @override
+  Future<GoogleConnectionResult> reselectDriveFolder({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    await _ensureInitialized();
+    onStage?.call(GoogleConnectionStage.signIn);
+    final attempt = _signIn.attemptLightweightAuthentication();
+    final account =
+        (attempt == null ? null : await attempt) ??
+        await _signIn.authenticate();
+    final idToken = account.authentication.idToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw StateError('Google sign-in did not provide an ID token');
+    }
+
+    onStage?.call(GoogleConnectionStage.folderSelection);
+    final result = await _channel.invokeMapMethod<String, Object?>(
+      'authorizeDrivePicker',
+      {'email': account.email},
+    );
+    if (result == null) {
+      throw StateError('Android Google connection returned no result');
+    }
+    final accessToken = result['accessToken'] as String?;
+    final selectedFolderId = result['folderId'] as String?;
+    if (accessToken == null || accessToken.isEmpty) {
+      throw StateError('Google authorization did not provide an access token');
+    }
+    if (selectedFolderId == null || selectedFolderId.isEmpty) {
+      throw StateError('Google Picker did not return a folder ID');
+    }
+
+    onStage?.call(GoogleConnectionStage.preparingDrive);
+    final drive = _driveClient(
+      account: account,
+      fallbackAccessToken: accessToken,
+    );
+    final bootstrap = await drive.ensureAppRoot(selectedFolderId);
+    _pendingFolderReselection = _PendingDriveFolderReselection(
+      idToken: idToken,
+      previousDrive: _drive,
+      previousBootstrap: _bootstrap,
+      candidateBootstrap: bootstrap,
+    );
+    _drive = drive;
+    _bootstrap = bootstrap;
+    return GoogleConnectionResult(
+      folderId: bootstrap.appRootFolderId,
+      folderName: bootstrap.appRootFolderName,
+      mock: false,
+    );
+  }
+
+  @override
+  Future<void> commitDriveFolderReselection() async {
+    final pending = _pendingFolderReselection;
+    if (pending == null) {
+      throw StateError('No Drive folder reselection is pending');
+    }
+    pending.bindingCommitAttempted = true;
+    await _api.storeDriveRoot(
+      idToken: pending.idToken,
+      folderId: pending.candidateBootstrap.appRootFolderId,
+      folderName: pending.candidateBootstrap.appRootFolderName,
+    );
+    _pendingFolderReselection = null;
+  }
+
+  @override
+  Future<void> rollbackDriveFolderReselection() async {
+    final pending = _pendingFolderReselection;
+    if (pending == null) return;
+    _drive = pending.previousDrive;
+    _bootstrap = pending.previousBootstrap;
+    try {
+      final previous = pending.previousBootstrap;
+      if (pending.bindingCommitAttempted && previous != null) {
+        await _api.storeDriveRoot(
+          idToken: pending.idToken,
+          folderId: previous.appRootFolderId,
+          folderName: previous.appRootFolderName,
+        );
+      }
+    } finally {
+      _pendingFolderReselection = null;
+    }
   }
 
   @override
@@ -518,6 +724,7 @@ class AndroidGoogleConnectionService
     await _signIn.signOut();
     _drive = null;
     _bootstrap = null;
+    _pendingFolderReselection = null;
   }
 
   @override

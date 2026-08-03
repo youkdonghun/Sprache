@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/active_study_session.dart';
+import 'package:sprache/src/domain/progress.dart';
+import 'package:sprache/src/domain/quiz_session_support.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 
 void main() {
@@ -148,19 +150,20 @@ void main() {
     final startedAt = DateTime.utc(2026, 7, 28, 13);
     final initial = [for (var index = 0; index < 100; index++) 'item-$index'];
     final queue = [...initial, ...initial, ...initial];
-    final session = ActiveStudySession.started(
-      sessionId: 'hundred-session',
-      courseId: 'ko-en',
-      mode: StudyMode.mixed,
-      unitIndex: null,
-      itemIds: initial,
-      startedAt: startedAt,
-    ).copyWith(
-      itemIds: queue,
-      currentIndex: 150,
-      wrongItemIds: initial.take(10).toSet(),
-      finalCorrectItemIds: initial.skip(10).take(20).toSet(),
-    );
+    final session =
+        ActiveStudySession.started(
+          sessionId: 'hundred-session',
+          courseId: 'ko-en',
+          mode: StudyMode.mixed,
+          unitIndex: null,
+          itemIds: initial,
+          startedAt: startedAt,
+        ).copyWith(
+          itemIds: queue,
+          currentIndex: 150,
+          wrongItemIds: initial.take(10).toSet(),
+          finalCorrectItemIds: initial.skip(10).take(20).toSet(),
+        );
 
     final paused = session.pause(startedAt.add(const Duration(minutes: 1)));
     final restored = ActiveStudySession.fromJson(paused.toJson());
@@ -201,6 +204,82 @@ void main() {
         startedAt: startedAt,
       ),
       throwsArgumentError,
+    );
+  });
+
+  test('exam attempt reviews survive resume and reset on derived sessions', () {
+    final startedAt = DateTime.utc(2026, 8, 3, 9);
+    final review = QuizAttemptReview(
+      sequence: 1,
+      itemId: 'a',
+      prompt: 'alpha',
+      expectedAnswer: '알파',
+      userAnswer: '알파',
+      exerciseType: 'recognition',
+      correct: true,
+      rating: ReviewRating.good,
+      usedHint: false,
+    );
+    final session = ActiveStudySession.started(
+      sessionId: 'exam-review-session',
+      courseId: 'ko-en',
+      mode: StudyMode.meaning,
+      unitIndex: null,
+      itemIds: const ['a', 'b'],
+      startedAt: startedAt,
+    ).copyWith(attemptReviews: [review]);
+
+    final restored = ActiveStudySession.fromJson(session.toJson());
+    final derived = restored.derive(
+      newSessionId: 'derived-session',
+      nextOrigin: StudySessionOrigin.restarted,
+      selectedItemIds: const ['a', 'b'],
+      startedAt: startedAt.add(const Duration(minutes: 1)),
+    );
+
+    expect(restored.attemptReviews, hasLength(1));
+    expect(restored.attemptReviews.single.prompt, 'alpha');
+    expect(restored.attemptReviews.single.rating, ReviewRating.good);
+    expect(derived.attemptReviews, isEmpty);
+    expect(derived.attemptMetrics, isEmpty);
+  });
+
+  test('active session rejects unsafe or unknown attempt reviews', () {
+    final session = ActiveStudySession.started(
+      sessionId: 'invalid-review-session',
+      courseId: 'ko-en',
+      mode: StudyMode.meaning,
+      unitIndex: null,
+      itemIds: const ['a'],
+      startedAt: DateTime.utc(2026, 8, 3, 9),
+    ).toJson();
+    final review = QuizAttemptReview(
+      sequence: 1,
+      itemId: 'missing',
+      prompt: 'alpha',
+      expectedAnswer: '알파',
+      userAnswer: '',
+      exerciseType: 'recognition:gaveUp',
+      correct: false,
+      rating: ReviewRating.again,
+      usedHint: false,
+    ).toJson();
+
+    expect(
+      () => ActiveStudySession.fromJson({
+        ...session,
+        'attemptReviews': [review],
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => ActiveStudySession.fromJson({
+        ...session,
+        'attemptReviews': [
+          {...review, 'itemId': 'a', 'rating': 'perfect'},
+        ],
+      }),
+      throwsFormatException,
     );
   });
 

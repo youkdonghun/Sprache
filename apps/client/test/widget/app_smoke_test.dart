@@ -17,6 +17,13 @@ import 'package:sprache/src/screens/library_screen.dart';
 import 'package:sprache/src/services/window_workspace_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 
+Future<void> _selectAllGames(WidgetTester tester) async {
+  final gamesTab = find.text('전체 게임');
+  expect(gamesTab, findsOneWidget);
+  await tester.tap(gamesTab);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   for (final size in const [
     Size(320, 640),
@@ -47,6 +54,7 @@ void main() {
           expect(find.text('다음 레슨'), findsOneWidget);
           await tester.tap(find.byKey(const Key('nav-learn')));
           await tester.pumpAndSettle();
+          await _selectAllGames(tester);
           expect(find.text('학습 방식'), findsOneWidget);
           await tester.drag(
             find.byKey(const Key('learning-hub-scroll')),
@@ -176,6 +184,7 @@ void main() {
       expect(find.text('다음 레슨'), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
       expect(find.text('학습 방식'), findsOneWidget);
 
       final container = ProviderScope.containerOf(
@@ -255,6 +264,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
       expect(find.text('학습 방식'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
@@ -348,7 +358,7 @@ void main() {
     }
   });
 
-  testWidgets('Windows home controls focus size and quick minimize', (
+  testWidgets('Windows home keeps window controls in shortcuts, not header', (
     tester,
   ) async {
     debugDefaultTargetPlatformOverride = TargetPlatform.windows;
@@ -368,16 +378,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('window-compact-toggle')), findsOneWidget);
-      expect(find.byKey(const Key('window-quick-minimize')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('window-compact-toggle')));
-      await tester.pumpAndSettle();
-      expect(driver.compact, isTrue);
-      expect(find.byIcon(Icons.open_in_full_rounded), findsOneWidget);
-
-      await tester.tap(find.byKey(const Key('window-quick-minimize')));
-      await tester.pumpAndSettle();
-      expect(driver.minimizeCount, 1);
+      expect(find.byKey(const Key('window-compact-toggle')), findsNothing);
+      expect(find.byKey(const Key('window-quick-minimize')), findsNothing);
+      expect(find.byKey(const Key('home-settings')), findsOneWidget);
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
@@ -385,7 +388,7 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pumpAndSettle();
-      expect(driver.compact, isFalse);
+      expect(driver.compact, isTrue);
 
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
@@ -393,7 +396,7 @@ void main() {
       await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
       await tester.pumpAndSettle();
-      expect(driver.minimizeCount, 2);
+      expect(driver.minimizeCount, 1);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -560,6 +563,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
       await tester.drag(
         find.byKey(const Key('learning-hub-scroll')),
         const Offset(0, -620),
@@ -697,6 +701,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
 
       expect(find.byKey(const Key('quick-practice-quiz')), findsOneWidget);
       expect(find.byKey(const Key('quick-practice-cards')), findsOneWidget);
@@ -737,6 +742,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
       await tester.ensureVisible(find.byKey(const Key('start-flashcards')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('start-flashcards')));
@@ -863,6 +869,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
       await tester.drag(
         find.byKey(const Key('learning-hub-scroll')),
         const Offset(0, -900),
@@ -907,6 +914,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
       await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('발음 따라하기'));
@@ -946,6 +954,7 @@ void main() {
 
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
       await tester.ensureVisible(find.byKey(const Key('practice-category-실전')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('실전 상황 미션'));
@@ -965,8 +974,16 @@ void main() {
       expect(find.text('어떻게 지내세요?'), findsOneWidget);
 
       for (var index = 0; index < 3; index++) {
-        await tester.tap(find.byKey(const Key('mission-next-phrase')));
+        final next = find.byKey(const Key('mission-next-phrase'));
+        await tester.ensureVisible(next);
+        await tester.tap(next);
         await tester.pumpAndSettle();
+        if (index < 2) {
+          final coach = find.byKey(const Key('mission-reveal'));
+          await tester.ensureVisible(coach);
+          await tester.tap(coach);
+          await tester.pumpAndSettle();
+        }
       }
       expect(find.text('실전 미션 완료'), findsOneWidget);
       expect(find.text('발음 채점'), findsOneWidget);
@@ -1006,6 +1023,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('nav-learn')));
         await tester.pumpAndSettle();
+        await _selectAllGames(tester);
         await tester.ensureVisible(
           find.byKey(const Key('practice-category-실전')),
         );
@@ -1054,6 +1072,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('nav-learn')));
         await tester.pumpAndSettle();
+        await _selectAllGames(tester);
         await tester.ensureVisible(
           find.byKey(const Key('practice-category-실전')),
         );
@@ -1096,6 +1115,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _selectAllGames(tester);
 
       expect(find.byKey(const Key('compact-learning-header')), findsOneWidget);
       expect(find.text('영어 학습'), findsOneWidget);
@@ -1143,7 +1163,8 @@ void main() {
 
         expect(find.text('영어 코스 여정'), findsOneWidget);
         expect(find.text('입문 코스 · 6개 단원'), findsOneWidget);
-        expect(find.byKey(const Key('course-unit-0')), findsOneWidget);
+        expect(find.byKey(const Key('course-unit-0')), findsNothing);
+        expect(find.byKey(const Key('course-unit-1')), findsOneWidget);
         await tester.drag(
           find.byKey(const Key('course-path-scroll')),
           const Offset(0, -1600),
@@ -1232,7 +1253,16 @@ void main() {
         const Offset(0, 1200),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.text('저장됨'));
+      await tester.tap(
+        find.byKey(const Key('library-mobile-filter-button')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('library-sheet-filter-favorites')),
+      );
+      await tester.tap(
+        find.byKey(const Key('apply-library-advanced-filters')),
+      );
       await tester.pumpAndSettle();
       expect(find.byKey(favoriteKey), findsOneWidget);
       await tester.drag(

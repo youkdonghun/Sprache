@@ -314,6 +314,140 @@ void main() {
       },
     );
 
+    test('daily quest completion persists by local day and subject', () {
+      final completedAt = DateTime(2026, 8, 3, 20, 15);
+      final catalog = const PracticeCatalogPreferences()
+          .recordDailyQuestCompletion(
+            activityId: '/study?mode=meaning',
+            subjectId: 'language:en',
+            completedAt: completedAt,
+          )
+          .recordDailyQuestCompletion(
+            activityId: 'production-writing',
+            subjectId: 'language:en',
+            completedAt: completedAt,
+          );
+
+      expect(
+        catalog.completedDailyQuestActivityIds(
+          day: completedAt,
+          subjectId: 'language:en',
+          activityIds: const [
+            'meaning-choice',
+            'production-writing',
+            'sentence-order',
+          ],
+        ),
+        {'meaning-choice', 'production-writing'},
+      );
+      expect(
+        catalog.completedDailyQuestActivityIds(
+          day: completedAt,
+          subjectId: 'language:ja',
+          activityIds: const ['meaning-choice'],
+        ),
+        isEmpty,
+      );
+      expect(
+        catalog.completedDailyQuestActivityIds(
+          day: completedAt.add(const Duration(days: 1)),
+          subjectId: 'language:en',
+          activityIds: const ['meaning-choice'],
+        ),
+        isEmpty,
+      );
+
+      final restored = PracticeCatalogPreferences.fromJson(catalog.toJson());
+      expect(restored.toJson(), catalog.toJson());
+      expect(
+        () => restored.dailyQuestCompletionDayByScope['unsafe'] = '2026-08-03',
+        throwsUnsupportedError,
+      );
+    });
+
+    test('daily quest assignment stays fixed when candidates change', () {
+      final day = DateTime(2026, 8, 3, 9);
+      final assigned = const PracticeCatalogPreferences()
+          .ensureDailyQuestAssignment(
+            day: day,
+            subjectId: 'language:en',
+            activityIds: const [
+              'meaning-choice',
+              'production-writing',
+              'sentence-order',
+              'match-sprint',
+            ],
+          );
+      final original = assigned.dailyQuestActivityIds(
+        day: day,
+        subjectId: 'language:en',
+        activityIds: const ['meaning-choice'],
+      );
+      final afterCandidateChange = assigned
+          .ensureDailyQuestAssignment(
+            day: day,
+            subjectId: 'language:en',
+            activityIds: const [
+              'meaning-choice',
+              'exam-simulator',
+              'recent-wrong',
+            ],
+          )
+          .dailyQuestActivityIds(
+            day: day,
+            subjectId: 'language:en',
+            activityIds: const ['exam-simulator'],
+          );
+
+      expect(afterCandidateChange, original);
+      final restored = PracticeCatalogPreferences.fromJson(assigned.toJson());
+      expect(
+        restored.dailyQuestActivityIds(
+          day: day,
+          subjectId: 'language:en',
+          activityIds: const ['exam-simulator'],
+        ),
+        original,
+      );
+    });
+
+    test(
+      'daily quest assignment keeps the newest day after the 60-day cap',
+      () {
+        var catalog = const PracticeCatalogPreferences();
+        final firstDay = DateTime(2026, 1, 1, 9);
+        for (var offset = 0; offset < 61; offset++) {
+          catalog = catalog.ensureDailyQuestAssignment(
+            day: firstDay.add(Duration(days: offset)),
+            subjectId: 'language:en',
+            activityIds: const [
+              'meaning-choice',
+              'production-writing',
+              'sentence-order',
+            ],
+          );
+        }
+
+        final newestDay = firstDay.add(const Duration(days: 60));
+        expect(catalog.dailyQuestAssignmentByScope, hasLength(60));
+        expect(
+          catalog.hasDailyQuestAssignment(
+            day: newestDay,
+            subjectId: 'language:en',
+          ),
+          isTrue,
+        );
+        expect(
+          catalog.dailyQuestActivityIds(
+            day: newestDay,
+            subjectId: 'language:en',
+            activityIds: const ['meaning-choice'],
+          ),
+          hasLength(3),
+        );
+      },
+    );
+
     test(
       'playlist route allowlist rejects navigation and non-study activities',
       () {
@@ -330,6 +464,14 @@ void main() {
         expect(
           practiceRouteForActivityId('match-sprint'),
           contains('match=true'),
+        );
+        expect(
+          practiceRouteForActivityId('listening-discrimination'),
+          contains('practiceActivityId=listening-discrimination'),
+        );
+        expect(
+          practiceRouteForActivityId('exam-simulator'),
+          contains('exam=true'),
         );
       },
     );

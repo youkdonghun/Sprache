@@ -322,9 +322,15 @@ void main() {
     expect(find.text('복습할 자료'), findsOneWidget);
     expect(find.text('즐겨찾기'), findsWidgets);
     expect(find.text('문장만'), findsOneWidget);
-    expect(find.byKey(const Key('library-filter-count-전체')), findsOneWidget);
-    expect(find.byKey(const Key('library-filter-count-단어')), findsOneWidget);
-    expect(find.byKey(const Key('library-filter-count-문장')), findsOneWidget);
+    expect(
+      find.byKey(const Key('library-mobile-filter-summary')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('library-mobile-filter-button')),
+      findsOneWidget,
+    );
+    expect(find.textContaining('필터 · 전체 ·'), findsOneWidget);
     expect(
       tester.getCenter(find.byKey(const Key('library-select-materials'))).dy,
       closeTo(

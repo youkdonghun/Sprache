@@ -230,7 +230,7 @@ String _studyActionLabel(StudyShortcutAction value) => switch (value) {
 };
 
 String _globalActionLabel(GlobalShortcutAction value) => switch (value) {
-  GlobalShortcutAction.openSearch => '전체 검색',
+  GlobalShortcutAction.openSearch => '명령 팔레트·전체 검색',
   GlobalShortcutAction.quickAdd => '빠른 추가',
   GlobalShortcutAction.keyboardHelp => '키보드 도움말',
   GlobalShortcutAction.focusContent => '본문으로 이동',

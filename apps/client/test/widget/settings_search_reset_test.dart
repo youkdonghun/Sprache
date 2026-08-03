@@ -6,10 +6,83 @@ import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
+import 'package:sprache/src/integrations/google/google_connection_service.dart';
 import 'package:sprache/src/screens/settings_screen.dart';
 import 'package:sprache/src/state/app_state.dart';
+import 'package:sprache/src/state/connection_state.dart';
 
 void main() {
+  testWidgets('storage deep link opens the Drive and local location category', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        studyStoreProvider.overrideWithValue(
+          MemoryStudyStore(
+            preferences: const StudyPreferences(onboardingCompleted: true),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: SettingsScreen(initialFocus: 'storage')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final storageChoice = tester.widget<ChoiceChip>(
+      find.byKey(const Key('settings-category-storage')),
+    );
+    expect(storageChoice.selected, isTrue);
+    expect(find.byKey(const Key('connection-card')), findsOneWidget);
+    expect(find.byKey(const Key('local-folder-status')), findsOneWidget);
+    expect(find.byKey(const Key('advanced-preferences-panel')), findsNothing);
+  });
+
+  testWidgets('connected storage shows an exact Drive folder target', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        studyStoreProvider.overrideWithValue(
+          MemoryStudyStore(
+            preferences: const StudyPreferences(onboardingCompleted: true),
+          ),
+        ),
+        googleConnectionServiceProvider.overrideWithValue(
+          MockGoogleConnectionService(),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(body: SettingsScreen(initialFocus: 'storage')),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final connection = container
+        .read(connectionControllerProvider.notifier)
+        .connect();
+    await tester.pump(const Duration(milliseconds: 600));
+    await connection;
+    await tester.pump();
+
+    expect(find.byKey(const Key('drive-folder-location')), findsOneWidget);
+    expect(find.byKey(const Key('drive-folder-identifier')), findsOneWidget);
+    expect(find.textContaining('mock_word_study_data'), findsOneWidget);
+    expect(find.byKey(const Key('open-drive-folder')), findsOneWidget);
+    expect(find.byKey(const Key('copy-drive-folder-id')), findsOneWidget);
+  });
+
   testWidgets('settings search filters sections and exposes a clear action', (
     tester,
   ) async {
@@ -33,6 +106,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('settings-category-picker')), findsOneWidget);
+      expect(find.byKey(const Key('connection-card')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('settings-category-display')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('connection-card')), findsNothing);
+      expect(
+        find.byKey(const Key('advanced-preferences-panel')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('settings-category-all')));
+      await tester.pumpAndSettle();
       expect(find.byKey(const Key('connection-card')), findsOneWidget);
       await tester.enterText(
         find.byKey(const Key('settings-search-field')),

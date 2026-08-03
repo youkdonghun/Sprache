@@ -33,6 +33,10 @@ void main() {
       expect(find.byKey(const Key('shell-storage-status')), findsOneWidget);
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('settings-category-storage')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('connect-google')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('connect-google')));
       await tester.pumpAndSettle();
 
@@ -44,9 +48,11 @@ void main() {
       expect(find.text('마지막 동기화'), findsOneWidget);
       expect(find.textContaining('↑'), findsWidgets);
       expect(
-        tester.getSize(find.byKey(const Key('connection-card'))).height,
-        lessThan(330),
+        tester.getSize(find.byKey(const Key('sync-merge-report'))).height,
+        lessThan(120),
       );
+      await tester.ensureVisible(find.byKey(const Key('open-sync-center')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-sync-center')));
       await tester.pumpAndSettle();
       expect(find.text('동기화 이력·충돌 복구'), findsOneWidget);

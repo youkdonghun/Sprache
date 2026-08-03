@@ -261,6 +261,11 @@ class DuplicateRepairAnalyzer {
     return 1 - (distance / maximumLength);
   }
 
+  /// Compares user-facing source text with the same normalization used by the
+  /// duplicate repair catalog.
+  double textSimilarity(String left, String right) =>
+      similarity(_similarityText(left), _similarityText(right));
+
   Set<(int, int)> _candidatePairs(
     List<LearningItem> items,
     Map<String, String> comparable,

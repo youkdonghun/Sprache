@@ -3,6 +3,8 @@ import 'package:sprache/src/domain/active_study_session.dart';
 import 'package:sprache/src/domain/adaptive_study_session.dart';
 import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/import_distribution.dart';
+import 'package:sprache/src/domain/progress.dart';
+import 'package:sprache/src/domain/quiz_session_support.dart';
 import 'package:sprache/src/domain/study_history.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
@@ -660,6 +662,14 @@ void main() {
     );
     expectRejected(
       {
+        'dailyQuestCompletionDayByScope': {
+          'language%3Aen|meaning-choice': '2026-02-31',
+        },
+      },
+      r'$.settings.interaction.practiceCatalog.dailyQuestCompletionDayByScope',
+    );
+    expectRejected(
+      {
         'bestRecordsByActivityId': {
           'match-sprint': {
             'bestScore': 101,
@@ -1242,6 +1252,64 @@ void main() {
       );
     },
   );
+
+  test('validates active exam attempt review identity and sequence', () {
+    final startedAt = DateTime.utc(2026, 8, 3, 9);
+    final session =
+        ActiveStudySession.started(
+          sessionId: 'active-exam-session',
+          courseId: 'ko-en',
+          mode: StudyMode.meaning,
+          unitIndex: null,
+          itemIds: const ['a'],
+          startedAt: startedAt,
+        ).copyWith(
+          attemptReviews: const [
+            QuizAttemptReview(
+              sequence: 1,
+              itemId: 'a',
+              prompt: 'alpha',
+              expectedAnswer: '알파',
+              userAnswer: '알파',
+              exerciseType: 'recognition',
+              correct: true,
+              rating: ReviewRating.good,
+              usedHint: false,
+            ),
+          ],
+        );
+    final valid = {
+      'schemaVersion': 1,
+      'activeStudy': {
+        'changedAt': session.updatedAt.toIso8601String(),
+        'session': session.toJson(),
+      },
+    };
+
+    expect(() => validator.validate(valid), returnsNormally);
+    final review = (session.toJson()['attemptReviews']! as List).single as Map;
+    expect(
+      () => validator.validate({
+        ...valid,
+        'activeStudy': {
+          'changedAt': session.updatedAt.toIso8601String(),
+          'session': {
+            ...session.toJson(),
+            'attemptReviews': [
+              {...review, 'itemId': 'missing'},
+            ],
+          },
+        },
+      }),
+      throwsA(
+        isA<RemoteSnapshotValidationException>().having(
+          (error) => error.issues.map((issue) => issue.path),
+          'paths',
+          contains(r'$.activeStudy.session.attemptReviews[0].itemId'),
+        ),
+      ),
+    );
+  });
 
   test('validates every snapshot v2 session planning field', () {
     final validPlan = <String, Object?>{

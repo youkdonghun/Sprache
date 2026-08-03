@@ -481,6 +481,160 @@ void main() {
     expect(find.byKey(const Key('quick-content-sheet')), findsNothing);
   });
 
+  testWidgets('typing suggests similar items, examples, and tags', (
+    tester,
+  ) async {
+    const similar = LearningItem(
+      id: 'suggestion-accomplish',
+      kind: LearningItemKind.word,
+      learningLanguage: LanguageTag.english,
+      subjectId: 'language:en',
+      text: 'accomplish',
+      translations: ['성취하다'],
+      acceptedAnswers: ['성취하다'],
+      partOfSpeech: PartOfSpeech.verb,
+      tags: ['achievement'],
+      capabilities: {
+        ExerciseCapability.recognition,
+        ExerciseCapability.production,
+      },
+      source: ContentSource.userCreated,
+    );
+    const example = LearningItem(
+      id: 'suggestion-example',
+      kind: LearningItemKind.sentence,
+      learningLanguage: LanguageTag.english,
+      subjectId: 'language:en',
+      text: 'I accomplish one goal every day.',
+      translations: ['나는 매일 목표 하나를 이룬다.'],
+      acceptedAnswers: ['나는 매일 목표 하나를 이룬다.'],
+      sentenceTokens: ['I', 'accomplish', 'one', 'goal', 'every', 'day.'],
+      tags: ['daily'],
+      capabilities: {
+        ExerciseCapability.recognition,
+        ExerciseCapability.production,
+      },
+      source: ContentSource.userCreated,
+    );
+    final store = MemoryStudyStore();
+    await store.saveCustomItems([similar, example]);
+    await _openQuickWord(tester, store);
+    await _enterRequired(tester, 'accomplis', '성취하다');
+
+    expect(find.byKey(const Key('quick-content-suggestions')), findsOneWidget);
+    expect(
+      find.byKey(const Key('quick-content-similar-suggestion-accomplish')),
+      findsOneWidget,
+    );
+    final exampleChip = find.byKey(
+      const Key('quick-content-example-suggestion-suggestion-example'),
+    );
+    await tester.ensureVisible(exampleChip);
+    await tester.tap(exampleChip);
+    await tester.pumpAndSettle();
+    final exampleField = tester.widget<TextFormField>(
+      find.byKey(const Key('quick-content-example')),
+    );
+    expect(exampleField.controller?.text, 'I accomplish one goal every day.');
+
+    final tagChip = find.byKey(
+      const Key('quick-content-tag-suggestion-achievement'),
+    );
+    await tester.ensureVisible(tagChip);
+    await tester.tap(tagChip);
+    await tester.pump();
+    final tagsField = tester.widget<TextFormField>(
+      find.byKey(const Key('quick-content-tags')),
+    );
+    expect(tagsField.controller?.text, contains('achievement'));
+  });
+
+  testWidgets('registration basket survives closing and widget restart', (
+    tester,
+  ) async {
+    final store = MemoryStudyStore();
+    await _openQuickWord(tester, store);
+    await _enterRequired(tester, 'persisted basket', '복구되는 바구니');
+    await tester.ensureVisible(
+      find.byKey(const Key('quick-content-add-to-basket')),
+    );
+    await tester.tap(find.byKey(const Key('quick-content-add-to-basket')));
+    await tester.pumpAndSettle();
+
+    final storedDraft = await store.loadQuickContentDraft(
+      subjectId: _subjectId,
+    );
+    expect(storedDraft?.basket, hasLength(1));
+    expect(storedDraft?.basket.single.item.text, 'persisted basket');
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await _openQuickWord(tester, store);
+    expect(
+      find.byKey(const Key('quick-content-draft-recovery')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('quick-content-draft-restore')));
+    await tester.pumpAndSettle();
+    await _expandWorkbench(tester);
+
+    expect(find.byKey(const Key('quick-content-basket-list')), findsOneWidget);
+    expect(find.text('persisted basket'), findsOneWidget);
+  });
+
+  testWidgets('saving one entry keeps the remaining basket recoverable', (
+    tester,
+  ) async {
+    final store = MemoryStudyStore();
+    await _openQuickWord(tester, store);
+    await _enterRequired(tester, 'basket first', '바구니 첫 항목');
+    await tester.ensureVisible(
+      find.byKey(const Key('quick-content-add-to-basket')),
+    );
+    await tester.tap(find.byKey(const Key('quick-content-add-to-basket')));
+    await tester.pumpAndSettle();
+
+    await _enterRequired(tester, 'save now', '지금 저장');
+    await tester.ensureVisible(find.byKey(const Key('quick-content-save')));
+    await tester.tap(find.byKey(const Key('quick-content-save')));
+    await tester.pumpAndSettle();
+
+    expect(store.savedItems.map((item) => item.text), contains('save now'));
+    final draft = await store.loadQuickContentDraft(subjectId: _subjectId);
+    expect(draft?.basket, hasLength(1));
+    expect(draft?.basket.single.item.text, 'basket first');
+    expect(draft?.text, isEmpty);
+  });
+
+  testWidgets('mobile keyboard focus mode keeps only essential entry actions', (
+    tester,
+  ) async {
+    await _openQuickWord(tester, MemoryStudyStore());
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('quick-content-keyboard-focus-mode')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('quick-content-text')), findsOneWidget);
+    expect(find.byKey(const Key('quick-content-meaning')), findsOneWidget);
+    expect(
+      find.byKey(const Key('quick-content-add-to-basket')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('quick-content-save')), findsOneWidget);
+
+    expect(find.byKey(const Key('quick-content-kind')), findsNothing);
+    expect(find.byKey(const Key('quick-content-group-options')), findsNothing);
+    expect(find.byKey(const Key('quick-content-workbench')), findsNothing);
+    expect(find.byKey(const Key('quick-content-save-and-study')), findsNothing);
+    expect(find.byKey(const Key('quick-content-save-and-add')), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('compact action bar stays usable at 320px and 200% text', (
     tester,
   ) async {

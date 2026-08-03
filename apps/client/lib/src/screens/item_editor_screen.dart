@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../domain/content_validation.dart';
 import '../domain/import_distribution.dart';
+import '../domain/item_editor_draft.dart';
 import '../domain/language.dart';
 import '../domain/learning_group.dart';
 import '../domain/learning_item.dart';
@@ -57,8 +58,14 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   var _saving = false;
   var _exitDialogOpen = false;
   var _savedSuccessfully = false;
+  var _draftReady = false;
+  var _editedBeforeDraftLoad = false;
+  var _suspendDraftRefresh = false;
+  var _draftWasPersisted = false;
   var _sentenceTokens = <String>[];
   String? _selectedGroup;
+  ItemEditorDraft? _recoverableDraft;
+  Timer? _draftTimer;
   late String _subjectId;
   late final String _initialDraftFingerprint;
   late final NavigationGuardController _navigationGuard;
@@ -67,6 +74,26 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   bool get _isEditing => _original != null;
   bool get _hasUnsavedChanges =>
       !_savedSuccessfully && _draftFingerprint() != _initialDraftFingerprint;
+
+  List<TextEditingController> get _draftControllers => [
+    _textController,
+    _translationController,
+    _acceptedController,
+    _readingController,
+    _secondaryReadingController,
+    _koreanPronunciationController,
+    _exampleController,
+    _exampleTranslationController,
+    _tagsController,
+    _levelController,
+    _sourceNameController,
+    _licenseController,
+    _sourceVersionController,
+    _sourceIdController,
+    _sourceUrlController,
+    _authorController,
+    _attributionController,
+  ];
 
   @override
   void initState() {
@@ -130,13 +157,21 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
       }
     }
     _initialDraftFingerprint = _draftFingerprint();
+    for (final controller in _draftControllers) {
+      controller.addListener(_refreshDraftState);
+    }
     _navigationGuard = ref.read(navigationGuardProvider)
       ..register(this, _confirmDiscardForNavigation);
+    unawaited(_loadDraft());
   }
 
   @override
   void dispose() {
     _navigationGuard.unregister(this);
+    _draftTimer?.cancel();
+    for (final controller in _draftControllers) {
+      controller.removeListener(_refreshDraftState);
+    }
     _textController.dispose();
     _translationController.dispose();
     _acceptedController.dispose();
@@ -157,12 +192,29 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     super.dispose();
   }
 
+  void _refreshDraftState() {
+    if (_suspendDraftRefresh || !mounted) return;
+    if (!_draftReady && _draftFingerprint() != _initialDraftFingerprint) {
+      _editedBeforeDraftLoad = true;
+    }
+    setState(() {});
+    _scheduleDraftSave();
+  }
+
+  void _updateDraftState(VoidCallback update) {
+    setState(update);
+    if (!_draftReady && _draftFingerprint() != _initialDraftFingerprint) {
+      _editedBeforeDraftLoad = true;
+    }
+    _scheduleDraftSave();
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appControllerProvider);
     final appController = ref.read(appControllerProvider.notifier);
     final subjects = appController.availableSubjects;
-    final groups = appController.availableLearningGroups;
+    final groups = appController.learningGroupsForSubject(_subjectId);
     final subject = subjects.firstWhere(
       (candidate) => candidate.id == _subjectId,
       orElse: () => appController.activeSubject,
@@ -227,6 +279,10 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
+                  if (_recoverableDraft != null) ...[
+                    _buildDraftRecoveryCard(context),
+                    const SizedBox(height: 12),
+                  ],
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
@@ -256,7 +312,14 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                             ],
                             onChanged: (value) {
                               if (value != null) {
-                                setState(() => _subjectId = value);
+                                final nextGroups = appController
+                                    .learningGroupsForSubject(value);
+                                _updateDraftState(() {
+                                  _subjectId = value;
+                                  if (!nextGroups.contains(_selectedGroup)) {
+                                    _selectedGroup = null;
+                                  }
+                                });
                               }
                             },
                           ),
@@ -276,7 +339,9 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                             ],
                             selected: {_kind},
                             onSelectionChanged: (selection) =>
-                                setState(() => _kind = selection.first),
+                                _updateDraftState(
+                                  () => _kind = selection.first,
+                                ),
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -312,8 +377,9 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                               sentenceText: _textController.text,
                               language: language,
                               tokens: _sentenceTokens,
-                              onChanged: (tokens) =>
-                                  setState(() => _sentenceTokens = tokens),
+                              onChanged: (tokens) => _updateDraftState(
+                                () => _sentenceTokens = tokens,
+                              ),
                             ),
                           ],
                           const SizedBox(height: 12),
@@ -337,7 +403,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                                   child: Text(group),
                                 ),
                             ],
-                            onChanged: (value) => setState(
+                            onChanged: (value) => _updateDraftState(
                               () => _selectedGroup = value == '__no_group__'
                                   ? null
                                   : value,
@@ -380,7 +446,9 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                               ],
                               onChanged: (value) {
                                 if (value != null) {
-                                  setState(() => _partOfSpeech = value);
+                                  _updateDraftState(
+                                    () => _partOfSpeech = value,
+                                  );
                                 }
                               },
                             ),
@@ -522,8 +590,9 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                           max: 10,
                           divisions: 10,
                           label: '$_priority',
-                          onChanged: (value) =>
-                              setState(() => _priority = value.round()),
+                          onChanged: (value) => _updateDraftState(
+                            () => _priority = value.round(),
+                          ),
                         ),
                         Text(
                           '높을수록 새 항목 큐에서 먼저 출제됩니다.',
@@ -692,6 +761,207 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     );
   }
 
+  Widget _buildDraftRecoveryCard(BuildContext context) {
+    final draft = _recoverableDraft!;
+    return Card(
+      key: const Key('item-editor-draft-recovery'),
+      color: Theme.of(context).colorScheme.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const Icon(Icons.restore_rounded),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '저장하지 않은 편집 초안이 있어요',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${_draftAgeLabel(draft.updatedAt)} 저장 · 복원해 이어서 작성할 수 있습니다.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  key: const Key('item-editor-draft-discard'),
+                  onPressed: _discardRecoverableDraft,
+                  child: const Text('버리기'),
+                ),
+                FilledButton.tonal(
+                  key: const Key('item-editor-draft-restore'),
+                  onPressed: _restoreDraft,
+                  child: const Text('복원'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadDraft() async {
+    ItemEditorDraft? draft;
+    try {
+      draft = await ref
+          .read(studyStoreProvider)
+          .loadItemEditorDraft(itemId: widget.itemId);
+    } on Object {
+      // Draft recovery is best-effort and must never block the editor.
+    }
+    if (!mounted) return;
+    final belongsToEditor =
+        draft != null &&
+        draft.itemId == widget.itemId &&
+        draft.baseFingerprint == _initialDraftFingerprint;
+    setState(() {
+      _draftReady = true;
+      if (belongsToEditor && !_editedBeforeDraftLoad) {
+        _recoverableDraft = draft;
+        _draftWasPersisted = true;
+      }
+    });
+  }
+
+  void _scheduleDraftSave() {
+    if (!_draftReady ||
+        _recoverableDraft != null ||
+        _savedSuccessfully ||
+        _suspendDraftRefresh) {
+      return;
+    }
+    _draftTimer?.cancel();
+    _draftTimer = Timer(
+      const Duration(milliseconds: 600),
+      () => unawaited(_persistDraft()),
+    );
+  }
+
+  Future<void> _persistDraft() async {
+    if (!mounted || _recoverableDraft != null || _savedSuccessfully) return;
+    try {
+      if (_hasUnsavedChanges) {
+        await ref.read(studyStoreProvider).saveItemEditorDraft(_currentDraft());
+        _draftWasPersisted = true;
+      } else if (_draftWasPersisted) {
+        await ref
+            .read(studyStoreProvider)
+            .clearItemEditorDraft(itemId: widget.itemId);
+        _draftWasPersisted = false;
+      }
+    } on Object {
+      // Editing remains available even if local recovery storage is full.
+    }
+  }
+
+  ItemEditorDraft _currentDraft() => ItemEditorDraft(
+    itemId: widget.itemId,
+    baseFingerprint: _initialDraftFingerprint,
+    subjectId: _subjectId,
+    kind: _kind,
+    partOfSpeech: _partOfSpeech,
+    priority: _priority,
+    group: _selectedGroup,
+    sentenceTokens: List.unmodifiable(_sentenceTokens),
+    text: _textController.text,
+    translation: _translationController.text,
+    acceptedAnswers: _acceptedController.text,
+    reading: _readingController.text,
+    secondaryReading: _secondaryReadingController.text,
+    koreanPronunciation: _koreanPronunciationController.text,
+    example: _exampleController.text,
+    exampleTranslation: _exampleTranslationController.text,
+    tags: _tagsController.text,
+    level: _levelController.text,
+    sourceName: _sourceNameController.text,
+    license: _licenseController.text,
+    sourceVersion: _sourceVersionController.text,
+    sourceId: _sourceIdController.text,
+    sourceUrl: _sourceUrlController.text,
+    author: _authorController.text,
+    attribution: _attributionController.text,
+    updatedAt: DateTime.now().toUtc(),
+  );
+
+  void _restoreDraft() {
+    final draft = _recoverableDraft;
+    if (draft == null) return;
+    final appController = ref.read(appControllerProvider.notifier);
+    final subjectIds = appController.availableSubjects
+        .map((subject) => subject.id)
+        .toSet();
+    final subjectId = subjectIds.contains(draft.subjectId)
+        ? draft.subjectId
+        : _subjectId;
+    final groups = appController.learningGroupsForSubject(subjectId);
+    _suspendDraftRefresh = true;
+    try {
+      setState(() {
+        _subjectId = subjectId;
+        _kind = draft.kind;
+        _partOfSpeech = draft.partOfSpeech;
+        _priority = draft.priority;
+        _selectedGroup = groups.contains(draft.group) ? draft.group : null;
+        _sentenceTokens = [...draft.sentenceTokens];
+        _textController.text = draft.text;
+        _translationController.text = draft.translation;
+        _acceptedController.text = draft.acceptedAnswers;
+        _readingController.text = draft.reading;
+        _secondaryReadingController.text = draft.secondaryReading;
+        _koreanPronunciationController.text = draft.koreanPronunciation;
+        _exampleController.text = draft.example;
+        _exampleTranslationController.text = draft.exampleTranslation;
+        _tagsController.text = draft.tags;
+        _levelController.text = draft.level;
+        _sourceNameController.text = draft.sourceName;
+        _licenseController.text = draft.license;
+        _sourceVersionController.text = draft.sourceVersion;
+        _sourceIdController.text = draft.sourceId;
+        _sourceUrlController.text = draft.sourceUrl;
+        _authorController.text = draft.author;
+        _attributionController.text = draft.attribution;
+        _recoverableDraft = null;
+      });
+    } finally {
+      _suspendDraftRefresh = false;
+    }
+  }
+
+  Future<void> _discardRecoverableDraft() async {
+    _draftTimer?.cancel();
+    try {
+      await ref
+          .read(studyStoreProvider)
+          .clearItemEditorDraft(itemId: widget.itemId);
+    } on Object {
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _recoverableDraft = null;
+      _draftWasPersisted = false;
+    });
+  }
+
+  String _draftAgeLabel(DateTime updatedAt) {
+    final elapsed = DateTime.now().toUtc().difference(updatedAt.toUtc());
+    if (elapsed.inMinutes < 1) return '방금';
+    if (elapsed.inHours < 1) return '${elapsed.inMinutes}분 전';
+    if (elapsed.inDays < 1) return '${elapsed.inHours}시간 전';
+    return '${elapsed.inDays}일 전';
+  }
+
   String _draftFingerprint() => <Object?>[
     _subjectId,
     _kind.name,
@@ -753,6 +1023,15 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     _exitDialogOpen = false;
     if (!mounted || discard != true) return false;
     _savedSuccessfully = true;
+    _draftTimer?.cancel();
+    try {
+      await ref
+          .read(studyStoreProvider)
+          .clearItemEditorDraft(itemId: widget.itemId);
+    } on Object {
+      // Discarding editor input must not be blocked by recovery cleanup.
+    }
+    if (!mounted) return false;
     return true;
   }
 
@@ -856,6 +1135,14 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
           ? null
           : await controller.saveQuickContent(item);
       if (_isEditing) await controller.upsertCustomItem(item);
+      _draftTimer?.cancel();
+      try {
+        await ref
+            .read(studyStoreProvider)
+            .clearItemEditorDraft(itemId: widget.itemId);
+      } on Object {
+        // The learning item is already saved; recovery cleanup is best-effort.
+      }
       if (!mounted) return;
       if (ref.read(appControllerProvider).driveConnected) {
         unawaited(

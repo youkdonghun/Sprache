@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 
 import '../domain/content_validation.dart';
 import '../domain/device_preferences.dart';
+import '../domain/item_editor_draft.dart';
 import '../domain/language.dart';
 import '../domain/learning_item.dart';
 import '../domain/active_study_session.dart';
@@ -19,6 +20,27 @@ import '../import/import_review_draft.dart';
 import '../sync/pending_sync.dart';
 import '../sync/sync_policy.dart';
 import 'database/app_database.dart';
+
+String _itemEditorDraftScope(String? itemId) => itemId ?? '__new_item__';
+
+String _itemEditorDraftStorageKey(String? itemId) {
+  final encoded = base64Url
+      .encode(utf8.encode(_itemEditorDraftScope(itemId)))
+      .replaceAll('=', '');
+  return 'item_editor_draft_v2:$encoded';
+}
+
+String _quickContentDraftStorageKey(String subjectId) {
+  final encoded = base64Url.encode(utf8.encode(subjectId)).replaceAll('=', '');
+  return 'quick_content_draft_v2:$encoded';
+}
+
+Map<String, QuickContentDraft> _initialQuickContentDrafts(
+  QuickContentDraft? draft,
+) => draft == null ? {} : {draft.subjectId: draft};
+
+Map<String, ItemEditorDraft> _initialItemEditorDrafts(ItemEditorDraft? draft) =>
+    draft == null ? {} : {_itemEditorDraftScope(draft.itemId): draft};
 
 class StoredProfile {
   const StoredProfile({
@@ -109,11 +131,17 @@ abstract interface class StudyStore {
 
   Future<void> saveSyncDeviceSettings(SyncDeviceSettings settings);
 
-  Future<QuickContentDraft?> loadQuickContentDraft();
+  Future<QuickContentDraft?> loadQuickContentDraft({required String subjectId});
 
   Future<void> saveQuickContentDraft(QuickContentDraft draft);
 
-  Future<void> clearQuickContentDraft();
+  Future<void> clearQuickContentDraft({required String subjectId});
+
+  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId});
+
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft);
+
+  Future<void> clearItemEditorDraft({String? itemId});
 
   Future<QuickContentLocalPreferences> loadQuickContentLocalPreferences();
 
@@ -174,6 +202,8 @@ abstract interface class StudyStore {
 
   Future<void> clearActiveStudySession(DateTime clearedAt);
 
+  Future<void> replaceActiveStudyState(StoredActiveStudyState activeStudy);
+
   Future<PendingSyncOperation?> loadPendingSnapshotSync();
 
   Future<void> replacePendingSnapshotSync(PendingSyncOperation operation);
@@ -193,6 +223,7 @@ class MemoryStudyStore implements StudyStore {
     LocalStorageSettings? localStorageSettings,
     SyncDeviceSettings? syncDeviceSettings,
     QuickContentDraft? quickContentDraft,
+    ItemEditorDraft? itemEditorDraft,
     QuickContentLocalPreferences? quickContentLocalPreferences,
     SearchLocalPreferences? searchLocalPreferences,
     DevicePreferences? devicePreferences,
@@ -215,7 +246,10 @@ class MemoryStudyStore implements StudyStore {
        _syncDeviceSettings = syncDeviceSettings ?? const SyncDeviceSettings(),
        // The public constructor name is intentionally clearer for tests/callers.
        // ignore: prefer_initializing_formals
-       _quickContentDraft = quickContentDraft,
+       _quickContentDrafts = _initialQuickContentDrafts(quickContentDraft),
+       // The public constructor name is intentionally clearer for tests/callers.
+       // ignore: prefer_initializing_formals
+       _itemEditorDrafts = _initialItemEditorDrafts(itemEditorDraft),
        _quickContentLocalPreferences =
            quickContentLocalPreferences ?? const QuickContentLocalPreferences(),
        _searchLocalPreferences =
@@ -236,7 +270,8 @@ class MemoryStudyStore implements StudyStore {
   PendingSyncOperation? _pendingSnapshotSync;
   LocalStorageSettings _localStorageSettings;
   SyncDeviceSettings _syncDeviceSettings;
-  QuickContentDraft? _quickContentDraft;
+  final Map<String, QuickContentDraft> _quickContentDrafts;
+  final Map<String, ItemEditorDraft> _itemEditorDrafts;
   QuickContentLocalPreferences _quickContentLocalPreferences;
   SearchLocalPreferences _searchLocalPreferences;
   DevicePreferences _devicePreferences;
@@ -298,17 +333,32 @@ class MemoryStudyStore implements StudyStore {
   }
 
   @override
-  Future<QuickContentDraft?> loadQuickContentDraft() async =>
-      _quickContentDraft;
+  Future<QuickContentDraft?> loadQuickContentDraft({
+    required String subjectId,
+  }) async => _quickContentDrafts[subjectId];
 
   @override
   Future<void> saveQuickContentDraft(QuickContentDraft draft) async {
-    _quickContentDraft = draft;
+    _quickContentDrafts[draft.subjectId] = draft;
   }
 
   @override
-  Future<void> clearQuickContentDraft() async {
-    _quickContentDraft = null;
+  Future<void> clearQuickContentDraft({required String subjectId}) async {
+    _quickContentDrafts.remove(subjectId);
+  }
+
+  @override
+  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId}) async =>
+      _itemEditorDrafts[_itemEditorDraftScope(itemId)];
+
+  @override
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft) async {
+    _itemEditorDrafts[_itemEditorDraftScope(draft.itemId)] = draft;
+  }
+
+  @override
+  Future<void> clearItemEditorDraft({String? itemId}) async {
+    _itemEditorDrafts.remove(_itemEditorDraftScope(itemId));
   }
 
   @override
@@ -497,6 +547,13 @@ class MemoryStudyStore implements StudyStore {
   @override
   Future<void> clearActiveStudySession(DateTime clearedAt) async {
     _activeStudyState = StoredActiveStudyState(changedAt: clearedAt);
+  }
+
+  @override
+  Future<void> replaceActiveStudyState(
+    StoredActiveStudyState activeStudy,
+  ) async {
+    _activeStudyState = activeStudy;
   }
 
   @override
@@ -800,18 +857,32 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
-  Future<QuickContentDraft?> loadQuickContentDraft() async {
-    final setting =
+  Future<QuickContentDraft?> loadQuickContentDraft({
+    required String subjectId,
+  }) async {
+    final key = _quickContentDraftStorageKey(subjectId);
+    var setting = await (database.select(
+      database.appSettings,
+    )..where((table) => table.key.equals(key))).getSingleOrNull();
+    setting ??=
         await (database.select(database.appSettings)
               ..where((table) => table.key.equals('quick_content_draft')))
             .getSingleOrNull();
     if (setting == null) return null;
     try {
-      return QuickContentDraft.fromJson(
+      final draft = QuickContentDraft.fromJson(
         Map<String, Object?>.from(
           jsonDecode(setting.valueJson) as Map<Object?, Object?>,
         ),
       );
+      if (draft.subjectId != subjectId) return null;
+      if (setting.key == 'quick_content_draft') {
+        await saveQuickContentDraft(draft);
+        await (database.delete(
+          database.appSettings,
+        )..where((table) => table.key.equals('quick_content_draft'))).go();
+      }
+      return draft;
     } catch (_) {
       return null;
     }
@@ -823,7 +894,7 @@ class DriftStudyStore implements StudyStore {
         .into(database.appSettings)
         .insertOnConflictUpdate(
           AppSettingsCompanion.insert(
-            key: 'quick_content_draft',
+            key: _quickContentDraftStorageKey(draft.subjectId),
             valueJson: jsonEncode(draft.toJson()),
             updatedAt: DateTime.now().toUtc(),
           ),
@@ -831,10 +902,62 @@ class DriftStudyStore implements StudyStore {
   }
 
   @override
-  Future<void> clearQuickContentDraft() async {
-    await (database.delete(
+  Future<void> clearQuickContentDraft({required String subjectId}) async {
+    await (database.delete(database.appSettings)..where(
+          (table) => table.key.equals(_quickContentDraftStorageKey(subjectId)),
+        ))
+        .go();
+  }
+
+  @override
+  Future<ItemEditorDraft?> loadItemEditorDraft({String? itemId}) async {
+    final key = _itemEditorDraftStorageKey(itemId);
+    var setting = await (database.select(
       database.appSettings,
-    )..where((table) => table.key.equals('quick_content_draft'))).go();
+    )..where((table) => table.key.equals(key))).getSingleOrNull();
+    setting ??=
+        await (database.select(database.appSettings)
+              ..where((table) => table.key.equals('item_editor_draft')))
+            .getSingleOrNull();
+    if (setting == null) return null;
+    try {
+      final draft = ItemEditorDraft.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+      if (draft.itemId != itemId) return null;
+      if (setting.key == 'item_editor_draft') {
+        await saveItemEditorDraft(draft);
+        await (database.delete(
+          database.appSettings,
+        )..where((table) => table.key.equals('item_editor_draft'))).go();
+      }
+      return draft;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveItemEditorDraft(ItemEditorDraft draft) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: _itemEditorDraftStorageKey(draft.itemId),
+            valueJson: jsonEncode(draft.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<void> clearItemEditorDraft({String? itemId}) async {
+    await (database.delete(database.appSettings)..where(
+          (table) => table.key.equals(_itemEditorDraftStorageKey(itemId)),
+        ))
+        .go();
   }
 
   @override
@@ -1377,6 +1500,25 @@ class DriftStudyStore implements StudyStore {
             updatedAt: clearedAt.toUtc(),
           ),
         );
+  }
+
+  @override
+  Future<void> replaceActiveStudyState(
+    StoredActiveStudyState activeStudy,
+  ) async {
+    final changedAt = activeStudy.changedAt;
+    if (changedAt == null) {
+      await (database.delete(
+        database.appSettings,
+      )..where((table) => table.key.equals('active_study_session'))).go();
+      return;
+    }
+    final session = activeStudy.session;
+    if (session == null) {
+      await clearActiveStudySession(changedAt);
+      return;
+    }
+    await saveActiveStudySession(session);
   }
 
   @override

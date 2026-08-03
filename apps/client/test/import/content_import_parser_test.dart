@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sprache/src/domain/content_validation.dart';
 import 'package:sprache/src/domain/import_distribution.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_group.dart';
@@ -25,6 +27,67 @@ word,missing meaning,,,기초,0
     expect(preview.items, hasLength(1));
     expect(preview.items.single.acceptedAnswers, contains('안녕'));
     expect(preview.issues.single.row, 3);
+  });
+
+  test('invalid tabular rows retain fields and can be revalidated', () {
+    const input = 'type,term,meaning,language\nword,repair me,,en\n';
+    final preview = parser.parseCsv(
+      input,
+      defaultLanguage: LanguageTag.english,
+    );
+
+    final issue = preview.issues.single;
+    expect(issue.canEdit, isTrue);
+    expect(issue.sourceFields['term'], 'repair me');
+
+    final repaired = parser.parseEditableRow(
+      row: issue.row,
+      values: {...issue.sourceFields, 'meaning': '고치다'},
+      defaultLanguage: LanguageTag.english,
+    );
+
+    expect(repaired.issues, isEmpty);
+    expect(repaired.items.single.text, 'repair me');
+    expect(repaired.items.single.translations, ['고치다']);
+  });
+
+  test('rejected JSON repair preserves nested source and list fields', () {
+    const input = '''[
+      {
+        "type": "word",
+        "language": "en",
+        "term": "nested source",
+        "meaning": "",
+        "accepted_answers": ["nested", "source"],
+        "source": {
+          "name": "Private notes",
+          "license": "private",
+          "sourceUrl": "https://example.com/nested",
+          "attribution": "Personal notebook"
+        }
+      }
+    ]''';
+    final rejected = parser.parseJson(
+      input,
+      defaultLanguage: LanguageTag.english,
+    );
+    final issue = rejected.issues.single;
+
+    expect(issue.sourceFields['source'], isA<Map>());
+    expect(issue.sourceFields['accepted_answers'], isA<List>());
+    final repaired = parser.parseEditableRow(
+      row: issue.row,
+      values: {...issue.sourceFields, 'meaning': '중첩된 출처'},
+      defaultLanguage: LanguageTag.english,
+    );
+
+    expect(repaired.issues, isEmpty);
+    final item = repaired.items.single;
+    expect(item.acceptedAnswers, containsAll(['nested', 'source']));
+    expect(item.source.name, 'Private notes');
+    expect(item.source.license, 'private');
+    expect(item.source.sourceUrl, 'https://example.com/nested');
+    expect(item.source.attribution, 'Personal notebook');
   });
 
   test('imports generic study material into the active subject', () {
@@ -623,6 +686,21 @@ word,ticket,표,Where can I buy a ticket?
       ),
       isTrue,
     );
+    final whip = baseballItems.singleWhere((item) => item.text == 'WHIP');
+    expect(whip.translations, contains('투수가 한 이닝당 허용한 볼넷과 안타의 합'));
+    expect(whip.example, 'WHIP는 허용한 볼넷과 안타의 합을 투구 이닝으로 나누어 계산한다.');
+    expect(whip.exampleTranslation, '허용 볼넷과 안타를 합한 뒤 투구 이닝으로 나눈 값이다.');
+    expect(whip.source.contentVersion, 2);
+    final bareFace = preview.items.singleWhere(
+      (item) =>
+          item.kind == LearningItemKind.word &&
+          item.effectiveSubjectId == 'general:idol-fandom' &&
+          item.text == '생얼',
+    );
+    expect(bareFace.translations, contains('화장하지 않은 자연스러운 얼굴'));
+    expect(bareFace.example, '자연스러운 생얼 사진이 공식 채널에 올라왔다.');
+    expect(bareFace.exampleTranslation, '화장하지 않은 자연스러운 얼굴 사진이 공식 채널에 올라왔다.');
+    expect(bareFace.source.contentVersion, 2);
     for (final language in LanguageTag.values.where(
       (value) => value.available,
     )) {
@@ -709,8 +787,11 @@ word,ticket,표,Where can I buy a ticket?
       );
       expect(
         baseball.translations,
-        containsAll(['출루율과 장타율의 합', '타자의 공격력을 나타내는 지표']),
+        containsAll(['출루율과 장타율을 더한 공격 지표', '출루율과 장타율의 합']),
       );
+      expect(baseball.acceptedAnswers, contains('타자의 공격력을 나타내는 지표'));
+      expect(baseball.example, 'OPS는 출루율과 장타율을 더해 계산한다.');
+      expect(baseball.exampleTranslation, '출루율과 장타율의 합으로 계산하는 공격 지표이다.');
       expect(learningGroupsOf(baseball), containsAll(['타격 지표', '이번 주 암기']));
       expect(baseball.priority, 9);
       expect(importDistributionKeyOf(baseball), 'baseball-core');
@@ -833,6 +914,209 @@ word,ticket,표,Where can I buy a ticket?
   );
 
   test(
+    'bundled v2 rows pin the legacy v1 identity and keep original idol terms',
+    () {
+      const expectedIds = <String, Map<String, String>>{
+        'assets/content/baseball-starter-pack-2026-07-28.json': {
+          'WHIP': 'f64d5def-2065-5768-aeb0-8374e6a201ed',
+          'ERA': '5a9673cc-a756-5f48-ab99-ad221ddcad15',
+          'RBI': '5a44b42b-99f0-5aa4-a63f-61e02c89f34b',
+          'OPS': '1c6b1541-b797-56aa-8255-5767db996318',
+          '퀄리티 스타트': 'f05074fe-e73d-5d09-9e82-ff502c667f19',
+          '인필드 플라이가 선언되면 공을 잡지 못해도 타자는 아웃이다.':
+              'b398e2cc-fb46-5a6c-bd86-a5e6c4108689',
+          '세이브는 일정한 조건에서 팀의 리드를 지키고 경기를 마친 구원 투수에게 기록된다.':
+              '103c44b1-a3e4-506b-bf5f-ae007f74005a',
+          '보크가 선언되면 주자는 원칙적으로 한 베이스씩 진루한다.':
+              '7c5ce509-4f01-5154-a99b-bb756c11ea18',
+        },
+        'assets/content/idol-fandom-starter-pack-2026-07-28.json': {
+          '최애': 'ccee871c-8e26-5c43-9b63-7277fefbffab',
+          '공카': 'bc40f5b1-0836-56b3-acf9-826db2857eb2',
+          '응원봉': 'e794cce0-3eb1-5801-ad62-dddf8491a51c',
+          '총공': '185b5fe9-d0a9-557f-b2cf-95d208c94ef4',
+          '출근길': '23e599b9-9a27-5971-b7f0-97b58e181d9d',
+          '퇴근길': 'b20af95c-6c2f-54b6-9850-685ca63dc6c9',
+          '생얼': '14eccebd-807a-5497-b745-89c8c89a2740',
+          '팬덤은 특정 가수나 그룹을 꾸준히 응원하는 팬 공동체이다.':
+              '4b06e3d7-cf34-50bc-9334-7aff9dfa0525',
+        },
+      };
+
+      for (final pack in expectedIds.entries) {
+        final input = File(pack.key).readAsStringSync();
+        final rows = (jsonDecode(input) as List<Object?>)
+            .map((row) => Map<String, Object?>.from(row! as Map))
+            .toList(growable: false);
+        expect(rows, hasLength(pack.value.length));
+        expect(
+          rows.every((row) => (row['id'] as String?)?.isNotEmpty == true),
+          isTrue,
+          reason: '${pack.key}의 모든 배포 행은 고정 ID가 있어야 합니다.',
+        );
+        for (final row in rows) {
+          expect(
+            row['id'],
+            pack.value[row['term']],
+            reason: row['term'] as String,
+          );
+        }
+      }
+
+      final idolRows =
+          (jsonDecode(
+                    File(
+                      'assets/content/idol-fandom-starter-pack-2026-07-28.json',
+                    ).readAsStringSync(),
+                  )
+                  as List<Object?>)
+              .cast<Map<String, Object?>>();
+      final idolTerms = idolRows.map((row) => row['term']).toSet();
+      expect(idolTerms, containsAll({'공카', '총공', '출근길', '퇴근길', '생얼'}));
+      expect(
+        idolTerms.intersection({'공식 팬 커뮤니티', '스트리밍', '컴백', '팬미팅', '팬사인회'}),
+        isEmpty,
+      );
+    },
+  );
+
+  test('legacy v1 imports converge on corrected v2 durable IDs', () {
+    LearningItem parseLegacy(String row, String subjectId) => parser
+        .parseJson(
+          '[$row]',
+          defaultLanguage: LanguageTag.korean,
+          defaultSubjectId: subjectId,
+        )
+        .items
+        .first;
+
+    final legacyWhip = parseLegacy(
+      '{"type":"word","language":"ko","subject_id":"general:baseball",'
+          '"term":"WHIP","meaning":"이닝당 볼넷과 안타 허용 수"}',
+      'general:baseball',
+    );
+    final legacyInfieldFly = parseLegacy(
+      '{"type":"sentence","language":"ko","subject_id":"general:baseball",'
+          '"term":"인필드 플라이는 심판이 선언하는 즉시 타자가 아웃된다.",'
+          '"meaning":"주자 보호를 위해 적용되는 내야 뜬공 규칙이다."}',
+      'general:baseball',
+    );
+    final legacyBareFace = parseLegacy(
+      '{"type":"word","language":"ko","subject_id":"general:idol-fandom",'
+          '"term":"생얼","meaning":"화장하지 않은 얼굴"}',
+      'general:idol-fandom',
+    );
+    final legacyWhipWithExample = parser.parseJson(
+      '''[{
+        "type":"word","language":"ko","subject_id":"general:baseball",
+        "term":"WHIP","meaning":"이닝당 볼넷과 안타 허용 수",
+        "example":"WHIP는 허용 볼넷과 안타의 합을 투구 이닝으로 나눈다.",
+        "example_translation":"수치가 낮을수록 주자를 적게 내보냈다는 뜻이다."
+      }]''',
+      defaultLanguage: LanguageTag.korean,
+      defaultSubjectId: 'general:baseball',
+    );
+    final baseball = parser.parseJson(
+      File(
+        'assets/content/baseball-starter-pack-2026-07-28.json',
+      ).readAsStringSync(),
+      defaultLanguage: LanguageTag.korean,
+      defaultSubjectId: 'general:baseball',
+    );
+    final idol = parser.parseJson(
+      File(
+        'assets/content/idol-fandom-starter-pack-2026-07-28.json',
+      ).readAsStringSync(),
+      defaultLanguage: LanguageTag.korean,
+      defaultSubjectId: 'general:idol-fandom',
+    );
+
+    expect(
+      baseball.items.singleWhere((item) => item.text == 'WHIP').id,
+      legacyWhip.id,
+    );
+    expect(
+      baseball.items
+          .singleWhere((item) => item.text.startsWith('인필드 플라이가 선언되면'))
+          .id,
+      legacyInfieldFly.id,
+    );
+    final bareFace = idol.items.singleWhere((item) => item.text == '생얼');
+    expect(bareFace.id, legacyBareFace.id);
+    final legacyWhipExample = legacyWhipWithExample.items.singleWhere(
+      (item) => item.kind == LearningItemKind.sentence,
+    );
+    final correctedWhipExample = baseball.items.singleWhere(
+      (item) =>
+          item.kind == LearningItemKind.sentence &&
+          item.text.startsWith('WHIP는 허용한'),
+    );
+    expect(correctedWhipExample.id, legacyWhipExample.id);
+
+    final newSemantic = parseLegacy(
+      '{"type":"word","language":"ko","subject_id":"general:idol-fandom",'
+          '"term":"팬사인회","meaning":"팬이 가수에게 사인을 받는 행사"}',
+      'general:idol-fandom',
+    );
+    expect(newSemantic.id, isNot(bareFace.id));
+  });
+
+  test('JSON, CSV, and XLSX overlaps share durable ID and POS identity', () {
+    const validator = LearningContentValidator();
+    LearningItem word(ImportPreview preview, String text) =>
+        preview.items.singleWhere(
+          (item) => item.kind == LearningItemKind.word && item.text == text,
+        );
+
+    final baseball = parser.parseJson(
+      File(
+        'assets/content/baseball-starter-pack-2026-07-28.json',
+      ).readAsStringSync(),
+      defaultLanguage: LanguageTag.korean,
+      defaultSubjectId: 'general:baseball',
+    );
+    final idol = parser.parseJson(
+      File(
+        'assets/content/idol-fandom-starter-pack-2026-07-28.json',
+      ).readAsStringSync(),
+      defaultLanguage: LanguageTag.korean,
+      defaultSubjectId: 'general:idol-fandom',
+    );
+    final csv = parser.parseCsv(
+      File('../../sample-data/import-template.csv').readAsStringSync(),
+      defaultLanguage: LanguageTag.english,
+    );
+    final full = parser.parseExcel(
+      File(
+        'assets/templates/Sprache-word-import-template.xlsx',
+      ).readAsBytesSync(),
+      defaultLanguage: LanguageTag.english,
+    );
+    final easy = parser.parseExcel(
+      File(
+        'assets/templates/Sprache-easy-import-template.xlsx',
+      ).readAsBytesSync(),
+      defaultLanguage: LanguageTag.english,
+    );
+
+    void expectSameIdentity(List<LearningItem> items) {
+      expect(items.map((item) => item.id).toSet(), hasLength(1));
+      expect(items.map(validator.identityKey).toSet(), hasLength(1));
+    }
+
+    expectSameIdentity([
+      word(baseball, 'WHIP'),
+      word(csv, 'WHIP'),
+      word(full, 'WHIP'),
+    ]);
+    expectSameIdentity([word(baseball, 'OPS'), word(easy, 'OPS')]);
+    expectSameIdentity([word(idol, '생얼'), word(full, '생얼')]);
+    expect(word(baseball, 'WHIP').partOfSpeech, PartOfSpeech.other);
+    expect(word(baseball, 'OPS').partOfSpeech, PartOfSpeech.other);
+    expect(word(idol, '생얼').partOfSpeech, PartOfSpeech.noun);
+  });
+
+  test(
     'bundled general-topic packs keep subject, groups, examples, and sources',
     () {
       final packs = {
@@ -873,6 +1157,134 @@ word,ticket,표,Where can I buy a ticket?
           isTrue,
         );
       }
+    },
+  );
+
+  test(
+    'bundled baseball and idol examples keep meanings, translations, and tokens aligned',
+    () {
+      const packs = [
+        'assets/content/baseball-starter-pack-2026-07-28.json',
+        'assets/content/idol-fandom-starter-pack-2026-07-28.json',
+      ];
+
+      for (final path in packs) {
+        final input = File(path).readAsStringSync();
+        final rows = (jsonDecode(input) as List<Object?>)
+            .map((row) => Map<String, Object?>.from(row! as Map))
+            .toList(growable: false);
+        final preview = parser.parseJson(
+          input,
+          defaultLanguage: LanguageTag.korean,
+        );
+
+        expect(preview.issues, isEmpty, reason: path);
+        expect(preview.duplicates, isEmpty, reason: path);
+        for (final row in rows) {
+          final text = row['term']! as String;
+          final meaning = row['meaning']! as String;
+          final kind = row['type'] == 'word'
+              ? LearningItemKind.word
+              : LearningItemKind.sentence;
+          final item = preview.items.singleWhere(
+            (candidate) => candidate.kind == kind && candidate.text == text,
+          );
+
+          expect(item.translations, contains(meaning), reason: '$path · $text');
+          expect(item.readings, isEmpty, reason: '$path · $text 한국어 읽기');
+          expect(row['content_version'], 2, reason: '$path · $text');
+          if (kind == LearningItemKind.word) {
+            expect(item.partOfSpeech, isNotNull, reason: '$path · $text 품사');
+            final example = row['example']! as String;
+            final translation = row['example_translation']! as String;
+            final tokens = (row['example_tokens']! as String).split('|');
+            expect(tokens.join(' '), example, reason: '$path · $text 예문 토큰');
+            expect(item.example, example, reason: '$path · $text');
+            expect(
+              item.exampleTranslation,
+              translation,
+              reason: '$path · $text',
+            );
+
+            final sentence = preview.items.singleWhere(
+              (candidate) =>
+                  candidate.kind == LearningItemKind.sentence &&
+                  candidate.text == example,
+            );
+            expect(row['example_id'], isNotEmpty, reason: '$path · $text');
+            expect(sentence.id, row['example_id'], reason: '$path · $text');
+            expect(
+              sentence.translations,
+              contains(translation),
+              reason: '$path · $text 예문 뜻',
+            );
+            expect(sentence.sentenceTokens, tokens, reason: '$path · $text');
+          } else {
+            final tokens = (row['sentence_tokens']! as String).split('|');
+            expect(tokens.join(' '), text, reason: '$path · $text 문장 토큰');
+            expect(item.sentenceTokens, tokens, reason: '$path · $text');
+          }
+        }
+      }
+
+      final baseball = parser.parseJson(
+        File(
+          'assets/content/baseball-starter-pack-2026-07-28.json',
+        ).readAsStringSync(),
+        defaultLanguage: LanguageTag.korean,
+      );
+      final whip = baseball.items.singleWhere(
+        (item) => item.kind == LearningItemKind.word && item.text == 'WHIP',
+      );
+      expect(whip.translations, ['투수가 한 이닝당 허용한 볼넷과 안타의 합']);
+      expect(whip.acceptedAnswers, isNot(contains('WHIP')));
+      expect(whip.exampleTranslation, '허용 볼넷과 안타를 합한 뒤 투구 이닝으로 나눈 값이다.');
+
+      final idol = parser.parseJson(
+        File(
+          'assets/content/idol-fandom-starter-pack-2026-07-28.json',
+        ).readAsStringSync(),
+        defaultLanguage: LanguageTag.korean,
+      );
+      final idolWords = idol.items
+          .where((item) => item.kind == LearningItemKind.word)
+          .map((item) => item.text)
+          .toSet();
+      expect(idolWords, containsAll({'공카', '응원봉', '총공', '출근길', '퇴근길', '생얼'}));
+      expect(
+        idolWords.intersection({'공식 팬 커뮤니티', '스트리밍', '컴백', '팬미팅', '팬사인회'}),
+        isEmpty,
+      );
+      final lightStick = idol.items.singleWhere(
+        (item) => item.kind == LearningItemKind.word && item.text == '응원봉',
+      );
+      expect(lightStick.example, '공연이 시작되자 관객들이 응원봉을 켰다.');
+      expect(lightStick.exampleTranslation, '관객들은 공연을 응원하기 위해 조명 도구를 켰다.');
+      final bareFace = idol.items.singleWhere(
+        (item) => item.kind == LearningItemKind.word && item.text == '생얼',
+      );
+      expect(bareFace.translations, ['화장하지 않은 자연스러운 얼굴']);
+      expect(bareFace.exampleTranslation, '화장하지 않은 자연스러운 얼굴 사진이 공식 채널에 올라왔다.');
+    },
+  );
+
+  test(
+    'repository CSV sample keeps the WHIP definition and example aligned',
+    () {
+      final preview = parser.parseCsv(
+        File('../../sample-data/import-template.csv').readAsStringSync(),
+        defaultLanguage: LanguageTag.english,
+      );
+
+      expect(preview.issues, isEmpty);
+      expect(preview.duplicates, isEmpty);
+      final whip = preview.items.singleWhere(
+        (item) => item.kind == LearningItemKind.word && item.text == 'WHIP',
+      );
+      expect(whip.translations, ['투수가 한 이닝당 허용한 볼넷과 안타의 합']);
+      expect(whip.example, 'WHIP는 허용한 볼넷과 안타의 합을 투구 이닝으로 나누어 계산한다.');
+      expect(whip.exampleTranslation, '허용 볼넷과 안타를 합한 뒤 투구 이닝으로 나눈 값이다.');
+      expect(whip.source.contentVersion, 2);
     },
   );
 }

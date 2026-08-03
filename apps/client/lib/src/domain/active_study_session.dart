@@ -1,4 +1,5 @@
 import 'adaptive_study_session.dart';
+import 'quiz_session_support.dart';
 import 'study_preferences.dart';
 import 'study_limits.dart';
 
@@ -132,6 +133,7 @@ class ActiveStudySession {
     this.runtimeOptions = const StudySessionRuntimeOptions(),
     this.inputCheckpoint,
     this.attemptMetrics = const [],
+    this.attemptReviews = const [],
   });
 
   factory ActiveStudySession.started({
@@ -210,6 +212,7 @@ class ActiveStudySession {
   final StudySessionRuntimeOptions runtimeOptions;
   final StudyInputCheckpoint? inputCheckpoint;
   final List<StudyAttemptMetric> attemptMetrics;
+  final List<QuizAttemptReview> attemptReviews;
 
   String get lineageRootId => rootSessionId ?? sessionId;
   List<String> get originalItemIds =>
@@ -247,6 +250,7 @@ class ActiveStudySession {
     StudySessionRuntimeOptions? runtimeOptions,
     Object? inputCheckpoint = _keepInputCheckpoint,
     List<StudyAttemptMetric>? attemptMetrics,
+    List<QuizAttemptReview>? attemptReviews,
   }) {
     return ActiveStudySession(
       sessionId: sessionId ?? this.sessionId,
@@ -278,6 +282,7 @@ class ActiveStudySession {
           ? this.inputCheckpoint
           : inputCheckpoint as StudyInputCheckpoint?,
       attemptMetrics: attemptMetrics ?? this.attemptMetrics,
+      attemptReviews: attemptReviews ?? this.attemptReviews,
     );
   }
 
@@ -422,6 +427,8 @@ class ActiveStudySession {
     if (inputCheckpoint != null) 'inputCheckpoint': inputCheckpoint!.toJson(),
     if (attemptMetrics.isNotEmpty)
       'attemptMetrics': [for (final metric in attemptMetrics) metric.toJson()],
+    if (attemptReviews.isNotEmpty)
+      'attemptReviews': [for (final review in attemptReviews) review.toJson()],
   };
 
   factory ActiveStudySession.fromJson(Map<String, Object?> json) {
@@ -552,10 +559,30 @@ class ActiveStudySession {
         else
           throw const FormatException('Invalid active study attempt metric'),
     ];
+    final rawAttemptReviews = json['attemptReviews'];
+    if (rawAttemptReviews != null &&
+        (rawAttemptReviews is! List<Object?> ||
+            rawAttemptReviews.length > StudyLimits.maxActiveQueueEntries)) {
+      throw const FormatException('Invalid active study attempt reviews');
+    }
+    final attemptReviews = <QuizAttemptReview>[
+      for (final value in (rawAttemptReviews as List<Object?>? ?? const []))
+        if (value is Map)
+          QuizAttemptReview.fromJson(Map<String, Object?>.from(value))
+        else
+          throw const FormatException('Invalid active study attempt review'),
+    ];
     if ((inputCheckpoint != null &&
             !knownItemIds.contains(inputCheckpoint.itemId)) ||
-        attemptMetrics.any((metric) => !knownItemIds.contains(metric.itemId))) {
+        attemptMetrics.any((metric) => !knownItemIds.contains(metric.itemId)) ||
+        attemptReviews.any((review) => !knownItemIds.contains(review.itemId))) {
       throw const FormatException('Unknown active study metric item');
+    }
+    final reviewSequences = attemptReviews
+        .map((review) => review.sequence)
+        .toSet();
+    if (reviewSequences.length != attemptReviews.length) {
+      throw const FormatException('Duplicate active study attempt review');
     }
     return ActiveStudySession(
       sessionId: sessionId,
@@ -583,6 +610,7 @@ class ActiveStudySession {
       runtimeOptions: runtimeOptions,
       inputCheckpoint: inputCheckpoint,
       attemptMetrics: List.unmodifiable(attemptMetrics),
+      attemptReviews: List.unmodifiable(attemptReviews),
     );
   }
 }

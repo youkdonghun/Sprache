@@ -8,8 +8,8 @@ workflows:
       xcode: latest
       cocoapods: default
       vars:
-        SPRACHE_VERSION: "1.32.0"
-        SPRACHE_BUILD_NUMBER: "56"
+        SPRACHE_VERSION: "1.33.0"
+        SPRACHE_BUILD_NUMBER: "57"
         SPRACHE_APPLE_ARTIFACT_DIR: "artifacts/apple-preview"
     cache:
       cache_paths:

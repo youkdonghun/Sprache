@@ -167,6 +167,44 @@ void main() {
     );
   });
 
+  testWidgets('mobile library keeps filters in one compact sheet', (
+    tester,
+  ) async {
+    final store = MemoryStudyStore(
+      preferences: const StudyPreferences(onboardingCompleted: true),
+    );
+    await store.saveCustomItems([
+      item(1, 'mobile filter'),
+      item(2, 'mobile filter'),
+    ]);
+    await pumpLibrary(
+      tester,
+      store: store,
+      size: const Size(390, 844),
+      platform: TargetPlatform.android,
+    );
+
+    expect(
+      find.byKey(const Key('library-mobile-filter-summary')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('library-advanced-filter-button')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('library-mobile-filter-button')));
+    await tester.pumpAndSettle();
+    expect(find.text('빠른 필터'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('library-sheet-filter-word')));
+    await tester.tap(find.byKey(const Key('apply-library-advanced-filters')));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('필터 · 단어 ·'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
   testWidgets(
     'bulk selection covers page, filter, inversion and hidden count',
     (tester) async {

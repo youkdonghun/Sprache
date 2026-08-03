@@ -455,6 +455,86 @@ void main() {
   });
 
   testWidgets(
+    'rejected file row can be corrected in the shared review workbench',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(390, 3000);
+      const preview = ImportPreview(
+        entries: [],
+        issues: [
+          ImportIssue(
+            row: 4,
+            message: '뜻을 입력해 주세요.',
+            sourceFields: {
+              'type': 'word',
+              'term': 'repair',
+              'meaning': '',
+              'language': 'en',
+            },
+          ),
+        ],
+        duplicates: [],
+      );
+
+      try {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              studyStoreProvider.overrideWithValue(MemoryStudyStore()),
+              recoveryCheckpointServiceProvider.overrideWithValue(
+                _NoopRecoveryCheckpointService(),
+              ),
+            ],
+            child: const MaterialApp(
+              home: Scaffold(
+                body: ImportScreen(
+                  initialPreview: preview,
+                  initialFileName: 'repair.csv',
+                  initialSha256: 'repair-sha256',
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const Key('import-review-workbench')),
+          findsOneWidget,
+        );
+        final rejected = find.byKey(const Key('import-rejected-rows'));
+        await tester.tap(rejected);
+        await tester.pumpAndSettle();
+
+        final edit = find.byKey(const Key('edit-rejected-import-4'));
+        expect(edit, findsOneWidget);
+        await tester.tap(edit);
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const Key('rejected-import-meaning')),
+          '수리하다',
+        );
+        await tester.tap(find.byKey(const Key('confirm-rejected-import-edit')));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const Key('edit-rejected-import-4')), findsNothing);
+        expect(find.text('repair'), findsWidgets);
+        final repairedCard = find.byKey(const Key('import-review-entry-4'));
+        expect(repairedCard, findsOneWidget);
+        final action = tester.widget<ChoiceChip>(
+          find
+              .descendant(of: repairedCard, matching: find.byType(ChoiceChip))
+              .first,
+        );
+        expect(action.selected, isTrue);
+        expect(tester.takeException(), isNull);
+      } finally {
+        tester.view.reset();
+      }
+    },
+  );
+
+  testWidgets(
     'import review summarizes every destination and offers each result',
     (tester) async {
       tester.view.devicePixelRatio = 1;

@@ -38,6 +38,22 @@ import '../widgets/privacy_mode_scope.dart';
 
 enum _LibraryFilter { all, favorites, word, sentence, weak, wrong }
 
+String _libraryFilterLabel(_LibraryFilter filter) => switch (filter) {
+  _LibraryFilter.all => '전체',
+  _LibraryFilter.favorites => '저장됨',
+  _LibraryFilter.word => '단어',
+  _LibraryFilter.sentence => '문장',
+  _LibraryFilter.weak => '취약',
+  _LibraryFilter.wrong => '최근 오답',
+};
+
+class _LibraryFilterSelection {
+  const _LibraryFilterSelection({required this.filter, required this.criteria});
+
+  final _LibraryFilter filter;
+  final LibrarySearchCriteria criteria;
+}
+
 enum _AddContentAction { quickWord, quickSentence, fullEditor, importFile }
 
 enum _DesktopItemAction { open, edit, group, study, export }
@@ -626,6 +642,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ],
           ],
         );
+        final filterCounts = <_LibraryFilter, int>{
+          _LibraryFilter.all: items.length,
+          _LibraryFilter.favorites: favoriteCount,
+          _LibraryFilter.word: items
+              .where((item) => item.kind == LearningItemKind.word)
+              .length,
+          _LibraryFilter.sentence: items
+              .where((item) => item.kind == LearningItemKind.sentence)
+              .length,
+          _LibraryFilter.weak: weakItems.length,
+          _LibraryFilter.wrong: recentWrongItems.length,
+        };
         final filters = SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -652,9 +680,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               const SizedBox(width: 7),
               _FilterChip(
                 label: '단어',
-                count: items
-                    .where((item) => item.kind == LearningItemKind.word)
-                    .length,
+                count: filterCounts[_LibraryFilter.word]!,
                 selected: _filter == _LibraryFilter.word,
                 onSelected: () => setState(() {
                   _filter = _LibraryFilter.word;
@@ -664,9 +690,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               const SizedBox(width: 7),
               _FilterChip(
                 label: '문장',
-                count: items
-                    .where((item) => item.kind == LearningItemKind.sentence)
-                    .length,
+                count: filterCounts[_LibraryFilter.sentence]!,
                 selected: _filter == _LibraryFilter.sentence,
                 onSelected: () => setState(() {
                   _filter = _LibraryFilter.sentence;
@@ -699,7 +723,44 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         if (compact) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [search, const SizedBox(height: 8), filters],
+            children: [
+              search,
+              const SizedBox(height: 8),
+              Row(
+                key: const Key('library-mobile-filter-summary'),
+                children: [
+                  Expanded(
+                    child: Badge(
+                      isLabelVisible: _advancedCriteria.facetCount > 0,
+                      label: Text('${_advancedCriteria.facetCount}'),
+                      child: OutlinedButton.icon(
+                        key: const Key('library-mobile-filter-button'),
+                        onPressed: () => _openMobileFilters(
+                          counts: filterCounts,
+                          partsOfSpeech: availablePartsOfSpeech,
+                          tags: availableTags,
+                          sources: availableSources,
+                        ),
+                        icon: const Icon(Icons.tune_rounded, size: 18),
+                        label: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '필터 · ${_libraryFilterLabel(_filter)} · ${filtered.length}개',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _LibraryViewModeControl(
+                    value: _searchPreferences.libraryViewMode,
+                    onChanged: _setLibraryViewMode,
+                  ),
+                ],
+              ),
+            ],
           );
         }
         return Row(
@@ -1412,13 +1473,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     required Set<String> tags,
     required Set<String> sources,
   }) async {
-    final result = await showModalBottomSheet<LibrarySearchCriteria>(
+    final result = await showModalBottomSheet<_LibraryFilterSelection>(
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (context) => _AdvancedLibraryFiltersSheet(
+        initialFilter: _filter,
         initialValue: _advancedCriteria,
+        filterCounts: const {},
+        showBaseFilters: false,
         partsOfSpeech: partsOfSpeech,
         tags: tags,
         sources: sources,
@@ -1426,7 +1490,36 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     );
     if (result == null || !mounted) return;
     setState(() {
-      _advancedCriteria = result;
+      _advancedCriteria = result.criteria;
+      _resultPage = 0;
+    });
+  }
+
+  Future<void> _openMobileFilters({
+    required Map<_LibraryFilter, int> counts,
+    required Set<PartOfSpeech> partsOfSpeech,
+    required Set<String> tags,
+    required Set<String> sources,
+  }) async {
+    final result = await showModalBottomSheet<_LibraryFilterSelection>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (context) => _AdvancedLibraryFiltersSheet(
+        initialFilter: _filter,
+        initialValue: _advancedCriteria,
+        filterCounts: counts,
+        showBaseFilters: true,
+        partsOfSpeech: partsOfSpeech,
+        tags: tags,
+        sources: sources,
+      ),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _filter = result.filter;
+      _advancedCriteria = result.criteria;
       _resultPage = 0;
     });
   }
@@ -2227,13 +2320,19 @@ class _BulkTagEdit {
 
 class _AdvancedLibraryFiltersSheet extends StatefulWidget {
   const _AdvancedLibraryFiltersSheet({
+    required this.initialFilter,
     required this.initialValue,
+    required this.filterCounts,
+    required this.showBaseFilters,
     required this.partsOfSpeech,
     required this.tags,
     required this.sources,
   });
 
+  final _LibraryFilter initialFilter;
   final LibrarySearchCriteria initialValue;
+  final Map<_LibraryFilter, int> filterCounts;
+  final bool showBaseFilters;
   final Set<PartOfSpeech> partsOfSpeech;
   final Set<String> tags;
   final Set<String> sources;
@@ -2245,6 +2344,7 @@ class _AdvancedLibraryFiltersSheet extends StatefulWidget {
 
 class _AdvancedLibraryFiltersSheetState
     extends State<_AdvancedLibraryFiltersSheet> {
+  late _LibraryFilter _filter;
   late Set<PartOfSpeech> _partsOfSpeech;
   late Set<String> _tags;
   late Set<String> _sources;
@@ -2254,6 +2354,7 @@ class _AdvancedLibraryFiltersSheetState
   @override
   void initState() {
     super.initState();
+    _filter = widget.initialFilter;
     _load(widget.initialValue);
   }
 
@@ -2293,8 +2394,12 @@ class _AdvancedLibraryFiltersSheetState
                 ),
                 TextButton(
                   key: const Key('reset-library-advanced-filters'),
-                  onPressed: () =>
-                      setState(() => _load(const LibrarySearchCriteria())),
+                  onPressed: () => setState(() {
+                    if (widget.showBaseFilters) {
+                      _filter = _LibraryFilter.all;
+                    }
+                    _load(const LibrarySearchCriteria());
+                  }),
                   child: const Text('초기화'),
                 ),
               ],
@@ -2303,6 +2408,30 @@ class _AdvancedLibraryFiltersSheetState
             Expanded(
               child: ListView(
                 children: [
+                  if (widget.showBaseFilters) ...[
+                    const _FilterSectionTitle(
+                      icon: Icons.filter_alt_outlined,
+                      title: '빠른 필터',
+                      helper: '자료 종류와 학습 상태를 한 번에 선택',
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 7,
+                      runSpacing: 7,
+                      children: [
+                        for (final filter in _LibraryFilter.values)
+                          FilterChip(
+                            key: Key('library-sheet-filter-${filter.name}'),
+                            label: Text(
+                              '${_libraryFilterLabel(filter)} ${widget.filterCounts[filter] ?? 0}',
+                            ),
+                            selected: _filter == filter,
+                            onSelected: (_) => setState(() => _filter = filter),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                  ],
                   DropdownButtonFormField<LibraryLearningStateFilter>(
                     key: const Key('library-learning-state-filter'),
                     initialValue: _learningState,
@@ -2423,12 +2552,15 @@ class _AdvancedLibraryFiltersSheetState
               key: const Key('apply-library-advanced-filters'),
               onPressed: () => Navigator.pop(
                 context,
-                LibrarySearchCriteria(
-                  partsOfSpeech: _partsOfSpeech,
-                  tags: _tags,
-                  sources: _sources,
-                  learningState: _learningState,
-                  sortOrder: _sortOrder,
+                _LibraryFilterSelection(
+                  filter: _filter,
+                  criteria: LibrarySearchCriteria(
+                    partsOfSpeech: _partsOfSpeech,
+                    tags: _tags,
+                    sources: _sources,
+                    learningState: _learningState,
+                    sortOrder: _sortOrder,
+                  ),
                 ),
               ),
               icon: const Icon(Icons.check_rounded),

@@ -1,5 +1,34 @@
 import 'language.dart';
 import 'learning_item.dart';
+import 'learning_item_codec.dart';
+
+class QuickContentBasketDraftEntry {
+  const QuickContentBasketDraftEntry({
+    required this.item,
+    required this.favorite,
+  });
+
+  factory QuickContentBasketDraftEntry.fromJson(Map<String, Object?> json) {
+    final rawItem = json['item'];
+    if (rawItem is! Map<Object?, Object?>) {
+      throw const FormatException('등록 바구니 항목에 학습 자료가 없습니다.');
+    }
+    return QuickContentBasketDraftEntry(
+      item: const LearningItemCodec().fromJson(
+        Map<String, Object?>.from(rawItem),
+      ),
+      favorite: json['favorite'] as bool? ?? false,
+    );
+  }
+
+  final LearningItem item;
+  final bool favorite;
+
+  Map<String, Object?> toJson() => {
+    'item': const LearningItemCodec().toJson(item),
+    'favorite': favorite,
+  };
+}
 
 /// Device-local recovery state for the quick content sheet.
 ///
@@ -22,6 +51,7 @@ class QuickContentDraft {
     required this.favorite,
     required this.priority,
     required this.updatedAt,
+    this.basket = const [],
   });
 
   factory QuickContentDraft.fromJson(Map<String, Object?> json) {
@@ -53,6 +83,21 @@ class QuickContentDraft {
         }
       }
     }
+    final basket = <QuickContentBasketDraftEntry>[];
+    if (json['basket'] case final List<Object?> rawBasket) {
+      for (final rawEntry in rawBasket.take(50)) {
+        if (rawEntry is! Map<Object?, Object?>) continue;
+        try {
+          basket.add(
+            QuickContentBasketDraftEntry.fromJson(
+              Map<String, Object?>.from(rawEntry),
+            ),
+          );
+        } on Object {
+          // Keep the remaining recoverable entries when one row is corrupt.
+        }
+      }
+    }
     return QuickContentDraft(
       subjectId: subjectId,
       kind: kind,
@@ -71,6 +116,7 @@ class QuickContentDraft {
       updatedAt:
           DateTime.tryParse(json['updatedAt'] as String? ?? '')?.toUtc() ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      basket: List.unmodifiable(basket),
     );
   }
 
@@ -89,6 +135,7 @@ class QuickContentDraft {
   final bool favorite;
   final int priority;
   final DateTime updatedAt;
+  final List<QuickContentBasketDraftEntry> basket;
 
   bool get hasContent =>
       text.trim().isNotEmpty ||
@@ -98,10 +145,11 @@ class QuickContentDraft {
       sentenceTokens.isNotEmpty ||
       example.trim().isNotEmpty ||
       exampleMeaning.trim().isNotEmpty ||
-      tags.isNotEmpty;
+      tags.isNotEmpty ||
+      basket.isNotEmpty;
 
   Map<String, Object?> toJson() => {
-    'version': 1,
+    'version': 2,
     'subjectId': subjectId,
     'kind': kind.name,
     'text': text,
@@ -119,6 +167,7 @@ class QuickContentDraft {
     'favorite': favorite,
     'priority': priority,
     'updatedAt': updatedAt.toUtc().toIso8601String(),
+    'basket': [for (final entry in basket) entry.toJson()],
   };
 }
 
