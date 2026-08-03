@@ -5,6 +5,8 @@ class AppConfig {
     required this.googleServerClientId,
     required this.appEnvironment,
     required this.mockMode,
+    this.googleDesktopClientSecret = '',
+    this.googleAppleClientId = '',
     this.appVersion = '개발 빌드',
     this.privacyPolicyUrl = '',
   });
@@ -12,6 +14,10 @@ class AppConfig {
   factory AppConfig.fromEnvironment() => const AppConfig(
     googleAndroidClientId: String.fromEnvironment('GOOGLE_ANDROID_CLIENT_ID'),
     googleDesktopClientId: String.fromEnvironment('GOOGLE_DESKTOP_CLIENT_ID'),
+    googleDesktopClientSecret: String.fromEnvironment(
+      'GOOGLE_DESKTOP_CLIENT_SECRET',
+    ),
+    googleAppleClientId: String.fromEnvironment('GOOGLE_APPLE_CLIENT_ID'),
     googleServerClientId: String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID'),
     appEnvironment: String.fromEnvironment(
       'APP_ENV',
@@ -27,13 +33,17 @@ class AppConfig {
 
   final String googleAndroidClientId;
   final String googleDesktopClientId;
+  final String googleDesktopClientSecret;
+  final String googleAppleClientId;
   final String googleServerClientId;
   final String appEnvironment;
   final bool mockMode;
   final String appVersion;
   final String privacyPolicyUrl;
 
-  bool get hasDesktopGoogleCredentials => googleDesktopClientId.isNotEmpty;
+  bool get hasDesktopGoogleCredentials =>
+      googleDesktopClientId.isNotEmpty && googleDesktopClientSecret.isNotEmpty;
   bool get hasAndroidGoogleCredentials =>
       googleAndroidClientId.isNotEmpty && googleServerClientId.isNotEmpty;
+  bool get hasAppleGoogleCredentials => googleAppleClientId.isNotEmpty;
 }

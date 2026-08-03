@@ -31,6 +31,8 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>GIDClientID</key>
+	<string>1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com</string>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
@@ -47,6 +49,16 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>sprache</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>Google Sign-In</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel</string>
 			</array>
 		</dict>
 	</array>

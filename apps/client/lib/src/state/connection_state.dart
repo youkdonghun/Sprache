@@ -1291,14 +1291,15 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     }
     if (error is GoogleOAuthException) {
       if (_isClientSecretConfigurationError(error)) {
-        return '등록된 Google OAuth Client ID가 Client Secret을 요구합니다. '
-            'Google Cloud에서 Windows용 OAuth 클라이언트를 “데스크톱 앱” 유형으로 새로 만들고 '
-            '그 Client ID로 앱을 다시 빌드해 주세요. Client Secret은 앱에 넣지 않습니다.';
+        return '이 Windows 빌드의 Google 토큰 교환 설정이 완전하지 않습니다. '
+            '로컬 학습 데이터는 그대로 유지되니 최신 Sprache 설치본으로 업데이트한 뒤 다시 연결해 주세요.';
       }
       return switch (error.code) {
         'google_client_id_missing' =>
           'Google Cloud의 Windows용 OAuth Client ID가 설정되지 않았습니다. '
               '“데스크톱 앱” 유형의 Client ID를 빌드 설정에 추가해 주세요.',
+        'google_client_secret_missing' =>
+          '이 Windows 빌드에 Google 토큰 교환 설정이 빠져 있습니다. 최신 설치본으로 업데이트해 주세요.',
         'google_oauth_timeout' ||
         'google_oauth_unreachable' ||
         'google_oauth_invalid_response' ||
@@ -1315,7 +1316,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         'access_denied' => 'Google 권한 동의가 취소되었습니다. 다시 연결해 권한을 허용해 주세요.',
         final String code when code.isNotEmpty =>
           'Google 인증에 실패했습니다. ($code'
-              '${error.description == null ? '' : ' · ${error.description}'})',
+              '${error.description == null ? '' : ' · ${_redactCredentialText(error.description!)}'})',
         _ => 'Google 인증에 실패했습니다. (HTTP ${error.statusCode})',
       };
     }
@@ -1421,7 +1422,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         'HTTP ${error.statusCode}',
         if (error.code != null && error.code!.isNotEmpty) error.code!,
         if (error.description != null && error.description!.isNotEmpty)
-          error.description!,
+          _redactCredentialText(error.description!),
       ];
       return _bounded(values.join(' · '));
     }
@@ -1444,6 +1445,18 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     return normalized.length <= 240
         ? normalized
         : '${normalized.substring(0, 237)}...';
+  }
+
+  String _redactCredentialText(String value) {
+    return value
+        .replaceAll(RegExp(r'GOCSPX-[A-Za-z0-9_-]+'), '[REDACTED]')
+        .replaceAllMapped(
+          RegExp(
+            r'(client[_ -]?secret(?:\s*(?:=|:)\s*|\s+))[^\s,;]+',
+            caseSensitive: false,
+          ),
+          (match) => '${match.group(1)}[REDACTED]',
+        );
   }
 
   bool _shouldRetry(Object error) {
@@ -1480,8 +1493,9 @@ class ConnectionController extends StateNotifier<ConnectionState> {
   }
 
   bool _isClientSecretConfigurationError(GoogleOAuthException error) {
-    return error.code == 'invalid_request' &&
-        (error.description ?? '').toLowerCase().contains('client_secret');
+    return error.code == 'google_client_secret_missing' ||
+        (error.code == 'invalid_request' &&
+            (error.description ?? '').toLowerCase().contains('client_secret'));
   }
 
   Duration? _minimumRetryDelay(Object error) {

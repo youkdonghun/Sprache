@@ -1,0 +1,41 @@
+{
+  "format": "sprache-release-spec-v2",
+  "version": "1.34.1",
+  "buildNumber": 59,
+  "releasePolicy": {
+    "windows": "REAL",
+    "android": "REAL",
+    "ios": "REAL",
+    "macos": "REAL"
+  },
+  "entries": [
+    {
+      "platform": "windows",
+      "mode": "REAL",
+      "verification": "RUNTIME",
+      "artifact": "Sprache-Windows-Setup-1.34.1-google-x64.exe",
+      "evidence": "runtime-windows.json"
+    },
+    {
+      "platform": "android",
+      "mode": "REAL",
+      "verification": "BUILD_ONLY",
+      "artifact": "Sprache-Android-1.34.1-google-debug-signed.apk",
+      "evidence": "build-android.json"
+    },
+    {
+      "platform": "ios",
+      "mode": "REAL",
+      "verification": "RUNTIME",
+      "artifact": "Sprache-iOS-Simulator-1.34.1-google-configured.zip",
+      "evidence": "runtime-ios.json"
+    },
+    {
+      "platform": "macos",
+      "mode": "REAL",
+      "verification": "RUNTIME",
+      "artifact": "Sprache-macOS-1.34.1-google-configured.zip",
+      "evidence": "runtime-macos.json"
+    }
+  ]
+}

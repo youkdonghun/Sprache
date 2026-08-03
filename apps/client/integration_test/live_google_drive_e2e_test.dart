@@ -37,6 +37,11 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
+      final reuseStoredSession =
+          Platform.environment['SPRACHE_LIVE_REUSE_SESSION'] == '1';
+      if (!reuseStoredSession) {
+        await container.read(tokenVaultProvider).clear();
+      }
 
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -50,15 +55,39 @@ void main() {
         timeout: const Duration(seconds: 30),
         failureMessage: '로컬 학습 데이터 초기화가 끝나지 않았습니다.',
       );
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      await tester.pump();
+      await _waitFor(
+        tester,
+        () => !container.read(connectionControllerProvider).busy,
+        timeout: const Duration(seconds: 30),
+        failureMessage: '시작 시 연결 복원 작업이 끝나지 않았습니다.',
+      );
 
       final config = container.read(appConfigProvider);
       _expectLiveWindowsConfig(config);
 
-      await container
-          .read(connectionControllerProvider.notifier)
-          .connect()
-          .timeout(const Duration(minutes: 22));
+      final connectionController = container.read(
+        connectionControllerProvider.notifier,
+      );
+      if (reuseStoredSession &&
+          container.read(connectionControllerProvider).phase !=
+              ConnectionPhase.connected) {
+        await connectionController.restoreSavedConnection().timeout(
+          const Duration(minutes: 2),
+        );
+      } else if (!reuseStoredSession) {
+        await connectionController.connect().timeout(
+          const Duration(minutes: 22),
+        );
+      }
       await tester.pump();
+      await _waitFor(
+        tester,
+        () => !container.read(connectionControllerProvider).busy,
+        timeout: const Duration(minutes: 2),
+        failureMessage: 'Google Drive connection did not settle after sign-in.',
+      );
 
       final connected = container.read(connectionControllerProvider);
       if (connected.phase == ConnectionPhase.failed) {
@@ -94,6 +123,12 @@ void main() {
           .syncNow()
           .timeout(const Duration(minutes: 2));
       await tester.pump();
+      await _waitFor(
+        tester,
+        () => !container.read(connectionControllerProvider).busy,
+        timeout: const Duration(minutes: 2),
+        failureMessage: 'Drive upload did not settle after the manual sync.',
+      );
 
       final synced = container.read(connectionControllerProvider);
       if (synced.phase == ConnectionPhase.failed) {
@@ -116,6 +151,11 @@ void main() {
 
 Future<bool> _launchChrome(Uri authorizationUri) async {
   final environment = Platform.environment;
+  final urlFile = environment['SPRACHE_LIVE_OAUTH_URL_FILE'];
+  if (urlFile != null && urlFile.isNotEmpty) {
+    await File(urlFile).writeAsString(authorizationUri.toString(), flush: true);
+    if (environment['SPRACHE_LIVE_OAUTH_FILE_ONLY'] == '1') return true;
+  }
   final candidates = [
     if (environment['LOCALAPPDATA'] case final localAppData?)
       '$localAppData\\Google\\Chrome\\Application\\chrome.exe',
@@ -136,7 +176,7 @@ Future<bool> _launchChrome(Uri authorizationUri) async {
       'Chrome 실행 파일을 찾을 수 없습니다. 확인한 경로: ${candidates.join(', ')}',
     );
   }
-  stdout.writeln('SPRACHE_LIVE_OAUTH_URL=$authorizationUri');
+  stdout.writeln('SPRACHE_LIVE_OAUTH_READY=true');
   await Process.start(chromePath, [
     authorizationUri.toString(),
   ], mode: ProcessStartMode.detached);
@@ -147,6 +187,7 @@ void _expectLiveWindowsConfig(AppConfig config) {
   expect(config.mockMode, isFalse);
   expect(config.appEnvironment, 'production');
   expect(config.googleDesktopClientId, isNotEmpty);
+  expect(config.googleDesktopClientSecret, isNotEmpty);
   expect(config.privacyPolicyUrl, startsWith('https://'));
 }
 

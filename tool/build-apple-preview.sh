@@ -21,8 +21,10 @@ fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 client_dir="$repo_root/apps/client"
-version="${SPRACHE_VERSION:-1.34.0}"
-build_number="${SPRACHE_BUILD_NUMBER:-58}"
+version="${SPRACHE_VERSION:-1.34.1}"
+build_number="${SPRACHE_BUILD_NUMBER:-59}"
+apple_client_id="${SPRACHE_GOOGLE_APPLE_CLIENT_ID:-1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com}"
+apple_reversed_client_id="com.googleusercontent.apps.${apple_client_id%.apps.googleusercontent.com}"
 artifact_dir="${SPRACHE_APPLE_ARTIFACT_DIR:-$repo_root/artifacts/apple-preview}"
 
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -31,6 +33,10 @@ if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 if [[ ! "$build_number" =~ ^[1-9][0-9]*$ ]]; then
   echo "SPRACHE_BUILD_NUMBER must be a positive integer: $build_number" >&2
+  exit 2
+fi
+if [[ ! "$apple_client_id" =~ ^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$ ]]; then
+  echo "SPRACHE_GOOGLE_APPLE_CLIENT_ID is not a Google OAuth client ID." >&2
   exit 2
 fi
 if [[ "$artifact_dir" != /* ]]; then
@@ -78,6 +84,75 @@ read_plist() {
   /usr/libexec/PlistBuddy -c "Print :$plist_key" "$plist_path"
 }
 
+assert_google_plist_configuration() {
+  local plist_path="$1"
+  python3 - "$plist_path" "$apple_client_id" "$apple_reversed_client_id" <<'PY'
+import pathlib
+import plistlib
+import sys
+
+path, client_id, reversed_client_id = sys.argv[1:]
+path = pathlib.Path(path)
+with path.open('rb') as source:
+    value = plistlib.load(source)
+
+assert value.get('GIDClientID') == client_id, (
+    f'{path}: GIDClientID does not match SPRACHE_GOOGLE_APPLE_CLIENT_ID'
+)
+url_types = value.get('CFBundleURLTypes')
+assert isinstance(url_types, list), f'{path}: CFBundleURLTypes is missing'
+schemes = [
+    scheme
+    for entry in url_types
+    if isinstance(entry, dict)
+    for scheme in entry.get('CFBundleURLSchemes', ())
+    if isinstance(scheme, str)
+]
+assert schemes.count('sprache') == 1, (
+    f'{path}: the Sprache inbound URL scheme must appear exactly once'
+)
+assert schemes.count(reversed_client_id) == 1, (
+    f'{path}: the reversed Google client URL scheme must appear exactly once'
+)
+PY
+}
+
+assert_macos_keychain_configuration() {
+  local entitlements_path="$1"
+  python3 - "$entitlements_path" <<'PY'
+import pathlib
+import plistlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+with path.open('rb') as source:
+    value = plistlib.load(source)
+assert value.get('keychain-access-groups') == [
+    '$(AppIdentifierPrefix)$(CFBundleIdentifier)'
+], f'{path}: Google Sign-In must use the app default Keychain access group'
+PY
+}
+
+assert_release_version() {
+  python3 - "$client_dir/pubspec.yaml" "$version" "$build_number" <<'PY'
+import pathlib
+import re
+import sys
+
+path, version, build_number = sys.argv[1:]
+match = re.search(
+    r'^version:\s*([^+\s]+)\+([0-9]+)\s*$',
+    pathlib.Path(path).read_text(encoding='utf-8'),
+    re.MULTILINE,
+)
+assert match, f'{path}: pubspec version is missing'
+assert match.group(1) == version and match.group(2) == build_number, (
+    f'{path}: expected {version}+{build_number}, found '
+    f'{match.group(1)}+{match.group(2)}'
+)
+PY
+}
+
 publish_runtime_evidence() {
   local evidence_path="$1"
   local platform="$2"
@@ -89,6 +164,7 @@ publish_runtime_evidence() {
     "$platform" \
     "$version" \
     "$build_number" \
+    "$apple_client_id" \
     "$probe" \
     "$artifact_dir/$output_json_name" \
     "$artifact_dir/$output_frame_name" <<'PY'
@@ -103,6 +179,7 @@ import sys
     platform,
     version,
     build_number,
+    apple_client_id,
     probe,
     output_json_path,
     output_frame_path,
@@ -113,7 +190,7 @@ output_frame_path = pathlib.Path(output_frame_path)
 value = json.loads(path.read_text())
 assert value['format'] == 'sprache-runtime-evidence-v1'
 assert value['platform'] == platform
-assert value['mode'] == 'MOCK'
+assert value['mode'] == 'REAL'
 assert value['version'] == version
 assert value['buildNumber'] == int(build_number)
 assert value['launched'] is True
@@ -128,6 +205,16 @@ assert frame_bytes.startswith(b'\x89PNG\r\n\x1a\n')
 assert hashlib.sha256(frame_bytes).hexdigest() == value['frameSha256']
 output_frame_path.write_bytes(frame_bytes)
 value['frameFile'] = output_frame_path.name
+value['googleOAuthConfigured'] = True
+value['googleOAuthRuntimeVerified'] = False
+value['googleOAuthClientId'] = apple_client_id
+value['appleDistributionSigningVerified'] = False
+value['signing'] = 'SIMULATOR' if platform == 'ios' else 'AD_HOC'
+value['limitation'] = (
+    'IOS_SIMULATOR_ONLY_NO_APPLE_DISTRIBUTION_SIGNING_OR_LIVE_GOOGLE_AUTH'
+    if platform == 'ios'
+    else 'MACOS_ADHOC_ONLY_NO_APPLE_DISTRIBUTION_SIGNING_OR_LIVE_GOOGLE_AUTH'
+)
 output_json_path.write_text(
     json.dumps(value, ensure_ascii=False, separators=(',', ':')) + '\n'
 )
@@ -135,15 +222,22 @@ PY
 }
 
 common_defines=(
-  "--dart-define=APP_ENV=ci"
-  "--dart-define=ENABLE_MOCK_MODE=true"
+  "--dart-define=APP_ENV=production"
+  "--dart-define=ENABLE_MOCK_MODE=false"
   "--dart-define=APP_VERSION=$version"
+  "--dart-define=GOOGLE_APPLE_CLIENT_ID=$apple_client_id"
   "--dart-define=ENABLE_RELEASE_PROBE=true"
-  "--dart-define=RELEASE_PROBE_MODE=MOCK"
+  "--dart-define=RELEASE_PROBE_MODE=REAL"
   "--dart-define=RELEASE_BUILD_NUMBER=$build_number"
 )
 
-echo "Building Sprache Apple previews $version+$build_number"
+assert_release_version
+assert_google_plist_configuration "$client_dir/ios/Runner/Info.plist"
+assert_google_plist_configuration "$client_dir/macos/Runner/Info.plist"
+assert_macos_keychain_configuration "$client_dir/macos/Runner/DebugProfile.entitlements"
+assert_macos_keychain_configuration "$client_dir/macos/Runner/Release.entitlements"
+
+echo "Building Sprache Google-configured Apple previews $version+$build_number"
 cd "$client_dir"
 flutter pub get
 
@@ -161,7 +255,7 @@ test "$(read_plist "$ios_plist" CFBundleName)" = "Sprache"
 test "$(read_plist "$ios_plist" MinimumOSVersion)" = "13.0"
 test "$(read_plist "$ios_plist" CFBundleShortVersionString)" = "$version"
 test "$(read_plist "$ios_plist" CFBundleVersion)" = "$build_number"
-test "$(read_plist "$ios_plist" 'CFBundleURLTypes:0:CFBundleURLSchemes:0')" = "sprache"
+assert_google_plist_configuration "$ios_plist"
 read_plist "$ios_plist" 'CFBundleDocumentTypes:0:LSItemContentTypes' |
   grep -q 'com.youkdonghun.sprache.json-lines'
 
@@ -255,7 +349,7 @@ publish_runtime_evidence \
 xcrun simctl io "$ios_device_id" screenshot \
   "$artifact_dir/runtime-ios-simulator-screenshot.png"
 
-ios_artifact_name="Sprache-iOS-Simulator-$version-mock.zip"
+ios_artifact_name="Sprache-iOS-Simulator-$version-google-configured.zip"
 ditto -c -k --sequesterRsrc --keepParent \
   "$ios_app" "$work_dir/$ios_artifact_name"
 mv -f "$work_dir/$ios_artifact_name" "$artifact_dir/$ios_artifact_name"
@@ -281,17 +375,26 @@ test -d "$macos_app"
 test -x "$macos_app/Contents/MacOS/Sprache"
 test -f "$macos_plist"
 cp "$client_dir/macos/Runner/Release.entitlements" "$ci_entitlements"
+# This preview is intentionally ad-hoc signed. An Apple-issued certificate and
+# provisioning profile are required before the production Keychain entitlement
+# can be retained and Google authentication can be verified on a real device.
 /usr/libexec/PlistBuddy -c 'Delete :keychain-access-groups' \
   "$ci_entitlements" 2>/dev/null || true
+if /usr/libexec/PlistBuddy -c 'Print :keychain-access-groups' \
+  "$ci_entitlements" >/dev/null 2>&1; then
+  echo "Ad-hoc macOS preview must not claim a production Keychain group." >&2
+  exit 2
+fi
 codesign --force --deep --sign - "$macos_app"
 codesign --force --sign - --entitlements "$ci_entitlements" "$macos_app"
 codesign --verify --deep --strict --verbose=2 "$macos_app"
+codesign -dv --verbose=4 "$macos_app" 2>&1 | grep -q 'Signature=adhoc'
 test "$(read_plist "$macos_plist" CFBundleIdentifier)" = "com.youkdonghun.sprache"
 test "$(read_plist "$macos_plist" CFBundleName)" = "Sprache"
 test "$(read_plist "$macos_plist" LSMinimumSystemVersion)" = "12.0"
 test "$(read_plist "$macos_plist" CFBundleShortVersionString)" = "$version"
 test "$(read_plist "$macos_plist" CFBundleVersion)" = "$build_number"
-test "$(read_plist "$macos_plist" 'CFBundleURLTypes:0:CFBundleURLSchemes:0')" = "sprache"
+assert_google_plist_configuration "$macos_plist"
 read_plist "$macos_plist" 'CFBundleDocumentTypes:0:LSItemContentTypes' |
   grep -q 'com.youkdonghun.sprache.json-lines'
 
@@ -323,7 +426,7 @@ publish_runtime_evidence \
   "$macos_marker" macos native-runtime \
   runtime-macos.json runtime-macos-first-frame.png
 
-macos_artifact_name="Sprache-macOS-$version-mock.zip"
+macos_artifact_name="Sprache-macOS-$version-google-configured.zip"
 ditto -c -k --sequesterRsrc --keepParent \
   "$macos_app" "$work_dir/$macos_artifact_name"
 mv -f "$work_dir/$macos_artifact_name" "$artifact_dir/$macos_artifact_name"

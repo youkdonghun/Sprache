@@ -6,10 +6,13 @@ iOS Simulator가 설치된 macOS 실행 환경이다. 이 저장소는 Codemagic
 
 ## 산출물 범위
 
-- `Sprache-iOS-Simulator-1.32.0-mock.zip`: iOS Simulator 전용 앱이며 IPA가 아니다.
-- `Sprache-macOS-1.32.0-mock.zip`: ad-hoc 서명된 미리보기 앱이며 공증 배포본이 아니다.
-- 두 앱 모두 실제 Local-First 학습 UI와 로컬 저장소를 사용한다. `MOCK` 표시는 현재
-  Apple 플랫폼에서 Google 로그인·Drive 연결을 제공하지 않는다는 뜻이다.
+- `Sprache-iOS-Simulator-1.34.1-google-configured.zip`: iOS Simulator 전용
+  REAL-configured 앱이며 IPA가 아니다.
+- `Sprache-macOS-1.34.1-google-configured.zip`: ad-hoc 서명된 REAL-configured
+  미리보기 앱이며 공증 배포본이 아니다.
+- 두 앱 모두 Local-First 학습 UI, 로컬 저장소와 iOS-type Google OAuth metadata를
+  포함한다. 첫 프레임 검증은 계정 선택이나 Drive 왕복을 수행하지 않으므로
+  `googleOAuthRuntimeVerified=false`를 evidence에 기록한다.
 - iPhone 설치용 IPA에는 Apple Developer 인증서와 provisioning profile이 필요하다.
 - 일반 배포용 macOS 앱에는 Developer ID 서명과 Apple 공증이 필요하다.
 
@@ -25,8 +28,9 @@ iOS Simulator가 설치된 macOS 실행 환경이다. 이 저장소는 Codemagic
 4. macOS 앱을 실제 실행하고 첫 프레임 증거를 수집한다.
 5. 두 `.app` 번들을 `ditto` ZIP과 SHA-256 파일로 패키징한다.
 
-현재 미리보기 범위에는 Apple 비밀값이 없으므로 Codemagic 환경변수에 인증서나
-토큰을 추가하지 않는다. 저장소 연결 권한 외에는 별도 비밀값이 필요하지 않다.
+Apple Client ID는 공개 식별자로 스크립트의 `GOOGLE_APPLE_CLIENT_ID` define에
+전달한다. Codemagic 환경변수에 Apple 인증서, provisioning profile, OAuth 토큰
+또는 사용자 계정을 추가하지 않는다.
 
 ## 격리된 전용 Mac
 
@@ -38,6 +42,11 @@ macOS 계정에서는 실행하지 않는다. Flutter 3.44.8, Xcode, CocoaPods�
 ```bash
 SPRACHE_ALLOW_ISOLATED_APPLE_RUNTIME=1 bash tool/build-apple-preview.sh
 ```
+
+스크립트의 기본 Apple client는
+`1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com`이다.
+다른 Google Cloud 프로젝트를 검증할 때만 `SPRACHE_GOOGLE_APPLE_CLIENT_ID`로
+공개 Client ID를 바꾼다.
 
 기본 출력은 `artifacts/apple-preview`에 생성된다. 버전과 출력 위치를 바꿀 때는
 `SPRACHE_VERSION`, `SPRACHE_BUILD_NUMBER`, `SPRACHE_APPLE_ARTIFACT_DIR`을 사용한다.

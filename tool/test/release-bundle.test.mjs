@@ -13,8 +13,8 @@ import {
 const policy = {
   windows: 'REAL',
   android: 'REAL',
-  ios: 'MOCK',
-  macos: 'MOCK',
+  ios: 'REAL',
+  macos: 'REAL',
 };
 const currentRelease = await readCurrentRelease();
 
@@ -181,6 +181,38 @@ test('does not let another platform or a mismatched spec opt into BUILD_ONLY', a
   );
 });
 
+test('rejects Apple preview evidence that claims live OAuth or omits its limitation', async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'sprache-release-apple-oauth-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const entries = await writeBundleInputs(root);
+  const ios = entries.find((entry) => entry.platform === 'ios');
+  const original = JSON.parse(
+    await readFile(path.join(root, ios.evidence), 'utf8'),
+  );
+  const specPath = path.join(root, 'release-spec.json');
+
+  for (const mutate of [
+    (value) => { value.googleOAuthConfigured = false; },
+    (value) => { value.googleOAuthRuntimeVerified = true; },
+    (value) => { value.googleOAuthClientId = 'wrong.apps.googleusercontent.com'; },
+    (value) => { value.appleDistributionSigningVerified = true; },
+    (value) => { value.signing = 'DISTRIBUTION'; },
+    (value) => { value.limitation = ''; },
+  ]) {
+    const evidence = structuredClone(original);
+    mutate(evidence);
+    await writeJson(path.join(root, ios.evidence), evidence);
+    await writeJson(specPath, {
+      format: 'sprache-release-spec-v2',
+      version: currentRelease.version,
+      buildNumber: currentRelease.buildNumber,
+      releasePolicy: policy,
+      entries,
+    });
+    await assert.rejects(createReleaseManifest({ specPath }));
+  }
+});
+
 async function writeBundleInputs(root) {
   const definitions = [
     [
@@ -197,15 +229,15 @@ async function writeBundleInputs(root) {
     ],
     [
       'ios',
-      'MOCK',
+      'REAL',
       'RUNTIME',
-      `Sprache-iOS-Simulator-${currentRelease.version}-mock.zip`,
+      `Sprache-iOS-Simulator-${currentRelease.version}-google-configured.zip`,
     ],
     [
       'macos',
-      'MOCK',
+      'REAL',
       'RUNTIME',
-      `Sprache-macOS-${currentRelease.version}-mock.zip`,
+      `Sprache-macOS-${currentRelease.version}-google-configured.zip`,
     ],
   ];
   const entries = [];
@@ -221,14 +253,26 @@ async function writeBundleInputs(root) {
       checkedAt: '2026-08-03T06:00:00.000Z',
     };
     if (verification === 'RUNTIME') {
-      await writeJson(path.join(root, evidence), {
+      const runtimeEvidence = {
         format: 'sprache-runtime-evidence-v1',
         ...common,
         launched: true,
         firstFrameRendered: true,
         firstFrameMillis: 731,
         probe: platform === 'windows' ? 'native-runtime' : 'flutter-first-frame',
-      });
+      };
+      if (platform === 'ios' || platform === 'macos') {
+        runtimeEvidence.googleOAuthConfigured = true;
+        runtimeEvidence.googleOAuthRuntimeVerified = false;
+        runtimeEvidence.googleOAuthClientId =
+          '1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com';
+        runtimeEvidence.appleDistributionSigningVerified = false;
+        runtimeEvidence.signing = platform === 'ios' ? 'SIMULATOR' : 'AD_HOC';
+        runtimeEvidence.limitation = platform === 'ios'
+          ? 'IOS_SIMULATOR_ONLY_NO_APPLE_DISTRIBUTION_SIGNING_OR_LIVE_GOOGLE_AUTH'
+          : 'MACOS_ADHOC_ONLY_NO_APPLE_DISTRIBUTION_SIGNING_OR_LIVE_GOOGLE_AUTH';
+      }
+      await writeJson(path.join(root, evidence), runtimeEvidence);
     } else {
       await writeJson(path.join(root, evidence), {
         format: 'sprache-build-evidence-v1',

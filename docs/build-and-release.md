@@ -34,21 +34,26 @@ Mock 빌드는 CI 회귀 검증용이며 최종 사용자 전달 폴더에서는
 ## Google 실제 연결 릴리스
 
 플랫폼별 Google OAuth client ID와 공개 개인정보처리방침 URL을 적용하고 Mock
-Mode를 끈다. Windows는 Client Secret이나 중계 서버 없이 PKCE로 Google 토큰
-엔드포인트에 직접 연결한다.
+Mode를 끈다. Windows는 Railway 중계 없이 PKCE와 Google이 발급한 Desktop
+credential로 Google 토큰 엔드포인트에 직접 연결한다. 실제 값은 저장소나 명령
+인수에 넣지 않고 현재 프로세스 환경에만 설정한다.
 
 ```powershell
+$env:SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET = '<local-secret>'
 npm run build:real
 ```
+
+변수가 없으면 Windows 컴파일 전에 명확히 중단한다. 스크립트는 값 자체를
+출력하거나 파일·manifest에 복사하지 않는다.
 
 플랫폼 하나만 다시 만들 때는 `npm run build:real:android` 또는 `npm run build:real:windows`를 사용한다.
 
 출력:
 
-- Android: `artifacts/Sprache-Android-1.32.0-google-debug-signed.apk`
-- Windows 설치본: `artifacts/Sprache-Windows-Setup-1.32.0-google-x64.exe`
-- Windows 포터블: `artifacts/Sprache-Windows-1.32.0-google-x64.zip`
-- SHA-256: `artifacts/SHA256SUMS-1.32.0-google.txt`
+- Android: `artifacts/Sprache-Android-1.34.1-google-debug-signed.apk`
+- Windows 설치본: `artifacts/Sprache-Windows-Setup-1.34.1-google-x64.exe`
+- Windows 포터블: `artifacts/Sprache-Windows-1.34.1-google-x64.zip`
+- SHA-256: `artifacts/SHA256SUMS-1.34.1-google.txt`
 
 Android 파일은 실제 Google 연결이 켜져 있지만 현재 로컬 debug 인증서로 서명된다. Play 배포본은 release keystore와 Play App Signing 지문용 Android OAuth 클라이언트를 별도로 사용해야 한다.
 
@@ -70,23 +75,25 @@ npm run test:installer
 ## iOS Simulator·macOS 미리보기 산출물
 
 Apple 산출물은 Xcode가 있는 macOS 실행 환경에서 만든다. 기본 경로는 루트의
-`codemagic.yaml`에 정의된 Codemagic `apple-preview` 워크플로이며, GitHub
-`macos-latest`의 `ios-simulator`·`macos-release` 작업도 대체 경로로 유지한다.
-Codemagic은 `tool/build-apple-preview.sh`를 실행해 pubspec의 `1.32.0+56`,
+`codemagic.yaml`에 정의된 Codemagic `apple-preview` 워크플로다.
+Codemagic은 `tool/build-apple-preview.sh`를 실행해 pubspec의 `1.34.1+59`,
 Bundle ID, 최소 OS와 실행 파일을 확인한다. 이어서 앱을 실제로 실행하고 Flutter
 첫 프레임 뒤 생성되는 CI 전용 evidence와 대응 PNG를 검증한 후 다음 이름으로
 업로드한다.
 
-- `Sprache-iOS-Simulator-1.32.0-mock.zip`
-- `Sprache-macOS-1.32.0-mock.zip`
+- `Sprache-iOS-Simulator-1.34.1-google-configured.zip`
+- `Sprache-macOS-1.34.1-google-configured.zip`
 - `runtime-ios.json`, `runtime-ios-first-frame.png`
 - `runtime-ios-simulator-screenshot.png`
 - `runtime-macos.json`, `runtime-macos-first-frame.png`
 
-둘 다 운영 Google Drive 자격 증명을 포함하지 않는 `MOCK` 산출물이다. iOS ZIP은
-Simulator 전용이며 IPA가 아니다. macOS ZIP은 unsigned/ad-hoc 상태이며 공증된
-배포 앱이 아니다. Apple Developer 인증서와 provisioning profile을 저장소에
-추가하지 않는다. 자세한 범위는
+둘 다 `ENABLE_MOCK_MODE=false`, `mode=REAL`과 iOS-type Client ID·callback scheme을
+검사한 configured preview다. 자동 검증은 앱 실행과 첫 프레임까지만 수행하며
+실계정 Google 로그인·Drive 왕복은 수행하지 않는다. evidence는
+`googleOAuthConfigured=true`, `googleOAuthRuntimeVerified=false`와 서명 제한을
+함께 기록한다. iOS ZIP은 Simulator 전용이며 IPA가 아니다. macOS ZIP은
+unsigned/ad-hoc 상태이며 공증된 배포 앱이 아니다. Apple Developer 인증서와
+provisioning profile을 저장소에 추가하지 않는다. 자세한 범위는
 [`ios-platform-readiness.md`](ios-platform-readiness.md)를 따른다. GitHub Actions
 없이 생성하는 절차와 격리 실행 규칙은
 [`apple-build-without-github-actions.md`](apple-build-without-github-actions.md)에 있다.
@@ -125,6 +132,7 @@ SPRACHE_WINDOWS_SIGNING_THUMBPRINT=<코드서명 인증서 SHA-1 thumbprint>
 
 ```powershell
 $env:SPRACHE_PRIVACY_POLICY_URL = 'https://소유도메인/privacy'
+$env:SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET = '<local-secret>'
 npm run build:release-gated
 ```
 
@@ -146,16 +154,20 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 
 - 체크섬 파일의 모든 항목과 실제 SHA-256 일치
 - Android 패키지·버전 코드·v2 서명·Debug/Release 파일명 일치
-- Android 3개 ABI와 Windows `app.so`의 앱 버전·실연결 설정
-- 구형 API 주소, `API_BASE_URL`과 Desktop Client Secret 변수명 부재
+- Android 3개 ABI, 등록된 Android·Web audience ID와 Google Cloud에 등록한
+  서명 SHA-1 일치
+- Windows `app.so`의 앱 버전, 새 Desktop Client ID와 현재 프로세스에서 받은
+  OAuth credential 포함 여부. 값 자체는 출력하지 않음
+- 구형 API 주소와 `API_BASE_URL` 부재
 - Windows ZIP의 EXE·Flutter data·Excel 템플릿
 - 설치 EXE 제품 버전과 선택적 Authenticode 강제
 - 선택 시 설치→실행→제거와 HKCU 제거 레지스트리 정리
 
-## 1.32.0 네 플랫폼 번들 manifest
+## 1.34.1 네 플랫폼 번들 manifest
 
-Windows·Android 실제 연결 산출물과 CI에서 받은 Apple `MOCK` ZIP을 같은 최종
-폴더에 모은다. `packaging/release-bundle-spec-1.32.0.json`에 기록된 파일명과
+Windows·Android 실제 연결 산출물과 Codemagic에서 받은 Apple REAL-configured
+preview ZIP을 같은 최종 폴더에 모은다.
+`packaging/release-bundle-spec-1.34.1.json`에 기록된 파일명과
 일치해야 한다. Windows·iOS·macOS는 실제 실행과 첫 프레임을 확인한
 `runtime-windows.json`, `runtime-ios.json`, `runtime-macos.json`을 사용한다.
 Android는 빌드·v2 서명·패키지·버전·ABI를 APK 해시와 결속한
@@ -169,25 +181,25 @@ Windows evidence는 `npm run capture:runtime:windows -- ...`로 수집한다. �
 
 ```powershell
 npm run create:release-bundle -- `
-  --spec packaging/release-bundle-spec-1.32.0.json `
+  --spec packaging/release-bundle-spec-1.34.1.json `
   --root <최종-산출물-폴더> `
-  --out <최종-산출물-폴더>\release-manifest-1.32.0.json
+  --out <최종-산출물-폴더>\release-manifest-1.34.1.json
 
 npm run verify:release-bundle -- `
-  --manifest <최종-산출물-폴더>\release-manifest-1.32.0.json `
+  --manifest <최종-산출물-폴더>\release-manifest-1.34.1.json `
   --root <최종-산출물-폴더>
 ```
 
 manifest는 네 산출물과 네 evidence의 SHA-256 및 바이트 길이를 봉인한다. 생성 후
 파일을 교체하거나 evidence를 수정하면 재검증이 실패한다. 상세 형식과 합격 조건은
-[`release-quality-gates-1.32.0.md`](release-quality-gates-1.32.0.md)에 있다.
+[`release-quality-gates-1.34.1.md`](release-quality-gates-1.34.1.md)에 있다.
 
 구버전 산출물 정리는 네 플랫폼 manifest 재검증까지 통과한 뒤에만 실행한다.
 manifest 경로를 생략하면 안전하게 중단하며 학습 DB와 복구 백업은 대상이 아니다.
 
 ```powershell
 npm run verify:release:promote -- `
-  -ReleaseBundleManifest <최종-산출물-폴더>\release-manifest-1.32.0.json
+  -ReleaseBundleManifest <최종-산출물-폴더>\release-manifest-1.34.1.json
 ```
 
 ## Windows 실제 크기와 엔진 UI 검증
@@ -284,6 +296,8 @@ Android APK는 이전 버전 위에 업그레이드 설치해 기존 학습 세�
 - 실제 Google 계정으로 Windows·Android 로그인과 Drive 양방향 복원 테스트
 - Windows 최소 크기 `380×520`, 일반·확장 크기 조절 테스트
 - Windows 영어 음성 인식과 비영어 코스의 따라 읽기 대체 흐름 테스트
-- Windows 직접 PKCE 토큰 교환과 refresh, 민감값 로그 미노출 확인
+- Windows Desktop credential + PKCE 토큰 교환과 refresh, 민감값 로그 미노출 확인
+- Apple configured preview의 Client ID·callback scheme·REAL 모드 확인과
+  `googleOAuthRuntimeVerified=false` 제한 표시
 - Mock Mode가 production 산출물에서 꺼졌는지 확인
 - `npm run build:release-gated`와 정식 서명 강제 `verify-release.ps1` 통과

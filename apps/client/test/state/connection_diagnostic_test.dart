@@ -226,7 +226,7 @@ void main() {
     app.dispose();
   });
 
-  test('web OAuth client mistake explains the desktop client fix', () async {
+  test('desktop OAuth client secret failure stays sanitized', () async {
     final app = AppController(MemoryStudyStore());
     await Future<void>.delayed(Duration.zero);
     final controller = ConnectionController(_ClientSecretFailureService(), app);
@@ -235,8 +235,9 @@ void main() {
 
     final diagnostic = controller.state.diagnostic;
     expect(diagnostic?.code, 'GOOGLE-TOKEN-EXCHANGE-400-INVALID-REQUEST');
-    expect(diagnostic?.message, contains('“데스크톱 앱” 유형'));
-    expect(diagnostic?.message, contains('Client Secret은 앱에 넣지 않습니다'));
+    expect(diagnostic?.message, contains('Google 토큰 교환 설정'));
+    expect(diagnostic?.message, isNot(contains('desktop-client-secret')));
+    expect(diagnostic?.clipboardText, isNot(contains('desktop-client-secret')));
     expect(diagnostic?.retryable, isFalse);
     expect(diagnostic?.reconnectRequired, isTrue);
     expect(diagnostic?.stageLabel, '1/4 Google 계정 선택·동의');
@@ -607,7 +608,7 @@ class _ClientSecretFailureService implements GoogleConnectionService {
       operation: 'Google token exchange',
       statusCode: 400,
       code: 'invalid_request',
-      description: 'client_secret is missing.',
+      description: 'client_secret desktop-client-secret is invalid.',
     );
   }
 

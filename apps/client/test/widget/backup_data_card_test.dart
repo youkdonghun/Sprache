@@ -53,6 +53,8 @@ void main() {
               const AppConfig(
                 googleAndroidClientId: 'android-client-id',
                 googleDesktopClientId: 'desktop-client-id',
+                googleDesktopClientSecret: 'desktop-client-secret',
+                googleAppleClientId: 'apple-client-id',
                 googleServerClientId: 'server-client-id',
                 appEnvironment: 'test',
                 mockMode: false,

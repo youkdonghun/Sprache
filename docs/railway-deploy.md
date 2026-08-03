@@ -10,7 +10,8 @@
 
 Railway 서비스를 중단하기 전에 다음 조건을 모두 확인한다.
 
-1. Windows가 client secret 없이 PKCE 직접 토큰 교환과 refresh를 완료한다.
+1. Windows가 로컬 빌드 환경의 Desktop credential과 PKCE로 직접 토큰 교환과
+   refresh를 완료하며 Railway token broker를 호출하지 않는다.
 2. Android가 중앙 ID token 검증 없이 Drive 권한과 동기화를 완료한다.
 3. 새 기기가 같은 계정의 `appDataFolder` 포인터로 `WordStudyData`를 찾아
    복원한다.
@@ -29,8 +30,8 @@ Railway 서비스를 중단하기 전에 다음 조건을 모두 확인한다.
    재발견과 `appDataFolder` 포인터 생성을 검증한다.
 3. Railway API로 향하는 새 클라이언트 요청이 없음을 로그의 요청 수와 로컬
    네트워크 검사로 확인한다.
-4. Google Cloud에서 서버 audience 전용 Web client와 desktop client secret이
-   더는 쓰이지 않는지 확인한 뒤 폐기한다.
+4. Android server audience용 Web client는 유지하고, 구형 Windows credential은
+   새 Desktop client의 실계정 검증 뒤 폐기한다.
 5. Railway의 `GOOGLE_DESKTOP_CLIENT_SECRET`, `USER_KEY_HMAC_SECRET`,
    `DATABASE_URL`과 기타 변수를 폐기하고 API·PostgreSQL 서비스를 중단한다.
 6. 필요한 감사 기록만 비밀값 없이 보존한 뒤 프로젝트 삭제 여부를 결정한다.
@@ -71,14 +72,15 @@ URL로 보내는 호환 페이지다. 새 링크와 OAuth 브랜딩에는 direct
 - 세 canonical URL이 HTTP 200이고 로그인·JavaScript 없이 본문이 보인다.
 - 홈페이지 → 개인정보처리방침·약관 → 홈페이지 링크가 `/Sprache/` 밖으로
   벗어나지 않는다.
-- 새 앱 빌드와 공개 정적 페이지에 운영 Railway endpoint, client secret 또는 실제
-  토큰이 없다. 과거 검증 기록의 endpoint는 이관 이력으로만 남긴다.
+- 새 앱 빌드와 공개 정적 페이지에 운영 Railway endpoint 또는 실제 토큰이 없다.
+  Windows credential 값은 공개 페이지·저장소·로그에 기록하지 않는다. 과거 검증
+  기록의 endpoint는 이관 이력으로만 남긴다.
 - 정적 페이지에 폼, 쿠키, 분석 스크립트와 OAuth callback 처리 코드가 없다.
 - 모바일 폭, 큰 글자와 라이트·다크 모드에서 읽을 수 있다.
 
 ## 롤백 원칙
 
 Pages 장애는 앱의 로컬 학습이나 Drive 동기화 경로와 분리한다. OAuth 공개 문서
-문제를 고치기 위해 client secret을 앱에 넣거나 Railway broker를 임시 복원하지
-않는다. 직접 OAuth 또는 Drive migration에 문제가 있으면 Google 연결만 안전하게
+문제를 고치기 위해 Railway broker를 임시 복원하지 않는다. 직접 OAuth 또는
+Drive migration에 문제가 있으면 Google 연결만 안전하게
 중지하고 SQLite와 업로드 대기열을 보존한 채 수정 버전을 배포한다.

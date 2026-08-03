@@ -11,9 +11,10 @@ Flutter Android / Windows
   ├─ 로컬 보관 어댑터
   │   ├─ Windows 파일시스템
   │   └─ Android Storage Access Framework
-  ├─ Google OAuth 공개 클라이언트
-  │   ├─ Windows: 시스템 브라우저 + loopback + PKCE
-  │   └─ Android: Google Identity 네이티브 흐름
+  ├─ Google OAuth 플랫폼 클라이언트
+  │   ├─ Windows: 시스템 브라우저 + loopback + PKCE + Desktop credential
+  │   ├─ Android: Google Identity 네이티브 흐름
+  │   └─ iOS·macOS: iOS-type client + 플랫폼 callback scheme
   └─ OS 보안 저장소
           │
           ├── 사용자 지정 로컬 Sprache 폴더: 백업·미러
@@ -56,11 +57,15 @@ manifest와 복원 충돌 규칙은 [로컬 저장과 저장 대상 전환](loca
 Windows는 시스템 브라우저의 `127.0.0.1` 동적 loopback callback과 매 요청마다
 새로 만든 PKCE `S256` verifier/challenge, 무작위 `state`를 사용한다. 받은
 인증 코드는 앱이 Google의 `https://oauth2.googleapis.com/token`으로 직접
-교환한다. 데스크톱 앱은 비밀을 안전하게 보관할 수 없는 공개 클라이언트이므로
-client secret을 EXE, 저장소, 빌드 변수 또는 별도 서버에 두지 않는다.
+교환한다. 현재 Google Desktop credential은 client secret을 요구하므로 빌드와
+실계정 E2E 프로세스의 `SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET` 환경에서만 값을
+읽어 Dart define으로 전달한다. 저장소, 스크립트 매개변수, manifest나 로그에는
+값을 기록하지 않는다. 데스크톱 앱은 비밀을 안전하게 보관할 수 없는 공개
+클라이언트이므로 이 값의 기밀성에 사용자 데이터 보호를 의존하지 않는다.
 
 Android는 같은 Google Cloud 프로젝트의 Android OAuth 클라이언트와 Google
-Identity 네이티브 흐름을 사용한다. 두 플랫폼의 client ID는 공개 식별자지만,
+Identity 네이티브 흐름을 사용한다. iOS와 macOS는 같은 iOS-type client ID와
+플랫폼 callback scheme을 사용한다. 플랫폼 client ID는 공개 식별자지만,
 토큰과 PKCE verifier는 로그에 남기지 않는다. refresh/access token과 계정 연결
 메타데이터는 OS 보안 저장소에만 저장하며 연결 해제 시 이 기기의 자격 증명을
 제거한다.
