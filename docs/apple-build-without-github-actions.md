@@ -53,3 +53,39 @@ SPRACHE_ALLOW_ISOLATED_APPLE_RUNTIME=1 bash tool/build-apple-preview.sh
 스크립트는 macOS가 아니거나 필수 Apple 도구가 없거나 실행 환경이 격리됐다는 명시적
 확인이 없으면 산출물을 가장하지 않고 즉시 중단한다. iOS에는 기존 Simulator를
 재사용하지 않고 전용 임시 Simulator를 생성하며 작업 후 삭제한다.
+
+## 아이폰 직접 설치용 IPA
+
+`codemagic.yaml`의 `ios-direct-install` 워크플로는 시뮬레이터 ZIP이나
+TestFlight용 파일이 아니라 Apple Distribution 인증서와 Ad Hoc 프로비저닝
+프로파일로 서명된 IPA를 만든다. 번들 ID는 `com.youkdonghun.sprache`이며
+Codemagic의 Developer Portal 연동 이름은 `Sprache Apple Developer`로 고정한다.
+
+이 워크플로를 실행하기 전에 Codemagic 개인 계정의 Developer Portal에 같은
+이름의 App Store Connect API 키를 연결하고, 번들 ID와 일치하는 Apple
+Distribution 인증서 및 Ad Hoc 프로파일을 Code signing identities에 등록해야
+한다. Ad Hoc 프로파일에는 설치할 아이폰의 UDID가 포함되어야 한다. 빌드는
+`tool/build-ios-device.sh`에서 다음 항목을 실패 조건으로 검증한다.
+
+- Apple Distribution 코드 서명과 10자리 Team Identifier
+- 유효기간이 남고 등록 기기가 포함된 Ad Hoc 프로비저닝 프로파일
+- `com.youkdonghun.sprache` 번들 ID와 `1.34.1+59` 버전
+- Google iOS OAuth 클라이언트 ID와 callback URL scheme
+- 실기기용 `iPhoneOS` 플랫폼 및 IPA 내부 구조
+
+출력 파일은 `artifacts/ios-device/Sprache-iPhone-Direct-Install-1.34.1.ipa`다.
+프로파일에 등록된 아이폰에서만 설치·실행되며 TestFlight나 App Store 등록은
+필요하지 않다.
+
+## 유료 개발자 계정이 없는 Windows 사이드로드
+
+Apple Developer Program이나 TestFlight를 사용하지 않을 때는 Codemagic의
+`ios-sideload-package` 워크플로로 iPhoneOS용 unsigned IPA를 만든 뒤 Windows에서
+사용자의 무료 Apple 계정으로 로컬 재서명한다. 출력은
+`artifacts/ios-sideload/Sprache-iPhone-Sideload-1.34.1-unsigned.ipa`다.
+
+이 파일은 시뮬레이터 바이너리가 아니며 iPhoneOS 기기용으로 컴파일되지만, 서명
+전에는 설치할 수 없다. Sideloadly 또는 AltStore 같은 로컬 설치 도구가 사용자의
+Apple 계정으로 프로비저닝한 다음 해당 아이폰에 설치한다. 무료 계정 프로파일은
+7일 후 만료되므로 같은 PC에서 자동 갱신 기능을 유지해야 한다. 앱 파일에는 Apple
+계정 비밀번호나 세션을 포함하지 않으며, 계정 입력은 로컬 설치 도구에서만 한다.
