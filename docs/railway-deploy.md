@@ -64,7 +64,8 @@ URL로 보내는 호환 페이지다. 새 링크와 OAuth 브랜딩에는 direct
 - 세 canonical URL이 HTTP 200이고 로그인·JavaScript 없이 본문이 보인다.
 - 홈페이지 → 개인정보처리방침·약관 → 홈페이지 링크가 `/Sprache/` 밖으로
   벗어나지 않는다.
-- 현재 문서에 운영 Railway endpoint, client secret 또는 실제 토큰이 없다.
+- 새 앱 빌드와 공개 정적 페이지에 운영 Railway endpoint, client secret 또는 실제
+  토큰이 없다. 과거 검증 기록의 endpoint는 이관 이력으로만 남긴다.
 - 정적 페이지에 폼, 쿠키, 분석 스크립트와 OAuth callback 처리 코드가 없다.
 - 모바일 폭, 큰 글자와 라이트·다크 모드에서 읽을 수 있다.
 

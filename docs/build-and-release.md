@@ -235,12 +235,11 @@ Android APK는 이전 버전 위에 업그레이드 설치해 기존 학습 세�
 유지되는 것을 확인했다. 해시·ABI·Windows 설치 수명주기와 실제 엔진 UI 검증은
 [`verification-report-1.22.1.md`](verification-report-1.22.1.md)에 기록했다.
 
-1.22.2부터 일반 실서비스 빌드는
-`https://sprache-api-production.up.railway.app/privacy`를 기본 공개
-개인정보처리방침으로 포함한다. 소유 custom domain이 준비되면
-`SPRACHE_PRIVACY_POLICY_URL`로 최종 URL을 덮어쓴다. 이 Railway 기본 주소는
-앱 사용자의 공개 고지 접근에는 유효하지만 Google 운영 브랜드 인증에 필요한
-소유 도메인을 대신하지 않는다. 배포·Android 실화면·Windows 설치 검증은
+1.22.2부터 1.33까지의 실서비스 빌드는 당시 Railway의 공개
+개인정보처리방침을 기본값으로 사용했다. 1.34부터는 Railway를 사용하지 않고
+`https://youkdonghun.github.io/Sprache/privacy/`를 포함한다. 필요하면
+`SPRACHE_PRIVACY_POLICY_URL`로 소유 도메인의 공개 URL을 지정할 수 있다.
+1.22.2 당시 배포·Android 실화면·Windows 설치 검증은
 [`verification-report-1.22.2.md`](verification-report-1.22.2.md)에 기록했다.
 
 1.22.3은 내장 단어 480개·문장 240개 전부에 한국어 발음 보조표기를
