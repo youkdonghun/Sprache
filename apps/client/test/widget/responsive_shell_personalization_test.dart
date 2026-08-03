@@ -140,11 +140,7 @@ void main() {
                 .height,
             greaterThanOrEqualTo(44),
           );
-          for (final key in const [
-            'open-global-search',
-            'shell-quick-add',
-            'open-keyboard-help',
-          ]) {
+          for (final key in const ['open-global-search', 'shell-quick-add']) {
             final size = tester.getSize(find.byKey(Key(key)));
             expect(size.width, greaterThanOrEqualTo(44));
             expect(size.height, greaterThanOrEqualTo(44));
@@ -215,7 +211,11 @@ void main() {
         () async {
           expect(find.byKey(const Key('open-global-search')), findsNothing);
           expect(find.byKey(const Key('shell-quick-add')), findsNothing);
-          expect(find.byKey(const Key('open-keyboard-help')), findsOneWidget);
+          expect(find.byKey(const Key('open-keyboard-help')), findsNothing);
+          expect(
+            find.byKey(const Key('desktop-sidebar-utility-toolbar')),
+            findsNothing,
+          );
           expect(find.byKey(const Key('nav-home')), findsOneWidget);
           expect(tester.takeException(), isNull);
         },

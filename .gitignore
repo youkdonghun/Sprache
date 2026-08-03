@@ -46,3 +46,4 @@ outputs/
 
 # Generated visual-test failure diagnostics
 **/test/visual/failures/
+**/test/qa/failures/

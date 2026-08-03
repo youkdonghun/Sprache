@@ -128,7 +128,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         (_storageSectionKey, _storageSectionFocus, '저장·동기화'),
       if (_matchesQuery(
         query,
-        '화면 학습 편의 테마 색상 다크 라이트 글자 밀도 모션 진동 소리 tts 음성 읽기 발음 퀴즈 접근성 고대비 카드 큰 버튼 단축키 제스처',
+        '화면 학습 편의 테마 색상 다크 라이트 글자 밀도 모션 진동 소리 tts 음성 읽기 발음 퀴즈 접근성 고대비 카드 큰 버튼 단축키 키보드 도움말 ctrl control slash ctrl+/ cmd+/ ⌘+/ 제스처',
       ))
         (_displaySectionKey, _displaySectionFocus, '화면·학습 편의'),
       if (_matchesQuery(query, '학습 분량 목표 xp 문제 수 세션 복습 새 표현 문장 비율 방식 일정 알림'))
@@ -211,7 +211,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       '저장 google 구글 drive 드라이브 로컬 폴더 동기화 백업 계정 연결 railway',
     );
     final showDisplay = _matches(
-      '화면 학습 편의 테마 색상 다크 라이트 글자 밀도 모션 진동 소리 tts 음성 읽기 발음 퀴즈 접근성 고대비 카드 큰 버튼 단축키 제스처',
+      '화면 학습 편의 테마 색상 다크 라이트 글자 밀도 모션 진동 소리 tts 음성 읽기 발음 퀴즈 접근성 고대비 카드 큰 버튼 단축키 키보드 도움말 ctrl control slash ctrl+/ cmd+/ ⌘+/ 제스처',
     );
     final showLearning = _matches('학습 분량 목표 xp 문제 수 세션 복습 새 표현 문장 비율 방식 일정 알림');
     final showWindows =

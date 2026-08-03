@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -12,50 +13,74 @@ void main() {
   testWidgets('settings search filters sections and exposes a clear action', (
     tester,
   ) async {
-    final container = ProviderContainer(
-      overrides: [
-        studyStoreProvider.overrideWithValue(
-          MemoryStudyStore(
-            preferences: const StudyPreferences(onboardingCompleted: true),
+    debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+    try {
+      final container = ProviderContainer(
+        overrides: [
+          studyStoreProvider.overrideWithValue(
+            MemoryStudyStore(
+              preferences: const StudyPreferences(onboardingCompleted: true),
+            ),
           ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: Scaffold(body: SettingsScreen())),
         ),
-      ],
-    );
-    addTearDown(container.dispose);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(home: Scaffold(body: SettingsScreen())),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('connection-card')), findsOneWidget);
-    await tester.enterText(
-      find.byKey(const Key('settings-search-field')),
-      '테마',
-    );
-    await tester.pump(const Duration(milliseconds: 500));
-    await tester.pumpAndSettle();
+      expect(find.byKey(const Key('connection-card')), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('settings-search-field')),
+        '테마',
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('advanced-preferences-panel')), findsOneWidget);
-    expect(find.byKey(const Key('connection-card')), findsNothing);
-    expect(
-      find.byKey(const Key('appearance-color-mode-system')),
-      findsOneWidget,
-    );
-    final displayFocus = tester.widget<Focus>(
-      find.byKey(const Key('settings-section-focus-display')),
-    );
-    expect(displayFocus.focusNode?.hasFocus, isTrue);
+      expect(
+        find.byKey(const Key('advanced-preferences-panel')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('connection-card')), findsNothing);
+      expect(
+        find.byKey(const Key('appearance-color-mode-system')),
+        findsOneWidget,
+      );
+      final displayFocus = tester.widget<Focus>(
+        find.byKey(const Key('settings-section-focus-display')),
+      );
+      expect(displayFocus.focusNode?.hasFocus, isTrue);
 
-    final clearSearch = find.byKey(const Key('clear-settings-search'));
-    await tester.ensureVisible(clearSearch);
-    await tester.pumpAndSettle();
-    await tester.tap(clearSearch);
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('connection-card')), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      final clearSearch = find.byKey(const Key('clear-settings-search'));
+      await tester.ensureVisible(clearSearch);
+      await tester.pumpAndSettle();
+      await tester.tap(clearSearch);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('connection-card')), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('settings-search-field')),
+        '키보드 도움말',
+      );
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('advanced-preferences-panel')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('connection-card')), findsNothing);
+      expect(
+        find.byKey(const Key('accessibility-shortcut-global-keyboardHelp')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
   });
 
   testWidgets('display reset previews changes and preserves study data', (

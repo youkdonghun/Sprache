@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -92,6 +93,33 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     }
   });
+
+  testWidgets(
+    'session manager keeps contextual keyboard help off the app bar',
+    (tester) async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.windows;
+      await _pumpHarness(tester);
+      try {
+        expect(find.byKey(const Key('open-study-keyboard-help')), findsNothing);
+
+        await tester.tap(find.byKey(const Key('open-session-management')));
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const Key('open-session-keyboard-help')),
+          findsOneWidget,
+        );
+
+        await tester.tap(find.byKey(const Key('open-session-keyboard-help')));
+        await tester.pumpAndSettle();
+        expect(find.text('퀴즈 키보드 도움말'), findsOneWidget);
+        expect(find.text('Ctrl+/'), findsOneWidget);
+        expect(tester.takeException(), isNull);
+      } finally {
+        await tester.pumpWidget(const SizedBox.shrink());
+        debugDefaultTargetPlatformOverride = null;
+      }
+    },
+  );
 
   testWidgets('starting another study never silently replaces a session', (
     tester,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,6 +47,7 @@ enum _ExerciseMode { recognition, production, cloze, sentenceOrder, listening }
 enum _SessionManagementAction {
   options,
   preview,
+  keyboardHelp,
   matchSprint,
   restart,
   wrongAnswers,
@@ -2176,6 +2178,14 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
             gradingStrength: _gradingStrength,
             inputProfile: _inputProfile,
             strategy: _runtimeOptions.strategy,
+            keyboardHelpShortcut: ref
+                .read(accessibilityInputProfileProvider)
+                .globalShortcutFor(GlobalShortcutAction.keyboardHelp)
+                .displayLabelFor(defaultTargetPlatform),
+            showKeyboardHelp:
+                defaultTargetPlatform == TargetPlatform.windows ||
+                defaultTargetPlatform == TargetPlatform.macOS ||
+                defaultTargetPlatform == TargetPlatform.linux,
             canChangeOptions: _correct == null,
             canStartMatch: MatchSprintDeck.fromItems(_queue).canStart,
           ),
@@ -2186,6 +2196,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         await _showSessionOptions();
       case _SessionManagementAction.preview:
         await _showQueuePreview();
+      case _SessionManagementAction.keyboardHelp:
+        _openKeyboardHelp();
       case _SessionManagementAction.matchSprint:
         await _showMatchSprint();
       case _SessionManagementAction.restart:
@@ -2572,13 +2584,6 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
                 progressStyle: experience.progressStyle,
               ),
               actions: [
-                if (MediaQuery.sizeOf(context).width >= 480)
-                  IconButton(
-                    key: const Key('open-study-keyboard-help'),
-                    onPressed: _openKeyboardHelp,
-                    icon: const Icon(Icons.keyboard_alt_outlined),
-                    tooltip: '키보드 도움말',
-                  ),
                 IconButton(
                   key: const Key('open-session-management'),
                   onPressed: _showSessionManager,
@@ -3114,6 +3119,8 @@ class _SessionManagementSheet extends StatelessWidget {
     required this.gradingStrength,
     required this.inputProfile,
     required this.strategy,
+    required this.keyboardHelpShortcut,
+    required this.showKeyboardHelp,
     required this.canChangeOptions,
     required this.canStartMatch,
   });
@@ -3125,6 +3132,8 @@ class _SessionManagementSheet extends StatelessWidget {
   final StudyGradingStrictness gradingStrength;
   final PracticeInputProfile inputProfile;
   final StudySessionStrategy strategy;
+  final String keyboardHelpShortcut;
+  final bool showKeyboardHelp;
   final bool canChangeOptions;
   final bool canStartMatch;
 
@@ -3181,6 +3190,19 @@ class _SessionManagementSheet extends StatelessWidget {
                       Navigator.pop(context, _SessionManagementAction.preview),
                 ),
                 const SizedBox(height: 8),
+                if (showKeyboardHelp) ...[
+                  _SessionManagementTile(
+                    key: const Key('open-session-keyboard-help'),
+                    icon: Icons.keyboard_alt_outlined,
+                    title: '현재 화면 단축키',
+                    subtitle: '이 퀴즈에서 쓸 수 있는 키를 확인합니다 · $keyboardHelpShortcut',
+                    onTap: () => Navigator.pop(
+                      context,
+                      _SessionManagementAction.keyboardHelp,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 _SessionManagementTile(
                   key: const Key('start-match-sprint'),
                   icon: Icons.grid_view_rounded,

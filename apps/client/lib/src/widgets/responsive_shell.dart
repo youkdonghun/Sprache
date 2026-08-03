@@ -397,7 +397,6 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                         onSubjectPressed: () => showSubjectPicker(context),
                         onSearchPressed: _openGlobalSearch,
                         onQuickAddPressed: _openQuickAdd,
-                        onHelpPressed: _openKeyboardHelp,
                         onSelected: _selectDestination,
                         showSearch: experience.showGlobalSearch,
                         showQuickAdd: experience.showQuickAdd,
@@ -427,11 +426,9 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                         onPressed: () => showSubjectPicker(context),
                         onSearchPressed: _openGlobalSearch,
                         onQuickAddPressed: _openQuickAdd,
-                        onHelpPressed: _openKeyboardHelp,
                         showSearch: experience.showGlobalSearch,
                         showQuickAdd: experience.showQuickAdd,
                         showStorageStatus: experience.showSyncStatus,
-                        showKeyboardHelp: isDesktop,
                         compactSubject:
                             experience.subjectSwitcherStyle ==
                             AppSubjectSwitcherStyle.compact,
@@ -522,7 +519,6 @@ class _DesktopSidebar extends StatelessWidget {
     required this.onSubjectPressed,
     required this.onSearchPressed,
     required this.onQuickAddPressed,
-    required this.onHelpPressed,
     required this.onSelected,
     required this.showSearch,
     required this.showQuickAdd,
@@ -541,7 +537,6 @@ class _DesktopSidebar extends StatelessWidget {
   final VoidCallback onSubjectPressed;
   final VoidCallback onSearchPressed;
   final VoidCallback onQuickAddPressed;
-  final VoidCallback onHelpPressed;
   final ValueChanged<int> onSelected;
   final bool showSearch;
   final bool showQuickAdd;
@@ -559,6 +554,7 @@ class _DesktopSidebar extends StatelessWidget {
         AppLayoutDensity.fromPreference(AppDensity.platform, isDesktop: true);
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final sidebarItemGap = layout.controlGap + (layout.dense ? 2 : 3);
+    final settingsDestination = ResponsiveShell._destinations[4];
     return AnimatedContainer(
       key: const Key('desktop-sidebar'),
       duration: reduceMotion
@@ -580,15 +576,14 @@ class _DesktopSidebar extends StatelessWidget {
             decorationIntensity: decorationIntensity,
           ),
           SizedBox(height: layout.sectionGap),
-          if (extended)
+          if (extended && (showSearch || showQuickAdd))
             _SidebarUtilityToolbar(
               showSearch: showSearch,
               showQuickAdd: showQuickAdd,
               onSearch: onSearchPressed,
               onQuickAdd: onQuickAddPressed,
-              onHelp: onHelpPressed,
             )
-          else ...[
+          else if (!extended) ...[
             if (showSearch) ...[
               _SidebarDestination(
                 key: const Key('open-global-search'),
@@ -613,19 +608,10 @@ class _DesktopSidebar extends StatelessWidget {
               ),
               SizedBox(height: sidebarItemGap),
             ],
-            _SidebarDestination(
-              key: const Key('open-keyboard-help'),
-              extended: false,
-              selected: false,
-              icon: Icons.keyboard_alt_outlined,
-              label: '키보드 도움말',
-              tooltip: '키보드 도움말',
-              onTap: onHelpPressed,
-            ),
           ],
           SizedBox(height: layout.sectionGap * 0.75),
           for (final (index, destination)
-              in ResponsiveShell._destinations.indexed)
+              in ResponsiveShell._destinations.take(4).indexed)
             Padding(
               padding: EdgeInsets.only(bottom: sidebarItemGap),
               child: _SidebarDestination(
@@ -647,6 +633,24 @@ class _DesktopSidebar extends StatelessWidget {
               ),
             ),
           const Spacer(),
+          _SidebarDestination(
+            key: const Key('nav-settings'),
+            extended:
+                extended &&
+                (navigationLabelMode == AppNavigationLabelMode.always ||
+                    selectedIndex == 4),
+            alignLeading: extended,
+            selected: selectedIndex == 4,
+            icon: _navigationIcon(
+              settingsDestination,
+              selected: selectedIndex == 4,
+              style: navigationIconStyle,
+            ),
+            label: settingsDestination.$2,
+            tooltip: settingsDestination.$3,
+            onTap: () => onSelected(4),
+          ),
+          SizedBox(height: sidebarItemGap),
           Tooltip(
             message: showStorageStatus
                 ? '$language · ${storageIndicator.label} · 주제 변경'
@@ -729,14 +733,12 @@ class _SidebarUtilityToolbar extends StatelessWidget {
     required this.showQuickAdd,
     required this.onSearch,
     required this.onQuickAdd,
-    required this.onHelp,
   });
 
   final bool showSearch;
   final bool showQuickAdd;
   final VoidCallback onSearch;
   final VoidCallback onQuickAdd;
-  final VoidCallback onHelp;
 
   @override
   Widget build(BuildContext context) {
@@ -762,13 +764,6 @@ class _SidebarUtilityToolbar extends StatelessWidget {
               icon: const Icon(Icons.add_rounded),
             ),
           ],
-          const Spacer(),
-          IconButton(
-            key: const Key('open-keyboard-help'),
-            tooltip: '키보드 도움말',
-            onPressed: onHelp,
-            icon: const Icon(Icons.keyboard_alt_outlined),
-          ),
         ],
       ),
     );
@@ -867,11 +862,9 @@ class _SubjectContextBar extends StatelessWidget {
     required this.onPressed,
     required this.onSearchPressed,
     required this.onQuickAddPressed,
-    required this.onHelpPressed,
     required this.showSearch,
     required this.showQuickAdd,
     required this.showStorageStatus,
-    required this.showKeyboardHelp,
     required this.compactSubject,
   });
 
@@ -881,11 +874,9 @@ class _SubjectContextBar extends StatelessWidget {
   final VoidCallback onPressed;
   final VoidCallback onSearchPressed;
   final VoidCallback onQuickAddPressed;
-  final VoidCallback onHelpPressed;
   final bool showSearch;
   final bool showQuickAdd;
   final bool showStorageStatus;
-  final bool showKeyboardHelp;
   final bool compactSubject;
 
   @override
@@ -976,18 +967,6 @@ class _SubjectContextBar extends StatelessWidget {
                 tooltip: '전체 검색',
                 onPressed: onSearchPressed,
                 icon: const Icon(Icons.search_rounded),
-              ),
-            ),
-          ],
-          if (showKeyboardHelp) ...[
-            SizedBox(width: layout.controlGap / 2),
-            SizedBox.square(
-              dimension: 44,
-              child: IconButton(
-                key: const Key('open-keyboard-help'),
-                tooltip: '키보드 도움말',
-                onPressed: onHelpPressed,
-                icon: const Icon(Icons.keyboard_alt_outlined),
               ),
             ),
           ],
