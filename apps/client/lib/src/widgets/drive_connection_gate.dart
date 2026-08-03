@@ -98,7 +98,8 @@ class DriveConnectionGate extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      if (defaultTargetPlatform == TargetPlatform.windows) ...[
+                      if (!kIsWeb &&
+                          defaultTargetPlatform == TargetPlatform.windows) ...[
                         const SizedBox(height: 10),
                         const Text(
                           '로그인 중 주소창에 127.0.0.1이 보여도 괜찮아요. 이 PC의 Sprache로 결과를 돌려주는 주소이며 별도 중계 서버를 거치지 않습니다.',
