@@ -1269,7 +1269,6 @@ class MainActivity : FlutterFragmentActivity() {
                 .setRequestedScopes(
                     listOf(
                         Scope(Scopes.DRIVE_FILE),
-                        Scope("https://www.googleapis.com/auth/drive.appdata"),
                     ),
                 )
                 .setOptOutIncludingGrantedScopes(true)

@@ -1,5 +1,9 @@
 param(
     [string]$Version = '',
+    [string]$ExpectedDesktopClientId = '1054343487948-o7nkfj4qmiilacvbln7alfgqrced6ior.apps.googleusercontent.com',
+    [string]$ExpectedAndroidClientId = '1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com',
+    [string]$ExpectedServerClientId = '1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com',
+    [string]$ExpectedAndroidCertificateSha1 = 'EF:1E:2A:C5:22:FC:BF:65:53:DC:35:35:0E:36:04:4F:F3:BC:F3:E2',
     [string]$ExpectedPrivacyPolicyUrl = $(if ([string]::IsNullOrWhiteSpace($env:SPRACHE_PRIVACY_POLICY_URL)) {
         'https://youkdonghun.github.io/Sprache/privacy/'
     } else {
@@ -46,6 +50,28 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 }
 if ($Version -ne $currentVersion) {
     throw "Release verifier only checks the current pubspec version $currentVersion, not $Version."
+}
+$desktopClientSecret = [Environment]::GetEnvironmentVariable(
+    'SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET',
+    'Process'
+)
+if ([string]::IsNullOrWhiteSpace($desktopClientSecret)) {
+    throw 'SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET is required to verify the Windows REAL OAuth configuration. The value is read only from the process environment and is never printed.'
+}
+foreach ($clientIdEntry in @{
+    GOOGLE_DESKTOP_CLIENT_ID = $ExpectedDesktopClientId
+    GOOGLE_ANDROID_CLIENT_ID = $ExpectedAndroidClientId
+    GOOGLE_SERVER_CLIENT_ID = $ExpectedServerClientId
+}.GetEnumerator()) {
+    if ([string]::IsNullOrWhiteSpace($clientIdEntry.Value) -or
+        $clientIdEntry.Value -notmatch '^[0-9]+-[a-z0-9]+\.apps\.googleusercontent\.com$') {
+        throw "Expected $($clientIdEntry.Key) is not a valid Google OAuth Client ID."
+    }
+}
+$expectedAndroidCertificateSha1Normalized =
+    ($ExpectedAndroidCertificateSha1 -replace '[^0-9A-Fa-f]', '').ToLowerInvariant()
+if ($expectedAndroidCertificateSha1Normalized -notmatch '^[0-9a-f]{40}$') {
+    throw 'ExpectedAndroidCertificateSha1 must be a 40-character SHA-1 fingerprint.'
 }
 
 $releaseApkPath = Join-Path $artifactsRoot "Sprache-Android-$Version-google-release-signed.apk"
@@ -174,6 +200,18 @@ try {
     if ($apkSignatureOutput -notmatch 'Verified using v2 scheme .*: true') {
         throw 'Android artifact is not verified with APK Signature Scheme v2.'
     }
+    $androidCertificateMatch = [regex]::Match(
+        $apkSignatureOutput,
+        'Signer #1 certificate SHA-1 digest:\s*(?<sha1>[0-9a-fA-F:]+)'
+    )
+    if (-not $androidCertificateMatch.Success) {
+        throw 'Android signing certificate SHA-1 could not be read from the APK.'
+    }
+    $androidCertificateSha1 =
+        ($androidCertificateMatch.Groups['sha1'].Value -replace ':', '').ToLowerInvariant()
+    if ($androidCertificateSha1 -ne $expectedAndroidCertificateSha1Normalized) {
+        throw "Android signing certificate SHA-1 does not match the expected Google OAuth registration: $androidCertificateSha1"
+    }
     $isAndroidDebugSigned = $apkSignatureOutput -match 'CN=Android Debug'
 }
 finally {
@@ -204,18 +242,23 @@ if ($RequireWindowsCodeSigning -and
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $binaryRows = @()
-$requiredBinaryTexts = @($Version)
+$commonRequiredBinaryTexts = @($Version)
 if (-not [string]::IsNullOrWhiteSpace($ExpectedPrivacyPolicyUrl)) {
     if (-not $ExpectedPrivacyPolicyUrl.StartsWith('https://', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Expected privacy policy URL must use HTTPS.'
     }
-    $requiredBinaryTexts += $ExpectedPrivacyPolicyUrl
+    $commonRequiredBinaryTexts += $ExpectedPrivacyPolicyUrl
 }
+$androidRequiredBinaryTexts = @(
+    $commonRequiredBinaryTexts
+) + @($ExpectedAndroidClientId, $ExpectedServerClientId)
+$windowsRequiredBinaryTexts = @(
+    $commonRequiredBinaryTexts
+) + @($ExpectedDesktopClientId)
 $forbiddenBinaryTexts = @(
     'http://127.0.0.1:3000',
     'sprache-api-production.up.railway.app',
-    'API_BASE_URL',
-    'GOOGLE_DESKTOP_CLIENT_SECRET'
+    'API_BASE_URL'
 )
 
 $apkArchive = [IO.Compression.ZipFile]::OpenRead($apkPath)
@@ -230,10 +273,13 @@ try {
     foreach ($entry in $androidAppEntries) {
         $bytes = Read-ZipEntryBytes -Entry $entry
         $binaryText = [Text.Encoding]::UTF8.GetString($bytes)
-        foreach ($requiredText in $requiredBinaryTexts) {
+        foreach ($requiredText in $androidRequiredBinaryTexts) {
             if ($binaryText.IndexOf($requiredText, [StringComparison]::Ordinal) -lt 0) {
                 throw "Android binary $($entry.FullName) is missing required value: $requiredText"
             }
+        }
+        if ($binaryText.IndexOf($desktopClientSecret, [StringComparison]::Ordinal) -ge 0) {
+            throw "Android binary $($entry.FullName) unexpectedly contains the Windows desktop OAuth credential."
         }
         foreach ($forbiddenText in $forbiddenBinaryTexts) {
             if ($binaryText.IndexOf($forbiddenText, [StringComparison]::Ordinal) -ge 0) {
@@ -269,10 +315,13 @@ try {
     $windowsAppBytes = Read-ZipEntryBytes -Entry $normalizedEntries['data/app.so']
     $windowsExeBytes = Read-ZipEntryBytes -Entry $normalizedEntries['sprache.exe']
     $windowsAppText = [Text.Encoding]::UTF8.GetString($windowsAppBytes)
-    foreach ($requiredText in $requiredBinaryTexts) {
+    foreach ($requiredText in $windowsRequiredBinaryTexts) {
         if ($windowsAppText.IndexOf($requiredText, [StringComparison]::Ordinal) -lt 0) {
             throw "Windows app.so is missing required value: $requiredText"
         }
+    }
+    if ($windowsAppText.IndexOf($desktopClientSecret, [StringComparison]::Ordinal) -lt 0) {
+        throw 'Windows app.so is missing the configured desktop OAuth credential.'
     }
     foreach ($forbiddenText in $forbiddenBinaryTexts) {
         if ($windowsAppText.IndexOf($forbiddenText, [StringComparison]::Ordinal) -ge 0) {
@@ -349,10 +398,12 @@ $binaryRows | Format-Table -AutoSize
     Version = "$Version+$versionCode"
     AndroidArtifact = Split-Path -Leaf $apkPath
     AndroidSigning = if ($isAndroidDebugSigned) { 'Debug' } else { 'Release' }
+    AndroidCertificateSha1 = $androidCertificateSha1
     WindowsZipEntries = $windowsZipEntryCount
     InstallerAuthenticode = $installerSignature.Status
     ChecksumsVerified = $checksumEntries.Count
     PrivacyPolicyUrlEmbedded = -not [string]::IsNullOrWhiteSpace($ExpectedPrivacyPolicyUrl)
+    WindowsOAuthCredentialEmbedded = $true
     InstallerSmokeRun = [bool]$RunInstallerSmoke
     OldArtifactsCleanupRun = [bool]$CleanOldArtifacts
 }

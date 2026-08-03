@@ -6,13 +6,43 @@ import 'package:sprache/src/integrations/google/oauth_tokens.dart';
 import 'package:sprache/src/services/study_notification_service.dart';
 
 void main() {
-  test('iOS Google connection stays unavailable without iOS credentials', () {
+  test('Apple platforms create the real Google connection service', () {
+    for (final platform in [TargetPlatform.iOS, TargetPlatform.macOS]) {
+      debugDefaultTargetPlatformOverride = platform;
+      try {
+        final service = createGoogleConnectionService(
+          config: const AppConfig(
+            googleAndroidClientId: 'android-client-id',
+            googleDesktopClientId: 'desktop-client-id',
+            googleDesktopClientSecret: 'desktop-client-secret',
+            googleAppleClientId: 'apple-client-id',
+            googleServerClientId: 'server-client-id',
+            appEnvironment: 'test',
+            mockMode: false,
+          ),
+          tokenVault: MemoryTokenVault(),
+        );
+
+        expect(
+          service,
+          isA<AppleGoogleConnectionService>(),
+          reason: '$platform must not silently fall back to local-only mode.',
+        );
+      } finally {
+        debugDefaultTargetPlatformOverride = null;
+      }
+    }
+  });
+
+  test('iOS Google connection is unavailable without an Apple client ID', () {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     try {
       final service = createGoogleConnectionService(
         config: const AppConfig(
           googleAndroidClientId: 'android-client-id',
           googleDesktopClientId: 'desktop-client-id',
+          googleDesktopClientSecret: 'desktop-client-secret',
+          googleAppleClientId: '',
           googleServerClientId: 'server-client-id',
           appEnvironment: 'test',
           mockMode: false,
@@ -21,16 +51,6 @@ void main() {
       );
 
       expect(service, isA<UnavailableGoogleConnectionService>());
-      expect(
-        () => service.connect(),
-        throwsA(
-          isA<StateError>().having(
-            (error) => error.message,
-            'message',
-            'Google connection is not supported on this platform',
-          ),
-        ),
-      );
     } finally {
       debugDefaultTargetPlatformOverride = null;
     }

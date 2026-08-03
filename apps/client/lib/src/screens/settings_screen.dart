@@ -431,6 +431,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               _restoreSelectedLocalBackup(context, ref),
                           onClearLocalFolder: () =>
                               _clearLocalFolder(context, ref),
+                          onExportBackup: () => _exportJson(context, ref),
+                          onImportBackup: () => _restoreJson(context, ref),
                           onConnect: () => ref
                               .read(connectionControllerProvider.notifier)
                               .connect(),
@@ -2678,6 +2680,8 @@ class _ConnectionCard extends ConsumerWidget {
     required this.onSaveLocalNow,
     required this.onRestoreLocal,
     required this.onClearLocalFolder,
+    required this.onExportBackup,
+    required this.onImportBackup,
     required this.onConnect,
     required this.onSync,
     required this.onChangeDriveFolder,
@@ -2694,6 +2698,8 @@ class _ConnectionCard extends ConsumerWidget {
   final VoidCallback onSaveLocalNow;
   final VoidCallback onRestoreLocal;
   final VoidCallback onClearLocalFolder;
+  final VoidCallback onExportBackup;
+  final VoidCallback onImportBackup;
   final VoidCallback onConnect;
   final VoidCallback onSync;
   final VoidCallback onChangeDriveFolder;
@@ -2702,6 +2708,14 @@ class _ConnectionCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hasPending = pendingSync != null;
+    final isBrowser = kIsWeb;
+    if (!connected && !mockMode) {
+      return _DriveRequiredSettingsCard(
+        connection: connection,
+        mockMode: mockMode,
+        onConnect: onConnect,
+      );
+    }
     final isWindows = defaultTargetPlatform == TargetPlatform.windows;
     final mobile = MediaQuery.sizeOf(context).width < 600;
     final canSync =
@@ -2713,9 +2727,10 @@ class _ConnectionCard extends ConsumerWidget {
         connected && connection.phase != ConnectionPhase.failed && !hasPending;
     final localHealthy =
         !connected &&
-        localStorage.configured &&
-        localStorage.errorMessage == null &&
-        !localStorage.existingArchiveAvailable;
+        (isBrowser ||
+            (localStorage.configured &&
+                localStorage.errorMessage == null &&
+                !localStorage.existingArchiveAvailable));
     final healthy = connected ? driveHealthy : localHealthy;
     final statusColor = connected
         ? driveHealthy
@@ -2725,6 +2740,8 @@ class _ConnectionCard extends ConsumerWidget {
               : connection.phase == ConnectionPhase.failed
               ? AppTheme.danger
               : AppTheme.desktopPrimary
+        : isBrowser
+        ? AppTheme.success
         : localStorage.errorMessage != null
         ? AppTheme.danger
         : localStorage.existingArchiveAvailable
@@ -2741,6 +2758,8 @@ class _ConnectionCard extends ConsumerWidget {
             ConnectionPhase.connected => hasPending ? '업로드 대기' : '연결됨',
             ConnectionPhase.disconnected => '연결 정보 있음',
           }
+        : isBrowser
+        ? '브라우저 저장'
         : !localStorage.initialized
         ? '확인 중'
         : localStorage.busy
@@ -2892,13 +2911,16 @@ class _ConnectionCard extends ConsumerWidget {
                   _DriveFolderStatusPanel(connection: connection),
                   const SizedBox(height: 10),
                 ],
-                _LocalFolderStatusPanel(
-                  state: localStorage,
-                  compact: mobile,
-                  onChooseFolder: onChooseLocalFolder,
-                  onRestore: onRestoreLocal,
-                  onClear: onClearLocalFolder,
-                ),
+                if (mockMode)
+                  _LocalFolderStatusPanel(
+                    state: localStorage,
+                    compact: mobile,
+                    onChooseFolder: onChooseLocalFolder,
+                    onRestore: onRestoreLocal,
+                    onClear: onClearLocalFolder,
+                  )
+                else
+                  const _DriveOnlyStoragePanel(),
                 if (connected && localStorage.pendingImportCount > 0) ...[
                   const SizedBox(height: 6),
                   Text(
@@ -3005,6 +3027,14 @@ class _ConnectionCard extends ConsumerWidget {
             );
             Widget primaryAction() {
               if (!connected) {
+                if (isBrowser) {
+                  return FilledButton.icon(
+                    key: const Key('download-browser-backup'),
+                    onPressed: onExportBackup,
+                    icon: const Icon(Icons.download_rounded),
+                    label: const Text('백업 내려받기'),
+                  );
+                }
                 return FilledButton.icon(
                   key: Key(
                     localStorage.configured
@@ -3080,14 +3110,16 @@ class _ConnectionCard extends ConsumerWidget {
                     leadingIcon: const Icon(Icons.drive_file_move_outline),
                     child: const Text('Drive 폴더 변경'),
                   ),
-                  MenuItemButton(
-                    key: const Key('disconnect-google-device'),
-                    onPressed: connection.busy || connection.policy.offlineLock
-                        ? null
-                        : onDisconnect,
-                    leadingIcon: const Icon(Icons.link_off_rounded),
-                    child: const Text('이 기기에서 연결 해제'),
-                  ),
+                  if (mockMode)
+                    MenuItemButton(
+                      key: const Key('disconnect-google-device'),
+                      onPressed:
+                          connection.busy || connection.policy.offlineLock
+                          ? null
+                          : onDisconnect,
+                      leadingIcon: const Icon(Icons.link_off_rounded),
+                      child: const Text('이 기기에서 연결 해제'),
+                    ),
                 ],
                 builder: (context, controller, child) => OutlinedButton.icon(
                   key: const Key('drive-management-menu'),
@@ -3614,6 +3646,97 @@ class _DriveFolderStatusPanel extends StatelessWidget {
                 label: const Text('폴더 ID 복사'),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DriveRequiredSettingsCard extends StatelessWidget {
+  const _DriveRequiredSettingsCard({
+    required this.connection,
+    required this.mockMode,
+    required this.onConnect,
+  });
+
+  final ConnectionState connection;
+  final bool mockMode;
+  final VoidCallback onConnect;
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = connection.busy;
+    return Card(
+      key: const Key('drive-required-settings-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Icon(Icons.add_to_drive_rounded, size: 38),
+            const SizedBox(height: 12),
+            Text(
+              'Google Drive 연결이 필요합니다',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Sprache는 Drive를 기본 저장 공간으로 사용합니다. 연결을 마치면 학습을 시작할 수 있어요.',
+              textAlign: TextAlign.center,
+            ),
+            if (connection.diagnostic case final diagnostic?) ...[
+              const SizedBox(height: 12),
+              Text(
+                diagnostic.message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ],
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              key: const Key('connect-google'),
+              onPressed: busy ? null : onConnect,
+              icon: busy
+                  ? const SizedBox.square(
+                      dimension: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.login_rounded),
+              label: Text(mockMode ? '테스트 Drive 연결' : 'Google로 계속'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DriveOnlyStoragePanel extends StatelessWidget {
+  const _DriveOnlyStoragePanel();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      key: const Key('drive-only-storage-status'),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.success.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppTheme.success.withValues(alpha: 0.22)),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.cloud_done_outlined, color: AppTheme.success, size: 20),
+          SizedBox(width: 9),
+          Expanded(
+            child: Text(
+              'Google Drive가 Sprache의 기본 저장 공간입니다. 학습 변경 사항은 연결된 Drive 폴더와 자동으로 맞춰집니다.',
+            ),
           ),
         ],
       ),

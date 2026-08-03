@@ -25,6 +25,8 @@ void main() {
         sourceUrl: 'https://example.com/entries/42',
         author: 'Example Author',
         attribution: 'Example Author · Personal notebook · private',
+        pageNumber: 7,
+        excerpt: 'run - 달리다',
       ),
     );
 
@@ -38,6 +40,8 @@ void main() {
     expect(restored.source.sourceId, 'entry-42');
     expect(restored.source.sourceUrl, 'https://example.com/entries/42');
     expect(restored.source.author, 'Example Author');
+    expect(restored.source.pageNumber, 7);
+    expect(restored.source.excerpt, 'run - 달리다');
     expect(
       restored.source.attribution,
       'Example Author · Personal notebook · private',

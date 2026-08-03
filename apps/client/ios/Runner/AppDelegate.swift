@@ -1,6 +1,10 @@
 import Flutter
 import UIKit
 
+func isSpracheInboundURL(_ url: URL) -> Bool {
+  url.scheme?.caseInsensitiveCompare("sprache") == .orderedSame
+}
+
 final class SpracheInboundIntentBridge {
   static let shared = SpracheInboundIntentBridge()
 
@@ -95,7 +99,10 @@ final class SpracheInboundIntentBridge {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    SpracheInboundIntentBridge.shared.receive(url)
-    return true
+    if isSpracheInboundURL(url) {
+      SpracheInboundIntentBridge.shared.receive(url)
+      return true
+    }
+    return super.application(app, open: url, options: options)
   }
 }

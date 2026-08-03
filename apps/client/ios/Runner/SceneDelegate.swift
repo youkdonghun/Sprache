@@ -8,14 +8,14 @@ class SceneDelegate: FlutterSceneDelegate {
     options connectionOptions: UIScene.ConnectionOptions
   ) {
     super.scene(scene, willConnectTo: session, options: connectionOptions)
-    for context in connectionOptions.urlContexts {
+    for context in connectionOptions.urlContexts where isSpracheInboundURL(context.url) {
       SpracheInboundIntentBridge.shared.receive(context.url)
     }
   }
 
   override func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
     super.scene(scene, openURLContexts: URLContexts)
-    for context in URLContexts {
+    for context in URLContexts where isSpracheInboundURL(context.url) {
       SpracheInboundIntentBridge.shared.receive(context.url)
     }
   }

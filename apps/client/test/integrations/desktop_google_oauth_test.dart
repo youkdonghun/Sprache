@@ -39,6 +39,7 @@ void main() {
       tokenVault: vault,
       tokenBroker: DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client-id',
+        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((_) async => http.Response('{}', 500)),
       ),
     );
@@ -56,20 +57,169 @@ void main() {
     expect(await oauth.hasStoredSession(), isTrue);
   });
 
+  for (final code in const [
+    'unauthorized_client',
+    'invalid_client',
+    'invalid_grant',
+  ]) {
+    test('desktop refresh clears a stale grant for $code', () async {
+      final vault = MemoryTokenVault();
+      await _writeExpiredDriveGrant(vault);
+      final oauth = DesktopGoogleOAuth(
+        clientId: 'desktop-client-id',
+        tokenVault: vault,
+        tokenBroker: _RefreshFailureBroker(code),
+      );
+
+      await expectLater(
+        oauth.accessToken(GoogleTokenKind.drive),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            contains('authorization is required'),
+          ),
+        ),
+      );
+      expect(await vault.read(GoogleTokenKind.drive), isNull);
+    });
+  }
+
+  test('desktop refresh preserves the grant for a transient failure', () async {
+    final vault = MemoryTokenVault();
+    await _writeExpiredDriveGrant(vault);
+    final oauth = DesktopGoogleOAuth(
+      clientId: 'desktop-client-id',
+      tokenVault: vault,
+      tokenBroker: const _RefreshFailureBroker('temporarily_unavailable'),
+    );
+
+    await expectLater(
+      oauth.accessToken(GoogleTokenKind.drive),
+      throwsA(
+        isA<GoogleOAuthException>().having(
+          (error) => error.code,
+          'code',
+          'temporarily_unavailable',
+        ),
+      ),
+    );
+    expect(await vault.read(GoogleTokenKind.drive), isNotNull);
+  });
+
   test(
-    'desktop OAuth completes loopback callback, token exchange, and storage',
+    'desktop Picker uses drive.file then authorizes the combined Drive scopes',
+    () async {
+      final vault = MemoryTokenVault();
+      final authorizationUris = <Uri>[];
+      final callbackResponses = <Future<_LoopbackResponse>>[];
+      var tokenRequests = 0;
+      final tokenBroker = DirectDesktopGoogleTokenBroker(
+        clientId: 'desktop-client-id',
+        clientSecret: 'desktop-client-secret',
+        httpClient: MockClient((request) async {
+          tokenRequests++;
+          expect(request.bodyFields['client_secret'], 'desktop-client-secret');
+          final expectedCode = tokenRequests == 1
+              ? 'picker-authorization-code'
+              : 'drive-authorization-code';
+          expect(request.bodyFields['code'], expectedCode);
+          return http.Response(
+            jsonEncode({
+              'access_token': tokenRequests == 1
+                  ? 'picker-access-token'
+                  : 'drive-access-token',
+              'refresh_token': tokenRequests == 1
+                  ? 'picker-refresh-token'
+                  : 'drive-refresh-token',
+              'expires_in': 3600,
+            }),
+            200,
+          );
+        }),
+      );
+      final oauth = DesktopGoogleOAuth(
+        clientId: 'desktop-client-id',
+        tokenVault: vault,
+        tokenBroker: tokenBroker,
+        urlLauncher: (uri) async {
+          authorizationUris.add(uri);
+          final isPicker = authorizationUris.length == 1;
+          if (isPicker) {
+            expect(
+              uri.queryParameters['scope'],
+              'https://www.googleapis.com/auth/drive.file',
+            );
+            expect(
+              uri.queryParameters['scope'],
+              isNot(contains('drive.appdata')),
+            );
+            expect(uri.queryParameters['trigger_onepick'], 'true');
+            expect(uri.queryParameters['allow_folder_selection'], 'true');
+          } else {
+            expect(uri.queryParameters['scope']!.split(' ').toSet(), {
+              'https://www.googleapis.com/auth/drive.file',
+              'https://www.googleapis.com/auth/drive.appdata',
+            });
+            expect(uri.queryParameters, isNot(contains('trigger_onepick')));
+            expect(
+              uri.queryParameters,
+              isNot(contains('allow_folder_selection')),
+            );
+          }
+
+          final redirectUri = Uri.parse(uri.queryParameters['redirect_uri']!);
+          callbackResponses.add(
+            Future<_LoopbackResponse>(() {
+              return _sendLoopbackCallback(
+                redirectUri.replace(
+                  queryParameters: {
+                    'code': isPicker
+                        ? 'picker-authorization-code'
+                        : 'drive-authorization-code',
+                    'state': uri.queryParameters['state']!,
+                    if (isPicker) 'picked_file_ids': 'selected-drive-folder',
+                  },
+                ),
+              );
+            }),
+          );
+          return true;
+        },
+      );
+
+      final result = await oauth.selectDriveFolder();
+      final browserResponses = await Future.wait(callbackResponses);
+      final stored = await vault.read(GoogleTokenKind.drive);
+
+      expect(authorizationUris, hasLength(2));
+      expect(tokenRequests, 2);
+      expect(
+        browserResponses.map((response) => response.statusCode),
+        everyElement(200),
+      );
+      expect(result.pickedFolderId, 'selected-drive-folder');
+      expect(result.tokens.accessToken, 'drive-access-token');
+      expect(stored?.accessToken, 'drive-access-token');
+    },
+  );
+
+  test(
+    'desktop follow-up authorization combines drive.file and drive.appdata',
     () async {
       final vault = MemoryTokenVault();
       Uri? authorizationUri;
       Future<_LoopbackResponse>? callbackResponse;
       final tokenBroker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client-id',
+        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((request) async {
           expect(request.url.toString(), 'https://oauth2.googleapis.com/token');
           expect(request, isA<http.Request>());
           final fields = request.bodyFields;
           expect(fields['grant_type'], 'authorization_code');
           expect(fields['client_id'], 'desktop-client-id');
+          expect(fields['client_secret'], 'desktop-client-secret');
           expect(fields['code'], 'test-authorization-code');
           expect(fields['code_verifier'], isNotEmpty);
           expect(
@@ -97,8 +247,15 @@ void main() {
           authorizationUri = uri;
           expect(uri.host, 'accounts.google.com');
           expect(uri.queryParameters['code_challenge_method'], 'S256');
-          expect(uri.queryParameters['scope'], contains('drive.file'));
-          expect(uri.queryParameters['scope'], contains('drive.appdata'));
+          expect(uri.queryParameters['scope']!.split(' ').toSet(), {
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/drive.appdata',
+          });
+          expect(uri.queryParameters, isNot(contains('trigger_onepick')));
+          expect(
+            uri.queryParameters,
+            isNot(contains('allow_folder_selection')),
+          );
 
           final redirectUri = Uri.parse(uri.queryParameters['redirect_uri']!);
           expect(redirectUri.host, '127.0.0.1');
@@ -140,6 +297,7 @@ void main() {
       var tokenExchangeCalled = false;
       final tokenBroker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client-id',
+        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((request) async {
           tokenExchangeCalled = true;
           return http.Response('{}', 500);
@@ -182,6 +340,45 @@ void main() {
       expect(tokenExchangeCalled, isFalse);
     },
   );
+}
+
+Future<void> _writeExpiredDriveGrant(MemoryTokenVault vault) {
+  return vault.write(
+    GoogleTokenKind.drive,
+    OAuthTokens(
+      accessToken: 'expired-access-token',
+      refreshToken: 'stale-refresh-token',
+      expiresAt: DateTime.now().toUtc().subtract(const Duration(minutes: 1)),
+    ),
+  );
+}
+
+class _RefreshFailureBroker implements DesktopGoogleTokenBroker {
+  const _RefreshFailureBroker(this.code);
+
+  final String code;
+
+  @override
+  Future<void> ensureReady() async {}
+
+  @override
+  Future<DesktopGoogleTokenResponse> exchangeAuthorizationCode({
+    required String authorizationCode,
+    required String codeVerifier,
+    required String redirectUri,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<DesktopGoogleTokenResponse> refresh({required String refreshToken}) {
+    throw GoogleOAuthException(
+      operation: 'Direct Google token refresh',
+      statusCode: 401,
+      code: code,
+      description: 'Unauthorized',
+    );
+  }
 }
 
 class _LoopbackResponse {

@@ -8,10 +8,11 @@ import 'package:sprache/src/integrations/google/desktop_google_token_broker.dart
 
 void main() {
   group('DirectDesktopGoogleTokenBroker', () {
-    test('is ready locally when the installed-app client ID exists', () async {
+    test('is ready locally when desktop OAuth credentials exist', () async {
       var requests = 0;
       final broker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client.apps.googleusercontent.com',
+        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((_) async {
           requests++;
           return http.Response('{}', 500);
@@ -24,10 +25,11 @@ void main() {
     });
 
     test(
-      'exchanges authorization code with PKCE and no client secret',
+      'exchanges authorization code with PKCE and the desktop client secret',
       () async {
         final broker = DirectDesktopGoogleTokenBroker(
           clientId: 'desktop-client.apps.googleusercontent.com',
+          clientSecret: 'desktop-client-secret',
           httpClient: MockClient((request) async {
             expect(request.method, 'POST');
             expect(
@@ -40,12 +42,12 @@ void main() {
             );
             expect(request.bodyFields, {
               'client_id': 'desktop-client.apps.googleusercontent.com',
+              'client_secret': 'desktop-client-secret',
               'code': 'one-time-authorization-code',
               'code_verifier': 'pkce-verifier',
               'redirect_uri': 'http://127.0.0.1:43123',
               'grant_type': 'authorization_code',
             });
-            expect(request.body, isNot(contains('client_secret')));
             return http.Response(
               jsonEncode({
                 'access_token': 'google-access-token',
@@ -72,16 +74,17 @@ void main() {
       },
     );
 
-    test('refreshes directly using client ID and refresh token only', () async {
+    test('refreshes using the desktop client credentials', () async {
       final broker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client.apps.googleusercontent.com',
+        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((request) async {
           expect(request.bodyFields, {
             'client_id': 'desktop-client.apps.googleusercontent.com',
+            'client_secret': 'desktop-client-secret',
             'refresh_token': 'stored-refresh-token',
             'grant_type': 'refresh_token',
           });
-          expect(request.body, isNot(contains('client_secret')));
           expect(request.body, isNot(contains('code_verifier')));
           return http.Response(
             jsonEncode({
@@ -106,12 +109,14 @@ void main() {
     test('maps Google JSON errors and redacts echoed credentials', () async {
       final broker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client.apps.googleusercontent.com',
+        clientSecret: 'desktop-client-secret',
         httpClient: MockClient(
           (_) async => http.Response(
             jsonEncode({
               'error': 'invalid_grant',
               'error_description':
-                  'Refresh token stored-refresh-token was rejected.',
+                  'Refresh token stored-refresh-token for '
+                  'desktop-client-secret was rejected.',
             }),
             400,
           ),
@@ -127,12 +132,17 @@ void main() {
               .having(
                 (error) => error.description,
                 'description',
-                'Refresh token [REDACTED] was rejected.',
+                'Refresh token [REDACTED] for [REDACTED] was rejected.',
               )
               .having(
                 (error) => error.toString(),
                 'safe diagnostics',
                 isNot(contains('stored-refresh-token')),
+              )
+              .having(
+                (error) => error.toString(),
+                'client secret redaction',
+                isNot(contains('desktop-client-secret')),
               ),
         ),
       );
@@ -144,6 +154,7 @@ void main() {
         const secretBody = 'not-json-with-google-access-token';
         final broker = DirectDesktopGoogleTokenBroker(
           clientId: 'desktop-client.apps.googleusercontent.com',
+          clientSecret: 'desktop-client-secret',
           httpClient: MockClient((_) async => http.Response(secretBody, 200)),
         );
 
@@ -170,6 +181,7 @@ void main() {
       final pending = Completer<http.Response>();
       final broker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client.apps.googleusercontent.com',
+        clientSecret: 'desktop-client-secret',
         requestTimeout: const Duration(milliseconds: 5),
         httpClient: MockClient((_) => pending.future),
       );
@@ -188,6 +200,7 @@ void main() {
       var requests = 0;
       final broker = DirectDesktopGoogleTokenBroker(
         clientId: '   ',
+        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((_) async {
           requests++;
           return http.Response('{}', 200);
@@ -208,5 +221,34 @@ void main() {
       );
       expect(requests, 0);
     });
+
+    test(
+      'fails before HTTP when the desktop client secret is missing',
+      () async {
+        var requests = 0;
+        final broker = DirectDesktopGoogleTokenBroker(
+          clientId: 'desktop-client.apps.googleusercontent.com',
+          clientSecret: '   ',
+          httpClient: MockClient((_) async {
+            requests++;
+            return http.Response('{}', 200);
+          }),
+        );
+
+        await expectLater(
+          broker.ensureReady(),
+          throwsA(
+            isA<GoogleOAuthException>()
+                .having((error) => error.statusCode, 'statusCode', 400)
+                .having(
+                  (error) => error.code,
+                  'code',
+                  'google_client_secret_missing',
+                ),
+          ),
+        );
+        expect(requests, 0);
+      },
+    );
   });
 }

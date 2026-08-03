@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_io/io.dart';
 
 import 'desktop_google_token_broker.dart';
 import 'oauth_tokens.dart';
@@ -33,8 +33,9 @@ class DesktopGoogleOAuth {
 
   static const _authorizationEndpoint =
       'https://accounts.google.com/o/oauth2/v2/auth';
+  static const pickerScopes = ['https://www.googleapis.com/auth/drive.file'];
   static const driveScopes = [
-    'https://www.googleapis.com/auth/drive.file',
+    ...pickerScopes,
     'https://www.googleapis.com/auth/drive.appdata',
   ];
   static const authorizationTimeout = Duration(minutes: 10);
@@ -47,11 +48,24 @@ class DesktopGoogleOAuth {
     return await tokenVault.read(GoogleTokenKind.drive) != null;
   }
 
-  Future<OAuthAuthorizationResult> selectDriveFolder() {
-    return _authorize(
+  Future<OAuthAuthorizationResult> selectDriveFolder() async {
+    // Google OnePick only accepts drive.file. Obtain the selected folder first,
+    // then request the app-data binding scope in a normal authorization flow.
+    final picker = await _authorize(
+      kind: GoogleTokenKind.drive,
+      scopes: pickerScopes,
+      usePicker: true,
+      persistTokens: false,
+    );
+    final driveAuthorization = await _authorize(
       kind: GoogleTokenKind.drive,
       scopes: driveScopes,
-      usePicker: true,
+      usePicker: false,
+      persistTokens: true,
+    );
+    return OAuthAuthorizationResult(
+      tokens: driveAuthorization.tokens,
+      pickedFolderId: picker.pickedFolderId,
     );
   }
 
@@ -60,6 +74,7 @@ class DesktopGoogleOAuth {
       kind: GoogleTokenKind.drive,
       scopes: driveScopes,
       usePicker: false,
+      persistTokens: true,
     );
   }
 
@@ -76,7 +91,14 @@ class DesktopGoogleOAuth {
       throw StateError('Google ${kind.name} authorization expired');
     }
 
-    final response = await tokenBroker.refresh(refreshToken: refreshToken);
+    late final DesktopGoogleTokenResponse response;
+    try {
+      response = await tokenBroker.refresh(refreshToken: refreshToken);
+    } on GoogleOAuthException catch (error) {
+      if (!_invalidStoredGrant(error)) rethrow;
+      await tokenVault.clear();
+      throw StateError('Google ${kind.name} authorization is required');
+    }
     final refreshed = OAuthTokens(
       accessToken: response.accessToken,
       refreshToken: refreshToken,
@@ -91,10 +113,20 @@ class DesktopGoogleOAuth {
 
   Future<void> disconnect() => tokenVault.clear();
 
+  bool _invalidStoredGrant(GoogleOAuthException error) {
+    return error.operation.contains('token refresh') &&
+        const {
+          'invalid_grant',
+          'invalid_client',
+          'unauthorized_client',
+        }.contains(error.code);
+  }
+
   Future<OAuthAuthorizationResult> _authorize({
     required GoogleTokenKind kind,
     required List<String> scopes,
     required bool usePicker,
+    required bool persistTokens,
   }) async {
     if (clientId.isEmpty) {
       throw StateError('GOOGLE_DESKTOP_CLIENT_ID is not configured');
@@ -121,6 +153,7 @@ class DesktopGoogleOAuth {
       'state': state,
       'access_type': 'offline',
       'prompt': 'consent',
+      'include_granted_scopes': 'true',
     };
     if (usePicker) {
       parameters.addAll({
@@ -180,7 +213,7 @@ class DesktopGoogleOAuth {
         codeVerifier: verifier,
         redirectUri: redirectUri,
       );
-      final previous = await tokenVault.read(kind);
+      final previous = persistTokens ? await tokenVault.read(kind) : null;
       final tokens = OAuthTokens(
         accessToken: tokenResponse.accessToken,
         refreshToken: tokenResponse.refreshToken ?? previous?.refreshToken,
@@ -189,7 +222,9 @@ class DesktopGoogleOAuth {
           Duration(seconds: tokenResponse.expiresIn),
         ),
       );
-      await tokenVault.write(kind, tokens);
+      if (persistTokens) {
+        await tokenVault.write(kind, tokens);
+      }
       final pickedIds = query['picked_file_ids'];
       final pickedFolderId = pickedIds?.split(',').first.trim();
       return OAuthAuthorizationResult(

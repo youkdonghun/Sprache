@@ -16,8 +16,19 @@ const BUILD_EVIDENCE_FORMAT = 'sprache-build-evidence-v1';
 const EXPECTED_POLICY = Object.freeze({
   windows: 'REAL',
   android: 'REAL',
-  ios: 'MOCK',
-  macos: 'MOCK',
+  ios: 'REAL',
+  macos: 'REAL',
+});
+const APPLE_RUNTIME_PLATFORMS = new Set(['ios', 'macos']);
+const EXPECTED_APPLE_CLIENT_ID =
+  '1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com';
+const EXPECTED_APPLE_SIGNING = Object.freeze({
+  ios: 'SIMULATOR',
+  macos: 'AD_HOC',
+});
+const EXPECTED_APPLE_LIMITATIONS = Object.freeze({
+  ios: 'IOS_SIMULATOR_ONLY_NO_APPLE_DISTRIBUTION_SIGNING_OR_LIVE_GOOGLE_AUTH',
+  macos: 'MACOS_ADHOC_ONLY_NO_APPLE_DISTRIBUTION_SIGNING_OR_LIVE_GOOGLE_AUTH',
 });
 const EXPECTED_EXTENSIONS = Object.freeze({
   windows: '.exe',
@@ -91,6 +102,16 @@ export async function createReleaseManifest({ specPath, outputPath, root }) {
     };
     if (entry.verification === 'RUNTIME') {
       manifestEntry.firstFrameMillis = evidence.firstFrameMillis;
+      if (APPLE_RUNTIME_PLATFORMS.has(entry.platform)) {
+        manifestEntry.googleOAuthConfigured = evidence.googleOAuthConfigured;
+        manifestEntry.googleOAuthRuntimeVerified =
+          evidence.googleOAuthRuntimeVerified;
+        manifestEntry.googleOAuthClientId = evidence.googleOAuthClientId;
+        manifestEntry.appleDistributionSigningVerified =
+          evidence.appleDistributionSigningVerified;
+        manifestEntry.signing = evidence.signing;
+        manifestEntry.limitation = evidence.limitation;
+      }
     } else {
       manifestEntry.firstFrameMillis = null;
       manifestEntry.buildVerified = evidence.buildVerified;
@@ -324,6 +345,46 @@ function validateRuntimeEvidence(evidence, entry) {
       evidence.firstFrameMillis <= 60000,
     `${entry.platform} firstFrameMillis must be within 0..60000`,
   );
+  if (APPLE_RUNTIME_PLATFORMS.has(entry.platform)) {
+    assert(
+      entry.mode === 'REAL',
+      `${entry.platform} configured Apple preview must use REAL mode`,
+    );
+    assert(
+      evidence.googleOAuthConfigured === true,
+      `${entry.platform} Google OAuth configuration was not verified`,
+    );
+    assert(
+      evidence.googleOAuthRuntimeVerified === false,
+      `${entry.platform} preview must not claim live Google OAuth verification`,
+    );
+    assert(
+      evidence.googleOAuthClientId === EXPECTED_APPLE_CLIENT_ID,
+      `${entry.platform} Google OAuth Client ID is not the approved Apple client`,
+    );
+    assert(
+      evidence.appleDistributionSigningVerified === false,
+      `${entry.platform} preview must not claim Apple distribution signing`,
+    );
+    assert(
+      evidence.signing === EXPECTED_APPLE_SIGNING[entry.platform],
+      `${entry.platform} signing metadata is invalid`,
+    );
+    assert(
+      evidence.limitation === EXPECTED_APPLE_LIMITATIONS[entry.platform],
+      `${entry.platform} signing/runtime limitation is invalid`,
+    );
+    return;
+  }
+  assert(
+    evidence.googleOAuthConfigured === undefined &&
+      evidence.googleOAuthRuntimeVerified === undefined &&
+      evidence.googleOAuthClientId === undefined &&
+      evidence.appleDistributionSigningVerified === undefined &&
+      evidence.signing === undefined &&
+      evidence.limitation === undefined,
+    `${entry.platform} contains Apple-only runtime metadata`,
+  );
 }
 
 function validateBuildEvidence(evidence, entry, artifact) {
@@ -396,13 +457,48 @@ function validateManifestVerification(entry) {
       'buildVerified',
       'signatureVerified',
       'packageVerified',
-      'limitation',
       'packageName',
       'abis',
     ]) {
       assert(
         entry[buildOnlyField] === undefined,
         `${entry.platform}.${buildOnlyField} is BUILD_ONLY metadata`,
+      );
+    }
+    if (APPLE_RUNTIME_PLATFORMS.has(entry.platform)) {
+      assert(
+        entry.googleOAuthConfigured === true,
+        `${entry.platform} manifest is missing Google OAuth configuration evidence`,
+      );
+      assert(
+        entry.googleOAuthRuntimeVerified === false,
+        `${entry.platform} manifest must disclose that live Google OAuth was not verified`,
+      );
+      assert(
+        entry.googleOAuthClientId === EXPECTED_APPLE_CLIENT_ID,
+        `${entry.platform} manifest Google OAuth Client ID is invalid`,
+      );
+      assert(
+        entry.appleDistributionSigningVerified === false,
+        `${entry.platform} manifest must disclose missing Apple distribution signing`,
+      );
+      assert(
+        entry.signing === EXPECTED_APPLE_SIGNING[entry.platform],
+        `${entry.platform} manifest signing metadata is invalid`,
+      );
+      assert(
+        entry.limitation === EXPECTED_APPLE_LIMITATIONS[entry.platform],
+        `${entry.platform} manifest limitation is invalid`,
+      );
+    } else {
+      assert(
+        entry.googleOAuthConfigured === undefined &&
+          entry.googleOAuthRuntimeVerified === undefined &&
+          entry.googleOAuthClientId === undefined &&
+          entry.appleDistributionSigningVerified === undefined &&
+          entry.signing === undefined &&
+          entry.limitation === undefined,
+        `${entry.platform} manifest contains Apple-only runtime metadata`,
       );
     }
     return;
@@ -436,6 +532,19 @@ function validateManifestEvidenceMetadata(entry, evidence) {
       evidence.firstFrameMillis === entry.firstFrameMillis,
       `${entry.platform} first-frame evidence metadata changed`,
     );
+    if (APPLE_RUNTIME_PLATFORMS.has(entry.platform)) {
+      assert(
+        evidence.googleOAuthConfigured === entry.googleOAuthConfigured &&
+          evidence.googleOAuthRuntimeVerified ===
+            entry.googleOAuthRuntimeVerified &&
+          evidence.googleOAuthClientId === entry.googleOAuthClientId &&
+          evidence.appleDistributionSigningVerified ===
+            entry.appleDistributionSigningVerified &&
+          evidence.signing === entry.signing &&
+          evidence.limitation === entry.limitation,
+        `${entry.platform} Google/signing evidence metadata changed`,
+      );
+    }
     return;
   }
   assert(

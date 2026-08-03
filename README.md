@@ -7,9 +7,12 @@ Sprache는 별도 API나 중앙 데이터베이스 없이 동작하는 Local-Fir
 사용자가 고른 Drive 위치에 `WordStudyData` 폴더를 만들고, 그 폴더에서 기기 간
 동기화 자료를 읽고 쓴다.
 
-- Windows는 시스템 브라우저·loopback·PKCE로 받은 인증 코드를 Google 토큰
-  엔드포인트에 직접 교환한다. client secret을 EXE나 서버에 두지 않는다.
+- Windows는 시스템 브라우저·loopback·PKCE와 Google Desktop credential로 받은
+  인증 코드를 Google 토큰 엔드포인트에 직접 교환한다. credential 값은 로컬·CI
+  프로세스 환경에서만 읽고 저장소·문서·로그에 남기지 않는다.
 - Android는 같은 Google Cloud 프로젝트의 네이티브 OAuth 클라이언트를 쓴다.
+- iOS·macOS는 공용 iOS-type OAuth client를 쓰며, unsigned preview는 실제
+  credential metadata만 검사하고 실계정 로그인을 완료했다고 표시하지 않는다.
 - OAuth 토큰은 OS 보안 저장소에만 보관하고 중앙 계정–폴더 매핑을 만들지 않는다.
 - Drive의 숨겨진 `appDataFolder`에는 `WordStudyData`의 폴더 ID와 이름만 담은
   작은 연결 포인터를 둔다. 학습 데이터 자체는 숨김 공간에 저장하지 않는다.
@@ -525,28 +528,41 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 - 검색·유형·취약 필터, 상세 보기, 학습 포함/제외가 가능한 단어장
 - 단어·문장 직접 추가·수정·삭제와 CSV·JSON·JSONL 일괄 가져오기
 - 코스 범위·정확도·학습 단계·최근 세션을 보여주는 학습 리포트
-- 설정·진도·사용자 표현·최근 세션을 포함한 JSON 백업 내보내기
-- 로컬 백업 경로와 Drive 앱 전용 저장 범위를 구분해 설명하는 설정 화면
+- 설정·진도·사용자 표현·최근 세션을 포함한 Google Drive 교차 동기화
+- 텍스트 PDF의 단어·뜻·페이지·문맥을 검토해 가져오는 공통 워크플로
+- iPhone 홈 화면 설치와 오프라인 학습을 지원하는 GitHub Pages PWA
 
 ## 바로 실행하기
 
-`npm run build:real`을 실행하면 현재 `pubspec.yaml` 버전에 맞춘 실제
-Google 직접 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.32.0의 표준
-파일명은 다음과 같다.
+Windows 빌드 전 `SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET`을 현재 프로세스 환경에
+설정한 뒤 `npm run build:real`을 실행하면 `pubspec.yaml` 버전에 맞춘 실제
+Google 직접 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 이 PC의 DPAPI
+보관값을 사용할 때는 다음 명령으로 평문을 남기지 않고 빌드한다.
 
-- Windows 설치본: `Sprache-Windows-Setup-1.32.0-google-x64.exe`
-- Windows 포터블: `Sprache-Windows-1.32.0-google-x64.zip`
-- Android: `Sprache-Android-1.32.0-google-debug-signed.apk`
-- 무결성: `SHA256SUMS-1.32.0-google.txt`
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tool\build-real-windows-local.ps1
+```
+
+1.35.0의 표준 파일명은 다음과 같다.
+
+- Windows 설치본: `Sprache-Windows-Setup-1.35.0-google-x64.exe`
+- Windows 포터블: `Sprache-Windows-1.35.0-google-x64.zip`
+- Android: `Sprache-Android-1.35.0-google-debug-signed.apk`
+- Apple: `Sprache-iOS-Simulator-1.35.0-google-configured.zip`, `Sprache-macOS-1.35.0-google-configured.zip`
+- PWA: `https://youkdonghun.github.io/Sprache/app/`
+- 무결성: `SHA256SUMS-1.35.0-google.txt`
 
 Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`
 폴더를 함께 유지한다. Android APK는 테스트 기기 또는 에뮬레이터에 직접
 설치한다. 파일명이 `debug-signed`이면 Play Store 배포용 서명이라고 표시하지
-않는다. Apple `MOCK` ZIP은 Xcode가 있는 macOS 실행 환경에서 별도로 생성한다.
+않는다. Apple `google-configured` ZIP은 Xcode가 있는 macOS 실행 환경에서 별도로 생성한다.
 기본 대체 경로는 Codemagic의 `apple-preview` 워크플로이며 자세한 절차는
 [`docs/apple-build-without-github-actions.md`](docs/apple-build-without-github-actions.md)에 있다.
 
-Mock 빌드는 Google 자격증명 없이 전체 학습 흐름을 시험하기 위한 것이다. 실제 Google 로그인·Drive 동기화를 사용하려면 `ENABLE_MOCK_MODE=false`와 플랫폼별 OAuth 설정이 필요하다.
+Mock 빌드는 Google 자격증명 없이 전체 학습 흐름을 시험하기 위한 것이다. 실제
+Google 로그인·Drive 동기화를 사용하려면 `ENABLE_MOCK_MODE=false`와 플랫폼별
+OAuth 설정이 필요하다. iOS Simulator와 ad-hoc macOS configured preview는 REAL
+설정을 포함하더라도 실계정 OAuth·기기 설치·공증을 검증한 배포본은 아니다.
 
 ## 개발 실행
 
@@ -564,6 +580,9 @@ npm run test:client
 
 ## 문서
 
+- [1.35.0 PWA·PDF·Drive 필수 연결 릴리스 안내](docs/release-notes-1.35.0.md)
+- [1.34.1 OAuth 수정 릴리스 안내](docs/release-notes-1.34.1.md)
+- [1.34.1 네 플랫폼 품질·릴리스 게이트](docs/release-quality-gates-1.34.1.md)
 - [1.32.0 릴리스 노트와 컴팩트 UX 80개 변경](docs/release-notes-1.32.0.md)
 - [1.32.0 컴팩트 UX 80개 목표](docs/compact-ux-80-upgrade-plan-1.32.0.md)
 - [1.32.0 컴팩트 UX 80개 최종 검증](docs/compact-ux-80-verification-1.32.0.md)

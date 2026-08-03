@@ -1,6 +1,6 @@
 workflows:
-  apple-preview:
-    name: Sprache Apple preview artifacts
+  ios-sideload-package:
+    name: Sprache iPhone free-account sideload IPA
     instance_type: mac_mini_m2
     max_build_duration: 120
     environment:
@@ -8,8 +8,83 @@ workflows:
       xcode: latest
       cocoapods: default
       vars:
-        SPRACHE_VERSION: "1.34.0"
-        SPRACHE_BUILD_NUMBER: "58"
+        SPRACHE_VERSION: "1.35.0"
+        SPRACHE_BUILD_NUMBER: "60"
+        SPRACHE_GOOGLE_APPLE_CLIENT_ID: "1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com"
+        SPRACHE_IOS_SIDELOAD_ARTIFACT_DIR: "artifacts/ios-sideload"
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+    scripts:
+      - name: Verify unsigned iPhone build host
+        script: |
+          set -euo pipefail
+          flutter --version
+          xcodebuild -version
+          pod --version
+      - name: Build and verify unsigned iPhone sideload IPA
+        script: |
+          set -euo pipefail
+          bash tool/build-ios-sideload.sh
+    artifacts:
+      - artifacts/ios-sideload/*.ipa
+      - artifacts/ios-sideload/*.sha256
+      - artifacts/ios-sideload/build-ios-sideload.json
+      - /tmp/xcodebuild_logs/*.log
+
+  ios-direct-install:
+    name: Sprache iPhone direct-install Ad Hoc IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    integrations:
+      app_store_connect: "Sprache Apple Developer"
+    environment:
+      flutter: "3.44.8"
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: ad_hoc
+        bundle_identifier: com.youkdonghun.sprache
+      vars:
+        SPRACHE_VERSION: "1.35.0"
+        SPRACHE_BUILD_NUMBER: "60"
+        SPRACHE_GOOGLE_APPLE_CLIENT_ID: "1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com"
+        SPRACHE_IOS_DEVICE_ARTIFACT_DIR: "artifacts/ios-device"
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
+    scripts:
+      - name: Verify signed iPhone build host
+        script: |
+          set -euo pipefail
+          flutter --version
+          xcodebuild -version
+          command -v xcode-project
+      - name: Build and verify Ad Hoc signed iPhone IPA
+        script: |
+          set -euo pipefail
+          bash tool/build-ios-device.sh
+    artifacts:
+      - artifacts/ios-device/*.ipa
+      - artifacts/ios-device/*.sha256
+      - artifacts/ios-device/build-ios-device.json
+      - apps/client/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+  apple-preview:
+    name: Sprache Apple Google-configured previews
+    instance_type: mac_mini_m2
+    max_build_duration: 120
+    environment:
+      flutter: "3.44.8"
+      xcode: latest
+      cocoapods: default
+      vars:
+        SPRACHE_VERSION: "1.35.0"
+        SPRACHE_BUILD_NUMBER: "60"
+        SPRACHE_GOOGLE_APPLE_CLIENT_ID: "1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com"
         SPRACHE_APPLE_ARTIFACT_DIR: "artifacts/apple-preview"
     cache:
       cache_paths:
@@ -22,7 +97,7 @@ workflows:
           flutter --version
           xcodebuild -version
           pod --version
-      - name: Build, launch, verify, and package Apple previews
+      - name: Build, launch, verify, and package Google-configured Apple previews
         script: |
           set -euo pipefail
           bash tool/build-apple-preview.sh

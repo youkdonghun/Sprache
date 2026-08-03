@@ -55,15 +55,19 @@ abstract interface class DesktopGoogleTokenBroker {
 
 /// Exchanges installed-app OAuth grants directly with Google's token endpoint.
 ///
-/// A desktop OAuth client is a public client, so this broker deliberately never
-/// accepts or sends a client secret. Authorization-code exchanges are protected
-/// by the PKCE verifier created by [DesktopGoogleOAuth].
+/// Google Desktop credentials created by the current Auth Platform console are
+/// issued with a token-exchange credential. It is injected only at build time,
+/// never logged, and is always combined with the PKCE verifier created by
+/// [DesktopGoogleOAuth]. Native apps still cannot treat this value as a
+/// confidential server secret.
 class DirectDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
   DirectDesktopGoogleTokenBroker({
     required String clientId,
+    required String clientSecret,
     http.Client? httpClient,
     this.requestTimeout = const Duration(seconds: 20),
   }) : _clientId = clientId.trim(),
+       _clientSecret = clientSecret.trim(),
        _httpClient = httpClient ?? http.Client();
 
   static final Uri _tokenEndpoint = Uri.https(
@@ -72,12 +76,13 @@ class DirectDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
   );
 
   final String _clientId;
+  final String _clientSecret;
   final http.Client _httpClient;
   final Duration requestTimeout;
 
   @override
   Future<void> ensureReady() async {
-    _requireClientId(operation: 'Direct Google OAuth preflight');
+    _requireCredentials(operation: 'Direct Google OAuth preflight');
   }
 
   @override
@@ -90,12 +95,13 @@ class DirectDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
       operation: 'Direct Google token exchange',
       form: {
         'client_id': _clientId,
+        'client_secret': _clientSecret,
         'code': authorizationCode,
         'code_verifier': codeVerifier,
         'redirect_uri': redirectUri,
         'grant_type': 'authorization_code',
       },
-      sensitiveValues: [authorizationCode, codeVerifier],
+      sensitiveValues: [authorizationCode, codeVerifier, _clientSecret],
     );
   }
 
@@ -105,10 +111,11 @@ class DirectDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
       operation: 'Direct Google token refresh',
       form: {
         'client_id': _clientId,
+        'client_secret': _clientSecret,
         'refresh_token': refreshToken,
         'grant_type': 'refresh_token',
       },
-      sensitiveValues: [refreshToken],
+      sensitiveValues: [refreshToken, _clientSecret],
     );
   }
 
@@ -117,7 +124,7 @@ class DirectDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
     required Map<String, String> form,
     required List<String> sensitiveValues,
   }) async {
-    _requireClientId(operation: operation);
+    _requireCredentials(operation: operation);
     late final http.Response response;
     try {
       response = await _httpClient
@@ -189,13 +196,22 @@ class DirectDesktopGoogleTokenBroker implements DesktopGoogleTokenBroker {
     );
   }
 
-  void _requireClientId({required String operation}) {
-    if (_clientId.isNotEmpty) return;
+  void _requireCredentials({required String operation}) {
+    if (_clientId.isEmpty) {
+      throw GoogleOAuthException(
+        operation: operation,
+        statusCode: 400,
+        code: 'google_client_id_missing',
+        description: 'GOOGLE_DESKTOP_CLIENT_ID is not configured.',
+      );
+    }
+    if (_clientSecret.isNotEmpty) return;
     throw GoogleOAuthException(
       operation: operation,
       statusCode: 400,
-      code: 'google_client_id_missing',
-      description: 'GOOGLE_DESKTOP_CLIENT_ID is not configured.',
+      code: 'google_client_secret_missing',
+      description:
+          'Google Desktop token-exchange credential is not configured.',
     );
   }
 

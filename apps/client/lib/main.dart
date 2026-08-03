@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:pdfrx/pdfrx.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'src/app_bootstrap.dart';
@@ -14,13 +15,17 @@ import 'src/services/window_placement_service.dart';
 
 Future<void> main(List<String> arguments) async {
   WidgetsFlutterBinding.ensureInitialized();
+  await pdfrxFlutterInitialize();
   final releaseRuntimeProbe = ReleaseRuntimeProbe.fromEnvironment(
     defaultTargetPlatform,
   );
-  await const TemporaryVoiceRecordingJanitor().clearAbandonedFiles();
+  if (!kIsWeb) {
+    await const TemporaryVoiceRecordingJanitor().clearAbandonedFiles();
+  }
 
-  if (defaultTargetPlatform == TargetPlatform.windows ||
-      defaultTargetPlatform == TargetPlatform.macOS) {
+  if (!kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.macOS)) {
     await windowManager.ensureInitialized();
     final placementService = WindowPlacementService();
     final restored = await placementService.loadSafe();

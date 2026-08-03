@@ -11,15 +11,17 @@ Sprache의 iOS Runner는 Android·Windows와 같은 Flutter 소스 및
 - CI는 실제 기기 서명 없이 iOS Simulator 앱이 컴파일되는지 확인한다.
 - CI는 Simulator와 macOS 앱을 실제로 실행하고, Flutter 첫 프레임 완료 뒤 앱
   sandbox에 기록된 CI 전용 evidence를 회수한다.
-- Google Drive 연결은 Apple 미리보기 빌드에서 제공하지 않는다. 앱은 비밀값을
-  임의로 포함하거나 Android 자격 증명을 재사용하지 않는다.
+- iOS-type OAuth client ID와 callback scheme을 Apple용으로 등록하고 Android
+  자격 증명을 재사용하지 않는다. configured preview는 REAL 모드로 빌드되지만
+  자동화에서는 실계정 로그인·Drive 왕복을 수행하지 않는다.
 - iOS·macOS 로컬 학습 알림은 Darwin 권한 요청·예약·시작 및 다시 알림 액션까지
-  연결되어 있다. CI `MOCK` 산출물에서는 컴파일 범위를 확인하며 실제 기기의
+  연결되어 있다. CI configured preview에서는 컴파일 범위를 확인하며 실제 기기의
   권한 배너·예약 전달은 별도 실기기 게이트로 남긴다.
 
-Google 연결을 활성화하려면 별도의 iOS OAuth client ID와 URL scheme을
-Google Cloud Console에서 발급하고, iOS용 연결 구현과 Drive 폴더 ID 선택 흐름을
-추가해야 한다.
+공용 iOS OAuth client ID는
+`1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com`이고,
+callback scheme은
+`com.googleusercontent.apps.1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel`이다.
 
 ## iOS Simulator 빌드
 
@@ -29,11 +31,12 @@ Xcode와 CocoaPods가 설치된 macOS에서 실행한다.
 cd apps/client
 flutter pub get
 flutter build ios --simulator --debug \
-  --build-name=1.32.0 \
-  --build-number=56 \
+  --build-name=1.34.1 \
+  --build-number=59 \
   --dart-define=APP_ENV=ci \
-  --dart-define=ENABLE_MOCK_MODE=true \
-  --dart-define=APP_VERSION=1.32.0
+  --dart-define=ENABLE_MOCK_MODE=false \
+  --dart-define=APP_VERSION=1.34.1 \
+  --dart-define=GOOGLE_APPLE_CLIENT_ID=1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com
 ```
 
 Simulator 결과는 `build/ios/iphonesimulator/Runner.app`에 생성된다. 이 파일은
@@ -45,15 +48,18 @@ iPhone에 설치하는 IPA가 아니다.
 cd apps/client
 flutter pub get
 flutter build macos --release \
-  --build-name=1.32.0 \
-  --build-number=56 \
+  --build-name=1.34.1 \
+  --build-number=59 \
   --dart-define=APP_ENV=ci \
-  --dart-define=ENABLE_MOCK_MODE=true \
-  --dart-define=APP_VERSION=1.32.0
+  --dart-define=ENABLE_MOCK_MODE=false \
+  --dart-define=APP_VERSION=1.34.1 \
+  --dart-define=GOOGLE_APPLE_CLIENT_ID=1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com
 ```
 
 결과는 `build/macos/Build/Products/Release/Sprache.app`이다. 현재 CI 전달본은
-unsigned/ad-hoc `MOCK`이며 Developer ID 서명·공증된 배포 앱이 아니다.
+unsigned/ad-hoc REAL-configured preview이며 Developer ID 서명·공증된 배포 앱이
+아니다. REAL은 OAuth 설정이 실제 값이라는 뜻이며 실계정 로그인 검증을 뜻하지
+않는다.
 
 실제 기기용 컴파일 확인은 다음처럼 코드 서명을 생략할 수 있지만 결과 앱은
 기기에 설치할 수 없다.
@@ -82,7 +88,7 @@ Windows에는 Xcode와 Apple 코드 서명 도구가 없으므로 IPA를 생성�
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass `
   -File .\tool\clean-release-artifacts.ps1 `
-  -KeepVersion 1.32.0 `
+  -KeepVersion 1.34.1 `
   -WhatIf
 ```
 

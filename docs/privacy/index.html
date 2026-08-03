@@ -66,8 +66,8 @@
       <ul>
         <li>학습 데이터의 작업 원본은 기기의 SQLite 데이터베이스입니다.</li>
         <li>Google 연결을 켜면 검증된 동기화 자료를 사용자가 고른 Drive 위치의 <code>WordStudyData</code>에 저장하고, 숨김 앱 설정에는 폴더 연결 포인터만 저장합니다.</li>
-        <li>Windows는 시스템 브라우저, loopback callback과 PKCE를 사용해 Google 토큰 엔드포인트에 직접 인증 코드를 교환합니다. 앱에 client secret을 포함하지 않습니다.</li>
-        <li>Windows OAuth 토큰은 운영체제 보안 저장소에 보관합니다. Android 인증 정보는 Google Identity 계층과 플랫폼 보안 저장소를 사용합니다.</li>
+        <li>Windows는 시스템 브라우저, loopback callback과 PKCE 및 Google이 발급한 설치형 앱 자격정보를 사용해 Google 토큰 엔드포인트에 직접 인증 코드를 교환합니다. 별도 Sprache 인증 서버를 거치지 않습니다.</li>
+        <li>Windows OAuth 토큰은 운영체제 보안 저장소에 보관합니다. Android·iOS·macOS 인증 정보는 Google Sign-In 계층과 플랫폼 보안 저장소를 사용합니다.</li>
         <li>연결 해제만으로 로컬 자료, Drive 학습 폴더나 숨김 연결 포인터를 자동 삭제하지 않습니다. 삭제 기능마다 대상과 영향을 따로 확인합니다.</li>
       </ul>
     </section>

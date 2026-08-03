@@ -6,6 +6,7 @@ import '../../config/app_config.dart';
 import 'desktop_google_oauth.dart';
 import 'desktop_google_token_broker.dart';
 import 'google_drive_client.dart';
+import 'google_web_oauth.dart';
 import 'oauth_tokens.dart';
 
 typedef GoogleDriveClientFactory =
@@ -262,6 +263,7 @@ class DesktopGoogleConnectionService
              tokenBroker ??
              DirectDesktopGoogleTokenBroker(
                clientId: config.googleDesktopClientId,
+               clientSecret: config.googleDesktopClientSecret,
              ),
          urlLauncher: urlLauncher,
        ),
@@ -560,10 +562,15 @@ class AndroidGoogleConnectionService
       throw StateError('Google Picker did not return a folder ID');
     }
 
+    // OnePick must be requested with drive.file alone. Request app-data access
+    // separately so the binding used for cross-device restore remains valid.
+    final driveAuthorization = await account.authorizationClient
+        .authorizeScopes(_driveScopes);
+
     onStage?.call(GoogleConnectionStage.preparingDrive);
     final drive = _driveClient(
       account: account,
-      fallbackAccessToken: accessToken,
+      fallbackAccessToken: driveAuthorization.accessToken,
     );
     final bootstrap = await drive.ensureAppRoot(selectedFolderId);
     return _completeConnection(
@@ -601,10 +608,13 @@ class AndroidGoogleConnectionService
       throw StateError('Google Picker did not return a folder ID');
     }
 
+    final driveAuthorization = await account.authorizationClient
+        .authorizeScopes(_driveScopes);
+
     onStage?.call(GoogleConnectionStage.preparingDrive);
     final drive = _driveClient(
       account: account,
-      fallbackAccessToken: accessToken,
+      fallbackAccessToken: driveAuthorization.accessToken,
     );
     final bootstrap = await drive.ensureAppRoot(selectedFolderId);
     _pendingFolderReselection = _PendingDriveFolderReselection(
@@ -829,12 +839,452 @@ class AndroidGoogleConnectionService
   }
 }
 
+/// Browser-only Google Identity Services connection. Access tokens stay in
+/// memory and are requested again after expiration or a PWA restart.
+class GoogleWebConnectionService
+    implements
+        GoogleConnectionService,
+        RestorableGoogleConnectionService,
+        DriveFolderReselectionService,
+        RemoteSnapshotQuarantineService,
+        RemoteStorageRetentionService,
+        AccountBindingDeletionService {
+  GoogleWebConnectionService({required this.config})
+    : _oauth = GoogleWebOAuthClient(clientId: config.googleWebClientId);
+
+  final AppConfig config;
+  final GoogleWebOAuthClient _oauth;
+  GoogleDriveClient? _drive;
+  DriveBootstrapResult? _bootstrap;
+  _PendingDriveFolderReselection? _pendingFolderReselection;
+
+  @override
+  Future<GoogleConnectionResult> connect({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    onStage?.call(GoogleConnectionStage.signIn);
+    final authorization = await _oauth.authorize();
+    final drive = _driveClient();
+
+    onStage?.call(GoogleConnectionStage.preparingDrive);
+    var bootstrap = await _restoreBootstrapFromDrive(
+      drive,
+      appDataScopeGranted: true,
+    );
+    if (bootstrap == null) {
+      onStage?.call(GoogleConnectionStage.folderSelection);
+      final selectedFolderId = config.googlePickerApiKey.isEmpty
+          ? 'root'
+          : await _oauth.pickDriveFolder(
+              accessToken: authorization.accessToken,
+              apiKey: config.googlePickerApiKey,
+            );
+      if (selectedFolderId == null) {
+        throw StateError('Google Drive folder selection was cancelled.');
+      }
+      onStage?.call(GoogleConnectionStage.preparingDrive);
+      bootstrap = await drive.ensureAppRoot(selectedFolderId);
+      onStage?.call(GoogleConnectionStage.linkingAccount);
+      await drive.upsertAppDataBinding(
+        folderId: bootstrap.appRootFolderId,
+        folderName: bootstrap.appRootFolderName,
+      );
+    }
+    return _activateConnection(drive: drive, bootstrap: bootstrap);
+  }
+
+  @override
+  Future<GoogleConnectionResult?> restoreConnection({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    onStage?.call(GoogleConnectionStage.checkingConnection);
+    final authorization = _oauth.currentAuthorization;
+    if (authorization == null) return null;
+    final drive = _driveClient();
+    onStage?.call(GoogleConnectionStage.preparingDrive);
+    try {
+      final bootstrap = await _restoreBootstrapFromDrive(
+        drive,
+        appDataScopeGranted: true,
+      );
+      if (bootstrap == null) return null;
+      return _activateConnection(drive: drive, bootstrap: bootstrap);
+    } on DriveRequestException catch (error) {
+      if (error.reconnectRequired) return null;
+      rethrow;
+    } on DriveDataIntegrityException {
+      return null;
+    }
+  }
+
+  @override
+  Future<GoogleConnectionResult> reselectDriveFolder({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    onStage?.call(GoogleConnectionStage.signIn);
+    final authorization = await _oauth.authorize();
+    onStage?.call(GoogleConnectionStage.folderSelection);
+    final selectedFolderId = config.googlePickerApiKey.isEmpty
+        ? 'root'
+        : await _oauth.pickDriveFolder(
+            accessToken: authorization.accessToken,
+            apiKey: config.googlePickerApiKey,
+          );
+    if (selectedFolderId == null) {
+      throw StateError('Google Drive folder selection was cancelled.');
+    }
+    onStage?.call(GoogleConnectionStage.preparingDrive);
+    final drive = _driveClient();
+    final bootstrap = await drive.ensureAppRoot(selectedFolderId);
+    _pendingFolderReselection = _PendingDriveFolderReselection(
+      previousDrive: _drive,
+      previousBootstrap: _bootstrap,
+      candidateBootstrap: bootstrap,
+    );
+    _drive = drive;
+    _bootstrap = bootstrap;
+    return GoogleConnectionResult(
+      folderId: bootstrap.appRootFolderId,
+      folderName: bootstrap.appRootFolderName,
+      mock: false,
+    );
+  }
+
+  @override
+  Future<void> commitDriveFolderReselection() async {
+    final pending = _pendingFolderReselection;
+    if (pending == null) throw StateError('No Drive folder change is pending.');
+    pending.bindingCommitAttempted = true;
+    await _requireDrive().upsertAppDataBinding(
+      folderId: pending.candidateBootstrap.appRootFolderId,
+      folderName: pending.candidateBootstrap.appRootFolderName,
+    );
+    _pendingFolderReselection = null;
+  }
+
+  @override
+  Future<void> rollbackDriveFolderReselection() async {
+    final pending = _pendingFolderReselection;
+    if (pending == null) return;
+    final bindingDrive = _drive;
+    try {
+      final previous = pending.previousBootstrap;
+      if (pending.bindingCommitAttempted && bindingDrive != null) {
+        if (previous == null) {
+          await bindingDrive.deleteAppDataBinding();
+        } else {
+          await bindingDrive.upsertAppDataBinding(
+            folderId: previous.appRootFolderId,
+            folderName: previous.appRootFolderName,
+          );
+        }
+      }
+    } finally {
+      _drive = pending.previousDrive;
+      _bootstrap = pending.previousBootstrap;
+      _pendingFolderReselection = null;
+    }
+  }
+
+  GoogleDriveClient _driveClient() {
+    return GoogleDriveClient(
+      accessTokenProvider: () async {
+        final current = _oauth.currentAuthorization;
+        if (current != null) return current.accessToken;
+        return (await _oauth.authorize()).accessToken;
+      },
+    );
+  }
+
+  GoogleConnectionResult _activateConnection({
+    required GoogleDriveClient drive,
+    required DriveBootstrapResult bootstrap,
+  }) {
+    _drive = drive;
+    _bootstrap = bootstrap;
+    return GoogleConnectionResult(
+      folderId: bootstrap.appRootFolderId,
+      folderName: bootstrap.appRootFolderName,
+      mock: false,
+    );
+  }
+
+  @override
+  Future<void> disconnect() async {
+    await _oauth.disconnect();
+    _drive = null;
+    _bootstrap = null;
+    _pendingFolderReselection = null;
+  }
+
+  @override
+  Future<void> deleteAccountBinding() async {
+    await _oauth.authorize();
+    await _driveClient().deleteAppDataBinding();
+    await disconnect();
+  }
+
+  @override
+  Future<Map<String, Object?>?> pullSnapshot() =>
+      _requireDrive().readStateSnapshot(_requireBootstrap().appRootFolderId);
+
+  @override
+  Future<void> pushSnapshot(Map<String, Object?> snapshot) =>
+      _requireDrive().writeStateSnapshot(
+        appRootId: _requireBootstrap().appRootFolderId,
+        snapshot: snapshot,
+      );
+
+  @override
+  Future<DriveQuarantineRecord?> quarantineLastPulledSnapshot({
+    required String reasonCode,
+    required String preview,
+  }) => _requireDrive().quarantineLastPulledSnapshot(
+    appRootId: _requireBootstrap().appRootFolderId,
+    reasonCode: reasonCode,
+    preview: preview,
+  );
+
+  @override
+  Future<DriveRetentionInventory> inspectDriveRetention() => _requireDrive()
+      .inspectRetention(appRootId: _requireBootstrap().appRootFolderId);
+
+  @override
+  Future<DriveRetentionCleanupResult> trashDriveRetentionItems({
+    required DriveRetentionInventory inventory,
+    required Set<String> selectedFileIds,
+  }) => _requireDrive().trashRetentionItems(
+    appRootId: _requireBootstrap().appRootFolderId,
+    inventory: inventory,
+    selectedFileIds: selectedFileIds,
+  );
+
+  GoogleDriveClient _requireDrive() =>
+      _drive ?? (throw StateError('Google Drive is not connected'));
+
+  DriveBootstrapResult _requireBootstrap() =>
+      _bootstrap ?? (throw StateError('Google Drive is not connected'));
+}
+
+/// Google Sign-In and Drive synchronization for iOS and macOS.
+///
+/// Apple platforms do not expose Google's native OnePick folder selector. A
+/// first-time connection therefore creates the app-owned `WordStudyData`
+/// folder in My Drive. If another Sprache device already wrote an app-data
+/// binding, that exact folder is restored instead.
+class AppleGoogleConnectionService
+    implements
+        GoogleConnectionService,
+        RestorableGoogleConnectionService,
+        RemoteSnapshotQuarantineService,
+        RemoteStorageRetentionService,
+        AccountBindingDeletionService {
+  AppleGoogleConnectionService({required this.config});
+
+  final AppConfig config;
+  final GoogleSignIn _signIn = GoogleSignIn.instance;
+  static const _driveScopes = [
+    'https://www.googleapis.com/auth/drive.file',
+    GoogleDriveClient.appDataOAuthScope,
+  ];
+
+  bool _initialized = false;
+  GoogleDriveClient? _drive;
+  DriveBootstrapResult? _bootstrap;
+
+  @override
+  Future<GoogleConnectionResult> connect({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    await _ensureInitialized();
+    onStage?.call(GoogleConnectionStage.signIn);
+    final account = await _signIn.authenticate();
+    final existingAuthorization = await account.authorizationClient
+        .authorizationForScopes(_driveScopes);
+    final authorization =
+        existingAuthorization ??
+        await account.authorizationClient.authorizeScopes(_driveScopes);
+
+    onStage?.call(GoogleConnectionStage.preparingDrive);
+    final drive = _driveClient(
+      account: account,
+      fallbackAccessToken: authorization.accessToken,
+    );
+    var bootstrap = await _restoreBootstrapFromDrive(
+      drive,
+      appDataScopeGranted: true,
+    );
+    if (bootstrap == null) {
+      bootstrap = await drive.ensureAppRoot('root');
+      onStage?.call(GoogleConnectionStage.linkingAccount);
+      await drive.upsertAppDataBinding(
+        folderId: bootstrap.appRootFolderId,
+        folderName: bootstrap.appRootFolderName,
+      );
+    }
+    return _activateConnection(drive: drive, bootstrap: bootstrap);
+  }
+
+  @override
+  Future<GoogleConnectionResult?> restoreConnection({
+    GoogleConnectionStageCallback? onStage,
+  }) async {
+    onStage?.call(GoogleConnectionStage.checkingConnection);
+    await _ensureInitialized();
+    final attempt = _signIn.attemptLightweightAuthentication();
+    if (attempt == null) return null;
+    final account = await attempt;
+    if (account == null) return null;
+    final authorization = await account.authorizationClient
+        .authorizationForScopes(_driveScopes);
+    if (authorization == null) return null;
+
+    onStage?.call(GoogleConnectionStage.preparingDrive);
+    final drive = _driveClient(
+      account: account,
+      fallbackAccessToken: authorization.accessToken,
+    );
+    try {
+      final bootstrap = await _restoreBootstrapFromDrive(
+        drive,
+        appDataScopeGranted: true,
+      );
+      if (bootstrap == null) return null;
+      return _activateConnection(drive: drive, bootstrap: bootstrap);
+    } on DriveRequestException catch (error) {
+      if (error.reconnectRequired) return null;
+      rethrow;
+    } on DriveDataIntegrityException {
+      return null;
+    }
+  }
+
+  GoogleDriveClient _driveClient({
+    required GoogleSignInAccount account,
+    required String fallbackAccessToken,
+  }) {
+    return GoogleDriveClient(
+      accessTokenProvider: () async {
+        final refreshed = await account.authorizationClient
+            .authorizationForScopes(_driveScopes);
+        return refreshed?.accessToken ?? fallbackAccessToken;
+      },
+    );
+  }
+
+  GoogleConnectionResult _activateConnection({
+    required GoogleDriveClient drive,
+    required DriveBootstrapResult bootstrap,
+  }) {
+    _drive = drive;
+    _bootstrap = bootstrap;
+    return GoogleConnectionResult(
+      folderId: bootstrap.appRootFolderId,
+      folderName: bootstrap.appRootFolderName,
+      mock: false,
+    );
+  }
+
+  @override
+  Future<void> disconnect() async {
+    await _signIn.signOut();
+    _drive = null;
+    _bootstrap = null;
+  }
+
+  @override
+  Future<void> deleteAccountBinding() async {
+    await _ensureInitialized();
+    final attempt = _signIn.attemptLightweightAuthentication();
+    final account =
+        (attempt == null ? null : await attempt) ??
+        await _signIn.authenticate();
+    final authorization = await account.authorizationClient.authorizeScopes(
+      _driveScopes,
+    );
+    final drive = _driveClient(
+      account: account,
+      fallbackAccessToken: authorization.accessToken,
+    );
+    await drive.deleteAppDataBinding();
+    await disconnect();
+  }
+
+  @override
+  Future<Map<String, Object?>?> pullSnapshot() {
+    return _requireDrive().readStateSnapshot(
+      _requireBootstrap().appRootFolderId,
+    );
+  }
+
+  @override
+  Future<void> pushSnapshot(Map<String, Object?> snapshot) {
+    return _requireDrive().writeStateSnapshot(
+      appRootId: _requireBootstrap().appRootFolderId,
+      snapshot: snapshot,
+    );
+  }
+
+  @override
+  Future<DriveQuarantineRecord?> quarantineLastPulledSnapshot({
+    required String reasonCode,
+    required String preview,
+  }) {
+    return _requireDrive().quarantineLastPulledSnapshot(
+      appRootId: _requireBootstrap().appRootFolderId,
+      reasonCode: reasonCode,
+      preview: preview,
+    );
+  }
+
+  @override
+  Future<DriveRetentionInventory> inspectDriveRetention() {
+    return _requireDrive().inspectRetention(
+      appRootId: _requireBootstrap().appRootFolderId,
+    );
+  }
+
+  @override
+  Future<DriveRetentionCleanupResult> trashDriveRetentionItems({
+    required DriveRetentionInventory inventory,
+    required Set<String> selectedFileIds,
+  }) {
+    return _requireDrive().trashRetentionItems(
+      appRootId: _requireBootstrap().appRootFolderId,
+      inventory: inventory,
+      selectedFileIds: selectedFileIds,
+    );
+  }
+
+  Future<void> _ensureInitialized() async {
+    if (_initialized) return;
+    await _signIn.initialize(clientId: config.googleAppleClientId);
+    _initialized = true;
+  }
+
+  GoogleDriveClient _requireDrive() {
+    return _drive ?? (throw StateError('Google Drive is not connected'));
+  }
+
+  DriveBootstrapResult _requireBootstrap() {
+    return _bootstrap ?? (throw StateError('Google Drive is not connected'));
+  }
+}
+
 GoogleConnectionService createGoogleConnectionService({
   required AppConfig config,
   required TokenVault tokenVault,
 }) {
   if (config.mockMode) {
     return MockGoogleConnectionService();
+  }
+  if (kIsWeb) {
+    if (!config.hasWebGoogleCredentials) {
+      return const UnavailableGoogleConnectionService(
+        'GOOGLE_WEB_CLIENT_ID is not configured',
+      );
+    }
+    return GoogleWebConnectionService(config: config);
   }
   if (defaultTargetPlatform == TargetPlatform.windows) {
     if (!config.hasDesktopGoogleCredentials) {
@@ -854,6 +1304,15 @@ GoogleConnectionService createGoogleConnectionService({
       );
     }
     return AndroidGoogleConnectionService(config: config);
+  }
+  if (defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS) {
+    if (!config.hasAppleGoogleCredentials) {
+      return const UnavailableGoogleConnectionService(
+        'GOOGLE_APPLE_CLIENT_ID is not configured',
+      );
+    }
+    return AppleGoogleConnectionService(config: config);
   }
   return const UnavailableGoogleConnectionService(
     'Google connection is not supported on this platform',

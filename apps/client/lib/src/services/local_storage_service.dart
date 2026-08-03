@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 import '../backup/backup_archive.dart';
 import '../domain/local_storage.dart';
@@ -126,6 +126,49 @@ abstract interface class ImportArchiveStagingService {
   Future<List<StagedImportArchive>> list();
 
   Future<void> remove(String id);
+}
+
+/// Browser imports are held only for the active session. The normalized
+/// learning data and import draft are persisted in Drift/IndexedDB instead,
+/// while the user's original file is never uploaded or retained implicitly.
+class MemoryImportArchiveStagingService implements ImportArchiveStagingService {
+  final Map<String, StagedImportArchive> _entries = {};
+
+  @override
+  Future<StagedImportArchive> stage({
+    required String originalFileName,
+    required Uint8List bytes,
+    required String sha256Hex,
+    String? distributionKey,
+  }) async {
+    if (sha256.convert(bytes).toString() != sha256Hex) {
+      throw const LocalStorageException(
+        'staged_import_sha_mismatch',
+        '가져올 원본 파일을 확인하지 못했습니다.',
+      );
+    }
+    final entry = StagedImportArchive(
+      id: sha256Hex.toLowerCase(),
+      originalFileName: _safeFileName(originalFileName),
+      sha256Hex: sha256Hex,
+      bytes: Uint8List.fromList(bytes),
+      createdAt: DateTime.now().toUtc(),
+      distributionKey: distributionKey?.trim(),
+    );
+    _entries[entry.id] = entry;
+    return entry;
+  }
+
+  @override
+  Future<List<StagedImportArchive>> list() async => List.unmodifiable(
+    _entries.values.toList()
+      ..sort((left, right) => left.createdAt.compareTo(right.createdAt)),
+  );
+
+  @override
+  Future<void> remove(String id) async {
+    _entries.remove(id);
+  }
 }
 
 class FileImportArchiveStagingService implements ImportArchiveStagingService {
@@ -386,10 +429,55 @@ class LocalStorageBundleBuilder {
 }
 
 LocalStorageBackend createPlatformLocalStorageBackend() {
+  if (kIsWeb) return const BrowserLocalStorageBackend();
   if (defaultTargetPlatform == TargetPlatform.android) {
     return const AndroidSafLocalStorageBackend();
   }
   return FileSystemLocalStorageBackend();
+}
+
+class BrowserLocalStorageBackend implements LocalStorageBackend {
+  const BrowserLocalStorageBackend();
+
+  Never _unsupported() => throw const LocalStorageException(
+    'browser_folder_not_supported',
+    '브라우저에서는 로컬 폴더 자동 저장 대신 백업 내려받기와 불러오기를 사용해 주세요.',
+  );
+
+  @override
+  Future<LocalStorageLocation?> pickLocation({
+    LocalStorageSettings? current,
+  }) async => _unsupported();
+
+  @override
+  Future<LocalStorageLocation> verifyLocation(
+    LocalStorageLocation location,
+  ) async => _unsupported();
+
+  @override
+  Future<LocalStorageWriteResult> writeBundle({
+    required LocalStorageLocation location,
+    required LocalStorageBundle bundle,
+  }) async => _unsupported();
+
+  @override
+  Future<Uint8List?> readLatestArchive(LocalStorageLocation location) async =>
+      _unsupported();
+
+  @override
+  Future<bool> hasLatestArchive(LocalStorageLocation location) async =>
+      _unsupported();
+
+  @override
+  Future<LocalImportArchiveResult> archiveImport({
+    required LocalStorageLocation location,
+    required String originalFileName,
+    required Uint8List bytes,
+    required String sha256Hex,
+  }) async => _unsupported();
+
+  @override
+  Future<void> releaseLocation(LocalStorageLocation location) async {}
 }
 
 class FileSystemLocalStorageBackend implements LocalStorageBackend {

@@ -23,6 +23,7 @@ import 'state/pending_import_state.dart';
 import 'theme/app_theme.dart';
 import 'theme/study_accessibility_theme.dart';
 import 'widgets/global_search_palette.dart';
+import 'widgets/drive_connection_gate.dart';
 import 'widgets/keyboard_help_overlay.dart';
 import 'widgets/privacy_mode_scope.dart';
 import 'widgets/quick_content_result_handler.dart';
@@ -484,6 +485,7 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
         if (devicePrivacy.privacyMode) {
           scaledChild = _PrivacyModeFrame(child: scaledChild);
         }
+        scaledChild = DriveConnectionGate(child: scaledChild);
         final globalBindings = effectiveAccessibilityProfile.globalBindingsFor({
           GlobalShortcutAction.openSearch: () =>
               unawaited(showGlobalSearchPalette(context, ref)),

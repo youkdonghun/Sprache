@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 typedef ReleaseProbeDirectoryResolver = Future<Directory> Function();
 typedef ReleaseProbeClock = DateTime Function();
@@ -42,8 +42,9 @@ class ReleaseRuntimeProbe {
       'RELEASE_PROBE_KIND',
       defaultValue: 'flutter-first-frame',
     );
-    final outputDirectory =
-        Platform.environment['SPRACHE_RELEASE_PROBE_DIRECTORY']?.trim();
+    final outputDirectory = Platform
+        .environment['SPRACHE_RELEASE_PROBE_DIRECTORY']
+        ?.trim();
     return ReleaseRuntimeProbe(
       enabled: compileTimeEnabled || runtimeEnabled,
       platform: _platformName(platform),

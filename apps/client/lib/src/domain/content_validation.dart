@@ -561,6 +561,8 @@ class LearningContentValidator {
         sourceUrl: _optional(item.source.sourceUrl),
         author: _optional(item.source.author),
         attribution: _optional(item.source.attribution),
+        pageNumber: item.source.pageNumber,
+        excerpt: _optional(item.source.excerpt),
       ),
       updatedAt: item.updatedAt?.toUtc(),
     );

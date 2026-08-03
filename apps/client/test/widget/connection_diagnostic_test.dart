@@ -28,6 +28,8 @@ void main() {
                 const AppConfig(
                   googleAndroidClientId: '',
                   googleDesktopClientId: 'desktop-client-id',
+                  googleDesktopClientSecret: 'desktop-client-secret',
+                  googleAppleClientId: '',
                   googleServerClientId: '',
                   appEnvironment: 'test',
                   mockMode: false,
@@ -39,15 +41,15 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const Key('home-settings')));
-        await tester.pumpAndSettle();
-
-        expect(find.byKey(const Key('windows-loopback-note')), findsOneWidget);
+        expect(
+          find.byKey(const Key('required-google-drive-connect')),
+          findsOneWidget,
+        );
         expect(find.textContaining('별도 중계 서버'), findsOneWidget);
 
-        final connectGoogle = find.byKey(const Key('connect-google'));
-        await tester.ensureVisible(connectGoogle);
-        await tester.pumpAndSettle();
+        final connectGoogle = find.byKey(
+          const Key('required-google-drive-connect'),
+        );
         await tester.tap(connectGoogle);
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
@@ -60,6 +62,9 @@ void main() {
         expect(find.textContaining('127.0.0.1이 보여도 괜찮아요'), findsOneWidget);
 
         service.complete();
+        await tester.pumpAndSettle();
+        expect(find.byKey(const Key('home-settings')), findsOneWidget);
+        await tester.tap(find.byKey(const Key('home-settings')));
         await tester.pumpAndSettle();
         expect(find.text('연결됨'), findsOneWidget);
         expect(tester.takeException(), isNull);

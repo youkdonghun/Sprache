@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
 import 'package:sprache/src/config/app_config.dart';
 import 'package:sprache/src/data/study_store.dart';
+import 'package:sprache/src/integrations/google/google_connection_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 import 'package:sprache/src/state/connection_state.dart';
 
@@ -53,6 +54,8 @@ void main() {
               const AppConfig(
                 googleAndroidClientId: 'android-client-id',
                 googleDesktopClientId: 'desktop-client-id',
+                googleDesktopClientSecret: 'desktop-client-secret',
+                googleAppleClientId: 'apple-client-id',
                 googleServerClientId: 'server-client-id',
                 appEnvironment: 'test',
                 mockMode: false,
@@ -61,10 +64,15 @@ void main() {
                     'https://youkdonghun.github.io/Sprache/privacy/',
               ),
             ),
+            googleConnectionServiceProvider.overrideWithValue(
+              MockGoogleConnectionService(),
+            ),
           ],
           child: const SpracheApp(),
         ),
       );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('required-google-drive-connect')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();

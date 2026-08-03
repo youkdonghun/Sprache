@@ -83,6 +83,8 @@ class ContentSource {
     this.sourceUrl,
     this.author,
     this.attribution,
+    this.pageNumber,
+    this.excerpt,
   });
 
   static const userCreated = ContentSource(
@@ -107,6 +109,8 @@ class ContentSource {
   final String? sourceUrl;
   final String? author;
   final String? attribution;
+  final int? pageNumber;
+  final String? excerpt;
 
   ContentSource copyWith({
     String? name,
@@ -117,6 +121,8 @@ class ContentSource {
     String? sourceUrl,
     String? author,
     String? attribution,
+    int? pageNumber,
+    String? excerpt,
   }) {
     return ContentSource(
       name: name ?? this.name,
@@ -127,6 +133,8 @@ class ContentSource {
       sourceUrl: sourceUrl ?? this.sourceUrl,
       author: author ?? this.author,
       attribution: attribution ?? this.attribution,
+      pageNumber: pageNumber ?? this.pageNumber,
+      excerpt: excerpt ?? this.excerpt,
     );
   }
 
@@ -139,6 +147,8 @@ class ContentSource {
     if (sourceUrl != null) 'sourceUrl': sourceUrl,
     if (author != null) 'author': author,
     if (attribution != null) 'attribution': attribution,
+    if (pageNumber != null) 'pageNumber': pageNumber,
+    if (excerpt != null) 'excerpt': excerpt,
   };
 
   factory ContentSource.fromJson(Map<String, Object?> json) {
@@ -149,6 +159,16 @@ class ContentSource {
     final sourceUrl = json['sourceUrl'] ?? json['source_url'] ?? json['url'];
     final author = json['author'] ?? json['creator'];
     final attribution = json['attribution'];
+    final rawPageNumber = json['pageNumber'] ?? json['page_number'];
+    final pageNumber = switch (rawPageNumber) {
+      null => null,
+      final int value => value,
+      final num value when value.isFinite && value == value.round() =>
+        value.toInt(),
+      final String value => int.tryParse(value),
+      _ => -1,
+    };
+    final excerpt = json['excerpt'] ?? json['context'];
     final rawContentVersion = json['contentVersion'] ?? 1;
     final contentVersion = switch (rawContentVersion) {
       final int value => value,
@@ -174,10 +194,14 @@ class ContentSource {
       'source.sourceUrl': sourceUrl,
       'source.author': author,
       'source.attribution': attribution,
+      'source.excerpt': excerpt,
     }.entries) {
       if (entry.value != null && entry.value is! String) {
         throw FormatException('${entry.key} 값은 문자열이어야 합니다.');
       }
+    }
+    if (pageNumber != null && pageNumber <= 0) {
+      throw const FormatException('source.pageNumber 값은 양의 정수여야 합니다.');
     }
     return ContentSource(
       name: name,
@@ -188,6 +212,8 @@ class ContentSource {
       sourceUrl: sourceUrl as String?,
       author: author as String?,
       attribution: attribution as String?,
+      pageNumber: pageNumber,
+      excerpt: excerpt as String?,
     );
   }
 }
