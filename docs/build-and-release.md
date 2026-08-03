@@ -71,20 +71,27 @@ npm run test:installer
 
 ## iOS Simulator·macOS 미리보기 산출물
 
-Apple 산출물은 Xcode가 있는 GitHub `macos-latest` 러너에서 만든다. CI의
-`ios-simulator`와 `macos-release` 작업은 pubspec의 `1.32.0+56`, Bundle ID,
-최소 OS와 실행 파일을 확인한다. 이어서 앱을 실제로 실행하고 Flutter 첫 프레임
-뒤 생성되는 CI 전용 evidence를 회수한 후 다음 이름으로 업로드한다.
+Apple 산출물은 Xcode가 있는 macOS 실행 환경에서 만든다. 기본 경로는 루트의
+`codemagic.yaml`에 정의된 Codemagic `apple-preview` 워크플로이며, GitHub
+`macos-latest`의 `ios-simulator`·`macos-release` 작업도 대체 경로로 유지한다.
+Codemagic은 `tool/build-apple-preview.sh`를 실행해 pubspec의 `1.32.0+56`,
+Bundle ID, 최소 OS와 실행 파일을 확인한다. 이어서 앱을 실제로 실행하고 Flutter
+첫 프레임 뒤 생성되는 CI 전용 evidence와 대응 PNG를 검증한 후 다음 이름으로
+업로드한다.
 
 - `Sprache-iOS-Simulator-1.32.0-mock.zip`
 - `Sprache-macOS-1.32.0-mock.zip`
-- `runtime-ios.json`, `runtime-ios-first-frame.png`, `runtime-macos.json`
+- `runtime-ios.json`, `runtime-ios-first-frame.png`
+- `runtime-ios-simulator-screenshot.png`
+- `runtime-macos.json`, `runtime-macos-first-frame.png`
 
 둘 다 운영 Google Drive 자격 증명을 포함하지 않는 `MOCK` 산출물이다. iOS ZIP은
 Simulator 전용이며 IPA가 아니다. macOS ZIP은 unsigned/ad-hoc 상태이며 공증된
 배포 앱이 아니다. Apple Developer 인증서와 provisioning profile을 저장소에
 추가하지 않는다. 자세한 범위는
-[`ios-platform-readiness.md`](ios-platform-readiness.md)를 따른다.
+[`ios-platform-readiness.md`](ios-platform-readiness.md)를 따른다. GitHub Actions
+없이 생성하는 절차와 격리 실행 규칙은
+[`apple-build-without-github-actions.md`](apple-build-without-github-actions.md)에 있다.
 
 ## 외부 키를 저장하지 않는 정식 서명
 

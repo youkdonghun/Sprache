@@ -519,7 +519,9 @@ Google·Railway 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 1.32
 Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`
 폴더를 함께 유지한다. Android APK는 테스트 기기 또는 에뮬레이터에 직접
 설치한다. 파일명이 `debug-signed`이면 Play Store 배포용 서명이라고 표시하지
-않는다. Apple `MOCK` ZIP은 GitHub Actions에서 별도로 생성한다.
+않는다. Apple `MOCK` ZIP은 Xcode가 있는 macOS 실행 환경에서 별도로 생성한다.
+기본 대체 경로는 Codemagic의 `apple-preview` 워크플로이며 자세한 절차는
+[`docs/apple-build-without-github-actions.md`](docs/apple-build-without-github-actions.md)에 있다.
 
 Mock 빌드는 Google 자격증명 없이 전체 학습 흐름을 시험하기 위한 것이다. 실제 Google 로그인·Drive 동기화를 사용하려면 `ENABLE_MOCK_MODE=false`와 플랫폼별 OAuth 설정이 필요하다.
 

@@ -32,6 +32,7 @@
     "build:real": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1",
     "build:real:windows": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target windows",
     "build:real:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target android",
+    "build:apple:preview": "bash ./tool/build-apple-preview.sh",
     "build:release-gated": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -RequireBrokerReady -RequirePrivacyPolicyUrl -RequireAndroidReleaseSigning -RequireWindowsCodeSigning",
     "test": "npm run test:api && npm run test:release-bundle && npm run test:client"
   },

@@ -32,8 +32,8 @@ Windows·iOS·macOS `RUNTIME`, Android `BUILD_ONLY`로 분리한다.
    `npm run verify:release`로 내부 버전·서명·ABI·운영 설정을 검증한다.
 6. Windows 설치본을 격리 설치해 `runtime-windows.json`을 생성한다. Android는
    빌드·v2 서명·패키지·ABI 결과를 `build-android.json`에 APK 해시와 결속한다.
-7. 변경을 푸시한 뒤 GitHub Actions의 iOS Simulator와 macOS 작업에서 실제 첫
-   프레임 evidence 및 `MOCK` ZIP을 받는다.
+7. 변경을 푸시한 뒤 Codemagic `apple-preview` 또는 GitHub Actions의 macOS
+   작업에서 실제 첫 프레임 evidence와 대응 PNG 및 `MOCK` ZIP을 받는다.
 8. 네 플랫폼 파일을 최종 폴더에 모아 번들 manifest를 만들고 다시 검증한다.
 9. manifest 재검증까지 통과한 뒤에만 승격 명령으로 저장소의 낡은 릴리스
    산출물을 정리한다. 학습 DB와 복구 백업은 삭제 대상이 아니다.
