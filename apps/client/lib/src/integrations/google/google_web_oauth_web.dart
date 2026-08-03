@@ -30,6 +30,19 @@ class GoogleWebOAuthClient {
   WebGoogleAuthorization? get currentAuthorization =>
       _authorization?.isUsable == true ? _authorization : null;
 
+  /// Reuses a previously approved Google browser session without displaying
+  /// an account picker or consent screen. A missing/expired browser session is
+  /// reported as `null`; only an explicit user reconnect may show UI.
+  Future<WebGoogleAuthorization?> restoreAuthorization() async {
+    final existing = currentAuthorization;
+    if (existing != null) return existing;
+    try {
+      return await authorize();
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<WebGoogleAuthorization> authorize({
     bool forceAccountChoice = false,
   }) async {
@@ -76,8 +89,14 @@ class GoogleWebOAuthClient {
         },
       ),
     );
+    // Always repeat the scopes in the request override. Some GIS SDK/browser
+    // combinations treat an override object without `scope` as replacing the
+    // initialization value, which makes Google reject the request with
+    // "Missing required parameter scope".
     tokenClient.requestAccessToken(
       gis.OverridableTokenClientConfig(
+        scope: scopes,
+        include_granted_scopes: true,
         prompt: forceAccountChoice ? 'select_account' : '',
       ),
     );

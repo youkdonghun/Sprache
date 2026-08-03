@@ -1204,38 +1204,15 @@ class _StorageIndicator {
         ),
         SyncDisplayStatus.localSaved => const _StorageIndicator(
           kind: _StorageIndicatorKind.local,
-          label: '로컬 저장',
+          label: '앱 내부 보관',
           icon: Icons.save_outlined,
         ),
       };
     }
-    if (state.busy) {
-      return const _StorageIndicator(
-        kind: _StorageIndicatorKind.syncing,
-        label: '로컬 저장 중',
-        icon: Icons.sync_rounded,
-      );
-    }
-    if (state.errorMessage != null ||
-        state.existingArchiveAvailable ||
-        state.settings.awaitingExistingArchiveDecision) {
-      return const _StorageIndicator(
-        kind: _StorageIndicatorKind.attention,
-        label: '저장 확인 필요',
-        icon: Icons.error_outline_rounded,
-      );
-    }
-    if (state.localMirrorActive) {
-      return const _StorageIndicator(
-        kind: _StorageIndicatorKind.local,
-        label: '로컬 저장 중',
-        icon: Icons.folder_copy_outlined,
-      );
-    }
     return const _StorageIndicator(
       kind: _StorageIndicatorKind.setupRequired,
-      label: '저장 위치 필요',
-      icon: Icons.create_new_folder_outlined,
+      label: 'Drive 연결 필요',
+      icon: Icons.cloud_off_outlined,
     );
   }
 

@@ -3704,9 +3704,13 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
 
   List<int> get _countOptions {
     if (widget.availableCount <= 0) return const [];
+    final maximumSelectableCount = widget.availableCount.clamp(
+      StudyLimits.minSessionItems,
+      StudyLimits.maxSessionItems,
+    );
     final options = <int>{
-      for (final count in const [5, 10, 20])
-        if (count <= widget.availableCount) count,
+      for (final count in const [5, 10, 20, 50, 100, 250, 500, 1000])
+        if (count <= maximumSelectableCount) count,
       widget.availableCount < 5 ? widget.availableCount : 5,
       if (widget.availableCount > 5 && widget.availableCount < 10)
         widget.availableCount,
@@ -3960,7 +3964,11 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           selected:
                               _preferences.length ==
                               PracticeSessionLength.allItems,
-                          label: Text('전체 ${widget.availableCount}개'),
+                          label: Text(
+                            widget.availableCount <= StudyLimits.maxSessionItems
+                                ? '전체 ${widget.availableCount}개'
+                                : '최대 ${StudyLimits.maxSessionItems}개',
+                          ),
                           onSelected: (_) =>
                               _setLength(PracticeSessionLength.allItems),
                         ),
@@ -3989,11 +3997,14 @@ class _PracticeLaunchSheetState extends State<_PracticeLaunchSheet> {
                           textAlign: TextAlign.center,
                           inputFormatters: [
                             FilteringTextInputFormatter.digitsOnly,
-                            LengthLimitingTextInputFormatter(3),
+                            LengthLimitingTextInputFormatter(
+                              StudyLimits.maxSessionItems.toString().length,
+                            ),
                           ],
                           decoration: const InputDecoration(
                             isDense: true,
-                            helperText: '1~100',
+                            helperText:
+                                '${StudyLimits.minSessionItems}~${StudyLimits.maxSessionItems}',
                           ),
                           onChanged: (value) {
                             final parsed = int.tryParse(value);

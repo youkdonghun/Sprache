@@ -84,6 +84,11 @@
     }
   </style>
   <script>
+    // Keep the local SQLite/IndexedDB cache resilient to browser storage
+    // pressure. Google Drive remains the cross-device source of recovery.
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist().catch(() => false);
+    }
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', (event) => {
         if (event.data && event.data.type === 'SPRACHE_UPDATE_READY') {

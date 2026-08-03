@@ -3171,6 +3171,48 @@ class AppController extends StateNotifier<AppState> {
     await _queueSyncIfDriveConnected();
   }
 
+  /// Validates and persists a group of user-authored items as one logical edit.
+  ///
+  /// Validation finishes before the store is touched, the store receives one
+  /// batch, and Drive is queued only once. This keeps spreadsheet-style edits
+  /// from producing a partially updated table or a sync operation per row.
+  Future<int> upsertCustomItems(Iterable<LearningItem> items) async {
+    final candidatesById = <String, LearningItem>{};
+    for (final item in items) {
+      final normalized = _contentValidator.ensureValid(item);
+      candidatesById[normalized.id] = normalized;
+    }
+    if (candidatesById.isEmpty) return 0;
+
+    final changedAt = DateTime.now().toUtc();
+    final normalizedItems = <LearningItem>[];
+    for (final item in candidatesById.values) {
+      final previous = customItemById(item.id);
+      normalizedItems.add(
+        _nextContentRevision(item.copyWith(updatedAt: changedAt), previous),
+      );
+    }
+
+    final tombstones = {...state.customItemTombstones}
+      ..removeWhere((id, _) => candidatesById.containsKey(id));
+    await _store.commitCustomItemImport(
+      items: normalizedItems,
+      tombstones: tombstones,
+    );
+    if (!mounted) return normalizedItems.length;
+
+    final merged = <String, LearningItem>{
+      for (final current in state.customItems) current.id: current,
+      for (final item in normalizedItems) item.id: item,
+    };
+    state = state.copyWith(
+      customItems: merged.values.toList(growable: false),
+      customItemTombstones: tombstones,
+    );
+    await _queueSyncIfDriveConnected();
+    return normalizedItems.length;
+  }
+
   LearningItem? findContentIdentityMatch(LearningItem candidate) {
     final identityKey = _contentValidator.identityKey(candidate);
     for (final item in [...state.customItems, ...sampleContent]) {

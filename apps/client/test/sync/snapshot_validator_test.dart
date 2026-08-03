@@ -7,6 +7,7 @@ import 'package:sprache/src/domain/progress.dart';
 import 'package:sprache/src/domain/quiz_session_support.dart';
 import 'package:sprache/src/domain/study_history.dart';
 import 'package:sprache/src/domain/study_interaction_preferences.dart';
+import 'package:sprache/src/domain/study_limits.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/sync/snapshot_validator.dart';
 
@@ -824,19 +825,38 @@ void main() {
     }
   });
 
-  test('accepts the 100-question session plan boundary', () {
+  test('accepts the 1000-question session plan boundary', () {
+    final selectedItemIds = {
+      for (var index = 0; index < StudyLimits.maxSessionItems; index++)
+        'item-$index',
+    };
     expect(
       () => validator.validate({
         'schemaVersion': 1,
         'settings': {
           'sessionPlan': {
-            ...const StudySessionPlan(itemLimit: 100).toJson(),
+            ...StudySessionPlan(
+              itemLimit: StudyLimits.maxSessionItems,
+              selectedItemIds: selectedItemIds,
+            ).toJson(),
             'queuePriority': StudyQueuePriority.newFirst.name,
             'historyFilter': StudyHistoryFilter.wrongOnly.name,
           },
         },
       }),
       returnsNormally,
+    );
+    expect(
+      () => validator.validate({
+        'schemaVersion': 1,
+        'settings': {
+          'sessionPlan': {
+            ...const StudySessionPlan().toJson(),
+            'itemLimit': StudyLimits.maxSessionItems + 1,
+          },
+        },
+      }),
+      throwsA(isA<RemoteSnapshotValidationException>()),
     );
   });
 
@@ -1091,7 +1111,7 @@ void main() {
             'deck': 'everywhere',
             'unitIndex': 20,
             'sentenceRatio': 4,
-            'itemLimit': 101,
+            'itemLimit': StudyLimits.maxSessionItems + 1,
             'updatedAt': 'not-a-date',
           },
         },

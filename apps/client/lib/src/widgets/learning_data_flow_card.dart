@@ -15,9 +15,7 @@ class LearningDataFlowCard extends StatelessWidget {
     this.syncLabel,
     this.syncBusy = false,
     this.onSync,
-    this.localFolderConfigured = false,
-    this.localFolderName,
-    this.onManageStorage,
+    this.onConnectDrive,
     this.condensed = false,
     super.key,
   });
@@ -33,9 +31,7 @@ class LearningDataFlowCard extends StatelessWidget {
   final String? syncLabel;
   final bool syncBusy;
   final VoidCallback? onSync;
-  final bool localFolderConfigured;
-  final String? localFolderName;
-  final VoidCallback? onManageStorage;
+  final VoidCallback? onConnectDrive;
   final bool condensed;
 
   @override
@@ -342,19 +338,8 @@ class LearningDataFlowCard extends StatelessWidget {
                 ),
                 const _StorageRow(
                   icon: Icons.phone_android_rounded,
-                  title: '이 기기의 로컬 데이터베이스',
-                  detail: '직접 만든 자료, 그룹, 진도, 일정과 XP는 항상 이 기기에 먼저 저장됩니다.',
-                ),
-                _StorageRow(
-                  icon: localFolderConfigured
-                      ? Icons.folder_copy_outlined
-                      : Icons.create_new_folder_outlined,
-                  title: '사용자 관리 로컬 폴더',
-                  detail: localFolderConfigured
-                      ? driveConnected
-                            ? '${localFolderName ?? 'Sprache'}는 Drive 연결 해제 시 자동으로 복귀할 대기 위치입니다.'
-                            : '${localFolderName ?? 'Sprache'}에 정돈된 학습 데이터의 검증 사본을 자동 보관합니다.'
-                      : '설정 > 저장·동기화에서 Drive 없이 쓸 로컬 폴더를 선택할 수 있습니다.',
+                  title: '앱 내부 오프라인 캐시',
+                  detail: '인터넷이 잠시 끊겨도 학습할 수 있도록 운영체제의 앱 전용 공간에만 작업 내용을 보관합니다.',
                 ),
                 _StorageRow(
                   icon: driveConnected
@@ -362,8 +347,8 @@ class LearningDataFlowCard extends StatelessWidget {
                       : Icons.cloud_off_outlined,
                   title: 'Google Drive',
                   detail: driveConnected
-                      ? '사용자가 고른 WordStudyData 폴더와 이 기기의 변경 내용을 맞춥니다.'
-                      : '설정 > 저장·동기화에서 연결할 수 있으며, 연결하지 않아도 학습할 수 있습니다.',
+                      ? '사용자가 고른 Sprache 폴더와 이 기기의 변경 내용을 맞춥니다.'
+                      : '학습 자료를 영구 저장하려면 Google Drive 연결이 필요합니다.',
                 ),
                 const _StorageRow(
                   icon: Icons.settings_suggest_outlined,
@@ -371,17 +356,15 @@ class LearningDataFlowCard extends StatelessWidget {
                   detail: '선택한 폴더의 ID와 이름만 내 Drive에 보관합니다. 별도 서버는 쓰지 않습니다.',
                   last: true,
                 ),
-                if (!driveConnected && onManageStorage != null) ...[
+                if (!driveConnected && onConnectDrive != null) ...[
                   const SizedBox(height: 14),
                   OutlinedButton.icon(
                     onPressed: () {
                       Navigator.pop(context);
-                      onManageStorage?.call();
+                      onConnectDrive?.call();
                     },
                     icon: const Icon(Icons.folder_open_rounded),
-                    label: Text(
-                      localFolderConfigured ? '저장 위치 설정 열기' : '로컬 폴더 선택',
-                    ),
+                    label: const Text('Google Drive 연결'),
                   ),
                 ],
                 if (driveConnected) ...[
@@ -438,10 +421,8 @@ class LearningDataFlowCard extends StatelessWidget {
   };
 
   String get _storageSummaryLabel => driveConnected
-      ? '현재: Drive · 앱 DB 원본'
-      : localFolderConfigured
-      ? '현재: 로컬 폴더 · 앱 DB 원본'
-      : '현재: 앱 내부 저장 · 폴더 선택 필요';
+      ? '현재: Google Drive · 앱 내부 오프라인 캐시'
+      : '현재: Google Drive 연결 필요';
 
   String get _recommendedTitle => switch (currentStep) {
     LearningDataStep.add => '다음 할 일 · 자료 추가',

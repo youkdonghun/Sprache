@@ -26,7 +26,6 @@ import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
-import '../state/local_storage_state.dart';
 import '../services/platform_completion_service.dart';
 import '../services/recovery_checkpoint_service.dart';
 import '../theme/app_theme.dart';
@@ -35,6 +34,7 @@ import '../widgets/learning_data_flow_card.dart';
 import '../widgets/highlighted_search_text.dart';
 import '../widgets/quick_content_sheet.dart';
 import '../widgets/privacy_mode_scope.dart';
+import 'bulk_item_editor_dialog.dart';
 
 enum _LibraryFilter { all, favorites, word, sentence, weak, wrong }
 
@@ -59,12 +59,12 @@ enum _AddContentAction { quickWord, quickSentence, fullEditor, importFile }
 enum _DesktopItemAction { open, edit, group, study, export }
 
 String _librarySyncLabel(AppState state, ConnectionState connection) {
-  if (!state.driveConnected) return '이 기기에 저장';
+  if (!state.driveConnected) return 'Drive 연결 필요';
   if (connection.phase == ConnectionPhase.syncing) return 'Drive 동기화 중';
   if (connection.phase == ConnectionPhase.failed) {
-    return '로컬 저장됨 · Drive 재시도 필요';
+    return '앱 내부 보관 · Drive 재시도 필요';
   }
-  if (state.pendingSync != null) return '이 기기에 저장됨 · Drive 저장 대기';
+  if (state.pendingSync != null) return 'Drive 저장 대기';
   final syncedAt = connection.lastSyncedAt?.toLocal();
   if (syncedAt == null) return 'Drive 첫 동기화 대기';
   final hour = syncedAt.hour.toString().padLeft(2, '0');
@@ -415,7 +415,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       (_, next) => _handleActiveSubjectChange(next),
     );
     final connection = ref.watch(connectionControllerProvider);
-    final localStorage = ref.watch(localStorageControllerProvider);
     final screenWidth = MediaQuery.sizeOf(context).width;
     final mobile = screenWidth < 600;
     final narrow = screenWidth < 360;
@@ -482,6 +481,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       excludedItemIds: state.preferences.excludedItemIds,
       favoriteItemIds: state.preferences.favoriteItemIds,
     );
+    final editableFiltered = filtered
+        .where((item) => customItemIds.contains(item.id))
+        .toList(growable: false);
     final availablePartsOfSpeech = items
         .map((item) => item.partOfSpeech)
         .whereType<PartOfSpeech>()
@@ -782,9 +784,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           studiedCount: studiedCount,
           favoriteCount: favoriteCount,
           trashCount: trashEntries.length,
+          editableCount: editableFiltered.length,
           onQuickWord: () => _openQuickContent(LearningItemKind.word),
           onAdd: _openAddMenu,
           onTrash: _openTrash,
+          onBulkEdit: editableFiltered.isEmpty
+              ? null
+              : () => _openBulkEditor(editableFiltered),
         ),
         SizedBox(
           height: narrow
@@ -793,9 +799,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               ? 10
               : 16,
         ),
-        if (!mobile ||
-            items.isEmpty ||
-            (!state.driveConnected && !localStorage.configured)) ...[
+        if (!mobile || items.isEmpty || !state.driveConnected) ...[
           LearningDataFlowCard(
             condensed: true,
             totalCount: items.length,
@@ -991,6 +995,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               onQuiz: () => _startSelected(memorize: false),
               onMoveToSubject: _moveSelectedToSubject,
               onToggleFavorite: _toggleSelectedFavorites,
+              onBulkEdit: () => _openBulkEditor(_selectedItems()),
               onEditTags: _editSelectedTags,
               onExport: _exportSelected,
               onToggleVisibility: _toggleSelectedVisibility,
@@ -1573,6 +1578,46 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         .courseItems
         .where((item) => selected.contains(item.id))
         .toList(growable: false);
+  }
+
+  Future<void> _openBulkEditor(Iterable<LearningItem> candidates) async {
+    final state = ref.read(appControllerProvider);
+    final customIds = state.customItems.map((item) => item.id).toSet();
+    final byId = <String, LearningItem>{};
+    var lockedCount = 0;
+    for (final item in candidates) {
+      if (customIds.contains(item.id)) {
+        byId[item.id] = item;
+      } else {
+        lockedCount += 1;
+      }
+    }
+    final items = byId.values.toList(growable: false);
+    if (items.isEmpty) {
+      _showLibraryMessage('직접 추가하거나 가져온 자료만 표에서 수정할 수 있어요.');
+      return;
+    }
+
+    final savedCount = await showDialog<int>(
+      context: context,
+      barrierDismissible: false,
+      useSafeArea: false,
+      builder: (context) => BulkItemEditorDialog(
+        items: items,
+        onSave: (changed) async {
+          await ref
+              .read(appControllerProvider.notifier)
+              .upsertCustomItems(changed);
+        },
+      ),
+    );
+    if (!mounted || savedCount == null) return;
+    final skippedLabel = lockedCount == 0
+        ? ''
+        : ' 기본 언어팩 $lockedCount개는 원본 보호를 위해 제외했어요.';
+    _showLibraryMessage(
+      '$savedCount개 자료를 한 번에 저장했습니다.$skippedLabel Drive 동기화에도 반영됩니다.',
+    );
   }
 
   Future<void> _toggleSelectedFavorites() async {
@@ -4640,9 +4685,11 @@ class _LibraryHeader extends StatelessWidget {
     required this.studiedCount,
     required this.favoriteCount,
     required this.trashCount,
+    required this.editableCount,
     required this.onQuickWord,
     required this.onAdd,
     required this.onTrash,
+    required this.onBulkEdit,
   });
 
   final String subjectName;
@@ -4652,9 +4699,11 @@ class _LibraryHeader extends StatelessWidget {
   final int studiedCount;
   final int favoriteCount;
   final int trashCount;
+  final int editableCount;
   final VoidCallback onQuickWord;
   final VoidCallback onAdd;
   final VoidCallback onTrash;
+  final VoidCallback? onBulkEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -4714,6 +4763,20 @@ class _LibraryHeader extends StatelessWidget {
         tooltip: '휴지통 열기',
       ),
     );
+    final tableEditButton = IconButton.outlined(
+      key: const Key('library-bulk-edit-button'),
+      onPressed: onBulkEdit,
+      icon: const Icon(Icons.table_view_outlined),
+      tooltip: editableCount == 0
+          ? '표로 편집할 사용자 자료가 없습니다.'
+          : '현재 목록의 사용자 자료 $editableCount개를 표로 편집',
+    );
+    final wideTableEditButton = OutlinedButton.icon(
+      key: const Key('library-bulk-edit-button'),
+      onPressed: onBulkEdit,
+      icon: const Icon(Icons.table_view_outlined, size: 18),
+      label: Text('표 편집 $editableCount'),
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 520) {
@@ -4723,6 +4786,8 @@ class _LibraryHeader extends StatelessWidget {
               Expanded(child: copy(veryNarrow: constraints.maxWidth < 360)),
               const SizedBox(width: 8),
               trashButton,
+              const SizedBox(width: 6),
+              tableEditButton,
               const SizedBox(width: 6),
               if (constraints.maxWidth < 420)
                 iconQuickWordButton
@@ -4738,6 +4803,8 @@ class _LibraryHeader extends StatelessWidget {
             Expanded(child: copy(veryNarrow: false)),
             const SizedBox(width: 18),
             trashButton,
+            const SizedBox(width: 8),
+            wideTableEditButton,
             const SizedBox(width: 8),
             quickWordButton,
             const SizedBox(width: 4),

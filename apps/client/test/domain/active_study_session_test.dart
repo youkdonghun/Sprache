@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/active_study_session.dart';
 import 'package:sprache/src/domain/progress.dart';
 import 'package:sprache/src/domain/quiz_session_support.dart';
+import 'package:sprache/src/domain/study_limits.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 
 void main() {
@@ -146,13 +147,16 @@ void main() {
     },
   );
 
-  test('supports 100 initial items and 300 retry queue entries', () {
+  test('supports 1000 initial items and 3000 retry queue entries', () {
     final startedAt = DateTime.utc(2026, 7, 28, 13);
-    final initial = [for (var index = 0; index < 100; index++) 'item-$index'];
+    final initial = [
+      for (var index = 0; index < StudyLimits.maxSessionItems; index++)
+        'item-$index',
+    ];
     final queue = [...initial, ...initial, ...initial];
     final session =
         ActiveStudySession.started(
-          sessionId: 'hundred-session',
+          sessionId: 'thousand-session',
           courseId: 'ko-en',
           mode: StudyMode.mixed,
           unitIndex: null,
@@ -160,7 +164,7 @@ void main() {
           startedAt: startedAt,
         ).copyWith(
           itemIds: queue,
-          currentIndex: 150,
+          currentIndex: StudyLimits.maxSessionItems + 500,
           wrongItemIds: initial.take(10).toSet(),
           finalCorrectItemIds: initial.skip(10).take(20).toSet(),
         );
@@ -168,9 +172,9 @@ void main() {
     final paused = session.pause(startedAt.add(const Duration(minutes: 1)));
     final restored = ActiveStudySession.fromJson(paused.toJson());
 
-    expect(restored.itemIds, hasLength(300));
-    expect(restored.initialItemIds, hasLength(100));
-    expect(restored.journey.last.itemCount, 100);
+    expect(restored.itemIds, hasLength(StudyLimits.maxActiveQueueEntries));
+    expect(restored.initialItemIds, hasLength(StudyLimits.maxSessionItems));
+    expect(restored.journey.last.itemCount, StudyLimits.maxSessionItems);
 
     expect(
       () => ActiveStudySession.fromJson({
@@ -181,7 +185,7 @@ void main() {
     );
   });
 
-  test('started sessions require at most 100 unique initial items', () {
+  test('started sessions require at most 1000 unique initial items', () {
     final startedAt = DateTime.utc(2026, 7, 28, 14);
     expect(
       () => ActiveStudySession.started(
@@ -200,7 +204,10 @@ void main() {
         courseId: 'ko-en',
         mode: StudyMode.mixed,
         unitIndex: null,
-        itemIds: [for (var index = 0; index < 101; index++) 'item-$index'],
+        itemIds: [
+          for (var index = 0; index <= StudyLimits.maxSessionItems; index++)
+            'item-$index',
+        ],
         startedAt: startedAt,
       ),
       throwsArgumentError,

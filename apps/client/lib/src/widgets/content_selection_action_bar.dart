@@ -12,6 +12,7 @@ class ContentSelectionActionBar extends StatelessWidget {
     this.busy = false,
     this.onMoveToSubject,
     this.onToggleFavorite,
+    this.onBulkEdit,
     this.onEditTags,
     this.onExport,
     this.onToggleVisibility,
@@ -31,6 +32,7 @@ class ContentSelectionActionBar extends StatelessWidget {
   final VoidCallback onClear;
   final VoidCallback? onMoveToSubject;
   final VoidCallback? onToggleFavorite;
+  final VoidCallback? onBulkEdit;
   final VoidCallback? onEditTags;
   final VoidCallback? onExport;
   final VoidCallback? onToggleVisibility;
@@ -80,6 +82,13 @@ class ContentSelectionActionBar extends StatelessWidget {
                 icon: const Icon(Icons.quiz_outlined, size: 18),
                 label: const Text('퀴즈'),
               ),
+              if (onBulkEdit != null)
+                FilledButton.tonalIcon(
+                  key: Key('$keyPrefix-bulk-edit'),
+                  onPressed: busy ? null : onBulkEdit,
+                  icon: const Icon(Icons.table_view_outlined, size: 18),
+                  label: const Text('표 편집'),
+                ),
               if (onMoveToSubject != null)
                 IconButton(
                   key: Key('$keyPrefix-subject-move'),

@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'language.dart';
 import 'learning_item.dart';
+import 'study_limits.dart';
 
 /// Rules for an assessment session. Exam results are intentionally calculated
 /// against the planned question count so a timeout cannot inflate accuracy.
@@ -10,7 +11,10 @@ class ExamConfiguration {
     this.questionCount = 10,
     this.timeLimit = const Duration(minutes: 10),
     this.passScore = 80,
-  }) : assert(questionCount > 0),
+  }) : assert(
+         questionCount >= StudyLimits.minSessionItems &&
+             questionCount <= StudyLimits.maxSessionItems,
+       ),
        assert(passScore >= 1 && passScore <= 100);
 
   final int questionCount;
@@ -28,8 +32,8 @@ class ExamConfiguration {
     final timeLimitSeconds = _exactInteger(json['timeLimitSeconds']);
     final passScore = _exactInteger(json['passScore']);
     if (questionCount == null ||
-        questionCount < 1 ||
-        questionCount > 100 ||
+        questionCount < StudyLimits.minSessionItems ||
+        questionCount > StudyLimits.maxSessionItems ||
         timeLimitSeconds == null ||
         timeLimitSeconds < 60 ||
         timeLimitSeconds > 120 * 60 ||
@@ -46,9 +50,15 @@ class ExamConfiguration {
   }
 
   ExamConfiguration normalizedFor(int availableQuestions) {
-    final available = max(1, availableQuestions);
+    final available = max(
+      StudyLimits.minSessionItems,
+      min(availableQuestions, StudyLimits.maxSessionItems),
+    );
     return ExamConfiguration(
-      questionCount: questionCount.clamp(1, available),
+      questionCount: questionCount.clamp(
+        StudyLimits.minSessionItems,
+        available,
+      ),
       timeLimit: Duration(seconds: timeLimit.inSeconds.clamp(60, 120 * 60)),
       passScore: passScore.clamp(1, 100),
     );

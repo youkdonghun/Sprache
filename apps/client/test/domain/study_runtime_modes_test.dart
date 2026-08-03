@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
+import 'package:sprache/src/domain/study_limits.dart';
 import 'package:sprache/src/domain/study_runtime_modes.dart';
 
 void main() {
@@ -23,6 +24,22 @@ void main() {
           'questionCount': 2.5,
         }),
         throwsFormatException,
+      );
+      final boundary = ExamConfiguration.fromJson({
+        ...configuration.toJson(),
+        'questionCount': StudyLimits.maxSessionItems,
+      });
+      expect(boundary.questionCount, StudyLimits.maxSessionItems);
+      expect(
+        () => ExamConfiguration.fromJson({
+          ...configuration.toJson(),
+          'questionCount': StudyLimits.maxSessionItems + 1,
+        }),
+        throwsFormatException,
+      );
+      expect(
+        boundary.normalizedFor(StudyLimits.maxSessionItems + 500).questionCount,
+        StudyLimits.maxSessionItems,
       );
     });
 

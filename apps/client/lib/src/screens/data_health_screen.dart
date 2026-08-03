@@ -58,13 +58,9 @@ class _DataHealthScreenState extends ConsumerState<DataHealthScreen> {
     if (_busySection != null) return;
     setState(() => _busySection = sectionId);
     try {
-      if (sectionId == 'local-folder') {
-        await ref.read(localStorageControllerProvider.notifier).saveNow();
-      } else {
-        await ref
-            .read(connectionControllerProvider.notifier)
-            .syncOrRestore(manual: true);
-      }
+      await ref
+          .read(connectionControllerProvider.notifier)
+          .syncOrRestore(manual: true);
       if (!mounted) return;
       _refresh();
       ScaffoldMessenger.of(
@@ -108,7 +104,6 @@ class _DataHealthScreenState extends ConsumerState<DataHealthScreen> {
           final report = const DataHealthReportBuilder().build(
             app: app,
             connection: connection,
-            localStorage: localStorage,
             recovery: recovery,
           );
           return ListView(
@@ -382,7 +377,7 @@ class _BackupReceiptCard extends StatelessWidget {
           ? const ListTile(
               leading: Icon(Icons.receipt_long_outlined),
               title: Text('백업 확인 기록'),
-              subtitle: Text('아직 확인된 복구 사본이나 로컬 보관본이 없습니다.'),
+              subtitle: Text('아직 확인된 앱 내부 복구 사본이 없습니다.'),
             )
           : ListTile(
               leading: Icon(

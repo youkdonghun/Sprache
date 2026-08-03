@@ -1,6 +1,5 @@
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
-import '../state/local_storage_state.dart';
 import '../sync/sync_policy.dart';
 import 'recovery_backup_catalog.dart';
 
@@ -88,7 +87,6 @@ class DataHealthReportBuilder {
   DataHealthReport build({
     required AppState app,
     required ConnectionState connection,
-    required LocalStorageState localStorage,
     required LocalRecoveryInventory recovery,
     DateTime? generatedAt,
   }) {
@@ -105,7 +103,6 @@ class DataHealthReportBuilder {
               ? item
               : latest,
         );
-    final localSettings = localStorage.settings;
     final lastBackup = lastCheckpoint != null
         ? BackupVerificationReceipt(
             createdAt: lastCheckpoint.modifiedAt,
@@ -115,14 +112,7 @@ class DataHealthReportBuilder {
             itemCount: lastCheckpoint.itemCount,
             reason: lastCheckpoint.reason,
           )
-        : localSettings.lastSavedAt == null
-        ? null
-        : BackupVerificationReceipt(
-            createdAt: localSettings.lastSavedAt!,
-            byteLength: localSettings.lastArchiveBytes ?? 0,
-            verified: localSettings.lastArchiveSha256 != null,
-            sha256Hex: localSettings.lastArchiveSha256,
-          );
+        : null;
 
     return DataHealthReport(
       generatedAt: (generatedAt ?? DateTime.now()).toUtc(),
@@ -138,31 +128,6 @@ class DataHealthReportBuilder {
           summary: app.isHydrated ? '로컬 DB 사용 가능' : '로컬 DB 여는 중',
           detail:
               '개인 콘텐츠 ${app.customItems.length}개 · 진도 ${app.progress.length}개 · 최근 세션 ${app.recentSessions.length}개',
-        ),
-        DataHealthSection(
-          id: 'local-folder',
-          title: '로컬 보관 폴더',
-          level: localStorage.errorMessage != null
-              ? DataHealthLevel.attention
-              : localStorage.configured
-              ? localStorage.driveConnected
-                    ? DataHealthLevel.waiting
-                    : DataHealthLevel.healthy
-              : DataHealthLevel.unavailable,
-          summary: localStorage.errorMessage != null
-              ? '저장 확인 필요'
-              : localStorage.configured
-              ? localStorage.driveConnected
-                    ? 'Drive 연결 해제 시 자동 복귀'
-                    : '로컬 미러 사용 중'
-              : '보관 폴더를 선택하지 않음',
-          detail:
-              localStorage.errorMessage ??
-              (localStorage.settings.displayName ?? '앱 DB에만 안전하게 저장합니다.'),
-          retryable:
-              localStorage.configured &&
-              !localStorage.driveConnected &&
-              localStorage.errorMessage != null,
         ),
         DataHealthSection(
           id: 'drive',

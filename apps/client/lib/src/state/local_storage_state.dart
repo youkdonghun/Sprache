@@ -14,7 +14,7 @@ import '../domain/local_storage.dart';
 import '../services/local_storage_service.dart';
 import 'app_state.dart';
 
-enum ActiveStorageTarget { appOnly, localFolder, googleDrive }
+enum ActiveStorageTarget { appOnly, googleDrive }
 
 class LocalStorageState {
   const LocalStorageState({
@@ -46,15 +46,8 @@ class LocalStorageState {
 
   bool get configured => settings.configured;
 
-  bool get requiresSetup => initialized && !driveConnected && !configured;
-
-  bool get localMirrorActive =>
-      initialized && !driveConnected && configured && errorMessage == null;
-
   ActiveStorageTarget get activeTarget => driveConnected
       ? ActiveStorageTarget.googleDrive
-      : configured
-      ? ActiveStorageTarget.localFolder
       : ActiveStorageTarget.appOnly;
 
   LocalStorageState copyWith({
@@ -357,7 +350,21 @@ class LocalStorageController extends StateNotifier<LocalStorageState> {
 
   Future<void> _initialize() async {
     try {
-      final settings = await _store.loadLocalStorageSettings();
+      var settings = await _store.loadLocalStorageSettings();
+      final retiredLocation = _locationFromSettings(settings);
+      if (settings.configured ||
+          settings.awaitingExistingArchiveDecision ||
+          settings.lastSavedAt != null ||
+          settings.lastArchiveSha256 != null ||
+          settings.lastArchiveBytes != null) {
+        settings = LocalStorageSettings(
+          accessibilityInputProfile: settings.accessibilityInputProfile,
+        );
+        await _store.saveLocalStorageSettings(settings);
+        if (retiredLocation != null) {
+          unawaited(_backend.releaseLocation(retiredLocation));
+        }
+      }
       final legacyPendingImports = await _importStaging.list();
       var pendingImports = legacyPendingImports;
       if (legacyPendingImports.isNotEmpty) {
@@ -372,53 +379,13 @@ class LocalStorageController extends StateNotifier<LocalStorageState> {
         pendingImports = await _importStaging.list();
       }
       if (!mounted) return;
-      _awaitingExistingDecision = settings.awaitingExistingArchiveDecision;
+      _awaitingExistingDecision = false;
       state = state.copyWith(
         initialized: true,
         settings: settings,
-        existingArchiveAvailable: _awaitingExistingDecision,
+        existingArchiveAvailable: false,
         pendingImportCount: pendingImports.length,
       );
-      final appState = _appState;
-      if (settings.configured &&
-          appState != null &&
-          appState.isHydrated &&
-          !appState.driveConnected) {
-        final location = _locationFromSettings(settings)!;
-        try {
-          final verified = await _backend.verifyLocation(location);
-          final verifiedSettings = LocalStorageSettings(
-            locationId: verified.locationId,
-            displayName: verified.displayName,
-            locationKind: verified.kind,
-            lastSavedAt: settings.lastSavedAt,
-            lastArchiveSha256: settings.lastArchiveSha256,
-            lastArchiveBytes: settings.lastArchiveBytes,
-            awaitingExistingArchiveDecision:
-                settings.awaitingExistingArchiveDecision,
-            accessibilityInputProfile: settings.accessibilityInputProfile,
-          );
-          if (verifiedSettings.displayName != settings.displayName ||
-              verifiedSettings.awaitingExistingArchiveDecision !=
-                  settings.awaitingExistingArchiveDecision) {
-            await _store.saveLocalStorageSettings(verifiedSettings);
-          }
-          if (mounted) {
-            state = state.copyWith(
-              settings: verifiedSettings,
-              existingArchiveAvailable: _awaitingExistingDecision,
-              errorMessage: null,
-            );
-          }
-          if (!_awaitingExistingDecision) {
-            _scheduleSave();
-          }
-        } catch (error) {
-          if (mounted) {
-            state = state.copyWith(errorMessage: _friendlyMessage(error));
-          }
-        }
-      }
     } catch (_) {
       if (mounted) {
         state = state.copyWith(
