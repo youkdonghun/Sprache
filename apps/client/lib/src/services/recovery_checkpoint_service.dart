@@ -1,10 +1,11 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 import '../backup/backup_archive.dart';
 
@@ -59,6 +60,14 @@ class RecoveryCheckpointService {
   final DateTime Function() _clock;
   final BackupArchiveCodec codec;
 
+  // Browser imports already persist their editable draft in Drift/IndexedDB.
+  // Keep the pre-commit safety copy in memory so Web never touches dart:io.
+  static final Map<
+    String,
+    ({List<int> bytes, RecoveryCheckpointReceipt receipt})
+  >
+  _browserCheckpoints = {};
+
   Future<RecoveryCheckpointReceipt> create(
     Map<String, Object?> archive, {
     required RecoveryCheckpointReason reason,
@@ -75,6 +84,27 @@ class RecoveryCheckpointService {
       '-',
     );
     final id = '$safeTimestamp-${reason.name}-${fingerprint.substring(0, 8)}';
+    if (kIsWeb) {
+      final checkpointPath = 'browser-checkpoint:$id';
+      final existing = _browserCheckpoints[checkpointPath];
+      if (existing != null) return existing.receipt;
+      final receipt = RecoveryCheckpointReceipt(
+        id: id,
+        reason: reason,
+        createdAt: createdAt,
+        byteLength: encoded.length,
+        sha256Hex: fingerprint,
+        customItemCount: validated.customItemCount,
+        progressCount: validated.progressCount,
+        sessionCount: validated.sessions.length,
+        path: checkpointPath,
+      );
+      _browserCheckpoints[checkpointPath] = (
+        bytes: List<int>.unmodifiable(encoded),
+        receipt: receipt,
+      );
+      return receipt;
+    }
     final root = Directory(await _rootResolver()).absolute;
     await root.create(recursive: true);
     final pending = Directory(path.join(root.path, '.$id.pending'));
@@ -115,6 +145,14 @@ class RecoveryCheckpointService {
   }
 
   Future<BackupArchive> load(String checkpointPath) async {
+    if (kIsWeb) {
+      final checkpoint = _browserCheckpoints[checkpointPath];
+      if (checkpoint == null) {
+        throw StateError('브라우저 세션에서 복구 지점을 찾을 수 없습니다.');
+      }
+      _verifyBrowserCheckpoint(checkpoint);
+      return codec.decode(utf8.decode(checkpoint.bytes));
+    }
     final directory = await _safeDirectory(checkpointPath);
     final receipt = await _readReceipt(directory, verifyArchive: true);
     final source = await File(
@@ -123,8 +161,30 @@ class RecoveryCheckpointService {
     return codec.decode(source);
   }
 
-  Future<RecoveryCheckpointReceipt> verify(String checkpointPath) async =>
-      _readReceipt(await _safeDirectory(checkpointPath), verifyArchive: true);
+  Future<RecoveryCheckpointReceipt> verify(String checkpointPath) async {
+    if (kIsWeb) {
+      final checkpoint = _browserCheckpoints[checkpointPath];
+      if (checkpoint == null) {
+        throw StateError('브라우저 세션에서 복구 지점을 찾을 수 없습니다.');
+      }
+      _verifyBrowserCheckpoint(checkpoint);
+      return checkpoint.receipt;
+    }
+    return _readReceipt(
+      await _safeDirectory(checkpointPath),
+      verifyArchive: true,
+    );
+  }
+
+  void _verifyBrowserCheckpoint(
+    ({List<int> bytes, RecoveryCheckpointReceipt receipt}) checkpoint,
+  ) {
+    final receipt = checkpoint.receipt;
+    if (checkpoint.bytes.length != receipt.byteLength ||
+        sha256.convert(checkpoint.bytes).toString() != receipt.sha256Hex) {
+      throw const FormatException('브라우저 복구 지점의 무결성 검증에 실패했습니다.');
+    }
+  }
 
   Future<Directory> _safeDirectory(String checkpointPath) async {
     final root = Directory(await _rootResolver()).absolute;

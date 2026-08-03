@@ -7,6 +7,8 @@ class AppConfig {
     required this.mockMode,
     this.googleDesktopClientSecret = '',
     this.googleAppleClientId = '',
+    this.googleWebClientId = '',
+    this.googlePickerApiKey = '',
     this.appVersion = '개발 빌드',
     this.privacyPolicyUrl = '',
   });
@@ -18,6 +20,8 @@ class AppConfig {
       'GOOGLE_DESKTOP_CLIENT_SECRET',
     ),
     googleAppleClientId: String.fromEnvironment('GOOGLE_APPLE_CLIENT_ID'),
+    googleWebClientId: String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
+    googlePickerApiKey: String.fromEnvironment('GOOGLE_PICKER_API_KEY'),
     googleServerClientId: String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID'),
     appEnvironment: String.fromEnvironment(
       'APP_ENV',
@@ -35,6 +39,8 @@ class AppConfig {
   final String googleDesktopClientId;
   final String googleDesktopClientSecret;
   final String googleAppleClientId;
+  final String googleWebClientId;
+  final String googlePickerApiKey;
   final String googleServerClientId;
   final String appEnvironment;
   final bool mockMode;
@@ -46,4 +52,5 @@ class AppConfig {
   bool get hasAndroidGoogleCredentials =>
       googleAndroidClientId.isNotEmpty && googleServerClientId.isNotEmpty;
   bool get hasAppleGoogleCredentials => googleAppleClientId.isNotEmpty;
+  bool get hasWebGoogleCredentials => googleWebClientId.isNotEmpty;
 }

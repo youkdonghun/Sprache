@@ -528,8 +528,9 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 - 검색·유형·취약 필터, 상세 보기, 학습 포함/제외가 가능한 단어장
 - 단어·문장 직접 추가·수정·삭제와 CSV·JSON·JSONL 일괄 가져오기
 - 코스 범위·정확도·학습 단계·최근 세션을 보여주는 학습 리포트
-- 설정·진도·사용자 표현·최근 세션을 포함한 JSON 백업 내보내기
-- 로컬 백업 경로와 Drive 앱 전용 저장 범위를 구분해 설명하는 설정 화면
+- 설정·진도·사용자 표현·최근 세션을 포함한 Google Drive 교차 동기화
+- 텍스트 PDF의 단어·뜻·페이지·문맥을 검토해 가져오는 공통 워크플로
+- iPhone 홈 화면 설치와 오프라인 학습을 지원하는 GitHub Pages PWA
 
 ## 바로 실행하기
 
@@ -542,12 +543,14 @@ Google 직접 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 이 PC
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tool\build-real-windows-local.ps1
 ```
 
-1.34.1의 표준 파일명은 다음과 같다.
+1.35.0의 표준 파일명은 다음과 같다.
 
-- Windows 설치본: `Sprache-Windows-Setup-1.34.1-google-x64.exe`
-- Windows 포터블: `Sprache-Windows-1.34.1-google-x64.zip`
-- Android: `Sprache-Android-1.34.1-google-debug-signed.apk`
-- 무결성: `SHA256SUMS-1.34.1-google.txt`
+- Windows 설치본: `Sprache-Windows-Setup-1.35.0-google-x64.exe`
+- Windows 포터블: `Sprache-Windows-1.35.0-google-x64.zip`
+- Android: `Sprache-Android-1.35.0-google-debug-signed.apk`
+- Apple: `Sprache-iOS-Simulator-1.35.0-google-configured.zip`, `Sprache-macOS-1.35.0-google-configured.zip`
+- PWA: `https://youkdonghun.github.io/Sprache/app/`
+- 무결성: `SHA256SUMS-1.35.0-google.txt`
 
 Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`
 폴더를 함께 유지한다. Android APK는 테스트 기기 또는 에뮬레이터에 직접
@@ -577,6 +580,7 @@ npm run test:client
 
 ## 문서
 
+- [1.35.0 PWA·PDF·Drive 필수 연결 릴리스 안내](docs/release-notes-1.35.0.md)
 - [1.34.1 OAuth 수정 릴리스 안내](docs/release-notes-1.34.1.md)
 - [1.34.1 네 플랫폼 품질·릴리스 게이트](docs/release-quality-gates-1.34.1.md)
 - [1.32.0 릴리스 노트와 컴팩트 UX 80개 변경](docs/release-notes-1.32.0.md)

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_io/io.dart';
 
 import 'desktop_google_token_broker.dart';
 import 'oauth_tokens.dart';

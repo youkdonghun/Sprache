@@ -1,9 +1,10 @@
-import 'dart:io';
 import 'dart:convert';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:universal_io/io.dart';
 
 class LocalRecoveryBackup {
   const LocalRecoveryBackup({
@@ -75,6 +76,15 @@ class RecoveryBackupCatalogService {
     Duration minimumAge = const Duration(days: 30),
   }) async {
     final now = _clock().toUtc();
+    if (kIsWeb) {
+      // Web drafts live in Drift/IndexedDB and session checkpoints are managed
+      // by RecoveryCheckpointService. There is no local folder to maintain.
+      return LocalRecoveryInventory(
+        items: const [],
+        minimumAge: minimumAge,
+        inspectedAt: now,
+      );
+    }
     final root = Directory(await _rootResolver());
     if (!await root.exists()) {
       return LocalRecoveryInventory(
@@ -172,6 +182,9 @@ class RecoveryBackupCatalogService {
     required LocalRecoveryInventory inventory,
     required Set<String> selectedIds,
   }) async {
+    if (kIsWeb) {
+      return const LocalRecoveryCleanupResult(deletedCount: 0, deletedBytes: 0);
+    }
     if (selectedIds.isEmpty) {
       return const LocalRecoveryCleanupResult(deletedCount: 0, deletedBytes: 0);
     }

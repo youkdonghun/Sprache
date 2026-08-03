@@ -43,6 +43,7 @@ try {
     $gitExe = @(
         (Join-Path $env:ProgramFiles 'Git\cmd\git.exe')
         (Join-Path $env:LOCALAPPDATA 'Programs\Git\cmd\git.exe')
+        (Join-Path $env:USERPROFILE '.cache\codex-runtimes\codex-primary-runtime\dependencies\native\git\cmd\git.exe')
     ) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } |
         Select-Object -First 1
     if ([string]::IsNullOrWhiteSpace($gitExe)) {

@@ -923,6 +923,23 @@ class ContentImportParser {
     final attribution = _string(row, [
       'attribution',
     ], fallback: _string(sourceMap ?? const {}, ['attribution']));
+    final rawSourcePage = _string(row, [
+      'source_page',
+      'page_number',
+      'pageNumber',
+    ], fallback: _string(sourceMap ?? const {}, ['pageNumber', 'page_number']));
+    final sourcePageNumber = rawSourcePage.isEmpty
+        ? null
+        : int.tryParse(rawSourcePage);
+    if (rawSourcePage.isNotEmpty &&
+        (sourcePageNumber == null || sourcePageNumber <= 0)) {
+      throw const FormatException('source_page는 양의 정수여야 합니다.');
+    }
+    final sourceExcerpt = _string(row, [
+      'source_excerpt',
+      'excerpt',
+      'context',
+    ], fallback: _string(sourceMap ?? const {}, ['excerpt', 'context']));
     final rawContentVersion = _string(
       row,
       ['content_version', 'contentVersion'],
@@ -995,6 +1012,8 @@ class ContentImportParser {
           sourceUrl: _nullable(sourceUrl),
           author: _nullable(author),
           attribution: _nullable(attribution),
+          pageNumber: sourcePageNumber,
+          excerpt: _nullable(sourceExcerpt),
         ),
       ),
     );
@@ -1049,11 +1068,12 @@ class ContentImportParser {
         String value => value.trim(),
         num value => value.toString(),
         bool value => value.toString(),
-        List<Object?> values => values
-            .where((value) => value != null)
-            .map((value) => value.toString().trim())
-            .where((value) => value.isNotEmpty)
-            .join('|'),
+        List<Object?> values =>
+          values
+              .where((value) => value != null)
+              .map((value) => value.toString().trim())
+              .where((value) => value.isNotEmpty)
+              .join('|'),
         _ => '',
       };
       if (normalized.isNotEmpty) return normalized;
@@ -1126,6 +1146,5 @@ class _ImportRow {
 }
 
 Map<String, Object?> _editableSourceFields(Map<String, Object?> source) => {
-  for (final entry in source.entries.take(80))
-    entry.key: entry.value,
+  for (final entry in source.entries.take(80)) entry.key: entry.value,
 };

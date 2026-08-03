@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Named public constructor parameters stay readable at provider/test call sites.
@@ -461,7 +462,9 @@ final localStorageBackendProvider = Provider<LocalStorageBackend>(
 );
 
 final importArchiveStagingProvider = Provider<ImportArchiveStagingService>(
-  (ref) => FileImportArchiveStagingService(),
+  (ref) => kIsWeb
+      ? MemoryImportArchiveStagingService()
+      : FileImportArchiveStagingService(),
 );
 
 final localStorageControllerProvider =

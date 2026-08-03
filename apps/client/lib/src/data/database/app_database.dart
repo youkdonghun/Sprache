@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 part 'app_database.g.dart';
 
@@ -151,7 +152,16 @@ final class AppDatabase extends _$AppDatabase {
 
   AppDatabase(super.executor);
 
-  AppDatabase.defaults() : super(driftDatabase(name: 'sprache'));
+  AppDatabase.defaults()
+    : super(
+        driftDatabase(
+          name: 'sprache',
+          web: DriftWebOptions(
+            sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+            driftWorker: Uri.parse('drift_worker.js'),
+          ),
+        ),
+      );
 
   @override
   int get schemaVersion => currentSchemaVersion;
@@ -170,6 +180,10 @@ final class AppDatabase extends _$AppDatabase {
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
+      if (kIsWeb) {
+        await customStatement('PRAGMA busy_timeout = 5000');
+        return;
+      }
       // WAL keeps the last committed database readable while a new commit is
       // being assembled. FULL synchronization makes SQLite surface an fsync
       // failure instead of acknowledging a commit that only reached an OS

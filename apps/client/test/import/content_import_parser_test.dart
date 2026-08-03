@@ -503,7 +503,9 @@ second,word,record,기록,noun
         "sourceId": "own-1",
         "sourceUrl": "https://example.com/own-1",
         "author": "Owner",
-        "attribution": "Owner · Own list"
+        "attribution": "Owner · Own list",
+        "pageNumber": 12,
+        "excerpt": "water - 물"
       }
   }
 ]
@@ -525,6 +527,8 @@ second,word,record,기록,noun
     expect(parsed.items.single.source.sourceUrl, 'https://example.com/own-1');
     expect(parsed.items.single.source.author, 'Owner');
     expect(parsed.items.single.source.attribution, 'Owner · Own list');
+    expect(parsed.items.single.source.pageNumber, 12);
+    expect(parsed.items.single.source.excerpt, 'water - 물');
     expect(rejected.items, isEmpty);
     expect(rejected.issues.single.message, contains('content_version'));
   });

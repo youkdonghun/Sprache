@@ -3,54 +3,50 @@
 ## 현재 시스템 경계
 
 ```text
-Flutter Android / Windows
+Flutter Android / Windows / iOS / macOS / Web PWA
   ├─ UI + Riverpod
   ├─ 순수 Dart 학습 엔진
-  ├─ Drift SQLite: 유일한 실시간 작업 원본
+  ├─ Drift SQLite
+  │   ├─ Native: sqlite3
+  │   └─ Web: sqlite3.wasm + IndexedDB/OPFS
   ├─ 플랫폼 TTS·음성 인식
-  ├─ 로컬 보관 어댑터
-  │   ├─ Windows 파일시스템
-  │   └─ Android Storage Access Framework
   ├─ Google OAuth 플랫폼 클라이언트
   │   ├─ Windows: 시스템 브라우저 + loopback + PKCE + Desktop credential
   │   ├─ Android: Google Identity 네이티브 흐름
-  │   └─ iOS·macOS: iOS-type client + 플랫폼 callback scheme
+  │   ├─ iOS·macOS: iOS-type client + 플랫폼 callback scheme
+  │   └─ Web: Google Identity Services + Drive API
+  ├─ PDF 텍스트 추출·검토·중복 병합
   └─ OS 보안 저장소
           │
-          ├── 사용자 지정 로컬 Sprache 폴더: 백업·미러
-          ├── Google Drive WordStudyData: 선택적 기기 간 동기화
+          ├── Google Drive WordStudyData: 필수 기기 간 동기화
           └── Google Drive appDataFolder: WordStudyData 연결 포인터
 
-GitHub Pages (/docs)
-  └── 앱 소개·개인정보처리방침·서비스 이용약관 정적 파일
+GitHub Pages
+  ├── /Sprache/: 소개·개인정보처리방침·서비스 이용약관
+  └── /Sprache/app/: 설치 가능한 Flutter PWA 정적 파일
 ```
 
 Sprache가 운영하는 API, Railway 서비스 또는 중앙 PostgreSQL은 현재 시스템
-경계에 포함되지 않는다. GitHub Pages는 정적 문서만 전달하며 로그인 callback,
-OAuth 토큰, 계정 정보나 학습 데이터를 받지 않는다.
+경계에 포함되지 않는다. GitHub Pages는 정적 파일만 전달하며 OAuth token,
+계정 정보나 학습 데이터를 서버에 받거나 저장하지 않는다.
 
 ## Local-First 저장
 
-SQLite는 Google 또는 로컬 폴더 연결 상태와 관계없이 유일한 실시간 작업
-원본이다. 문제 응답은 SQLite에 즉시 기록하고 세션 종료, 앱 비활성화, 수동
-요청과 같은 안전한 시점에 미러 또는 Drive 동기화를 예약한다.
-
-Google 연결 전에는 설정에서 사용자가 고른 로컬 `Sprache` 폴더에
-`segmented-v1` 데이터셋과 전체 복원 백업을 미러할 수 있다. 이 경로는
-Windows 폴더 선택기 또는 Android SAF로 명시적으로 바꾸며, 설정 화면에 실제
-표시 경로와 `변경` 동작을 함께 제공한다.
+SQLite는 현재 기기의 실시간 작업 원본이다. 문제 응답은 즉시 기록하고 세션 종료,
+앱 비활성화, 수동 요청과 같은 안전한 시점에 Drive 동기화를 예약한다. 운영
+빌드는 첫 화면에서 Google Drive 연결을 요구하며 연결 전에는 학습·가져오기·
+설정 본문을 열지 않는다. 사용자가 따로 로컬 백업 폴더를 고르는 흐름은 제공하지
+않는다.
 
 Google을 처음 연결할 때 사용자가 Drive Picker에서 상위 폴더를 고르면 앱이 그
 아래에 `WordStudyData`를 만들거나 기존 앱 폴더를 재사용한다. 학습 snapshot과
 manifest는 이 일반 Drive 폴더에 저장한다. 설정에는 선택한 폴더 이름과
-`Drive 위치 다시 선택` 동작을 함께 제공한다. 로컬 폴더 설정과 기존 파일은
-삭제하지 않고 수동 백업과 연결 해제 시의 보존 대상으로 유지한다.
+`Drive 위치 다시 선택` 동작을 함께 제공한다.
 
 네트워크 단절, Drive API 오류, 토큰 갱신 실패는 SQLite의 `pending_syncs`와
-가져오기 staging을 유지한 채 재시도한다. 일시적인 Drive 오류 때문에 서로 다른
-저장 대상을 자동으로 오가거나 정상 로컬 데이터를 삭제하지 않는다. 로컬 형식,
-manifest와 복원 충돌 규칙은 [로컬 저장과 저장 대상 전환](local-storage.md)을
-참고한다.
+가져오기 staging을 유지한 채 재시도한다. 일시적인 Drive 오류 때문에 정상 기기
+DB를 삭제하거나 손상된 원격 자료로 덮어쓰지 않는다. manifest와 복원 충돌 규칙은
+[동기화 프로토콜](sync-protocol.md)을 참고한다.
 
 ## Google OAuth와 토큰 경계
 

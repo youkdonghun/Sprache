@@ -1,10 +1,10 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:universal_io/io.dart';
 
 class PlatformCompletionService {
   const PlatformCompletionService();

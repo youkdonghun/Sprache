@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:universal_io/io.dart';
 
 class InboundFilePayload {
   const InboundFilePayload({required this.name, required this.bytes});

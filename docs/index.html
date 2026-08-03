@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Sprache는 Android와 Windows에서 사용하는 Local-First 반복 학습 도구입니다.">
+  <meta name="description" content="Sprache는 Android, Windows와 iPhone PWA에서 사용하는 Google Drive 연동 반복 학습 도구입니다.">
   <link rel="canonical" href="https://youkdonghun.github.io/Sprache/">
   <title>Sprache — 나만의 반복 학습 작업공간</title>
   <style>
@@ -32,10 +32,11 @@
 <body>
   <main>
     <header>
-      <div class="eyebrow">ANDROID · WINDOWS · LOCAL-FIRST</div>
+      <div class="eyebrow">ANDROID · WINDOWS · iPHONE PWA · GOOGLE DRIVE</div>
       <h1>Sprache</h1>
       <p>단어와 문장을 직접 만들고, 파일로 가져오고, 원하는 그룹과 일정으로 암기·퀴즈·듣기·발음을 반복하는 개인 학습 작업공간입니다.</p>
       <div class="actions">
+        <a class="button" href="./app/">iPhone에서 실행</a>
         <a class="button" href="https://github.com/youkdonghun/Sprache">프로젝트 보기</a>
         <a class="button secondary" href="./privacy/">개인정보처리방침</a>
         <a class="button secondary" href="./terms/">서비스 이용약관</a>
@@ -55,13 +56,14 @@
     <section>
       <h2>내 데이터는 어디에 저장되나요?</h2>
       <article>
-        <p>학습 자료와 상세 진도는 먼저 기기의 SQLite에 저장됩니다. Google 연결은 선택 기능이며, 연결하면 사용자가 고른 Drive 위치의 <code>WordStudyData</code> 폴더에 검증된 동기화 자료를 보관합니다.</p>
+        <p>학습 자료와 상세 진도는 기기의 SQLite와 내 Google Drive 사이에서 안전하게 이어집니다. 첫 실행에서 Google 연결을 마치면 사용자가 고른 Drive 위치의 <code>WordStudyData</code> 폴더에 검증된 동기화 자료를 보관합니다.</p>
         <ul>
-          <li>Google 연결 전에도 로컬 학습과 사용자 지정 로컬 백업 폴더를 사용할 수 있습니다.</li>
+          <li>별도의 로컬 백업 폴더를 고를 필요 없이 Google Drive를 기본 저장 공간으로 사용합니다.</li>
           <li>Drive의 숨겨진 앱 설정에는 학습 자료가 아닌 <code>WordStudyData</code> 폴더 포인터만 저장합니다.</li>
           <li>OAuth 인증 코드는 PKCE로 Google에 직접 교환하며, 토큰은 운영체제 보안 저장소에만 둡니다.</li>
           <li>별도 Sprache 서버로 학습 자료, 계정 연결 또는 토큰을 보내지 않습니다.</li>
           <li>광고, 데이터 판매 또는 사용자 프로파일링을 하지 않습니다.</li>
+          <li>PDF 원본은 업로드하지 않고, 사용자가 검토해 저장한 단어와 짧은 출처 정보만 동기화합니다.</li>
         </ul>
       </article>
     </section>

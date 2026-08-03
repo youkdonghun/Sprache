@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/Sprache/app/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="내 Google Drive에 학습 자료를 안전하게 이어 저장하는 언어 학습 앱 Sprache">
+  <meta name="theme-color" content="#F7F4EC">
+  <meta name="color-scheme" content="light dark">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Sprache">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Sprache · 나만의 언어 학습</title>
+  <link rel="manifest" href="manifest.json">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js" async defer></script>
+</head>
+<body>
+  <div id="sprache-update" hidden role="status" aria-live="polite">
+    <span>새 버전이 준비됐어요.</span>
+    <button type="button" onclick="location.reload()">지금 업데이트</button>
+  </div>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+  <style>
+    #sprache-update {
+      position: fixed;
+      z-index: 2147483647;
+      left: 50%;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      width: min(420px, calc(100% - 28px));
+      box-sizing: border-box;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #202522;
+      color: #fff;
+      box-shadow: 0 10px 32px rgba(0, 0, 0, .24);
+      font: 600 14px/1.4 system-ui, sans-serif;
+    }
+    #sprache-update:not([hidden]) {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    #sprache-update button {
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 9px;
+      padding: 8px 10px;
+      background: #c7f1d3;
+      color: #17351f;
+      font: inherit;
+      cursor: pointer;
+    }
+  </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SPRACHE_UPDATE_READY') {
+          document.getElementById('sprache-update').hidden = false;
+        }
+      });
+    }
+  </script>
+</body>
+</html>

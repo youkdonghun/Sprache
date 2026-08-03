@@ -24,6 +24,7 @@ import '../import/import_limits.dart';
 import '../import/import_report_exporter.dart';
 import '../import/import_reconciler.dart';
 import '../import/import_review_draft.dart';
+import '../import/pdf_extraction_service.dart';
 import '../import/template_file_name.dart';
 import '../import/text_import_decoder.dart';
 import '../import/xlsx_import_reader.dart';
@@ -35,9 +36,14 @@ import '../state/local_storage_state.dart';
 import '../state/navigation_guard_state.dart';
 import '../state/pending_import_state.dart';
 import '../theme/app_theme.dart';
+import '../widgets/pdf_import_review_dialog.dart';
 
 final recoveryCheckpointServiceProvider = Provider<RecoveryCheckpointService>(
   (ref) => RecoveryCheckpointService(),
+);
+
+final pdfExtractionServiceProvider = Provider<PdfExtractionService>(
+  (ref) => const PdfrxPdfExtractionService(),
 );
 
 enum _ReviewFilter { all, selected, changed, problems }
@@ -291,6 +297,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   bool _busy = false;
   String? _busyMessage;
   bool _committed = false;
+  PdfExtractionCancellationToken? _pdfCancellationToken;
   Future<void> _draftWriteTail = Future.value();
   late final NavigationGuardController _navigationGuard;
 
@@ -425,7 +432,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     if (_busy) return;
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const ['xlsx', 'csv', 'tsv', 'json', 'jsonl'],
+      allowedExtensions: const ['xlsx', 'csv', 'tsv', 'json', 'jsonl', 'pdf'],
       withData: true,
     );
     if (result == null || result.files.isEmpty) return;
@@ -447,6 +454,10 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
     required String? extension,
     required List<int> bytes,
   }) async {
+    if (extension == 'pdf') {
+      await _loadPdfBytes(fileName: fileName, bytes: bytes);
+      return;
+    }
     if (_busy) return;
     setState(() {
       _busy = true;
@@ -743,6 +754,230 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           _busyMessage = null;
         });
       }
+    }
+  }
+
+  Future<void> _loadPdfBytes({
+    required String fileName,
+    required List<int> bytes,
+  }) async {
+    if (_busy) return;
+    final token = PdfExtractionCancellationToken();
+    _pdfCancellationToken = token;
+    setState(() {
+      _busy = true;
+      _busyMessage = 'PDF 분석을 준비하고 있어요…';
+    });
+    try {
+      final appController = ref.read(appControllerProvider.notifier);
+      final activeSubject = appController.activeSubject;
+      final subjectId = _routeSubjectId ?? activeSubject.id;
+      final subject = appController.allSubjects.firstWhere(
+        (value) => value.id == subjectId,
+        orElse: () => activeSubject,
+      );
+      final rawDistributionKey = _distributionKeyController.text.trim();
+      final distributionKey = rawDistributionKey.isEmpty
+          ? null
+          : normalizeImportDistributionKey(rawDistributionKey);
+      final group = _distributionGroupController.text.trim();
+      if (distributionKey != null) {
+        await appController.upsertImportDistributionRule(
+          key: distributionKey,
+          subjectId: subject.id,
+          groupName: group.isEmpty ? null : group,
+        );
+      }
+
+      final data = Uint8List.fromList(bytes);
+      String? password;
+      PdfExtractionResult extraction;
+      while (true) {
+        try {
+          extraction = await ref
+              .read(pdfExtractionServiceProvider)
+              .extract(
+                PdfExtractionRequest(
+                  fileName: fileName,
+                  bytes: data,
+                  language: subject.contentLanguage,
+                  password: password,
+                ),
+                cancellationToken: token,
+                onProgress: (progress) {
+                  if (!mounted) return;
+                  setState(() {
+                    _busyMessage =
+                        'PDF 분석 중 · ${progress.processedPages}/${progress.totalPages}쪽';
+                  });
+                },
+              );
+          break;
+        } on PdfExtractionException catch (error) {
+          if (error.failure != PdfExtractionFailure.encrypted || !mounted) {
+            rethrow;
+          }
+          password = await _requestPdfPassword();
+          if (password == null) return;
+        }
+      }
+      token.throwIfCancelled();
+      if (extraction.candidates.isEmpty) {
+        throw const FormatException('등록할 만한 단어 후보를 찾지 못했습니다.');
+      }
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _busyMessage = null;
+      });
+      final selected = await showPdfImportReviewDialog(
+        context: context,
+        result: extraction,
+      );
+      if (selected == null || selected.isEmpty || !mounted) return;
+      setState(() {
+        _busy = true;
+        _busyMessage = '선택한 후보를 기존 자료와 비교하고 있어요…';
+      });
+      final rows = [
+        for (final candidate in selected)
+          <String, Object?>{
+            'id': candidate.id,
+            'term': candidate.term.trim(),
+            'meaning': candidate.meaning.trim(),
+            'language': subject.contentLanguage.code,
+            if (!subject.isLanguage) 'subject_id': subject.id,
+            ...distributionKey == null
+                ? const <String, Object?>{}
+                : <String, Object?>{'distribution_key': distributionKey},
+            if (group.isNotEmpty) 'group': group,
+            'source': <String, Object?>{
+              'name': fileName,
+              'license': 'private',
+              'sourceVersion': extraction.sha256Hex.substring(0, 12),
+              'contentVersion': 1,
+              'sourceId': extraction.sha256Hex,
+              'pageNumber': candidate.pageNumber,
+              'excerpt': candidate.excerpt,
+            },
+          },
+      ];
+      final parseRequest = (
+        bytes: utf8.encode(jsonEncode(rows)),
+        extension: 'json',
+        defaultLanguageCode: subject.contentLanguage.code,
+        defaultSubjectId: subject.isLanguage ? null : subject.id,
+        distributionKey: distributionKey,
+        distributionGroup: group.isEmpty ? null : group,
+        routeSubjectId: distributionKey == null ? null : subject.id,
+        routeLanguageCode: distributionKey == null
+            ? null
+            : subject.contentLanguage.code,
+        subjectIdByDistributionKey: const <String, String>{},
+        groupByDistributionKey: const <String, String>{},
+        languageCodeByDistributionKey: const <String, String>{},
+        columnMapping: const <String, String>{},
+        textEncodingName: null,
+        delimiterName: null,
+        sheetName: null,
+      );
+      final parsedRows = await compute(_parseImportBytes, parseRequest);
+      final previous = await appController.previousImportBySha256(
+        extraction.sha256Hex,
+      );
+      final storedDraft = await ref
+          .read(studyStoreProvider)
+          .loadImportReviewDraft();
+      final matchingDraft = storedDraft?.fileSha256 == extraction.sha256Hex
+          ? storedDraft
+          : null;
+      if (!mounted) return;
+      setState(() {
+        _preview = parsedRows.preview;
+        _committed = false;
+        _fileName = fileName;
+        _fileSha256 = extraction.sha256Hex;
+        _previousImport = previous;
+        _sourceExtension = 'pdf';
+        _sourceSummary =
+            'PDF ${extraction.pageCount}쪽 · 단어–뜻 ${extraction.mappedPairCount}개 · 선택 ${selected.length}개';
+        _columnMapping = const {};
+        _textEncodingName = null;
+        _delimiterName = null;
+        _sheetName = null;
+        _decisions
+          ..clear()
+          ..addAll({
+            for (final entry
+                in matchingDraft == null
+                    ? const <MapEntry<String, ImportDraftDecision>>[]
+                    : matchingDraft.decisions.entries)
+              entry.key: switch (entry.value) {
+                ImportDraftDecision.add => ImportReviewAction.add,
+                ImportDraftDecision.replace => ImportReviewAction.replace,
+                ImportDraftDecision.skip => ImportReviewAction.skip,
+              },
+          });
+        _filter = _ReviewFilter.all;
+        _visibleLimit = 50;
+      });
+      _saveReviewDraft();
+    } on PdfExtractionCancelled {
+      _showMessage('PDF 분석을 취소했습니다.');
+    } on PdfExtractionException catch (error) {
+      _showMessage(error.message);
+    } on FormatException catch (error) {
+      _showMessage(error.message.toString());
+    } catch (_) {
+      _showMessage('PDF를 가져오지 못했습니다. 파일을 다시 확인해 주세요.');
+    } finally {
+      _pdfCancellationToken = null;
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _busyMessage = null;
+        });
+      }
+    }
+  }
+
+  Future<String?> _requestPdfPassword() async {
+    final controller = TextEditingController();
+    try {
+      return await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('PDF 암호 입력'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            obscureText: true,
+            onSubmitted: (value) {
+              if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+            },
+            decoration: const InputDecoration(
+              labelText: '암호',
+              helperText: '암호는 저장하거나 전송하지 않습니다.',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('취소'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final value = controller.text;
+                if (value.isNotEmpty) Navigator.pop(dialogContext, value);
+              },
+              child: const Text('다시 분석'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      controller.dispose();
     }
   }
 
@@ -1772,6 +2007,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                     _UploadCard(
                       fileName: _fileName,
                       busyMessage: _busyMessage,
+                      onCancel: _pdfCancellationToken?.cancel,
                       onPickFile: _busy ? null : _pickFile,
                       onPaste: _busy ? null : _openBulkPaste,
                       onSaveEasyTemplate: _busy
@@ -3369,6 +3605,7 @@ class _UploadCard extends StatelessWidget {
   const _UploadCard({
     required this.fileName,
     required this.busyMessage,
+    required this.onCancel,
     required this.onPickFile,
     required this.onPaste,
     required this.onSaveEasyTemplate,
@@ -3377,6 +3614,7 @@ class _UploadCard extends StatelessWidget {
 
   final String? fileName;
   final String? busyMessage;
+  final VoidCallback? onCancel;
   final VoidCallback? onPickFile;
   final VoidCallback? onPaste;
   final VoidCallback? onSaveEasyTemplate;
@@ -3421,7 +3659,7 @@ class _UploadCard extends StatelessWidget {
                 Text(
                   selected
                       ? '다른 파일로 바꾸거나 아래 템플릿을 내려받을 수 있습니다.'
-                      : 'Excel, CSV, JSON, JSONL · 내용을 확인한 뒤 저장해요.',
+                      : 'PDF, Excel, CSV, JSON, JSONL · 내용을 확인한 뒤 저장해요.',
                   maxLines: compact ? 2 : 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodyMedium,
@@ -3452,6 +3690,13 @@ class _UploadCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(fontWeight: FontWeight.w700),
                         ),
+                        if (onCancel != null)
+                          TextButton.icon(
+                            key: const Key('cancel-pdf-extraction'),
+                            onPressed: onCancel,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text('PDF 분석 취소'),
+                          ),
                       ],
                     ),
                   ),

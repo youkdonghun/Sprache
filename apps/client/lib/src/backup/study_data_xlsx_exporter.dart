@@ -34,9 +34,6 @@ class StudyDataXlsxExporter {
     addXml('xl/worksheets/sheet1.xml', _worksheet(rows));
 
     final encoded = ZipEncoder().encode(archive);
-    if (encoded == null) {
-      throw StateError('Excel 파일을 압축하지 못했습니다.');
-    }
     return Uint8List.fromList(encoded);
   }
 
