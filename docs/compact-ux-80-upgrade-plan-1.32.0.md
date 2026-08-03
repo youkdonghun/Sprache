@@ -128,7 +128,7 @@ Babbel의 복습 형식 선택, Anki의 화면 밀도와 점진 공개, LingQ의
 - 320px·200% 글자 크기, 44px 조작 영역, Windows 좁은 창 회귀 테스트
 - Windows 실제 실행 화면의 홈·빠른 등록·자료실·학습 허브·설정 확인
 - Windows 설치본·portable ZIP과 Android APK 생성
-- iOS·macOS는 GitHub Actions macOS runner의 실제 빌드·첫 프레임 결과로 판정
+- iOS·macOS는 Codemagic macOS M2의 실제 빌드·첫 프레임 결과로 판정
 
 ## 참고한 공식 자료
 

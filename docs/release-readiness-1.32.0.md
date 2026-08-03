@@ -45,10 +45,19 @@ Windows·iOS·macOS `RUNTIME`, Android `BUILD_ONLY`로 분리한다.
 - Android `REAL/BUILD_ONLY`: `google-debug-signed`를 Play 서명본이라고 부르지
   않는다. 에뮬레이터 실행 evidence가 추가돼도 기본 번들의 판정을 임의로
   바꾸지 않는다.
-- iOS `MOCK/RUNTIME`: GitHub macOS runner에서 Simulator 앱을 실행한다. ZIP은
+- iOS `MOCK/RUNTIME`: Codemagic macOS M2에서 Simulator 앱을 실행한다. ZIP은
   기기 설치용 IPA가 아니다.
 - macOS `MOCK/RUNTIME`: unsigned/ad-hoc 앱을 실행한다. Developer ID 서명·공증
   배포본으로 표시하지 않는다.
+
+## 2026-08-03 실제 Apple 검증 결과
+
+- Codemagic `apple-preview`가 `1.32.0+56`을 빌드하고 두 앱을 실제 실행했다.
+- iOS Simulator 첫 프레임은 2,631ms에 확인했으며 ZIP SHA-256은
+  `df33d877224abd2ea210029e3b6d36bfd8c76af2de616f92c8057c3b05be3ea8`이다.
+- macOS 첫 프레임은 421ms에 확인했으며 ZIP SHA-256은
+  `acc5b8487ed976d148736ac1176d9ead4c14cb05210ffb2c692e0153cd830f93`이다.
+- 네 플랫폼 `release-manifest-1.32.0.json` 생성과 재검증을 통과했다.
 
 ## 보안과 정리 조건
 

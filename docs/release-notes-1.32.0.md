@@ -70,8 +70,8 @@
 |---|---|---|---|
 | Windows | `Sprache-Windows-Setup-1.32.0-google-x64.exe` | `REAL` | 실제 설치·첫 프레임 `RUNTIME` |
 | Android | `Sprache-Android-1.32.0-google-debug-signed.apk` | `REAL` | 패키지·버전·ABI·v2 서명 `BUILD_ONLY` |
-| iOS | `Sprache-iOS-Simulator-1.32.0-mock.zip` | `MOCK` | GitHub macOS runner의 Simulator `RUNTIME` |
-| macOS | `Sprache-macOS-1.32.0-mock.zip` | `MOCK` | GitHub macOS runner의 unsigned/ad-hoc `RUNTIME` |
+| iOS | `Sprache-iOS-Simulator-1.32.0-mock.zip` | `MOCK` | Codemagic macOS M2의 Simulator `RUNTIME` |
+| macOS | `Sprache-macOS-1.32.0-mock.zip` | `MOCK` | Codemagic macOS M2의 ad-hoc `RUNTIME` |
 
 Windows 설치본은 코드 서명 인증서가 없으면 기능 검증용 무서명 파일이다.
 Android의 `debug-signed` APK는 Play 배포본이 아니며, iOS ZIP은 IPA가 아니고

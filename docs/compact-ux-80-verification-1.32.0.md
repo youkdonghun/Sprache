@@ -77,7 +77,8 @@ Android는 `com.youkdonghun.sprache`, 버전 `1.32.0+56`, `arm64-v8a`,
 - 구형 Android `aapt.exe`가 한글 작업공간 경로를 읽지 못하는 경우 APK를 짧은
   ASCII 경로에 SHA-256 검증 복사한 뒤 검사하고 즉시 정리한다.
 
-iOS Simulator와 macOS unsigned/ad-hoc ZIP은 이 변경 커밋의 GitHub macOS
-workflow에서 `MOCK/RUNTIME`으로 생성한다. 기기 설치용 IPA나 서명·공증된 macOS
+iOS Simulator와 macOS ad-hoc ZIP은 이 변경 커밋의 Codemagic macOS M2
+워크플로에서 `MOCK/RUNTIME`으로 생성·실행 검증했다. iOS 첫 프레임은 2,631ms,
+macOS 첫 프레임은 421ms에 확인했다. 기기 설치용 IPA나 서명·공증된 macOS
 배포본으로 표시하지 않으며, 최종 파일과 evidence는
-`release-manifest-1.32.0.json`에 SHA-256으로 결속한다.
+`release-manifest-1.32.0.json`에 SHA-256으로 결속했다.
