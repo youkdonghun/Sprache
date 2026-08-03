@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'sprache-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}1.35.0-60`;
+const CACHE_NAME = `${CACHE_PREFIX}1.35.0-60-r2`;
 const PRECACHE = [
   './',
   './index.html',
