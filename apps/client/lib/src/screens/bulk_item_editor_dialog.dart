@@ -93,6 +93,36 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
     });
   }
 
+  Future<void> _copyGridToClipboard() async {
+    final rows = <String>[
+      '자료 ID\t표현\t뜻\t한글 발음\t예문\t예문 뜻\t태그\t레벨',
+      for (final draft in _visibleDrafts)
+        <String>[
+          draft.item.id,
+          draft.text,
+          draft.meaning,
+          draft.pronunciation,
+          draft.example,
+          draft.exampleMeaning,
+          draft.tags,
+          draft.level,
+        ].map(_spreadsheetCell).join('\t'),
+    ];
+    await Clipboard.setData(ClipboardData(text: rows.join('\n')));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          '현재 표 ${_visibleDrafts.length}개 행을 복사했어요. Excel이나 Google Sheets에 붙여 수정하세요.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  static String _spreadsheetCell(String value) =>
+      value.replaceAll(RegExp(r'[\t\r\n]+'), ' ').trim();
+
   Future<void> _openGridPaste() async {
     final targets = _visibleDrafts;
     if (targets.isEmpty) {
@@ -113,7 +143,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
           result.appliedCells == 0
               ? '적용할 표 데이터를 찾지 못했어요. 탭으로 나눈 열을 확인해 주세요.'
               : '${result.appliedRows}개 행의 ${result.appliedCells}개 셀을 반영했어요.'
-                    '${result.skippedRows == 0 ? '' : ' 목록보다 많은 ${result.skippedRows}개 행은 제외했어요.'}'
+                    '${result.skippedRows == 0 ? '' : ' 매칭하지 못한 ${result.skippedRows}개 행은 제외했어요.'}'
                     ' 아직 저장 전이에요.',
         ),
         behavior: SnackBarBehavior.floating,
@@ -148,17 +178,42 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
             _BulkGridField.level,
           ];
     final dataRows = hasHeader ? rows.skip(1).toList(growable: false) : rows;
+    final idColumn = fields.indexOf(_BulkGridField.id);
+    final textColumn = fields.indexOf(_BulkGridField.text);
+    final targetsById = {for (final target in targets) target.item.id: target};
     var appliedRows = 0;
     var appliedCells = 0;
+    var skippedRows = 0;
+    final usedTargets = <_BulkItemDraft>{};
 
     setState(() {
-      for (
-        var rowIndex = 0;
-        rowIndex < dataRows.length && rowIndex < targets.length;
-        rowIndex++
-      ) {
+      for (var rowIndex = 0; rowIndex < dataRows.length; rowIndex++) {
         final cells = dataRows[rowIndex];
-        final target = targets[rowIndex];
+        _BulkItemDraft? target;
+        if (idColumn >= 0 && idColumn < cells.length) {
+          target = targetsById[cells[idColumn].trim()];
+        }
+        if (target == null && textColumn >= 0 && textColumn < cells.length) {
+          final expression = cells[textColumn].trim().toLowerCase();
+          if (expression.isNotEmpty) {
+            for (final candidate in targets) {
+              if (usedTargets.contains(candidate)) continue;
+              if (candidate.originalText.trim().toLowerCase() == expression ||
+                  candidate.text.trim().toLowerCase() == expression) {
+                target = candidate;
+                break;
+              }
+            }
+          }
+        }
+        if (target == null && idColumn < 0 && rowIndex < targets.length) {
+          target = targets[rowIndex];
+        }
+        if (target == null) {
+          skippedRows += 1;
+          continue;
+        }
+        usedTargets.add(target);
         var rowChanged = false;
         for (
           var columnIndex = 0;
@@ -166,7 +221,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
           columnIndex++
         ) {
           final field = fields[columnIndex];
-          if (field == null) continue;
+          if (field == null || field == _BulkGridField.id) continue;
           final rawValue = cells[columnIndex].trim();
           if (rawValue.isEmpty) continue;
           final value = _bulkGridClearTokens.contains(rawValue.toLowerCase())
@@ -190,7 +245,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
     return _BulkGridPasteResult(
       appliedRows: appliedRows,
       appliedCells: appliedCells,
-      skippedRows: (dataRows.length - targets.length).clamp(0, dataRows.length),
+      skippedRows: skippedRows,
     );
   }
 
@@ -301,7 +356,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
               title: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('표로 한 번에 편집'),
+                  Text('등록 자료 Excel형 일괄 수정'),
                   Text(
                     '엑셀처럼 셀을 옮겨가며 수정하고 마지막에 한 번만 저장합니다.',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
@@ -382,10 +437,18 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
                             error: true,
                           ),
                         TextButton.icon(
+                          key: const Key('bulk-item-copy-grid'),
+                          onPressed: _visibleDrafts.isEmpty || _saving
+                              ? null
+                              : _copyGridToClipboard,
+                          icon: const Icon(Icons.copy_all_outlined),
+                          label: const Text('Excel용 표 복사'),
+                        ),
+                        TextButton.icon(
                           key: const Key('bulk-item-paste-grid'),
                           onPressed: _saving ? null : _openGridPaste,
                           icon: const Icon(Icons.content_paste_go_rounded),
-                          label: const Text('표 붙여넣기'),
+                          label: const Text('수정한 표 붙여넣기'),
                         ),
                         TextButton.icon(
                           key: const Key('reset-all-bulk-item-edits'),
@@ -528,9 +591,9 @@ class _BulkGridPasteDialogState extends State<_BulkGridPasteDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '현재 보이는 최대 ${widget.maxRows}개 행에 위에서부터 순서대로 적용합니다. '
-              '첫 줄에 표현, 뜻, 한글 발음, 예문, 예문 뜻, 태그, 레벨 같은 '
-              '열 이름을 넣으면 순서가 달라도 자동으로 찾아요.',
+              'Excel·Sheets에서 수정한 표를 그대로 붙여넣으세요. '
+              '“Excel용 표 복사”로 가져간 표는 자료 ID를 기준으로 정확히 찾아 '
+              '순서가 바뀌어도 안전하게 적용합니다. ID가 없으면 표현이나 현재 행 순서로 찾아요.',
             ),
             const SizedBox(height: 8),
             const Text(
@@ -572,6 +635,7 @@ class _BulkGridPasteDialogState extends State<_BulkGridPasteDialog> {
 }
 
 enum _BulkGridField {
+  id,
   text,
   meaning,
   pronunciation,
@@ -586,6 +650,7 @@ const _bulkGridClearTokens = {'[비우기]', '[clear]'};
 _BulkGridField? _bulkGridFieldForHeader(String raw) {
   final header = raw.trim().toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
   return switch (header) {
+    '자료id' || 'id' || 'itemid' => _BulkGridField.id,
     '표현' || '단어' || '문장' || 'text' || 'word' => _BulkGridField.text,
     '뜻' || '의미' || '해석' || 'meaning' || 'translation' => _BulkGridField.meaning,
     '발음' || '한글발음' || 'pronunciation' => _BulkGridField.pronunciation,
@@ -1078,6 +1143,7 @@ class _BulkItemDraft {
 
   bool apply(_BulkGridField field, String value) {
     final current = switch (field) {
+      _BulkGridField.id => item.id,
       _BulkGridField.text => text,
       _BulkGridField.meaning => meaning,
       _BulkGridField.pronunciation => pronunciation,
@@ -1088,6 +1154,8 @@ class _BulkItemDraft {
     };
     if (current == value) return false;
     switch (field) {
+      case _BulkGridField.id:
+        return false;
       case _BulkGridField.text:
         text = value;
       case _BulkGridField.meaning:
