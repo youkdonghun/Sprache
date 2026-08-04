@@ -17,8 +17,8 @@ Sprache는 별도 API나 중앙 데이터베이스 없이 동작하는 Local-Fir
 - Drive의 숨겨진 `appDataFolder`에는 `WordStudyData`의 폴더 ID와 이름만 담은
   작은 연결 포인터를 둔다. 학습 데이터 자체는 숨김 공간에 저장하지 않는다.
 - 로컬 백업 폴더와 Google Drive 저장 위치는 설정에서 각각 확인하고 변경한다.
-- 앱 소개, [개인정보처리방침](https://youkdonghun.github.io/Sprache/privacy/)과
-  [서비스 이용약관](https://youkdonghun.github.io/Sprache/terms/)은 GitHub Pages의
+- 앱 소개, [개인정보처리방침](https://sprache6.github.io/privacy/)과
+  [서비스 이용약관](https://sprache6.github.io/terms/)은 GitHub Pages의
   정적 문서다.
 
 아래 버전별 기록의 Railway 언급은 당시 릴리스의 검증 이력이다. 현행 설정은
@@ -549,7 +549,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tool\build-real-windows-lo
 - Windows 포터블: `Sprache-Windows-1.35.0-google-x64.zip`
 - Android: `Sprache-Android-1.35.0-google-debug-signed.apk`
 - Apple: `Sprache-iOS-Simulator-1.35.0-google-configured.zip`, `Sprache-macOS-1.35.0-google-configured.zip`
-- PWA: `https://youkdonghun.github.io/Sprache/app/`
+- PWA: `https://sprache6.github.io/app/`
 - 무결성: `SHA256SUMS-1.35.0-google.txt`
 
 Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`

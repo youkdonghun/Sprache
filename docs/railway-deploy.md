@@ -43,20 +43,19 @@ Railway 서비스를 중단하기 전에 다음 조건을 모두 확인한다.
 ## GitHub Pages 배포
 
 Sprache 소스 저장소는 비공개로 유지한다. 무료 Pages를 위해 소스 저장소의
-visibility를 바꾸지 않고, 공개 문서만 담는 `youkdonghun/youkdonghun.github.io`
+visibility를 바꾸지 않고, 공개 문서만 담는 `Sprache6/Sprache6.github.io`
 저장소를 사용한다. 이 저장소의 `main` root가 Pages 원본이다.
 
 현재 저장소의 `docs/index.html`, `docs/privacy/index.html`,
-`docs/terms/index.html`과 `.nojekyll`을 공개 저장소의 `Sprache/` 아래에 같은
-구조로 복사한다. 공개 저장소 root에도 같은 문서를 두어 사용자 사이트의 루트
-주소가 404가 되지 않게 한다. 앱 소스, 빌드 로그, 토큰과 과거 Railway 문서는
-공개 저장소에 복사하지 않는다.
+`docs/terms/index.html`과 `.nojekyll`을 공개 저장소 root에 같은 구조로 복사한다.
+설치 가능한 PWA는 `app/` 아래에 둔다. 앱 소스, 빌드 로그, 토큰과 과거 Railway
+문서는 공개 저장소에 복사하지 않는다.
 
 배포 URL:
 
-- 홈페이지: `https://youkdonghun.github.io/Sprache/`
-- 개인정보처리방침: `https://youkdonghun.github.io/Sprache/privacy/`
-- 서비스 이용약관: `https://youkdonghun.github.io/Sprache/terms/`
+- 홈페이지: `https://sprache6.github.io/`
+- 개인정보처리방침: `https://sprache6.github.io/privacy/`
+- 서비스 이용약관: `https://sprache6.github.io/terms/`
 
 기존 `app-homepage.html`과 `privacy-policy.html`은 오래된 링크를 새 canonical
 URL로 보내는 호환 페이지다. 새 링크와 OAuth 브랜딩에는 directory URL을 쓴다.

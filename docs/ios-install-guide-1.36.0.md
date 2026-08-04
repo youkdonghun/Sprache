@@ -10,7 +10,7 @@
 
 유료 Apple 개발자 계정도, 7일마다 재설치하는 작업도 필요 없는 방법입니다.
 
-1. iPhone의 Safari에서 `https://youkdonghun.github.io/Sprache/app/`를 엽니다.
+1. iPhone의 Safari에서 `https://sprache6.github.io/app/`를 엽니다.
 2. 공유 버튼을 누릅니다.
 3. `홈 화면에 추가`를 누릅니다.
 4. `웹 앱으로 열기`가 보이면 켠 뒤 `추가`를 누릅니다.
