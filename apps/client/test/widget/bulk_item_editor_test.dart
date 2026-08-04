@@ -193,4 +193,40 @@ void main() {
     expect(tester.takeException(), isNull);
     debugDefaultTargetPlatformOverride = null;
   });
+
+  testWidgets('copied spreadsheet rows match by id after their order changes', (
+    tester,
+  ) async {
+    final store = await pumpLibrary(tester);
+
+    await tester.tap(find.byKey(const Key('open-registered-bulk-editor')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('bulk-item-paste-grid')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('bulk-item-paste-grid-input')),
+      'ID\t표현\t뜻\n'
+      'bulk-edit-second\tledger\t뒤집은 회계 원장\n'
+      'bulk-edit-first\tfixture\t뒤집은 고정 장치',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('confirm-bulk-item-paste-grid')));
+    await tester.pumpAndSettle();
+    expect(find.text('2개 변경 저장'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('save-bulk-item-edits')));
+    await tester.pumpAndSettle();
+
+    final saved = await store.loadCustomItems();
+    expect(
+      saved.singleWhere((item) => item.id == first.id).primaryTranslation,
+      '뒤집은 고정 장치',
+    );
+    expect(
+      saved.singleWhere((item) => item.id == second.id).primaryTranslation,
+      '뒤집은 회계 원장',
+    );
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
 }

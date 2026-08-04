@@ -256,4 +256,68 @@ void main() {
       tester.view.reset();
     }
   });
+
+  testWidgets('registered item has a visible edit path from the library', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(412, 915);
+    const existing = LearningItem(
+      id: 'visible-edit-item',
+      kind: LearningItemKind.word,
+      learningLanguage: LanguageTag.english,
+      subjectId: 'language:en',
+      text: 'visible',
+      translations: ['보이는'],
+      acceptedAnswers: ['보이는'],
+    );
+    final store = MemoryStudyStore(
+      preferences: const StudyPreferences(onboardingCompleted: true),
+    );
+    await store.saveCustomItems(const [existing]);
+
+    try {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [studyStoreProvider.overrideWithValue(store)],
+          child: const SpracheApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('자료실').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('registered-content-actions')),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const Key('show-registered-content')));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('edit-library-item-visible-edit-item')),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const Key('edit-library-item-visible-edit-item')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('표현 수정'), findsOneWidget);
+      expect(find.byKey(const Key('item-text-field')), findsOneWidget);
+      expect(find.byKey(const Key('item-translation-field')), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('item-translation-field')),
+        '확실히 보이는',
+      );
+      await tester.tap(find.text('변경 내용 저장'));
+      await tester.pumpAndSettle();
+
+      expect(store.savedItems.single.primaryTranslation, '확실히 보이는');
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    }
+  });
 }

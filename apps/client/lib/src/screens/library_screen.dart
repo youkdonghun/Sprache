@@ -36,10 +36,11 @@ import '../widgets/quick_content_sheet.dart';
 import '../widgets/privacy_mode_scope.dart';
 import 'bulk_item_editor_dialog.dart';
 
-enum _LibraryFilter { all, favorites, word, sentence, weak, wrong }
+enum _LibraryFilter { all, registered, favorites, word, sentence, weak, wrong }
 
 String _libraryFilterLabel(_LibraryFilter filter) => switch (filter) {
   _LibraryFilter.all => '전체',
+  _LibraryFilter.registered => '내가 등록',
   _LibraryFilter.favorites => '즐겨찾기',
   _LibraryFilter.word => '단어',
   _LibraryFilter.sentence => '문장',
@@ -187,6 +188,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       return;
     }
     _searchFocus.unfocus();
+  }
+
+  void _showRegisteredItems() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() {
+      _query = '';
+      _filter = _LibraryFilter.registered;
+      _advancedCriteria = const LibrarySearchCriteria();
+      _groupFilter = null;
+      _groupSelectionMode = false;
+      _selectedForGroup.clear();
+      _resultPage = 0;
+    });
+    _revealSearchResults();
   }
 
   void _onSearchChanged(String value) {
@@ -459,6 +475,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       final progress = state.progress[item.id];
       final matchesFilter = switch (_filter) {
         _LibraryFilter.all => true,
+        _LibraryFilter.registered => customItemIds.contains(item.id),
         _LibraryFilter.favorites => state.preferences.isFavorite(item.id),
         _LibraryFilter.word => item.kind == LearningItemKind.word,
         _LibraryFilter.sentence => item.kind == LearningItemKind.sentence,
@@ -481,8 +498,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       excludedItemIds: state.preferences.excludedItemIds,
       favoriteItemIds: state.preferences.favoriteItemIds,
     );
-    final editableFiltered = filtered
-        .where((item) => customItemIds.contains(item.id))
+    final registeredItems = state.customItems
+        .where((item) => item.effectiveSubjectId == activeSubject.id)
         .toList(growable: false);
     final availablePartsOfSpeech = items
         .map((item) => item.partOfSpeech)
@@ -644,6 +661,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         );
         final filterCounts = <_LibraryFilter, int>{
           _LibraryFilter.all: items.length,
+          _LibraryFilter.registered: registeredItems.length,
           _LibraryFilter.favorites: favoriteCount,
           _LibraryFilter.word: items
               .where((item) => item.kind == LearningItemKind.word)
@@ -666,6 +684,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   _filter = _LibraryFilter.all;
                   _resultPage = 0;
                 }),
+              ),
+              const SizedBox(width: 7),
+              _FilterChip(
+                label: '내가 등록',
+                count: registeredItems.length,
+                selected: _filter == _LibraryFilter.registered,
+                onSelected: _showRegisteredItems,
               ),
               const SizedBox(width: 7),
               _FilterChip(
@@ -784,14 +809,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           studiedCount: studiedCount,
           favoriteCount: favoriteCount,
           trashCount: trashEntries.length,
-          editableCount: editableFiltered.length,
+          editableCount: registeredItems.length,
           onQuickWord: () => _openQuickContent(LearningItemKind.word),
           onAdd: _openAddMenu,
           onTrash: _openTrash,
-          onBulkEdit: editableFiltered.isEmpty
+          onBulkEdit: registeredItems.isEmpty
               ? null
-              : () => _openBulkEditor(editableFiltered),
+              : () => _openBulkEditor(registeredItems),
         ),
+        if (registeredItems.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          _RegisteredContentActions(
+            count: registeredItems.length,
+            onShow: _showRegisteredItems,
+            onBulkEdit: () => _openBulkEditor(registeredItems),
+          ),
+        ],
         SizedBox(
           height: narrow
               ? 8
@@ -3309,6 +3342,7 @@ class _ActiveLibraryFilters extends StatelessWidget {
       if (query.isNotEmpty) '검색 “$query”',
       if (filter != _LibraryFilter.all)
         switch (filter) {
+          _LibraryFilter.registered => '내가 등록',
           _LibraryFilter.favorites => '즐겨찾기',
           _LibraryFilter.word => '단어',
           _LibraryFilter.sentence => '문장',
@@ -4769,13 +4803,13 @@ class _LibraryHeader extends StatelessWidget {
       icon: const Icon(Icons.table_view_outlined),
       tooltip: editableCount == 0
           ? '엑셀처럼 편집할 사용자 자료가 없습니다.'
-          : '현재 목록의 $editableCount개를 엑셀처럼 일괄 편집',
+          : '내가 등록한 $editableCount개를 Excel처럼 일괄 수정',
     );
     final wideTableEditButton = OutlinedButton.icon(
       key: const Key('library-bulk-edit-button'),
       onPressed: onBulkEdit,
       icon: const Icon(Icons.table_view_outlined, size: 18),
-      label: Text('엑셀형 일괄 편집 · $editableCount'),
+      label: Text('등록 자료 일괄 수정 · $editableCount'),
     );
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -4812,6 +4846,80 @@ class _LibraryHeader extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _RegisteredContentActions extends StatelessWidget {
+  const _RegisteredContentActions({
+    required this.count,
+    required this.onShow,
+    required this.onBulkEdit,
+  });
+
+  final int count;
+  final VoidCallback onShow;
+  final VoidCallback onBulkEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card.outlined(
+      key: const Key('registered-content-actions'),
+      margin: EdgeInsets.zero,
+      color: colors.secondaryContainer.withValues(alpha: 0.28),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final description = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '내가 등록한 단어·문장 $count개',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 2),
+                const Text('하나씩 수정하거나 Excel·Sheets 표를 붙여 한 번에 바꿀 수 있어요.'),
+              ],
+            );
+            final actions = Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const Key('show-registered-content'),
+                  onPressed: onShow,
+                  icon: const Icon(Icons.edit_note_rounded),
+                  label: const Text('목록에서 하나씩 수정'),
+                ),
+                FilledButton.tonalIcon(
+                  key: const Key('open-registered-bulk-editor'),
+                  onPressed: onBulkEdit,
+                  icon: const Icon(Icons.table_view_outlined),
+                  label: const Text('Excel처럼 일괄 수정'),
+                ),
+              ],
+            );
+            if (constraints.maxWidth < 720) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [description, const SizedBox(height: 10), actions],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: description),
+                const SizedBox(width: 12),
+                actions,
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
@@ -5011,6 +5119,14 @@ class _LibraryRow extends ConsumerWidget {
                       _ProgressStatus(label: status.$1, color: status.$2),
                     ],
                     if (!selectionMode) ...[
+                      if (isCustom)
+                        IconButton(
+                          key: Key('edit-library-item-${item.id}'),
+                          onPressed: onEdit,
+                          tooltip: '이 자료 수정',
+                          visualDensity: VisualDensity.compact,
+                          icon: const Icon(Icons.edit_outlined),
+                        ),
                       IconButton(
                         key: Key('favorite-${item.id}'),
                         onPressed: onFavorite,
@@ -5174,6 +5290,14 @@ class _LibraryGridCard extends StatelessWidget {
                     ),
                   const Spacer(),
                   if (!selectionMode) ...[
+                    if (isCustom)
+                      IconButton(
+                        key: Key('edit-library-item-${item.id}'),
+                        visualDensity: VisualDensity.compact,
+                        tooltip: '이 자료 수정',
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined),
+                      ),
                     IconButton(
                       key: Key('favorite-${item.id}'),
                       visualDensity: VisualDensity.compact,
