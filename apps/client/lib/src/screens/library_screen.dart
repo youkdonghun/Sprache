@@ -40,7 +40,7 @@ enum _LibraryFilter { all, registered, favorites, word, sentence, weak, wrong }
 
 String _libraryFilterLabel(_LibraryFilter filter) => switch (filter) {
   _LibraryFilter.all => '전체',
-  _LibraryFilter.registered => '내가 등록',
+  _LibraryFilter.registered => '내 편집본',
   _LibraryFilter.favorites => '즐겨찾기',
   _LibraryFilter.word => '단어',
   _LibraryFilter.sentence => '문장',
@@ -205,6 +205,21 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     _revealSearchResults();
   }
 
+  void _showAllItemsForEditing() {
+    _searchDebounce?.cancel();
+    _searchController.clear();
+    setState(() {
+      _query = '';
+      _filter = _LibraryFilter.all;
+      _advancedCriteria = const LibrarySearchCriteria();
+      _groupFilter = null;
+      _groupSelectionMode = false;
+      _selectedForGroup.clear();
+      _resultPage = 0;
+    });
+    _revealSearchResults();
+  }
+
   void _onSearchChanged(String value) {
     _searchDebounce?.cancel();
     _searchDebounce = Timer(_searchDebounceDuration, () {
@@ -299,15 +314,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             title: Text('열기'),
           ),
         ),
-        if (isCustom)
-          const PopupMenuItem(
-            value: _DesktopItemAction.edit,
-            child: ListTile(
-              dense: true,
-              leading: Icon(Icons.edit_outlined),
-              title: Text('수정'),
-            ),
+        const PopupMenuItem(
+          value: _DesktopItemAction.edit,
+          child: ListTile(
+            dense: true,
+            leading: Icon(Icons.edit_outlined),
+            title: Text('수정'),
           ),
+        ),
         const PopupMenuItem(
           value: _DesktopItemAction.group,
           child: ListTile(
@@ -687,7 +701,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               ),
               const SizedBox(width: 7),
               _FilterChip(
-                label: '내가 등록',
+                label: '내 편집본',
                 count: registeredItems.length,
                 selected: _filter == _LibraryFilter.registered,
                 onSelected: _showRegisteredItems,
@@ -809,20 +823,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           studiedCount: studiedCount,
           favoriteCount: favoriteCount,
           trashCount: trashEntries.length,
-          editableCount: registeredItems.length,
+          editableCount: items.length,
           onQuickWord: () => _openQuickContent(LearningItemKind.word),
           onAdd: _openAddMenu,
           onTrash: _openTrash,
-          onBulkEdit: registeredItems.isEmpty
-              ? null
-              : () => _openBulkEditor(registeredItems),
+          onBulkEdit: items.isEmpty ? null : () => _openBulkEditor(items),
         ),
-        if (registeredItems.isNotEmpty) ...[
+        if (items.isNotEmpty) ...[
           const SizedBox(height: 10),
-          _RegisteredContentActions(
-            count: registeredItems.length,
-            onShow: _showRegisteredItems,
-            onBulkEdit: () => _openBulkEditor(registeredItems),
+          _ContentEditingActions(
+            totalCount: items.length,
+            personalCount: registeredItems.length,
+            onShow: _showAllItemsForEditing,
+            onBulkEdit: () => _openBulkEditor(items),
           ),
         ],
         SizedBox(
@@ -1614,20 +1627,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Future<void> _openBulkEditor(Iterable<LearningItem> candidates) async {
-    final state = ref.read(appControllerProvider);
-    final customIds = state.customItems.map((item) => item.id).toSet();
+    final personalItemIds = ref
+        .read(appControllerProvider)
+        .customItems
+        .map((item) => item.id)
+        .toSet();
     final byId = <String, LearningItem>{};
-    var lockedCount = 0;
     for (final item in candidates) {
-      if (customIds.contains(item.id)) {
-        byId[item.id] = item;
-      } else {
-        lockedCount += 1;
-      }
+      byId[item.id] = item;
     }
     final items = byId.values.toList(growable: false);
     if (items.isEmpty) {
-      _showLibraryMessage('직접 추가하거나 가져온 자료만 표에서 수정할 수 있어요.');
+      _showLibraryMessage('수정할 자료가 없어요.');
       return;
     }
 
@@ -1637,6 +1648,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       useSafeArea: false,
       builder: (context) => BulkItemEditorDialog(
         items: items,
+        personalItemIds: personalItemIds,
         onSave: (changed) async {
           await ref
               .read(appControllerProvider.notifier)
@@ -1645,12 +1657,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       ),
     );
     if (!mounted || savedCount == null) return;
-    final skippedLabel = lockedCount == 0
-        ? ''
-        : ' 기본 언어팩 $lockedCount개는 원본 보호를 위해 제외했어요.';
-    _showLibraryMessage(
-      '$savedCount개 자료를 한 번에 저장했습니다.$skippedLabel Drive 동기화에도 반영됩니다.',
-    );
+    _showLibraryMessage('$savedCount개 자료를 내 편집본으로 저장했어요. Drive 동기화에도 반영됩니다.');
   }
 
   Future<void> _toggleSelectedFavorites() async {
@@ -3342,7 +3349,7 @@ class _ActiveLibraryFilters extends StatelessWidget {
       if (query.isNotEmpty) '검색 “$query”',
       if (filter != _LibraryFilter.all)
         switch (filter) {
-          _LibraryFilter.registered => '내가 등록',
+          _LibraryFilter.registered => '내 편집본',
           _LibraryFilter.favorites => '즐겨찾기',
           _LibraryFilter.word => '단어',
           _LibraryFilter.sentence => '문장',
@@ -4802,14 +4809,14 @@ class _LibraryHeader extends StatelessWidget {
       onPressed: onBulkEdit,
       icon: const Icon(Icons.table_view_outlined),
       tooltip: editableCount == 0
-          ? '엑셀처럼 편집할 사용자 자료가 없습니다.'
-          : '내가 등록한 $editableCount개를 Excel처럼 일괄 수정',
+          ? '수정할 자료가 없습니다.'
+          : '기본 자료를 포함한 $editableCount개를 Excel처럼 일괄 수정',
     );
     final wideTableEditButton = OutlinedButton.icon(
       key: const Key('library-bulk-edit-button'),
       onPressed: onBulkEdit,
       icon: const Icon(Icons.table_view_outlined, size: 18),
-      label: Text('등록 자료 일괄 수정 · $editableCount'),
+      label: Text('전체 자료 일괄 수정 · $editableCount'),
     );
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -4850,14 +4857,16 @@ class _LibraryHeader extends StatelessWidget {
   }
 }
 
-class _RegisteredContentActions extends StatelessWidget {
-  const _RegisteredContentActions({
-    required this.count,
+class _ContentEditingActions extends StatelessWidget {
+  const _ContentEditingActions({
+    required this.totalCount,
+    required this.personalCount,
     required this.onShow,
     required this.onBulkEdit,
   });
 
-  final int count;
+  final int totalCount;
+  final int personalCount;
   final VoidCallback onShow;
   final VoidCallback onBulkEdit;
 
@@ -4865,7 +4874,7 @@ class _RegisteredContentActions extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Card.outlined(
-      key: const Key('registered-content-actions'),
+      key: const Key('content-editing-actions'),
       margin: EdgeInsets.zero,
       color: colors.secondaryContainer.withValues(alpha: 0.28),
       child: Padding(
@@ -4877,13 +4886,17 @@ class _RegisteredContentActions extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  '내가 등록한 단어·문장 $count개',
+                  '단어·문장 $totalCount개 수정',
                   style: Theme.of(
                     context,
                   ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
-                const Text('하나씩 수정하거나 Excel·Sheets 표를 붙여 한 번에 바꿀 수 있어요.'),
+                Text(
+                  '기본 데이터도 고칠 수 있어요. '
+                  '수정한 내용은 원본을 보호하면서 내 편집본으로 저장됩니다.'
+                  '${personalCount == 0 ? '' : ' 현재 내 편집본 $personalCount개.'}',
+                ),
               ],
             );
             final actions = Wrap(
@@ -4891,13 +4904,13 @@ class _RegisteredContentActions extends StatelessWidget {
               runSpacing: 8,
               children: [
                 OutlinedButton.icon(
-                  key: const Key('show-registered-content'),
+                  key: const Key('show-all-editable-content'),
                   onPressed: onShow,
                   icon: const Icon(Icons.edit_note_rounded),
                   label: const Text('목록에서 하나씩 수정'),
                 ),
                 FilledButton.tonalIcon(
-                  key: const Key('open-registered-bulk-editor'),
+                  key: const Key('open-all-content-bulk-editor'),
                   onPressed: onBulkEdit,
                   icon: const Icon(Icons.table_view_outlined),
                   label: const Text('Excel처럼 일괄 수정'),
@@ -5119,14 +5132,13 @@ class _LibraryRow extends ConsumerWidget {
                       _ProgressStatus(label: status.$1, color: status.$2),
                     ],
                     if (!selectionMode) ...[
-                      if (isCustom)
-                        IconButton(
-                          key: Key('edit-library-item-${item.id}'),
-                          onPressed: onEdit,
-                          tooltip: '이 자료 수정',
-                          visualDensity: VisualDensity.compact,
-                          icon: const Icon(Icons.edit_outlined),
-                        ),
+                      IconButton(
+                        key: Key('edit-library-item-${item.id}'),
+                        onPressed: onEdit,
+                        tooltip: isCustom ? '내 편집본 수정' : '기본 자료를 내 편집본으로 수정',
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.edit_outlined),
+                      ),
                       IconButton(
                         key: Key('favorite-${item.id}'),
                         onPressed: onFavorite,
@@ -5165,16 +5177,16 @@ class _LibraryRow extends ConsumerWidget {
                               title: Text(selected ? '학습에서 제외' : '학습에 포함'),
                             ),
                           ),
-                          if (isCustom) ...[
-                            const PopupMenuDivider(),
-                            const PopupMenuItem(
-                              value: _ItemAction.edit,
-                              child: ListTile(
-                                dense: true,
-                                leading: Icon(Icons.edit_rounded),
-                                title: Text('수정'),
-                              ),
+                          const PopupMenuDivider(),
+                          PopupMenuItem(
+                            value: _ItemAction.edit,
+                            child: ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.edit_rounded),
+                              title: Text(isCustom ? '수정' : '내 편집본으로 수정'),
                             ),
+                          ),
+                          if (isCustom)
                             const PopupMenuItem(
                               value: _ItemAction.delete,
                               child: ListTile(
@@ -5182,9 +5194,8 @@ class _LibraryRow extends ConsumerWidget {
                                 leading: Icon(Icons.delete_outline_rounded),
                                 title: Text('삭제'),
                               ),
-                            ),
-                          ] else ...[
-                            const PopupMenuDivider(),
+                            )
+                          else
                             const PopupMenuItem(
                               value: _ItemAction.correct,
                               child: ListTile(
@@ -5193,7 +5204,6 @@ class _LibraryRow extends ConsumerWidget {
                                 title: Text('교정 메모'),
                               ),
                             ),
-                          ],
                         ],
                       ),
                     ],
@@ -5290,14 +5300,13 @@ class _LibraryGridCard extends StatelessWidget {
                     ),
                   const Spacer(),
                   if (!selectionMode) ...[
-                    if (isCustom)
-                      IconButton(
-                        key: Key('edit-library-item-${item.id}'),
-                        visualDensity: VisualDensity.compact,
-                        tooltip: '이 자료 수정',
-                        onPressed: onEdit,
-                        icon: const Icon(Icons.edit_outlined),
-                      ),
+                    IconButton(
+                      key: Key('edit-library-item-${item.id}'),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: isCustom ? '내 편집본 수정' : '기본 자료를 내 편집본으로 수정',
+                      onPressed: onEdit,
+                      icon: const Icon(Icons.edit_outlined),
+                    ),
                     IconButton(
                       key: Key('favorite-${item.id}'),
                       visualDensity: VisualDensity.compact,
@@ -5329,16 +5338,16 @@ class _LibraryGridCard extends StatelessWidget {
                           value: _ItemAction.toggle,
                           child: Text(selected ? '학습에서 제외' : '학습에 포함'),
                         ),
-                        if (isCustom) ...[
-                          const PopupMenuItem(
-                            value: _ItemAction.edit,
-                            child: Text('수정'),
-                          ),
+                        PopupMenuItem(
+                          value: _ItemAction.edit,
+                          child: Text(isCustom ? '수정' : '내 편집본으로 수정'),
+                        ),
+                        if (isCustom)
                           const PopupMenuItem(
                             value: _ItemAction.delete,
                             child: Text('삭제'),
-                          ),
-                        ] else
+                          )
+                        else
                           const PopupMenuItem(
                             value: _ItemAction.correct,
                             child: Text('교정 메모'),

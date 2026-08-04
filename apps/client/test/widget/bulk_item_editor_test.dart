@@ -60,59 +60,67 @@ void main() {
     return store;
   }
 
-  testWidgets('filtered custom items open in a spreadsheet and save together', (
-    tester,
-  ) async {
-    final store = await pumpLibrary(tester);
+  testWidgets(
+    'all items open in a spreadsheet and custom edits save together',
+    (tester) async {
+      final store = await pumpLibrary(tester);
 
-    await tester.tap(find.byKey(const Key('library-bulk-edit-button')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('library-bulk-edit-button')));
+      await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('bulk-item-editor-dialog')), findsOneWidget);
-    expect(find.byKey(const Key('bulk-item-desktop-table')), findsOneWidget);
-    expect(find.text('전체 2'), findsOneWidget);
+      expect(find.byKey(const Key('bulk-item-editor-dialog')), findsOneWidget);
+      expect(find.byKey(const Key('bulk-item-desktop-table')), findsOneWidget);
+      expect(find.textContaining('전체 '), findsWidgets);
+      expect(
+        find.byKey(const Key('bulk-meaning-en-starter-word-1')),
+        findsOneWidget,
+      );
 
-    await tester.enterText(
-      find.byKey(const Key('bulk-meaning-bulk-edit-first')),
-      '고정 장치',
-    );
-    await tester.enterText(
-      find.byKey(const Key('bulk-pronunciation-bulk-edit-first')),
-      '픽스처 새 발음',
-    );
-    await tester.enterText(
-      find.byKey(const Key('bulk-tags-bulk-edit-first')),
-      '기존, 핵심',
-    );
-    await tester.enterText(
-      find.byKey(const Key('bulk-meaning-bulk-edit-second')),
-      '회계 원장',
-    );
-    await tester.pump();
+      await tester.enterText(
+        find.byKey(const Key('bulk-meaning-bulk-edit-first')),
+        '고정 장치',
+      );
+      await tester.enterText(
+        find.byKey(const Key('bulk-pronunciation-bulk-edit-first')),
+        '픽스처 새 발음',
+      );
+      await tester.enterText(
+        find.byKey(const Key('bulk-tags-bulk-edit-first')),
+        '기존, 핵심',
+      );
+      await tester.enterText(
+        find.byKey(const Key('bulk-meaning-bulk-edit-second')),
+        '회계 원장',
+      );
+      await tester.pump();
 
-    expect(find.text('4개 변경 저장'), findsNothing);
-    expect(find.text('2개 변경 저장'), findsOneWidget);
-    await tester.drag(
-      find.byKey(const Key('bulk-item-horizontal-scroll')),
-      const Offset(-300, 0),
-    );
-    await tester.pump();
-    expect(tester.takeException(), isNull);
+      expect(find.text('4개 변경 저장'), findsNothing);
+      expect(find.text('2개 변경 저장'), findsOneWidget);
+      await tester.drag(
+        find.byKey(const Key('bulk-item-horizontal-scroll')),
+        const Offset(-300, 0),
+      );
+      await tester.pump();
+      expect(tester.takeException(), isNull);
 
-    await tester.tap(find.byKey(const Key('save-bulk-item-edits')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('save-bulk-item-edits')));
+      await tester.pumpAndSettle();
 
-    final saved = await store.loadCustomItems();
-    final savedFirst = saved.singleWhere((item) => item.id == first.id);
-    final savedSecond = saved.singleWhere((item) => item.id == second.id);
-    expect(savedFirst.primaryTranslation, '고정 장치');
-    expect(savedFirst.koreanPronunciation, '픽스처 새 발음');
-    expect(savedFirst.tags, containsAll(['기존', '핵심', learningGroupTag('업무')]));
-    expect(savedSecond.primaryTranslation, '회계 원장');
-    expect(find.byKey(const Key('bulk-item-editor-dialog')), findsNothing);
-    expect(tester.takeException(), isNull);
-    debugDefaultTargetPlatformOverride = null;
-  });
+      final saved = await store.loadCustomItems();
+      final savedFirst = saved.singleWhere((item) => item.id == first.id);
+      final savedSecond = saved.singleWhere((item) => item.id == second.id);
+      expect(savedFirst.primaryTranslation, '고정 장치');
+      expect(savedFirst.koreanPronunciation, '픽스처 새 발음');
+      expect(
+        savedFirst.tags,
+        containsAll(['기존', '핵심', learningGroupTag('업무')]),
+      );
+      expect(savedSecond.primaryTranslation, '회계 원장');
+      expect(find.byKey(const Key('bulk-item-editor-dialog')), findsNothing);
+      expect(tester.takeException(), isNull);
+      debugDefaultTargetPlatformOverride = null;
+    },
+  );
 
   testWidgets('an invalid row blocks the whole spreadsheet save', (
     tester,
@@ -199,7 +207,7 @@ void main() {
   ) async {
     final store = await pumpLibrary(tester);
 
-    await tester.tap(find.byKey(const Key('open-registered-bulk-editor')));
+    await tester.tap(find.byKey(const Key('open-all-content-bulk-editor')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('bulk-item-paste-grid')));
@@ -226,6 +234,40 @@ void main() {
       saved.singleWhere((item) => item.id == second.id).primaryTranslation,
       '뒤집은 회계 원장',
     );
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
+
+  testWidgets('bundled rows are editable and saved as personal overrides', (
+    tester,
+  ) async {
+    final store = await pumpLibrary(tester);
+
+    await tester.tap(find.byKey(const Key('library-bulk-edit-button')));
+    await tester.pumpAndSettle();
+
+    final bundledMeaning = find.byKey(
+      const Key('bulk-meaning-en-starter-word-1'),
+    );
+    expect(bundledMeaning, findsOneWidget);
+    expect(find.text('기본'), findsWidgets);
+    await tester.tap(find.byKey(const Key('bulk-item-paste-grid')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('bulk-item-paste-grid-input')),
+      'ID\t표현\t뜻\n'
+      'en-starter-word-1\thello\t일괄로 고친 기본 뜻',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('confirm-bulk-item-paste-grid')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('save-bulk-item-edits')));
+    await tester.pumpAndSettle();
+
+    final saved = (await store.loadCustomItems()).singleWhere(
+      (item) => item.id == 'en-starter-word-1',
+    );
+    expect(saved.primaryTranslation, '일괄로 고친 기본 뜻');
     expect(tester.takeException(), isNull);
     debugDefaultTargetPlatformOverride = null;
   });

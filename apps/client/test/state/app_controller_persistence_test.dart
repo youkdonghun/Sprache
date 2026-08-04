@@ -489,6 +489,46 @@ void main() {
   });
 
   test(
+    'editing bundled content stores an override and uses it everywhere',
+    () async {
+      final store = MemoryStudyStore();
+      final controller = AppController(store);
+      await Future<void>.delayed(Duration.zero);
+      final bundled = sampleContent.firstWhere(
+        (item) => item.id == 'en-starter-word-1',
+      );
+      final edited = bundled.copyWith(
+        translations: const ['사용자가 고친 뜻'],
+        acceptedAnswers: const ['사용자가 고친 뜻'],
+      );
+
+      await controller.upsertCustomItem(edited);
+
+      final visible = controller.allContentItems
+          .where((item) => item.id == bundled.id)
+          .toList(growable: false);
+      expect(visible, hasLength(1));
+      expect(visible.single.primaryTranslation, '사용자가 고친 뜻');
+      expect(controller.courseItems, contains(visible.single));
+      expect(store.savedItems.single.id, bundled.id);
+      expect(store.savedItems.single.primaryTranslation, '사용자가 고친 뜻');
+      controller.dispose();
+
+      final restored = AppController(store);
+      await Future<void>.delayed(Duration.zero);
+      final restoredVisible = restored.allContentItems.singleWhere(
+        (item) => item.id == bundled.id,
+      );
+      expect(restoredVisible.primaryTranslation, '사용자가 고친 뜻');
+      expect(
+        restored.allContentItems.where((item) => item.id == bundled.id),
+        hasLength(1),
+      );
+      restored.dispose();
+    },
+  );
+
+  test(
     'bulk content edit validates first and writes one store batch',
     () async {
       final store = _CountingContentStore();

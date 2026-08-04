@@ -73,6 +73,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   late final String _initialDraftFingerprint;
   late final NavigationGuardController _navigationGuard;
   LearningItem? _original;
+  var _editingBundledOriginal = false;
 
   bool get _isEditing => _original != null;
   bool get _hasUnsavedChanges =>
@@ -111,6 +112,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
         for (final item in controller.courseItems) {
           if (item.id == itemId) {
             _original = item;
+            _editingBundledOriginal = true;
             break;
           }
         }
@@ -265,11 +267,17 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _isEditing ? '표현 수정' : '새 표현 추가',
+                              _editingBundledOriginal
+                                  ? '기본 자료 수정'
+                                  : _isEditing
+                                  ? '표현 수정'
+                                  : '새 표현 추가',
                               style: Theme.of(context).textTheme.headlineSmall,
                             ),
                             Text(
-                              '${subject.symbol} ${subject.name} · 이 기기에 바로 저장돼요.',
+                              _editingBundledOriginal
+                                  ? '${subject.symbol} ${subject.name} · 원본은 보호하고 내 편집본으로 저장해요.'
+                                  : '${subject.symbol} ${subject.name} · 이 기기에 바로 저장돼요.',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -1171,6 +1179,8 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
           ? quickResult!.addedMeaningCount > 0
                 ? '기존 표현에 새 뜻을 추가했어요.'
                 : '같은 표현과 뜻이 이미 있어 한 번만 저장했어요.'
+          : _editingBundledOriginal
+          ? '기본 자료의 내 편집본을 저장했어요.'
           : _isEditing
           ? '표현을 수정했어요.'
           : '새 표현을 저장했어요.';
