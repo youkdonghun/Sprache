@@ -249,7 +249,7 @@ Android APK는 이전 버전 위에 업그레이드 설치해 기존 학습 세�
 
 1.22.2부터 1.33까지의 실서비스 빌드는 당시 Railway의 공개
 개인정보처리방침을 기본값으로 사용했다. 1.34부터는 Railway를 사용하지 않고
-`https://youkdonghun.github.io/Sprache/privacy/`를 포함한다. 필요하면
+`https://sprache6.github.io/privacy/`를 포함한다. 필요하면
 `SPRACHE_PRIVACY_POLICY_URL`로 소유 도메인의 공개 URL을 지정할 수 있다.
 1.22.2 당시 배포·Android 실화면·Windows 설치 검증은
 [`verification-report-1.22.2.md`](verification-report-1.22.2.md)에 기록했다.

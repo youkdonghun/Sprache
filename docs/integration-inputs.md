@@ -20,9 +20,9 @@ PKCE verifier, 서명 키와 비밀번호는 저장소·채팅·로그에 남기
 | iOS·macOS 공용 iOS client ID | `1054343487948-8ueu92l0ov3259rs8psun40c6iu4arel.apps.googleusercontent.com` | `GOOGLE_APPLE_CLIENT_ID` |
 | Drive API | 활성화 | Google Cloud API |
 | Google Picker API | 활성화 | Google Cloud API |
-| 공개 홈페이지 | `https://youkdonghun.github.io/Sprache/` | OAuth 브랜딩 |
-| 개인정보처리방침 | `https://youkdonghun.github.io/Sprache/privacy/` | 앱·OAuth 브랜딩 |
-| 이용약관 | `https://youkdonghun.github.io/Sprache/terms/` | OAuth 브랜딩 |
+| 공개 홈페이지 | `https://sprache6.github.io/` | OAuth 브랜딩 |
+| 개인정보처리방침 | `https://sprache6.github.io/privacy/` | 앱·OAuth 브랜딩 |
+| 이용약관 | `https://sprache6.github.io/terms/` | OAuth 브랜딩 |
 
 요청 범위는 계정 표시용 기본 identity 범위와 `drive.file`, `drive.appdata`다.
 `drive.file`은 사용자가 선택했거나 Sprache가 만든 파일만 다루고,
@@ -46,7 +46,7 @@ GOOGLE_ANDROID_CLIENT_ID=<android-client-id>
 GOOGLE_DESKTOP_CLIENT_ID=<desktop-client-id>
 GOOGLE_APPLE_CLIENT_ID=<ios-client-id>
 GOOGLE_SERVER_CLIENT_ID=<android-web-audience-id>
-PRIVACY_POLICY_URL=https://youkdonghun.github.io/Sprache/privacy/
+PRIVACY_POLICY_URL=https://sprache6.github.io/privacy/
 SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET=<local-or-ci-secret>
 ```
 

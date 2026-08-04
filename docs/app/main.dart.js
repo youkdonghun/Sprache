@@ -48274,7 +48274,7 @@ s=A.cRy()
 r=new A.O7()
 $.Sh()
 r.kY()
-return new A.b4T(!1,q,"MOCK","1.36.1",p,"flutter-first-frame",s,A.aAI(),r)},
+return new A.b4T(!1,q,"MOCK","1.36.2",p,"flutter-first-frame",s,A.aAI(),r)},
 cF0(a){var s,r="Release frame capture is not a PNG image."
 if(a.length<8)throw A.l(A.aA(r))
 for(s=0;s<8;++s)if(a[s]!==B.Lp[s])throw A.l(A.aA(r))},
@@ -172541,7 +172541,7 @@ B.b.u(a0,A.a([B.c6,f,B.A,new A.apV(p,o.I(n,m).geB().c,A.cbs(q,h.ax),p.DF(q.gaZ()
 f.push(B.bsw)
 B.b.u(a0,f)}if(h.cy){f=h.f
 q=h.w
-B.b.u(a0,A.a([B.c6,A.h_(!1,g,new A.yG("\ub370\uc774\ud130\uc640 \uac1c\uc778\uc815\ubcf4","\ub0b4 \ub370\uc774\ud130\uac00 \uc5b4\ub514\uc5d0 \uc800\uc7a5\ub418\ub294\uc9c0 \ud655\uc778",g,g,r.at),g,g,g,r.cy,!0,B.bf5,g,g,g,g,g),B.A,new A.asK(new A.bV2(a1,h.b),"https://youkdonghun.github.io/Sprache/privacy/",f,new A.bV3(r,a1,f),g),B.A,new A.amY(h.as.b,h.CW.b,new A.bV4(r),g),B.A,A.be(A.dc(!1,g,g,g,!0,g,g,g,!0,g,g,B.alO,g,g,g,g,new A.bV6(a1),!1,g,g,g,g,g,B.b1N,g,B.YD,g,B.d2,g),g,g,g,B.bcY,g,g),B.A,A.be(A.dc(!1,g,g,g,!0,g,g,g,!0,g,g,B.ye,g,g,g,g,new A.bV7(a1),!1,g,g,g,g,g,B.b2w,g,B.aWW,g,B.d2,g),g,g,g,B.b8F,g,g),B.A,new A.akE(J.az(q.as),J.az(q.ay),new A.bV8(r,a1),new A.bV9(r,a1),new A.bVa(r,a1),new A.bVb(r,a1),new A.bVc(r,a1),new A.bVd(r,a1),g),B.A,new A.awc(new A.bVe(r,a1,f),g)],s))}if(h.db)B.b.u(a0,A.a([B.c6,A.h_(!1,g,new A.yG("\uc571 \uc815\ubcf4","",g,g,r.ax),g,g,g,r.db,!0,B.bcw,g,g,g,g,g),B.A,A.be(A.O(A.a([new A.a5v(B.y2,"Sprache","\uc5ec\ub7ec \uc5b8\uc5b4\uc640 \uc8fc\uc81c\ub97c \uafb8\uc900\ud788 \ubcf5\uc2b5\ud558\ub294 \uc571","1.36.1",A.h(a1).ax.b,g),B.eb,new A.a5v(B.ai_,"\ud604\uc7ac \ud50c\ub7ab\ud3fc",A.cOR(A.aS()),"production",B.eC,g)],s),B.k,g,B.e,B.f,0,B.j),g,g,g,g,g,g)],s))
+B.b.u(a0,A.a([B.c6,A.h_(!1,g,new A.yG("\ub370\uc774\ud130\uc640 \uac1c\uc778\uc815\ubcf4","\ub0b4 \ub370\uc774\ud130\uac00 \uc5b4\ub514\uc5d0 \uc800\uc7a5\ub418\ub294\uc9c0 \ud655\uc778",g,g,r.at),g,g,g,r.cy,!0,B.bf5,g,g,g,g,g),B.A,new A.asK(new A.bV2(a1,h.b),"https://sprache6.github.io/privacy/",f,new A.bV3(r,a1,f),g),B.A,new A.amY(h.as.b,h.CW.b,new A.bV4(r),g),B.A,A.be(A.dc(!1,g,g,g,!0,g,g,g,!0,g,g,B.alO,g,g,g,g,new A.bV6(a1),!1,g,g,g,g,g,B.b1N,g,B.YD,g,B.d2,g),g,g,g,B.bcY,g,g),B.A,A.be(A.dc(!1,g,g,g,!0,g,g,g,!0,g,g,B.ye,g,g,g,g,new A.bV7(a1),!1,g,g,g,g,g,B.b2w,g,B.aWW,g,B.d2,g),g,g,g,B.b8F,g,g),B.A,new A.akE(J.az(q.as),J.az(q.ay),new A.bV8(r,a1),new A.bV9(r,a1),new A.bVa(r,a1),new A.bVb(r,a1),new A.bVc(r,a1),new A.bVd(r,a1),g),B.A,new A.awc(new A.bVe(r,a1,f),g)],s))}if(h.db)B.b.u(a0,A.a([B.c6,A.h_(!1,g,new A.yG("\uc571 \uc815\ubcf4","",g,g,r.ax),g,g,g,r.db,!0,B.bcw,g,g,g,g,g),B.A,A.be(A.O(A.a([new A.a5v(B.y2,"Sprache","\uc5ec\ub7ec \uc5b8\uc5b4\uc640 \uc8fc\uc81c\ub97c \uafb8\uc900\ud788 \ubcf5\uc2b5\ud558\ub294 \uc571","1.36.2",A.h(a1).ax.b,g),B.eb,new A.a5v(B.ai_,"\ud604\uc7ac \ud50c\ub7ab\ud3fc",A.cOR(A.aS()),"production",B.eC,g)],s),B.k,g,B.e,B.f,0,B.j),g,g,g,g,g,g)],s))
 return A.lv(A.a([A.cn(new A.bf(B.a2h,A.O(a0,B.n,g,B.e,B.f,0,B.j),g),g,g)],s),g,new A.a_(d,c,b,a),g,B.I,!1)},
 $S:1285}
 A.bUT.prototype={
@@ -172619,7 +172619,7 @@ $0(){var s=this.a
 return s.IP(this.b,s.gU(),this.c.a)},
 $S:3}
 A.bV2.prototype={
-$0(){return A.cO5(this.a,"1.36.1")},
+$0(){return A.cO5(this.a,"1.36.2")},
 $S:0}
 A.bV3.prototype={
 $0(){var s=this.a

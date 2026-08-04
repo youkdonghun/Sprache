@@ -31,7 +31,7 @@ class AppConfig {
     appVersion: String.fromEnvironment('APP_VERSION', defaultValue: '개발 빌드'),
     privacyPolicyUrl: String.fromEnvironment(
       'PRIVACY_POLICY_URL',
-      defaultValue: 'https://youkdonghun.github.io/Sprache/privacy/',
+      defaultValue: 'https://sprache6.github.io/privacy/',
     ),
   );
 

@@ -22,8 +22,8 @@ Flutter Android / Windows / iOS / macOS / Web PWA
           └── Google Drive appDataFolder: WordStudyData 연결 포인터
 
 GitHub Pages
-  ├── /Sprache/: 소개·개인정보처리방침·서비스 이용약관
-  └── /Sprache/app/: 설치 가능한 Flutter PWA 정적 파일
+  ├── /: 소개·개인정보처리방침·서비스 이용약관
+  └── /app/: 설치 가능한 Flutter PWA 정적 파일
 ```
 
 Sprache가 운영하는 API, Railway 서비스 또는 중앙 PostgreSQL은 현재 시스템

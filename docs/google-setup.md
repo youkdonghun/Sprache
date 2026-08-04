@@ -172,9 +172,9 @@ Google 문서상 설치형 client는 비밀을 안전하게 보관할 수 없는
 
 | 용도 | URL |
 | --- | --- |
-| 앱 홈페이지 | `https://youkdonghun.github.io/Sprache/` |
-| 개인정보처리방침 | `https://youkdonghun.github.io/Sprache/privacy/` |
-| 서비스 이용약관 | `https://youkdonghun.github.io/Sprache/terms/` |
+| 앱 홈페이지 | `https://sprache6.github.io/` |
+| 개인정보처리방침 | `https://sprache6.github.io/privacy/` |
+| 서비스 이용약관 | `https://sprache6.github.io/terms/` |
 
 GitHub 저장소의 **Settings → Pages**에서 다음처럼 설정한다.
 
@@ -189,7 +189,7 @@ Actions workflow는 만들지 않는다. HTML 내부 링크는 `/privacy/` 같�
 
 Google Auth Platform 브랜딩에는 위 홈페이지·개인정보처리방침·약관 URL과
 개발자 연락처를 등록한다. Google이 요구하는 방식으로
-`youkdonghun.github.io`의 사이트 소유권을 확인하고 승인된 도메인과 공개 범위를
+`sprache6.github.io`의 사이트 소유권을 확인하고 승인된 도메인과 공개 범위를
 최종 검토한다.
 
 ## 6. 빌드 설정
@@ -202,7 +202,7 @@ GOOGLE_ANDROID_CLIENT_ID=<android-client-id>
 GOOGLE_DESKTOP_CLIENT_ID=<desktop-client-id>
 GOOGLE_APPLE_CLIENT_ID=<ios-client-id>
 GOOGLE_SERVER_CLIENT_ID=<android-google-sign-in-audience>
-PRIVACY_POLICY_URL=https://youkdonghun.github.io/Sprache/privacy/
+PRIVACY_POLICY_URL=https://sprache6.github.io/privacy/
 SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET=<local-or-ci-secret>
 ```
 
