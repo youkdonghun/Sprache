@@ -147,4 +147,50 @@ void main() {
     expect(tester.takeException(), isNull);
     debugDefaultTargetPlatformOverride = null;
   });
+
+  testWidgets('tab-separated spreadsheet rows paste and save in one batch', (
+    tester,
+  ) async {
+    final store = await pumpLibrary(tester);
+
+    await tester.tap(find.byKey(const Key('library-bulk-edit-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('bulk-item-paste-grid')));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      find.byKey(const Key('bulk-item-paste-grid-input')),
+      '표현\t뜻\t태그\nfixture\t고정 장치\t기존, 핵심\nledger\t회계 원장\t회계',
+    );
+    await tester.pump();
+    expect(
+      tester
+          .widget<EditableText>(
+            find.descendant(
+              of: find.byKey(const Key('bulk-item-paste-grid-input')),
+              matching: find.byType(EditableText),
+            ),
+          )
+          .controller
+          .text,
+      contains('\t'),
+    );
+    await tester.tap(find.byKey(const Key('confirm-bulk-item-paste-grid')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('bulk-item-paste-grid-input')), findsNothing);
+    expect(find.textContaining('2개 행의 4개 셀'), findsWidgets);
+    await tester.tap(find.byKey(const Key('save-bulk-item-edits')));
+    await tester.pumpAndSettle();
+
+    final saved = await store.loadCustomItems();
+    final savedFirst = saved.singleWhere((item) => item.id == first.id);
+    final savedSecond = saved.singleWhere((item) => item.id == second.id);
+    expect(savedFirst.primaryTranslation, '고정 장치');
+    expect(savedFirst.tags, containsAll(['기존', '핵심', learningGroupTag('업무')]));
+    expect(savedSecond.primaryTranslation, '회계 원장');
+    expect(savedSecond.tags, contains('회계'));
+    expect(tester.takeException(), isNull);
+    debugDefaultTargetPlatformOverride = null;
+  });
 }

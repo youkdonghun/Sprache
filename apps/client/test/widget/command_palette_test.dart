@@ -52,7 +52,8 @@ void main() {
     tester,
   ) async {
     await withDesktopApp(tester, () async {
-      expect(find.text('전체 검색 · Ctrl K'), findsOneWidget);
+      expect(find.text('전체 검색'), findsOneWidget);
+      expect(find.textContaining('Ctrl K'), findsNothing);
       await pressCommandShortcut(tester);
 
       expect(find.byKey(const Key('global-search-field')), findsOneWidget);

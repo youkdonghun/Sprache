@@ -4768,14 +4768,14 @@ class _LibraryHeader extends StatelessWidget {
       onPressed: onBulkEdit,
       icon: const Icon(Icons.table_view_outlined),
       tooltip: editableCount == 0
-          ? '표로 편집할 사용자 자료가 없습니다.'
-          : '현재 목록의 사용자 자료 $editableCount개를 표로 편집',
+          ? '엑셀처럼 편집할 사용자 자료가 없습니다.'
+          : '현재 목록의 $editableCount개를 엑셀처럼 일괄 편집',
     );
     final wideTableEditButton = OutlinedButton.icon(
       key: const Key('library-bulk-edit-button'),
       onPressed: onBulkEdit,
       icon: const Icon(Icons.table_view_outlined, size: 18),
-      label: Text('표 편집 $editableCount'),
+      label: Text('엑셀형 일괄 편집 · $editableCount'),
     );
     return LayoutBuilder(
       builder: (context, constraints) {
