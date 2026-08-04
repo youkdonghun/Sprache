@@ -347,7 +347,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('기본 자료 수정'), findsOneWidget);
-      expect(find.textContaining('내 편집본으로 저장'), findsOneWidget);
+      expect(find.textContaining('내 편집본으로 저장'), findsWidgets);
       await tester.enterText(
         find.byKey(const Key('item-translation-field')),
         '사용자가 고친 인사말',
@@ -359,6 +359,25 @@ void main() {
         (item) => item.id == 'en-starter-word-1',
       );
       expect(saved.primaryTranslation, '사용자가 고친 인사말');
+
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const Key('bundled-original-comparison')),
+        findsOneWidget,
+      );
+      expect(find.text('내 편집본과 기본 원본 비교'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('restore-bundled-original')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('confirm-restore-bundled-original')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        store.savedItems.where((item) => item.id == 'en-starter-word-1'),
+        isEmpty,
+      );
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

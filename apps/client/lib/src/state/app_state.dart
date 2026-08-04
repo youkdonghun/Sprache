@@ -3213,6 +3213,67 @@ class AppController extends StateNotifier<AppState> {
     return normalizedItems.length;
   }
 
+  /// Applies spreadsheet edits and bundled-catalog restores as one atomic
+  /// local transaction, then queues one Drive snapshot.
+  Future<int> applyCustomItemEdits({
+    Iterable<LearningItem> items = const <LearningItem>[],
+    Set<String> restoreBundledItemIds = const <String>{},
+  }) async {
+    final candidatesById = <String, LearningItem>{};
+    for (final item in items) {
+      final normalized = _contentValidator.ensureValid(item);
+      candidatesById[normalized.id] = normalized;
+    }
+    final restoredIds = <String>{
+      for (final itemId in restoreBundledItemIds)
+        if (!candidatesById.containsKey(itemId) &&
+            bundledItemById(itemId) != null &&
+            customItemById(itemId) != null)
+          itemId,
+    };
+    if (candidatesById.isEmpty && restoredIds.isEmpty) return 0;
+
+    final changedAt = DateTime.now().toUtc();
+    final normalizedItems = <LearningItem>[];
+    for (final item in candidatesById.values) {
+      normalizedItems.add(
+        _nextContentRevision(
+          item.copyWith(updatedAt: changedAt),
+          customItemById(item.id),
+        ),
+      );
+    }
+    final merged = <String, LearningItem>{
+      for (final current in state.customItems)
+        if (!restoredIds.contains(current.id)) current.id: current,
+      for (final item in normalizedItems) item.id: item,
+    };
+    final tombstones = {...state.customItemTombstones}
+      ..removeWhere((id, _) => candidatesById.containsKey(id));
+    for (final itemId in restoredIds) {
+      tombstones[itemId] = changedAt;
+    }
+
+    await _store.replaceCustomContent(
+      items: merged.values,
+      tombstones: tombstones,
+    );
+    if (!mounted) return normalizedItems.length + restoredIds.length;
+    state = state.copyWith(
+      customItems: merged.values.toList(growable: false),
+      customItemTombstones: tombstones,
+    );
+    await _queueSyncIfDriveConnected();
+    return normalizedItems.length + restoredIds.length;
+  }
+
+  Future<bool> restoreBundledItem(String itemId) async {
+    final restored = await applyCustomItemEdits(
+      restoreBundledItemIds: {itemId},
+    );
+    return restored == 1;
+  }
+
   LearningItem? findContentIdentityMatch(LearningItem candidate) {
     final identityKey = _contentValidator.identityKey(candidate);
     for (final item in [...state.customItems, ...sampleContent]) {
@@ -3877,6 +3938,16 @@ class AppController extends StateNotifier<AppState> {
     }
     return null;
   }
+
+  LearningItem? bundledItemById(String itemId) {
+    for (final item in sampleContent) {
+      if (item.id == itemId) return item;
+    }
+    return null;
+  }
+
+  bool isBundledOverride(String itemId) =>
+      bundledItemById(itemId) != null && customItemById(itemId) != null;
 
   LearningItem _mergeDuplicateContent({
     required LearningItem canonical,

@@ -1179,29 +1179,31 @@ class _StorageIndicator {
     }
     if (state.driveConnected) {
       return switch (connection.displayStatus) {
-        SyncDisplayStatus.completed => const _StorageIndicator(
+        SyncDisplayStatus.completed => _StorageIndicator(
           kind: _StorageIndicatorKind.completed,
-          label: '동기화 완료',
+          label: connection.lastSyncedAt == null
+              ? 'Drive 저장 완료'
+              : 'Drive ${_syncTime(connection.lastSyncedAt!)} 저장 완료',
           icon: Icons.cloud_done_outlined,
         ),
         SyncDisplayStatus.waiting => const _StorageIndicator(
           kind: _StorageIndicatorKind.waiting,
-          label: '동기화 대기',
+          label: '기기에 저장됨 · Drive 대기',
           icon: Icons.cloud_upload_outlined,
         ),
         SyncDisplayStatus.syncing => const _StorageIndicator(
           kind: _StorageIndicatorKind.syncing,
-          label: '동기화 중',
+          label: 'Drive 저장 중',
           icon: Icons.sync_rounded,
         ),
         SyncDisplayStatus.error => const _StorageIndicator(
           kind: _StorageIndicatorKind.attention,
-          label: '동기화 오류',
+          label: '기기에 저장됨 · 재시도 필요',
           icon: Icons.cloud_off_outlined,
         ),
         SyncDisplayStatus.localSaved => const _StorageIndicator(
           kind: _StorageIndicatorKind.local,
-          label: '앱 내부 보관',
+          label: '기기에 저장됨',
           icon: Icons.save_outlined,
         ),
       };
@@ -1216,6 +1218,13 @@ class _StorageIndicator {
   final _StorageIndicatorKind kind;
   final String label;
   final IconData icon;
+
+  static String _syncTime(DateTime value) {
+    final local = value.toLocal();
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
 
   Color color(ColorScheme colors) => switch (kind) {
     _StorageIndicatorKind.loading => colors.onSurfaceVariant,
