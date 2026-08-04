@@ -12,11 +12,13 @@ typedef BulkItemSave = Future<void> Function(List<LearningItem> items);
 class BulkItemEditorDialog extends StatefulWidget {
   const BulkItemEditorDialog({
     required this.items,
+    required this.personalItemIds,
     required this.onSave,
     super.key,
   });
 
   final List<LearningItem> items;
+  final Set<String> personalItemIds;
   final BulkItemSave onSave;
 
   @override
@@ -37,7 +39,14 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
   @override
   void initState() {
     super.initState();
-    _drafts = widget.items.map(_BulkItemDraft.fromItem).toList(growable: false);
+    _drafts = widget.items
+        .map(
+          (item) => _BulkItemDraft.fromItem(
+            item,
+            isPersonal: widget.personalItemIds.contains(item.id),
+          ),
+        )
+        .toList(growable: false);
   }
 
   @override
@@ -356,9 +365,9 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
               title: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('등록 자료 Excel형 일괄 수정'),
+                  Text('모든 자료 Excel형 일괄 수정'),
                   Text(
-                    '엑셀처럼 셀을 옮겨가며 수정하고 마지막에 한 번만 저장합니다.',
+                    '기본 데이터는 바꾼 행만 내 편집본으로 저장됩니다.',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
                   ),
                 ],
@@ -865,9 +874,18 @@ class _BulkItemDesktopRow extends StatelessWidget {
           ),
           SizedBox(
             width: 72,
-            child: Text(
-              draft.item.kind == LearningItemKind.word ? '단어' : '문장',
-              textAlign: TextAlign.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(draft.item.kind == LearningItemKind.word ? '단어' : '문장'),
+                Text(
+                  draft.isPersonal ? '내 편집본' : '기본',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: draft.isPersonal ? colors.primary : colors.outline,
+                  ),
+                ),
+              ],
             ),
           ),
           _TableCell(
@@ -1011,7 +1029,8 @@ class _BulkItemMobileCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  '$index · ${draft.item.kind == LearningItemKind.word ? '단어' : '문장'}',
+                  '$index · ${draft.item.kind == LearningItemKind.word ? '단어' : '문장'} '
+                  '· ${draft.isPersonal ? '내 편집본' : '기본 데이터'}',
                   style: const TextStyle(fontWeight: FontWeight.w800),
                 ),
                 const Spacer(),
@@ -1113,7 +1132,7 @@ class _MobileField extends StatelessWidget {
 }
 
 class _BulkItemDraft {
-  _BulkItemDraft.fromItem(this.item)
+  _BulkItemDraft.fromItem(this.item, {required this.isPersonal})
     : originalText = item.text,
       originalMeaning = item.primaryTranslation,
       originalPronunciation = item.koreanPronunciation ?? '',
@@ -1125,6 +1144,7 @@ class _BulkItemDraft {
   }
 
   final LearningItem item;
+  final bool isPersonal;
   final String originalText;
   final String originalMeaning;
   final String originalPronunciation;

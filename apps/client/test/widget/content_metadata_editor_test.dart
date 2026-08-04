@@ -288,11 +288,8 @@ void main() {
       await tester.tap(find.text('자료실').last);
       await tester.pumpAndSettle();
 
-      expect(
-        find.byKey(const Key('registered-content-actions')),
-        findsOneWidget,
-      );
-      await tester.tap(find.byKey(const Key('show-registered-content')));
+      expect(find.byKey(const Key('content-editing-actions')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('show-all-editable-content')));
       await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('edit-library-item-visible-edit-item')),
@@ -314,6 +311,54 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(store.savedItems.single.primaryTranslation, '확실히 보이는');
+      expect(tester.takeException(), isNull);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+      tester.view.reset();
+    }
+  });
+
+  testWidgets('bundled item can be edited and becomes a personal override', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(412, 915);
+    final store = MemoryStudyStore(
+      preferences: const StudyPreferences(onboardingCompleted: true),
+    );
+
+    try {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [studyStoreProvider.overrideWithValue(store)],
+          child: const SpracheApp(),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('자료실').last);
+      await tester.pumpAndSettle();
+
+      final editButton = find.byKey(
+        const Key('edit-library-item-en-starter-word-1'),
+      );
+      expect(editButton, findsOneWidget);
+      await tester.tap(editButton);
+      await tester.pumpAndSettle();
+
+      expect(find.text('기본 자료 수정'), findsOneWidget);
+      expect(find.textContaining('내 편집본으로 저장'), findsOneWidget);
+      await tester.enterText(
+        find.byKey(const Key('item-translation-field')),
+        '사용자가 고친 인사말',
+      );
+      await tester.tap(find.text('변경 내용 저장'));
+      await tester.pumpAndSettle();
+
+      final saved = store.savedItems.singleWhere(
+        (item) => item.id == 'en-starter-word-1',
+      );
+      expect(saved.primaryTranslation, '사용자가 고친 인사말');
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;
