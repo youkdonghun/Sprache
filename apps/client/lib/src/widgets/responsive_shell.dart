@@ -808,9 +808,6 @@ class _SidebarUtilityToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final commandShortcut = defaultTargetPlatform == TargetPlatform.macOS
-        ? '⌘ K'
-        : 'Ctrl K';
     return FocusTraversalGroup(
       policy: WidgetOrderTraversalPolicy(),
       child: Semantics(
@@ -827,7 +824,7 @@ class _SidebarUtilityToolbar extends StatelessWidget {
                     key: const Key('open-global-search'),
                     onPressed: onSearch,
                     icon: const Icon(Icons.manage_search_rounded, size: 18),
-                    label: Text('전체 검색 · $commandShortcut'),
+                    label: const Text('전체 검색'),
                     style: const ButtonStyle(
                       minimumSize: WidgetStatePropertyAll(Size.fromHeight(44)),
                       padding: WidgetStatePropertyAll(
@@ -1301,7 +1298,7 @@ class _BrandMark extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'SPRACHE',
+                    'Sprache',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(

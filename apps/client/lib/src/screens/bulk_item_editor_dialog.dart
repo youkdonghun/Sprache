@@ -93,6 +93,107 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
     });
   }
 
+  Future<void> _openGridPaste() async {
+    final targets = _visibleDrafts;
+    if (targets.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('표 데이터를 적용할 행이 없어요.')));
+      return;
+    }
+    final raw = await showDialog<String>(
+      context: context,
+      builder: (context) => _BulkGridPasteDialog(maxRows: targets.length),
+    );
+    if (raw == null || !mounted) return;
+    final result = _applyGridPaste(raw, targets);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.appliedCells == 0
+              ? '적용할 표 데이터를 찾지 못했어요. 탭으로 나눈 열을 확인해 주세요.'
+              : '${result.appliedRows}개 행의 ${result.appliedCells}개 셀을 반영했어요.'
+                    '${result.skippedRows == 0 ? '' : ' 목록보다 많은 ${result.skippedRows}개 행은 제외했어요.'}'
+                    ' 아직 저장 전이에요.',
+        ),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  _BulkGridPasteResult _applyGridPaste(
+    String raw,
+    List<_BulkItemDraft> targets,
+  ) {
+    final rows = raw
+        .replaceAll('\r\n', '\n')
+        .replaceAll('\r', '\n')
+        .split('\n')
+        .map((line) => line.split('\t'))
+        .where((cells) => cells.any((cell) => cell.trim().isNotEmpty))
+        .toList(growable: false);
+    if (rows.isEmpty) return const _BulkGridPasteResult();
+
+    final detectedFields = rows.first.map(_bulkGridFieldForHeader).toList();
+    final hasHeader = detectedFields.whereType<_BulkGridField>().length >= 2;
+    final fields = hasHeader
+        ? detectedFields
+        : const <_BulkGridField?>[
+            _BulkGridField.text,
+            _BulkGridField.meaning,
+            _BulkGridField.pronunciation,
+            _BulkGridField.example,
+            _BulkGridField.exampleMeaning,
+            _BulkGridField.tags,
+            _BulkGridField.level,
+          ];
+    final dataRows = hasHeader ? rows.skip(1).toList(growable: false) : rows;
+    var appliedRows = 0;
+    var appliedCells = 0;
+
+    setState(() {
+      for (
+        var rowIndex = 0;
+        rowIndex < dataRows.length && rowIndex < targets.length;
+        rowIndex++
+      ) {
+        final cells = dataRows[rowIndex];
+        final target = targets[rowIndex];
+        var rowChanged = false;
+        for (
+          var columnIndex = 0;
+          columnIndex < cells.length && columnIndex < fields.length;
+          columnIndex++
+        ) {
+          final field = fields[columnIndex];
+          if (field == null) continue;
+          final rawValue = cells[columnIndex].trim();
+          if (rawValue.isEmpty) continue;
+          final value = _bulkGridClearTokens.contains(rawValue.toLowerCase())
+              ? ''
+              : rawValue;
+          final changed = target.apply(field, value);
+          if (!changed) continue;
+          appliedCells += 1;
+          rowChanged = true;
+        }
+        if (rowChanged) appliedRows += 1;
+        final inspection = _validator.inspect(target.toItem());
+        if (inspection.errors.isEmpty) {
+          _errorsById.remove(target.item.id);
+        } else {
+          _errorsById[target.item.id] = inspection.errors.first.message;
+        }
+      }
+      _revision += 1;
+    });
+    return _BulkGridPasteResult(
+      appliedRows: appliedRows,
+      appliedCells: appliedCells,
+      skippedRows: (dataRows.length - targets.length).clamp(0, dataRows.length),
+    );
+  }
+
   Future<void> _requestClose() async {
     if (_saving) return;
     if (_changedCount == 0) {
@@ -281,6 +382,12 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
                             error: true,
                           ),
                         TextButton.icon(
+                          key: const Key('bulk-item-paste-grid'),
+                          onPressed: _saving ? null : _openGridPaste,
+                          icon: const Icon(Icons.content_paste_go_rounded),
+                          label: const Text('표 붙여넣기'),
+                        ),
+                        TextButton.icon(
                           key: const Key('reset-all-bulk-item-edits'),
                           onPressed: changedCount == 0 || _saving
                               ? null
@@ -390,6 +497,119 @@ class _CountChip extends StatelessWidget {
       side: error ? BorderSide(color: colors.error) : null,
     );
   }
+}
+
+class _BulkGridPasteDialog extends StatefulWidget {
+  const _BulkGridPasteDialog({required this.maxRows});
+
+  final int maxRows;
+
+  @override
+  State<_BulkGridPasteDialog> createState() => _BulkGridPasteDialogState();
+}
+
+class _BulkGridPasteDialogState extends State<_BulkGridPasteDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Excel·Sheets 표 붙여넣기'),
+      content: SizedBox(
+        width: 720,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '현재 보이는 최대 ${widget.maxRows}개 행에 위에서부터 순서대로 적용합니다. '
+              '첫 줄에 표현, 뜻, 한글 발음, 예문, 예문 뜻, 태그, 레벨 같은 '
+              '열 이름을 넣으면 순서가 달라도 자동으로 찾아요.',
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '빈 셀은 기존 값을 유지하고, 값을 지우려면 [비우기]를 넣으세요.',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('bulk-item-paste-grid-input'),
+              controller: _controller,
+              autofocus: true,
+              minLines: 8,
+              maxLines: 14,
+              onChanged: (_) => setState(() {}),
+              decoration: const InputDecoration(
+                hintText: '표현\t뜻\t태그\nhello\t안녕하세요\t인사',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton.icon(
+          key: const Key('confirm-bulk-item-paste-grid'),
+          onPressed: _controller.text.trim().isEmpty
+              ? null
+              : () => Navigator.pop(context, _controller.text),
+          icon: const Icon(Icons.playlist_add_check_rounded),
+          label: const Text('표에 적용'),
+        ),
+      ],
+    );
+  }
+}
+
+enum _BulkGridField {
+  text,
+  meaning,
+  pronunciation,
+  example,
+  exampleMeaning,
+  tags,
+  level,
+}
+
+const _bulkGridClearTokens = {'[비우기]', '[clear]'};
+
+_BulkGridField? _bulkGridFieldForHeader(String raw) {
+  final header = raw.trim().toLowerCase().replaceAll(RegExp(r'[\s_\-]'), '');
+  return switch (header) {
+    '표현' || '단어' || '문장' || 'text' || 'word' => _BulkGridField.text,
+    '뜻' || '의미' || '해석' || 'meaning' || 'translation' => _BulkGridField.meaning,
+    '발음' || '한글발음' || 'pronunciation' => _BulkGridField.pronunciation,
+    '예문' || 'example' => _BulkGridField.example,
+    '예문뜻' ||
+    '예문해석' ||
+    'examplemeaning' ||
+    'exampletranslation' => _BulkGridField.exampleMeaning,
+    '태그' || 'tag' || 'tags' => _BulkGridField.tags,
+    '레벨' || '난이도' || 'level' => _BulkGridField.level,
+    _ => null,
+  };
+}
+
+class _BulkGridPasteResult {
+  const _BulkGridPasteResult({
+    this.appliedRows = 0,
+    this.appliedCells = 0,
+    this.skippedRows = 0,
+  });
+
+  final int appliedRows;
+  final int appliedCells;
+  final int skippedRows;
 }
 
 class _BulkEditorEmpty extends StatelessWidget {
@@ -855,6 +1075,36 @@ class _BulkItemDraft {
   late String exampleMeaning;
   late String tags;
   late String level;
+
+  bool apply(_BulkGridField field, String value) {
+    final current = switch (field) {
+      _BulkGridField.text => text,
+      _BulkGridField.meaning => meaning,
+      _BulkGridField.pronunciation => pronunciation,
+      _BulkGridField.example => example,
+      _BulkGridField.exampleMeaning => exampleMeaning,
+      _BulkGridField.tags => tags,
+      _BulkGridField.level => level,
+    };
+    if (current == value) return false;
+    switch (field) {
+      case _BulkGridField.text:
+        text = value;
+      case _BulkGridField.meaning:
+        meaning = value;
+      case _BulkGridField.pronunciation:
+        pronunciation = value;
+      case _BulkGridField.example:
+        example = value;
+      case _BulkGridField.exampleMeaning:
+        exampleMeaning = value;
+      case _BulkGridField.tags:
+        tags = value;
+      case _BulkGridField.level:
+        level = value;
+    }
+    return true;
+  }
 
   bool get changed =>
       text != originalText ||

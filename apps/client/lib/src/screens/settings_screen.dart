@@ -30,6 +30,7 @@ import '../services/recovery_checkpoint_service.dart';
 import '../services/app_clock.dart';
 import '../services/study_notification_service.dart';
 import '../services/tts_service.dart';
+import '../services/web_focus_workspace.dart';
 import '../state/app_state.dart';
 import '../state/app_state_view.dart';
 import '../state/connection_state.dart';
@@ -58,7 +59,7 @@ String _settingsCategoryLabel(_SettingsCategory category) => switch (category) {
   _SettingsCategory.storage => '저장·동기화',
   _SettingsCategory.display => '화면·편의',
   _SettingsCategory.learning => '학습',
-  _SettingsCategory.windows => 'Windows',
+  _SettingsCategory.windows => kIsWeb ? '집중 화면' : 'Windows',
   _SettingsCategory.privacy => '데이터',
   _SettingsCategory.about => '앱 정보',
 };
@@ -69,7 +70,8 @@ IconData _settingsCategoryIcon(_SettingsCategory category) =>
       _SettingsCategory.storage => Icons.cloud_sync_outlined,
       _SettingsCategory.display => Icons.tune_rounded,
       _SettingsCategory.learning => Icons.school_outlined,
-      _SettingsCategory.windows => Icons.desktop_windows_outlined,
+      _SettingsCategory.windows =>
+        kIsWeb ? Icons.open_in_full_rounded : Icons.desktop_windows_outlined,
       _SettingsCategory.privacy => Icons.privacy_tip_outlined,
       _SettingsCategory.about => Icons.info_outline_rounded,
     };
@@ -267,6 +269,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final connected = state.driveConnected;
     final isWindows = defaultTargetPlatform == TargetPlatform.windows;
     final isAndroid = defaultTargetPlatform == TargetPlatform.android;
+    final supportsFocusWorkspace = isWindows || kIsWeb;
     final usesDesktopKeyboard =
         isWindows ||
         defaultTargetPlatform == TargetPlatform.macOS ||
@@ -290,9 +293,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _showsCategory(_SettingsCategory.learning) &&
         _matches('학습 분량 목표 xp 문제 수 세션 복습 새 표현 문장 비율 방식 일정 알림');
     final showWindows =
-        isWindows &&
+        supportsFocusWorkspace &&
         _showsCategory(_SettingsCategory.windows) &&
-        _matches('windows 윈도우 창 크기 컴팩트 최소화 항상 위 업무');
+        _matches(
+          'windows 윈도우 웹 브라우저 pwa 창 크기 컴팩트 최소화 '
+          '항상 위 업무 집중 화면 전체 화면',
+        );
     final showPrivacy =
         _showsCategory(_SettingsCategory.privacy) &&
         _matches('데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리 콘텐츠 품질 점검 교정');
@@ -395,7 +401,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(height: 10),
                       _SettingsCategoryPicker(
                         selected: _selectedCategory,
-                        showWindows: isWindows,
+                        showWindows: supportsFocusWorkspace,
                         onSelected: _selectCategory,
                       ),
                       if (!hasSearchResult) ...[
@@ -569,23 +575,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           focusNode: _windowsSectionFocus,
                           child: _SectionLabel(
                             key: _windowsSectionKey,
-                            title: 'Windows 창 도구',
-                            caption: '집중 창, 항상 위, 빠른 최소화',
+                            title: kIsWeb ? '웹 집중 화면' : 'Windows 창 도구',
+                            caption: kIsWeb
+                                ? '브라우저 도구를 숨기고 학습에 집중'
+                                : '집중 창, 항상 위, 빠른 최소화',
                           ),
                         ),
                         const SizedBox(height: 10),
-                        _WindowsWorkspaceCard(
-                          state: windowWorkspace,
-                          onToggleCompact: () => ref
-                              .read(windowWorkspaceControllerProvider.notifier)
-                              .toggleCompact(),
-                          onToggleAlwaysOnTop: () => ref
-                              .read(windowWorkspaceControllerProvider.notifier)
-                              .toggleAlwaysOnTop(),
-                          onMinimize: () => ref
-                              .read(windowWorkspaceControllerProvider.notifier)
-                              .minimize(),
-                        ),
+                        if (kIsWeb)
+                          const _WebFocusWorkspaceCard()
+                        else
+                          _WindowsWorkspaceCard(
+                            state: windowWorkspace,
+                            onToggleCompact: () => ref
+                                .read(
+                                  windowWorkspaceControllerProvider.notifier,
+                                )
+                                .toggleCompact(),
+                            onToggleAlwaysOnTop: () => ref
+                                .read(
+                                  windowWorkspaceControllerProvider.notifier,
+                                )
+                                .toggleAlwaysOnTop(),
+                            onMinimize: () => ref
+                                .read(
+                                  windowWorkspaceControllerProvider.notifier,
+                                )
+                                .minimize(),
+                          ),
                       ],
                       if (showPrivacy) ...[
                         const SizedBox(height: 20),
@@ -2015,6 +2032,140 @@ class _WindowsWorkspaceCard extends StatelessWidget {
                   color: colors.error,
                   fontWeight: FontWeight.w700,
                 ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WebFocusWorkspaceCard extends StatefulWidget {
+  const _WebFocusWorkspaceCard();
+
+  @override
+  State<_WebFocusWorkspaceCard> createState() => _WebFocusWorkspaceCardState();
+}
+
+class _WebFocusWorkspaceCardState extends State<_WebFocusWorkspaceCard> {
+  static const _service = WebFocusWorkspaceService();
+
+  var _busy = false;
+  String? _errorMessage;
+
+  Future<void> _toggleFullscreen() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _errorMessage = null;
+    });
+    try {
+      final active = await _service.toggle();
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            active
+                ? '전체 화면 집중 모드를 시작했어요. Esc로 나올 수 있어요.'
+                : '전체 화면 집중 모드를 종료했어요.',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } on Object {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _errorMessage = '브라우저가 전체 화면 전환을 막았어요. 사이트 권한을 확인해 주세요.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final supported = _service.isSupported;
+    final active = _service.isActive;
+    return Card(
+      key: const Key('web-focus-workspace-card'),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.primaryContainer,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const SizedBox.square(
+                    dimension: 44,
+                    child: Icon(Icons.center_focus_strong_rounded),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        active ? '집중 화면 사용 중' : '브라우저 집중 화면',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 3),
+                      const Text(
+                        '주소창과 탭을 숨겨 학습 화면을 넓게 쓸 수 있어요. '
+                        '웹에서는 Windows처럼 항상 위에 고정하거나 창 크기를 '
+                        '자동으로 바꾸는 것은 브라우저 제한으로 제공하지 않아요.',
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: FilledButton.tonalIcon(
+                key: const Key('settings-web-focus-toggle'),
+                onPressed: supported && !_busy ? _toggleFullscreen : null,
+                icon: _busy
+                    ? const SizedBox.square(
+                        dimension: 17,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        active
+                            ? Icons.close_rounded
+                            : Icons.open_in_full_rounded,
+                      ),
+                label: Text(active ? '전체 화면 종료' : '전체 화면으로 집중'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.outlineVariant),
+              ),
+              child: const Text(
+                'PWA를 설치해 실행하면 평소에도 브라우저 주소창 없이 '
+                '앱처럼 열립니다. iPhone은 Safari 공유 → 홈 화면에 추가, '
+                'PC는 브라우저의 앱 설치 메뉴를 사용하세요.',
+              ),
+            ),
+            if (!supported || _errorMessage != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _errorMessage ?? '이 브라우저는 전체 화면 전환을 지원하지 않아요.',
+                style: TextStyle(color: colors.error),
               ),
             ],
           ],
