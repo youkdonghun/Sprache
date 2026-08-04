@@ -7,18 +7,24 @@ import '../domain/language.dart';
 import '../domain/learning_group.dart';
 import '../domain/learning_item.dart';
 
-typedef BulkItemSave = Future<void> Function(List<LearningItem> items);
+typedef BulkItemSave =
+    Future<void> Function(
+      List<LearningItem> items,
+      Set<String> restoreBundledItemIds,
+    );
 
 class BulkItemEditorDialog extends StatefulWidget {
   const BulkItemEditorDialog({
     required this.items,
     required this.personalItemIds,
+    required this.bundledOriginals,
     required this.onSave,
     super.key,
   });
 
   final List<LearningItem> items;
   final Set<String> personalItemIds;
+  final Map<String, LearningItem> bundledOriginals;
   final BulkItemSave onSave;
 
   @override
@@ -44,6 +50,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
           (item) => _BulkItemDraft.fromItem(
             item,
             isPersonal: widget.personalItemIds.contains(item.id),
+            bundledOriginal: widget.bundledOriginals[item.id],
           ),
         )
         .toList(growable: false);
@@ -72,6 +79,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
     _BulkItemDraft draft,
     void Function(_BulkItemDraft draft) change,
   ) {
+    draft.restoreBundled = false;
     change(draft);
     final result = _validator.inspect(draft.toItem());
     final error = result.errors.isEmpty ? null : result.errors.first;
@@ -87,6 +95,15 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
   void _reset(_BulkItemDraft draft) {
     setState(() {
       draft.reset();
+      _errorsById.remove(draft.item.id);
+      _revision += 1;
+    });
+  }
+
+  void _restoreToBundled(_BulkItemDraft draft) {
+    if (!draft.canRestoreBundled) return;
+    setState(() {
+      draft.restoreToBundled();
       _errorsById.remove(draft.item.id);
       _revision += 1;
     });
@@ -299,8 +316,13 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
     if (changed.isEmpty) return;
 
     final items = <LearningItem>[];
+    final restoreBundledItemIds = <String>{};
     final errors = <String, String>{};
     for (final draft in changed) {
+      if (draft.restoreBundled) {
+        restoreBundledItemIds.add(draft.item.id);
+        continue;
+      }
       final result = _validator.inspect(draft.toItem());
       if (result.errors.isEmpty) {
         items.add(result.item);
@@ -323,8 +345,8 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
 
     setState(() => _saving = true);
     try {
-      await widget.onSave(items);
-      if (mounted) _pop(items.length);
+      await widget.onSave(items, restoreBundledItemIds);
+      if (mounted) _pop(items.length + restoreBundledItemIds.length);
     } on Object catch (error) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -524,6 +546,9 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
                                       onReset: draft.changed
                                           ? () => _reset(draft)
                                           : null,
+                                      onRestore: draft.canRestoreBundled
+                                          ? () => _restoreToBundled(draft)
+                                          : null,
                                     );
                                   },
                                 );
@@ -535,6 +560,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
                                 errorsById: _errorsById,
                                 onChanged: _update,
                                 onReset: _reset,
+                                onRestore: _restoreToBundled,
                               );
                             },
                           ),
@@ -717,9 +743,10 @@ class _BulkItemDesktopTable extends StatefulWidget {
     required this.errorsById,
     required this.onChanged,
     required this.onReset,
+    required this.onRestore,
   });
 
-  static const tableWidth = 1640.0;
+  static const tableWidth = 1680.0;
   final int revision;
   final List<_BulkItemDraft> drafts;
   final List<_BulkItemDraft> allDrafts;
@@ -730,6 +757,7 @@ class _BulkItemDesktopTable extends StatefulWidget {
   )
   onChanged;
   final void Function(_BulkItemDraft draft) onReset;
+  final void Function(_BulkItemDraft draft) onRestore;
 
   @override
   State<_BulkItemDesktopTable> createState() => _BulkItemDesktopTableState();
@@ -773,7 +801,7 @@ class _BulkItemDesktopTableState extends State<_BulkItemDesktopTable> {
                     _TableHeader('예문 뜻', 250),
                     _TableHeader('태그(쉼표)', 220),
                     _TableHeader('레벨', 100),
-                    _TableHeader('', 56),
+                    _TableHeader('', 96),
                   ],
                 ),
               ),
@@ -792,6 +820,9 @@ class _BulkItemDesktopTableState extends State<_BulkItemDesktopTable> {
                       onChanged: (change) => widget.onChanged(draft, change),
                       onReset: draft.changed
                           ? () => widget.onReset(draft)
+                          : null,
+                      onRestore: draft.canRestoreBundled
+                          ? () => widget.onRestore(draft)
                           : null,
                     );
                   },
@@ -828,6 +859,7 @@ class _BulkItemDesktopRow extends StatelessWidget {
     required this.error,
     required this.onChanged,
     required this.onReset,
+    required this.onRestore,
     super.key,
   });
 
@@ -836,6 +868,7 @@ class _BulkItemDesktopRow extends StatelessWidget {
   final String? error;
   final void Function(void Function(_BulkItemDraft draft) change) onChanged;
   final VoidCallback? onReset;
+  final VoidCallback? onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -879,7 +912,7 @@ class _BulkItemDesktopRow extends StatelessWidget {
               children: [
                 Text(draft.item.kind == LearningItemKind.word ? '단어' : '문장'),
                 Text(
-                  draft.isPersonal ? '내 편집본' : '기본',
+                  draft.statusLabel,
                   style: TextStyle(
                     fontSize: 10,
                     color: draft.isPersonal ? colors.primary : colors.outline,
@@ -935,12 +968,26 @@ class _BulkItemDesktopRow extends StatelessWidget {
             onChanged: (value) => onChanged((draft) => draft.level = value),
           ),
           SizedBox(
-            width: 56,
-            child: IconButton(
-              key: Key('reset-bulk-row-${draft.item.id}'),
-              onPressed: onReset,
-              icon: const Icon(Icons.undo_rounded, size: 19),
-              tooltip: '이 행 되돌리기',
+            width: 96,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (onRestore != null)
+                  IconButton(
+                    key: Key('restore-bulk-row-${draft.item.id}'),
+                    onPressed: onRestore,
+                    visualDensity: VisualDensity.compact,
+                    icon: const Icon(Icons.restore_rounded, size: 19),
+                    tooltip: '기본 원본으로 되돌리기',
+                  ),
+                IconButton(
+                  key: Key('reset-bulk-row-${draft.item.id}'),
+                  onPressed: onReset,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.undo_rounded, size: 19),
+                  tooltip: '이 행의 작업 취소',
+                ),
+              ],
             ),
           ),
         ],
@@ -1003,6 +1050,7 @@ class _BulkItemMobileCard extends StatelessWidget {
     required this.error,
     required this.onChanged,
     required this.onReset,
+    required this.onRestore,
     super.key,
   });
 
@@ -1011,6 +1059,7 @@ class _BulkItemMobileCard extends StatelessWidget {
   final String? error;
   final void Function(void Function(_BulkItemDraft draft) change) onChanged;
   final VoidCallback? onReset;
+  final VoidCallback? onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -1028,25 +1077,43 @@ class _BulkItemMobileCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Text(
-                  '$index · ${draft.item.kind == LearningItemKind.word ? '단어' : '문장'} '
-                  '· ${draft.isPersonal ? '내 편집본' : '기본 데이터'}',
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                Expanded(
+                  child: Text(
+                    '$index · ${draft.item.kind == LearningItemKind.word ? '단어' : '문장'} '
+                    '· ${draft.statusLabel}',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
                 ),
-                const Spacer(),
                 if (error != null)
                   Tooltip(
                     message: error!,
                     child: Icon(Icons.error_rounded, color: colors.error),
                   ),
+                if (onRestore != null)
+                  IconButton(
+                    key: Key('restore-bulk-row-${draft.item.id}'),
+                    onPressed: onRestore,
+                    icon: const Icon(Icons.restore_rounded),
+                    tooltip: '기본 원본으로 되돌리기',
+                  ),
                 IconButton(
                   key: Key('reset-bulk-row-${draft.item.id}'),
                   onPressed: onReset,
                   icon: const Icon(Icons.undo_rounded),
-                  tooltip: '이 행 되돌리기',
+                  tooltip: '이 행의 작업 취소',
                 ),
               ],
             ),
+            if (draft.canRestoreBundled) ...[
+              Text(
+                '기본 원본 · ${draft.bundledOriginal!.text} · '
+                '${draft.bundledOriginal!.primaryTranslation}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+            ],
             if (error != null) ...[
               Text(error!, style: TextStyle(color: colors.error)),
               const SizedBox(height: 8),
@@ -1132,19 +1199,23 @@ class _MobileField extends StatelessWidget {
 }
 
 class _BulkItemDraft {
-  _BulkItemDraft.fromItem(this.item, {required this.isPersonal})
-    : originalText = item.text,
-      originalMeaning = item.primaryTranslation,
-      originalPronunciation = item.koreanPronunciation ?? '',
-      originalExample = item.example ?? '',
-      originalExampleMeaning = item.exampleTranslation ?? '',
-      originalTags = _editableTags(item).join(', '),
-      originalLevel = item.level {
+  _BulkItemDraft.fromItem(
+    this.item, {
+    required this.isPersonal,
+    required this.bundledOriginal,
+  }) : originalText = item.text,
+       originalMeaning = item.primaryTranslation,
+       originalPronunciation = item.koreanPronunciation ?? '',
+       originalExample = item.example ?? '',
+       originalExampleMeaning = item.exampleTranslation ?? '',
+       originalTags = _editableTags(item).join(', '),
+       originalLevel = item.level {
     reset();
   }
 
   final LearningItem item;
   final bool isPersonal;
+  final LearningItem? bundledOriginal;
   final String originalText;
   final String originalMeaning;
   final String originalPronunciation;
@@ -1160,6 +1231,15 @@ class _BulkItemDraft {
   late String exampleMeaning;
   late String tags;
   late String level;
+  var restoreBundled = false;
+
+  bool get canRestoreBundled => isPersonal && bundledOriginal != null;
+
+  String get statusLabel {
+    if (restoreBundled) return '원본 복구 예정';
+    if (isPersonal) return bundledOriginal == null ? '내 자료' : '내 편집본';
+    return '기본';
+  }
 
   bool apply(_BulkGridField field, String value) {
     final current = switch (field) {
@@ -1173,6 +1253,7 @@ class _BulkItemDraft {
       _BulkGridField.level => level,
     };
     if (current == value) return false;
+    restoreBundled = false;
     switch (field) {
       case _BulkGridField.id:
         return false;
@@ -1195,6 +1276,7 @@ class _BulkItemDraft {
   }
 
   bool get changed =>
+      restoreBundled ||
       text != originalText ||
       meaning != originalMeaning ||
       pronunciation != originalPronunciation ||
@@ -1217,6 +1299,7 @@ class _BulkItemDraft {
   ].join(' ').toLowerCase();
 
   void reset() {
+    restoreBundled = false;
     text = originalText;
     meaning = originalMeaning;
     pronunciation = originalPronunciation;
@@ -1224,6 +1307,19 @@ class _BulkItemDraft {
     exampleMeaning = originalExampleMeaning;
     tags = originalTags;
     level = originalLevel;
+  }
+
+  void restoreToBundled() {
+    final original = bundledOriginal;
+    if (original == null || !isPersonal) return;
+    restoreBundled = true;
+    text = original.text;
+    meaning = original.primaryTranslation;
+    pronunciation = original.koreanPronunciation ?? '';
+    example = original.example ?? '';
+    exampleMeaning = original.exampleTranslation ?? '';
+    tags = _editableTags(original).join(', ');
+    level = original.level;
   }
 
   LearningItem toItem() {

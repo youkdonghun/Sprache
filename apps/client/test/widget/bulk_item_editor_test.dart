@@ -268,6 +268,30 @@ void main() {
       (item) => item.id == 'en-starter-word-1',
     );
     expect(saved.primaryTranslation, '일괄로 고친 기본 뜻');
+
+    tester.view.physicalSize = const Size(390, 844);
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('library-bulk-edit-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('bulk-item-mobile-list')), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('bulk-item-search')), 'hello');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('내 편집본'), findsWidgets);
+    await tester.tap(
+      find.byKey(const Key('restore-bulk-row-en-starter-word-1')),
+    );
+    await tester.pump();
+    expect(find.textContaining('원본 복구 예정'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('save-bulk-item-edits')));
+    await tester.pumpAndSettle();
+
+    expect(
+      (await store.loadCustomItems()).where(
+        (item) => item.id == 'en-starter-word-1',
+      ),
+      isEmpty,
+    );
     expect(tester.takeException(), isNull);
     debugDefaultTargetPlatformOverride = null;
   });

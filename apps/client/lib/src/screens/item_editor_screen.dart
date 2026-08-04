@@ -73,6 +73,7 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
   late final String _initialDraftFingerprint;
   late final NavigationGuardController _navigationGuard;
   LearningItem? _original;
+  LearningItem? _bundledOriginal;
   var _editingBundledOriginal = false;
 
   bool get _isEditing => _original != null;
@@ -107,12 +108,14 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
     final itemId = widget.itemId;
     if (itemId != null) {
       final controller = ref.read(appControllerProvider.notifier);
+      _bundledOriginal = controller.bundledItemById(itemId);
+      _editingBundledOriginal = _bundledOriginal != null;
       _original = controller.customItemById(itemId);
+      _original ??= _bundledOriginal;
       if (_original == null) {
         for (final item in controller.courseItems) {
           if (item.id == itemId) {
             _original = item;
-            _editingBundledOriginal = true;
             break;
           }
         }
@@ -300,6 +303,14 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
                   const SizedBox(height: 20),
                   if (_recoverableDraft != null) ...[
                     _buildDraftRecoveryCard(context),
+                    const SizedBox(height: 12),
+                  ],
+                  if (_bundledOriginal case final original?) ...[
+                    _buildBundledOriginalCard(
+                      context,
+                      original: original,
+                      hasOverride: appController.isBundledOverride(original.id),
+                    ),
                     const SizedBox(height: 12),
                   ],
                   Card(
@@ -778,6 +789,132 @@ class _ItemEditorScreenState extends ConsumerState<ItemEditorScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildBundledOriginalCard(
+    BuildContext context, {
+    required LearningItem original,
+    required bool hasOverride,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    final pronunciation = original.reading(ReadingScheme.hangul);
+    return Card.outlined(
+      key: const Key('bundled-original-comparison'),
+      color: colors.tertiaryContainer.withValues(alpha: 0.28),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.layers_outlined, color: colors.tertiary),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    hasOverride ? '내 편집본과 기본 원본 비교' : '기본 원본을 보호해서 편집',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (hasOverride)
+                  OutlinedButton.icon(
+                    key: const Key('restore-bundled-original'),
+                    onPressed: _saving
+                        ? null
+                        : () => _restoreBundledOriginal(original),
+                    icon: const Icon(Icons.restore_rounded, size: 18),
+                    label: const Text('원본으로'),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '${original.text} · ${original.primaryTranslation}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            if (pronunciation != null && pronunciation.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text('한글 발음 $pronunciation'),
+            ],
+            if (original.example case final example?) ...[
+              const SizedBox(height: 6),
+              Text(
+                '예문 $example${original.exampleTranslation == null ? '' : ' · ${original.exampleTranslation}'}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            const SizedBox(height: 6),
+            Text(
+              hasOverride
+                  ? '아래 입력칸은 내 편집본입니다. “원본으로”를 누르면 모든 기기에서 기본 내용으로 돌아갑니다.'
+                  : '아래에서 바꾼 값만 내 편집본으로 저장되며 기본 데이터는 그대로 남습니다.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _restoreBundledOriginal(LearningItem original) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('기본 원본으로 되돌릴까요?'),
+        content: Text(
+          '“${original.text}”의 내 편집본을 없애고 앱의 기본 뜻과 예문을 다시 사용합니다. 학습 기록과 즐겨찾기는 유지됩니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton.icon(
+            key: const Key('confirm-restore-bundled-original'),
+            onPressed: () => Navigator.pop(context, true),
+            icon: const Icon(Icons.restore_rounded),
+            label: const Text('원본으로 되돌리기'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      final restored = await ref
+          .read(appControllerProvider.notifier)
+          .restoreBundledItem(original.id);
+      if (!restored) return;
+      _savedSuccessfully = true;
+      _pendingDraftSnapshot = null;
+      _draftTimer?.cancel();
+      await _studyStore.clearItemEditorDraft(itemId: widget.itemId);
+      if (!mounted) return;
+      if (ref.read(appControllerProvider).driveConnected) {
+        unawaited(
+          ref.read(connectionControllerProvider.notifier).syncAutomatically(),
+        );
+      }
+      context.go(
+        Uri(
+          path: '/library',
+          queryParameters: {
+            'subject': original.effectiveSubjectId,
+            'q': original.text,
+          },
+        ).toString(),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('기본 원본으로 되돌렸어요. 학습 기록은 그대로 유지됩니다.')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
   }
 
   Widget _buildDraftRecoveryCard(BuildContext context) {

@@ -57,7 +57,7 @@ class _LibraryFilterSelection {
 
 enum _AddContentAction { quickWord, quickSentence, fullEditor, importFile }
 
-enum _DesktopItemAction { open, edit, group, study, export }
+enum _DesktopItemAction { open, edit, restore, group, study, export }
 
 String _librarySyncLabel(AppState state, ConnectionState connection) {
   if (!state.driveConnected) return 'Drive 연결 필요';
@@ -294,7 +294,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   Future<void> _openDesktopItemMenu(
     LearningItem item,
     TapDownDetails details, {
-    required bool isCustom,
+    required bool isBundledOverride,
   }) async {
     if (!usesDesktopWorkspace(defaultTargetPlatform)) return;
     final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
@@ -322,6 +322,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             title: Text('수정'),
           ),
         ),
+        if (isBundledOverride)
+          const PopupMenuItem(
+            value: _DesktopItemAction.restore,
+            child: ListTile(
+              dense: true,
+              leading: Icon(Icons.restore_rounded),
+              title: Text('기본 원본으로 되돌리기'),
+            ),
+          ),
         const PopupMenuItem(
           value: _DesktopItemAction.group,
           child: ListTile(
@@ -354,6 +363,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         setState(() => _detailItemId = item.id);
       case _DesktopItemAction.edit:
         context.go('/library/edit/${item.id}');
+      case _DesktopItemAction.restore:
+        await _confirmRestoreBundled(context, item);
       case _DesktopItemAction.group:
         _selectOnly(item.id);
         await _organizeGroup(copy: true);
@@ -1110,6 +1121,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       final progress = state.progress[item.id];
       void onTap() => handleItemTap(item);
       final isCustomItem = customItemIds.contains(item.id);
+      final isBundledOverride = controller.isBundledOverride(item.id);
       if (grid) {
         return _LibraryGridCard(
           item: item,
@@ -1118,6 +1130,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           selected: state.preferences.includes(item),
           favorite: state.preferences.isFavorite(item.id),
           isCustom: isCustomItem,
+          isBundledOverride: isBundledOverride,
           detailSelected: desktopMasterDetail && detailItem?.id == item.id,
           selectionMode: _groupSelectionMode,
           bulkSelected: _selectedForGroup.contains(item.id),
@@ -1126,9 +1139,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           onEdit: () => context.go('/library/edit/${item.id}'),
           onCorrect: () => _openCorrection(item),
           onDelete: () => _confirmDelete(context, item),
+          onRestore: () => _confirmRestoreBundled(context, item),
           onBulkSelect: () => toggleBulkItem(item),
           onSecondaryTapDown: (details) => unawaited(
-            _openDesktopItemMenu(item, details, isCustom: isCustomItem),
+            _openDesktopItemMenu(
+              item,
+              details,
+              isBundledOverride: isBundledOverride,
+            ),
           ),
           onTap: onTap,
         );
@@ -1143,16 +1161,22 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         selected: state.preferences.includes(item),
         favorite: state.preferences.isFavorite(item.id),
         isCustom: isCustomItem,
+        isBundledOverride: isBundledOverride,
         onToggle: () => controller.toggleItemSelection(item.id),
         onFavorite: () => controller.toggleFavorite(item.id),
         onEdit: () => context.go('/library/edit/${item.id}'),
         onCorrect: () => _openCorrection(item),
         onDelete: () => _confirmDelete(context, item),
+        onRestore: () => _confirmRestoreBundled(context, item),
         selectionMode: _groupSelectionMode,
         bulkSelected: _selectedForGroup.contains(item.id),
         onBulkSelect: () => toggleBulkItem(item),
         onSecondaryTapDown: (details) => unawaited(
-          _openDesktopItemMenu(item, details, isCustom: isCustomItem),
+          _openDesktopItemMenu(
+            item,
+            details,
+            isBundledOverride: isBundledOverride,
+          ),
         ),
         onTap: onTap,
       );
@@ -1627,6 +1651,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Future<void> _openBulkEditor(Iterable<LearningItem> candidates) async {
+    final controller = ref.read(appControllerProvider.notifier);
     final personalItemIds = ref
         .read(appControllerProvider)
         .customItems
@@ -1637,6 +1662,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       byId[item.id] = item;
     }
     final items = byId.values.toList(growable: false);
+    final bundledOriginals = <String, LearningItem>{
+      for (final item in items) item.id: ?controller.bundledItemById(item.id),
+    };
     if (items.isEmpty) {
       _showLibraryMessage('수정할 자료가 없어요.');
       return;
@@ -1649,10 +1677,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       builder: (context) => BulkItemEditorDialog(
         items: items,
         personalItemIds: personalItemIds,
-        onSave: (changed) async {
-          await ref
-              .read(appControllerProvider.notifier)
-              .upsertCustomItems(changed);
+        bundledOriginals: bundledOriginals,
+        onSave: (changed, restoreBundledItemIds) async {
+          await controller.applyCustomItemEdits(
+            items: changed,
+            restoreBundledItemIds: restoreBundledItemIds,
+          );
         },
       ),
     );
@@ -2391,6 +2421,48 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         .trashCustomItems({item.id});
     if (!context.mounted) return;
     _showDeleteUndo(batch);
+  }
+
+  Future<void> _confirmRestoreBundled(
+    BuildContext context,
+    LearningItem item,
+  ) async {
+    final original = ref
+        .read(appControllerProvider.notifier)
+        .bundledItemById(item.id);
+    if (original == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('기본 원본으로 되돌릴까요?'),
+        content: Text(
+          '“${item.text}”의 내 편집본을 없애고 “${original.primaryTranslation}” 원본을 다시 사용합니다. 학습 기록과 즐겨찾기는 유지됩니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton.icon(
+            key: const Key('confirm-library-restore-bundled'),
+            onPressed: () => Navigator.pop(context, true),
+            icon: const Icon(Icons.restore_rounded),
+            label: const Text('원본으로 되돌리기'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    final restored = await ref
+        .read(appControllerProvider.notifier)
+        .restoreBundledItem(item.id);
+    if (!context.mounted || !restored) return;
+    if (ref.read(appControllerProvider).driveConnected) {
+      unawaited(
+        ref.read(connectionControllerProvider.notifier).syncAutomatically(),
+      );
+    }
+    _showLibraryMessage('기본 원본으로 되돌렸어요. 학습 기록은 그대로 유지됩니다.');
   }
 }
 
@@ -4947,11 +5019,13 @@ class _LibraryRow extends ConsumerWidget {
     required this.selected,
     required this.favorite,
     required this.isCustom,
+    required this.isBundledOverride,
     required this.onToggle,
     required this.onFavorite,
     required this.onEdit,
     required this.onCorrect,
     required this.onDelete,
+    required this.onRestore,
     required this.onTap,
     required this.selectionMode,
     required this.bulkSelected,
@@ -4967,11 +5041,13 @@ class _LibraryRow extends ConsumerWidget {
   final bool selected;
   final bool favorite;
   final bool isCustom;
+  final bool isBundledOverride;
   final VoidCallback onToggle;
   final VoidCallback onFavorite;
   final VoidCallback onEdit;
   final VoidCallback onCorrect;
   final VoidCallback onDelete;
+  final VoidCallback onRestore;
   final VoidCallback onTap;
   final bool selectionMode;
   final bool bulkSelected;
@@ -5162,6 +5238,8 @@ class _LibraryRow extends ConsumerWidget {
                               onCorrect();
                             case _ItemAction.delete:
                               onDelete();
+                            case _ItemAction.restore:
+                              onRestore();
                           }
                         },
                         itemBuilder: (context) => [
@@ -5186,7 +5264,16 @@ class _LibraryRow extends ConsumerWidget {
                               title: Text(isCustom ? '수정' : '내 편집본으로 수정'),
                             ),
                           ),
-                          if (isCustom)
+                          if (isBundledOverride)
+                            const PopupMenuItem(
+                              value: _ItemAction.restore,
+                              child: ListTile(
+                                dense: true,
+                                leading: Icon(Icons.restore_rounded),
+                                title: Text('기본 원본으로 되돌리기'),
+                              ),
+                            )
+                          else if (isCustom)
                             const PopupMenuItem(
                               value: _ItemAction.delete,
                               child: ListTile(
@@ -5226,6 +5313,7 @@ class _LibraryGridCard extends StatelessWidget {
     required this.selected,
     required this.favorite,
     required this.isCustom,
+    required this.isBundledOverride,
     required this.detailSelected,
     required this.selectionMode,
     required this.bulkSelected,
@@ -5234,6 +5322,7 @@ class _LibraryGridCard extends StatelessWidget {
     required this.onEdit,
     required this.onCorrect,
     required this.onDelete,
+    required this.onRestore,
     required this.onBulkSelect,
     required this.onSecondaryTapDown,
     required this.onTap,
@@ -5245,6 +5334,7 @@ class _LibraryGridCard extends StatelessWidget {
   final bool selected;
   final bool favorite;
   final bool isCustom;
+  final bool isBundledOverride;
   final bool detailSelected;
   final bool selectionMode;
   final bool bulkSelected;
@@ -5253,6 +5343,7 @@ class _LibraryGridCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onCorrect;
   final VoidCallback onDelete;
+  final VoidCallback onRestore;
   final VoidCallback onBulkSelect;
   final GestureTapDownCallback onSecondaryTapDown;
   final VoidCallback onTap;
@@ -5331,6 +5422,8 @@ class _LibraryGridCard extends StatelessWidget {
                             onCorrect();
                           case _ItemAction.delete:
                             onDelete();
+                          case _ItemAction.restore:
+                            onRestore();
                         }
                       },
                       itemBuilder: (context) => [
@@ -5342,7 +5435,12 @@ class _LibraryGridCard extends StatelessWidget {
                           value: _ItemAction.edit,
                           child: Text(isCustom ? '수정' : '내 편집본으로 수정'),
                         ),
-                        if (isCustom)
+                        if (isBundledOverride)
+                          const PopupMenuItem(
+                            value: _ItemAction.restore,
+                            child: Text('기본 원본으로 되돌리기'),
+                          )
+                        else if (isCustom)
                           const PopupMenuItem(
                             value: _ItemAction.delete,
                             child: Text('삭제'),
@@ -5388,7 +5486,7 @@ class _LibraryGridCard extends StatelessWidget {
   }
 }
 
-enum _ItemAction { toggle, edit, correct, delete }
+enum _ItemAction { toggle, edit, correct, delete, restore }
 
 class _ProgressStatus extends StatelessWidget {
   const _ProgressStatus({required this.label, required this.color});

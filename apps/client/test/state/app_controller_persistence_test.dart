@@ -529,6 +529,47 @@ void main() {
   );
 
   test(
+    'restoring a bundled override brings the protected catalog item back',
+    () async {
+      final store = MemoryStudyStore();
+      final controller = AppController(store);
+      await Future<void>.delayed(Duration.zero);
+      final original = sampleContent.firstWhere(
+        (item) => item.id == 'en-starter-word-1',
+      );
+      await controller.upsertCustomItem(
+        original.copyWith(
+          translations: const ['임시 편집 뜻'],
+          acceptedAnswers: const ['임시 편집 뜻'],
+        ),
+      );
+
+      expect(controller.isBundledOverride(original.id), isTrue);
+      expect(await controller.restoreBundledItem(original.id), isTrue);
+      expect(controller.customItemById(original.id), isNull);
+      expect(controller.isBundledOverride(original.id), isFalse);
+      expect(controller.state.customItemTombstones, contains(original.id));
+      expect(
+        controller.allContentItems.singleWhere(
+          (item) => item.id == original.id,
+        ),
+        original,
+      );
+      expect(await controller.restoreBundledItem(original.id), isFalse);
+      controller.dispose();
+
+      final restored = AppController(store);
+      await Future<void>.delayed(Duration.zero);
+      expect(restored.customItemById(original.id), isNull);
+      expect(
+        restored.allContentItems.singleWhere((item) => item.id == original.id),
+        original,
+      );
+      restored.dispose();
+    },
+  );
+
+  test(
     'bulk content edit validates first and writes one store batch',
     () async {
       final store = _CountingContentStore();
