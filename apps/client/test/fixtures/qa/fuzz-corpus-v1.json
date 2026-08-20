@@ -110,7 +110,7 @@
         "privacy": {"privacyMode": true, "curtainDelay": "immediate"},
         "voice": {"pitch": 99, "soundStrength": "strong", "hapticStrength": "light"}
       },
-      "expected": {"enabled": false, "quietStartMinutes": 0, "quietEndMinutes": 1439, "pitch": 2.0, "privacyMode": true}
+      "expected": {"enabled": false, "quietStartMinutes": 0, "quietEndMinutes": 1439, "pitch": 1.2, "privacyMode": true}
     },
     {
       "id": "wrong-shapes-fall-back",

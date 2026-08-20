@@ -2,9 +2,19 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as path;
+import 'package:record/record.dart';
 import 'package:sprache/src/services/temporary_voice_recording_service.dart';
 
 void main() {
+  test('voice practice uses lossless full-band mono without stacked DSP', () {
+    expect(voicePracticeRecordConfig.encoder, AudioEncoder.wav);
+    expect(voicePracticeRecordConfig.sampleRate, 48000);
+    expect(voicePracticeRecordConfig.numChannels, 1);
+    expect(voicePracticeRecordConfig.autoGain, isFalse);
+    expect(voicePracticeRecordConfig.echoCancel, isFalse);
+    expect(voicePracticeRecordConfig.noiseSuppress, isFalse);
+  });
+
   test(
     'app-start janitor deletes only app-owned temporary voice files',
     () async {

@@ -22,6 +22,20 @@ abstract interface class TemporaryVoiceRecordingService {
 
 typedef TemporaryVoiceRootResolver = Future<String> Function();
 
+/// Lossless full-band speech without stacking device audio processors.
+///
+/// The old 16 kHz profile enabled automatic gain, echo cancellation and noise
+/// suppression together. On devices that already process microphone input,
+/// that combination can pump the level and clip consonants.
+const voicePracticeRecordConfig = RecordConfig(
+  encoder: AudioEncoder.wav,
+  sampleRate: 48000,
+  numChannels: 1,
+  autoGain: false,
+  echoCancel: false,
+  noiseSuppress: false,
+);
+
 class TemporaryVoiceRecordingJanitor {
   const TemporaryVoiceRecordingJanitor({TemporaryVoiceRootResolver? root})
     : _root = root ?? _defaultRoot;
@@ -91,17 +105,7 @@ class DeviceTemporaryVoiceRecordingService
       voiceDirectory.path,
       'voice-${const Uuid().v4()}.wav',
     );
-    await _recorder.start(
-      const RecordConfig(
-        encoder: AudioEncoder.wav,
-        sampleRate: 16000,
-        numChannels: 1,
-        autoGain: true,
-        echoCancel: true,
-        noiseSuppress: true,
-      ),
-      path: target,
-    );
+    await _recorder.start(voicePracticeRecordConfig, path: target);
     _recordingPath = target;
     _isRecording = true;
     return true;
