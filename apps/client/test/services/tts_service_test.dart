@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sprache/src/domain/device_preferences.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/services/tts_service.dart';
 
@@ -131,7 +132,31 @@ void main() {
       );
 
       expect(platform.voices.single['name'], 'English B');
-      expect(platform.pitches, [2.0]);
+      expect(platform.pitches, [maximumNaturalVoicePitch]);
+    },
+  );
+
+  test('normalizes legacy extreme pitch values to a natural range', () {
+    expect(normalizeNaturalVoicePitch(2), maximumNaturalVoicePitch);
+    expect(normalizeNaturalVoicePitch(0.5), minimumNaturalVoicePitch);
+    expect(normalizeNaturalVoicePitch(double.nan), defaultNaturalVoicePitch);
+  });
+
+  test(
+    'rapid speech requests are serialized and only the latest starts',
+    () async {
+      final platform = _FakeTtsPlatform(const []);
+      final service = TtsService(platform: platform);
+
+      final first = service.speak(language: LanguageTag.english, text: 'first');
+      final second = service.speak(
+        language: LanguageTag.english,
+        text: 'second',
+      );
+      await Future.wait([first, second]);
+
+      expect(platform.spoken, ['second']);
+      expect(platform.stopCount, 2);
     },
   );
 }

@@ -27,8 +27,8 @@ function New-SpracheSecureDartDefineFile {
             )
             # This FileStream overload applies the protected ACL atomically at
             # creation and keeps the handle exclusive while content is written.
-            $stream = [System.IO.FileStream]::new(
-                $path,
+            $stream = [System.IO.FileSystemAclExtensions]::Create(
+                [System.IO.FileInfo]::new($path),
                 [System.IO.FileMode]::CreateNew,
                 [System.Security.AccessControl.FileSystemRights]::FullControl,
                 [System.IO.FileShare]::None,

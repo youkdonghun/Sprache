@@ -110,10 +110,22 @@ class DevicePrivacyPreferences {
   Map<String, Object?> toJson() => {'privacyMode': privacyMode};
 }
 
+const minimumNaturalVoicePitch = 0.8;
+const maximumNaturalVoicePitch = 1.2;
+const defaultNaturalVoicePitch = 1.0;
+
+double normalizeNaturalVoicePitch(Object? value) {
+  if (value is! num || !value.isFinite) return defaultNaturalVoicePitch;
+  return value
+      .toDouble()
+      .clamp(minimumNaturalVoicePitch, maximumNaturalVoicePitch)
+      .toDouble();
+}
+
 class DeviceVoicePreferences {
   const DeviceVoicePreferences({
     this.voiceIdByLanguage = const {},
-    this.pitch = 1,
+    this.pitch = defaultNaturalVoicePitch,
     this.soundStrength = DeviceFeedbackStrength.normal,
     this.hapticStrength = DeviceFeedbackStrength.normal,
   });
@@ -134,10 +146,7 @@ class DeviceVoicePreferences {
         voices[language] = voice;
       }
     }
-    final rawPitch = json['pitch'];
-    final pitch = rawPitch is num && rawPitch.isFinite
-        ? rawPitch.toDouble().clamp(0.5, 2.0).toDouble()
-        : 1.0;
+    final pitch = normalizeNaturalVoicePitch(json['pitch']);
     return DeviceVoicePreferences(
       voiceIdByLanguage: Map.unmodifiable(voices),
       pitch: pitch,
@@ -168,7 +177,7 @@ class DeviceVoicePreferences {
     voiceIdByLanguage: Map.unmodifiable(
       voiceIdByLanguage ?? this.voiceIdByLanguage,
     ),
-    pitch: (pitch ?? this.pitch).clamp(0.5, 2).toDouble(),
+    pitch: normalizeNaturalVoicePitch(pitch ?? this.pitch),
     soundStrength: soundStrength ?? this.soundStrength,
     hapticStrength: hapticStrength ?? this.hapticStrength,
   );

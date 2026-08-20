@@ -28,7 +28,7 @@ void main() {
     expect(restored.notifications.quietEndMinutes, 1439);
     expect(restored.privacy.privacyMode, isTrue);
     expect(restored.privacy.toJson(), isNot(contains('curtainDelay')));
-    expect(restored.voice.pitch, 2);
+    expect(restored.voice.pitch, maximumNaturalVoicePitch);
     expect(restored.voice.voiceIdByLanguage.length, lessThanOrEqualTo(20));
     expect(restored.voice.soundStrength, DeviceFeedbackStrength.light);
     expect(
@@ -94,7 +94,7 @@ void main() {
     final cleared = selected.selectVoice('en', null);
 
     expect(selected.voiceIdByLanguage['en'], 'en-us::Local Voice');
-    expect(selected.pitch, 1.35);
+    expect(selected.pitch, maximumNaturalVoicePitch);
     expect(selected.soundStrength, DeviceFeedbackStrength.strong);
     expect(selected.hapticStrength, DeviceFeedbackStrength.off);
     expect(cleared.voiceIdByLanguage, isNot(contains('en')));

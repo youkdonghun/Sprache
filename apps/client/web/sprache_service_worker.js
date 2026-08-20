@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'sprache-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}1.37.0-66-r1`;
+const CACHE_NAME = `${CACHE_PREFIX}1.37.1-67-r1`;
 const PRECACHE = [
   './',
   './index.html',
@@ -58,7 +58,7 @@ self.addEventListener('activate', (event) => {
         for (const client of clients) {
           client.postMessage({
             type: 'SPRACHE_UPDATE_READY',
-            version: '1.37.0',
+            version: '1.37.1',
           });
         }
       }

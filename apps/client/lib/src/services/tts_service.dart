@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter_tts/flutter_tts.dart';
 
+import '../domain/device_preferences.dart';
 import '../domain/language.dart';
 
 class TtsVoice {
@@ -170,6 +173,8 @@ class TtsService {
   final TtsPlatformAdapter platform;
   final TtsVoiceSelector selector;
   List<TtsVoice>? _voiceCache;
+  Future<void> _speechTail = Future<void>.value();
+  var _speechGeneration = 0;
 
   Future<List<TtsVoice>> installedVoices({bool refresh = false}) async {
     if (refresh) _voiceCache = null;
@@ -255,7 +260,7 @@ class TtsService {
     if (pitchAdapter is TtsPitchPlatformAdapter) {
       try {
         await (pitchAdapter as TtsPitchPlatformAdapter).setPitch(
-          pitch.clamp(0.5, 2).toDouble(),
+          normalizeNaturalVoicePitch(pitch),
         );
       } catch (_) {
         // Pitch is optional on some engines; selected voice remains usable.
@@ -272,27 +277,59 @@ class TtsService {
     int repeatCount = 1,
     String? preferredVoiceId,
     double pitch = 1,
-  }) async {
+  }) {
     final normalized = text.trim();
     if (normalized.isEmpty) {
-      throw const FormatException('재생할 문장이 비어 있습니다.');
+      return Future<TtsVoiceSelection>.error(
+        const FormatException('재생할 문장이 비어 있습니다.'),
+      );
     }
-    await platform.stop();
-    final selection = await configure(
-      language,
-      preferOfflineVoice: preferOfflineVoice,
-      preferredVoiceId: preferredVoiceId,
-      pitch: pitch,
-    );
-    await platform.setSpeechRate(rate.clamp(0.2, 0.8).toDouble());
-    final repeats = repeatCount.clamp(1, 3);
-    for (var index = 0; index < repeats; index++) {
-      await platform.speak(normalized);
-    }
-    return selection;
+    final generation = ++_speechGeneration;
+    final completer = Completer<TtsVoiceSelection>();
+
+    // Stop active playback immediately, then serialize configuration and
+    // speech. This prevents autoplay and rapid taps from racing the same
+    // platform voice engine and producing overlapping or broken audio.
+    final interrupt = platform.stop();
+    final previous = _speechTail;
+    final operation = previous.then<void>((_) async {
+      try {
+        await interrupt;
+        if (generation != _speechGeneration) {
+          completer.complete(TtsVoiceSelection(locale: language.ttsLocale));
+          return;
+        }
+        final selection = await configure(
+          language,
+          preferOfflineVoice: preferOfflineVoice,
+          preferredVoiceId: preferredVoiceId,
+          pitch: pitch,
+        );
+        if (generation != _speechGeneration) {
+          completer.complete(selection);
+          return;
+        }
+        await platform.setSpeechRate(rate.clamp(0.2, 0.8).toDouble());
+        final repeats = repeatCount.clamp(1, 3);
+        for (var index = 0; index < repeats; index++) {
+          if (generation != _speechGeneration) break;
+          await platform.speak(normalized);
+        }
+        completer.complete(selection);
+      } catch (error, stackTrace) {
+        if (!completer.isCompleted) {
+          completer.completeError(error, stackTrace);
+        }
+      }
+    });
+    _speechTail = operation.catchError((Object _) {});
+    return completer.future;
   }
 
-  Future<void> stop() => platform.stop();
+  Future<void> stop() {
+    _speechGeneration += 1;
+    return platform.stop();
+  }
 
   Future<List<TtsVoice>> _loadVoicesSafely() async {
     try {

@@ -1778,9 +1778,9 @@ class _DeviceFeedbackPreferencesCardState
             Slider(
               key: const Key('device-voice-pitch'),
               value: _pitch,
-              min: 0.5,
-              max: 2,
-              divisions: 15,
+              min: minimumNaturalVoicePitch,
+              max: maximumNaturalVoicePitch,
+              divisions: 8,
               label: _pitch.toStringAsFixed(2),
               semanticFormatterCallback: (value) =>
                   '음성 높낮이 ${value.toStringAsFixed(2)}배',
