@@ -153,9 +153,9 @@ jobs:
               "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "title": f"Sprache {version}",
               "notes": [
-                  "Android에서 최신 APK를 앱 안에서 다시 받을 수 있습니다.",
-                  "자료함에서 단어와 문장의 발음을 바로 들을 수 있습니다.",
-                  "빠른 연속 재생을 정리해 음성이 겹치거나 깨지는 현상을 막았습니다.",
+                  "첫 학습 설정을 6단계에서 2단계로 줄였습니다.",
+                  "홈에서 다음 학습과 핵심 바로가기를 먼저 보여 줍니다.",
+                  "통계·최근 자료·동기화·예약 학습은 필요할 때 펼쳐서 볼 수 있습니다.",
               ],
               "releasePageUrl": release_page,
               "artifacts": {
@@ -200,4 +200,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --title "Sprache ${{ steps.version.outputs.version }}" \
-            --notes "Android 앱 내 업데이트와 자료함 발음 듣기를 개선했습니다."
+            --notes "첫 설정과 홈을 간결하게 정리하고, 자세한 학습 현황은 필요할 때만 펼쳐 볼 수 있게 개선했습니다."

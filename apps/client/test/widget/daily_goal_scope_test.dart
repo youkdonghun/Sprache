@@ -48,6 +48,8 @@ void main() {
 
         expect(find.textContaining('오늘 10/50 XP · Lv.1'), findsOneWidget);
         expect(find.textContaining('누적 400'), findsOneWidget);
+        await tester.tap(find.byKey(const Key('home-simple-details-toggle')));
+        await tester.pumpAndSettle();
         expect(
           find.byKey(const Key('home-weekly-target-summary')),
           findsOneWidget,

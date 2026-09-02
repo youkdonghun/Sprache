@@ -28,6 +28,7 @@ void main() {
     expect(preferences.readingWidth, AppReadingWidth.balanced);
     expect(preferences.highContrast, isFalse);
     expect(preferences.showFocusRing, isTrue);
+    expect(preferences.simpleHome, isTrue);
     expect(preferences.showHomeHeader, isTrue);
     expect(preferences.showStreak, isTrue);
     expect(preferences.showXp, isTrue);
@@ -85,6 +86,7 @@ void main() {
       readingWidth: AppReadingWidth.wide,
       highContrast: true,
       showFocusRing: false,
+      simpleHome: false,
       showHomeHeader: false,
       showStreak: false,
       showXp: false,
@@ -160,6 +162,7 @@ void main() {
       readingWidth: AppReadingWidth.balanced,
       highContrast: true,
       showFocusRing: false,
+      simpleHome: false,
       showHomeHeader: false,
       showStreak: false,
       showXp: false,
@@ -216,6 +219,7 @@ void main() {
     expect(changed.readingWidth, AppReadingWidth.balanced);
     expect(changed.highContrast, isTrue);
     expect(changed.showFocusRing, isFalse);
+    expect(changed.simpleHome, isFalse);
     expect(changed.showHomeHeader, isFalse);
     expect(changed.showStreak, isFalse);
     expect(changed.showXp, isFalse);
@@ -286,6 +290,7 @@ void main() {
       'readingWidth': 'edgeToEdge',
       'highContrast': 'yes',
       'showFocusRing': 0,
+      'simpleHome': 'sometimes',
       'showHomeHeader': null,
       'showStreak': 'no',
       'showXp': 1,
@@ -360,6 +365,7 @@ void main() {
     expect(malformed.readingWidth, AppReadingWidth.balanced);
     expect(malformed.highContrast, isFalse);
     expect(malformed.showFocusRing, isTrue);
+    expect(malformed.simpleHome, isTrue);
     expect(malformed.showHomeHeader, isTrue);
     expect(malformed.showStreak, isTrue);
     expect(malformed.showXp, isTrue);

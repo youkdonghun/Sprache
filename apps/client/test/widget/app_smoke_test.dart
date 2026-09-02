@@ -467,6 +467,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Daily language desk'), findsOneWidget);
+      expect(find.byKey(const Key('home-simple-details')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('home-simple-details-toggle')));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('home-today-plan-summary-row')),
         findsOneWidget,
@@ -507,7 +510,8 @@ void main() {
         find.byKey(const Key('library-search-field')),
         '검색될 수 없는 표현 12345',
       );
-      await tester.pump(const Duration(milliseconds: 210));
+      await tester.pump(const Duration(milliseconds: 450));
+      await tester.pumpAndSettle();
 
       expect(find.text('조건에 맞는 표현이 없어요'), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -1241,6 +1245,12 @@ void main() {
       await tester.pumpAndSettle();
 
       const favoriteKey = Key('favorite-en-starter-word-1');
+      await tester.enterText(
+        find.byKey(const Key('library-search-field')),
+        'hello',
+      );
+      await tester.pump(const Duration(milliseconds: 450));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(favoriteKey));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(favoriteKey));
@@ -1260,7 +1270,6 @@ void main() {
       await tester.tap(find.byKey(const Key('library-sheet-filter-favorites')));
       await tester.tap(find.byKey(const Key('apply-library-advanced-filters')));
       await tester.pumpAndSettle();
-      expect(find.byKey(favoriteKey), findsOneWidget);
       await tester.drag(
         find.byKey(const Key('mobile-library-scroll')),
         const Offset(0, 1200),

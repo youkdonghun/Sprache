@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/study_store.dart';
+import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
@@ -67,6 +68,7 @@ Future<void> _withApp(
       preferences: const StudyPreferences(
         onboardingCompleted: true,
         activeSubjectId: 'language:en',
+        experience: AppExperiencePreferences(simpleHome: false),
       ),
     );
     await store.saveCustomItems(items);

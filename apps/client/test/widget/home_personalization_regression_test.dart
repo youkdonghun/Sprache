@@ -49,41 +49,52 @@ void main() {
     }
   }
 
-  testWidgets('home renders header, XP, today plan, and default data section', (
-    tester,
-  ) async {
-    await pumpHome(tester, experience: const AppExperiencePreferences());
+  testWidgets(
+    'simple home shows one clear start and reveals details on demand',
+    (tester) async {
+      await pumpHome(tester, experience: const AppExperiencePreferences());
 
-    expect(find.byKey(const Key('home-header')), findsOneWidget);
-    expect(
-      find.text('오늘의 영어'),
-      findsOneWidget,
-      reason: '같은 화면 제목을 카드와 헤더에서 중복 노출하지 않는다.',
-    );
-    expect(find.byKey(const Key('home-next-study-card')), findsOneWidget);
-    expect(find.byKey(const Key('home-primary-study-button')), findsOneWidget);
-    expect(find.byKey(const Key('home-xp-summary')), findsOneWidget);
-    expect(find.byKey(const Key('home-today-plan')), findsOneWidget);
-    expect(
-      find.byKey(const Key('home-today-plan-summary-row')),
-      findsOneWidget,
-    );
-    expect(
-      find.byKey(const Key('home-weekly-target-summary-row')),
-      findsOneWidget,
-    );
-    expect(
-      tester.getSize(find.byKey(const Key('home-today-plan'))).height,
-      lessThan(100),
-    );
-    expect(
-      tester
-          .getSize(find.byKey(const Key('home-weekly-target-summary-row')))
-          .height,
-      lessThanOrEqualTo(60),
-    );
-    expect(find.byKey(const Key('learning-data-flow-card')), findsOneWidget);
-  });
+      expect(find.byKey(const Key('home-header')), findsOneWidget);
+      expect(find.byKey(const Key('home-next-study-card')), findsOneWidget);
+      expect(
+        find.byKey(const Key('home-primary-study-button')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home-custom-quick-actions')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('home-simple-details')), findsOneWidget);
+      expect(find.byKey(const Key('home-xp-summary')), findsOneWidget);
+      expect(find.byKey(const Key('home-today-plan')), findsNothing);
+      expect(find.byKey(const Key('learning-data-flow-card')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('home-simple-details-toggle')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('home-today-plan')), findsOneWidget);
+      expect(
+        find.byKey(const Key('home-today-plan-summary-row')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('home-weekly-target-summary-row')),
+        findsOneWidget,
+      );
+      expect(
+        tester.getSize(find.byKey(const Key('home-today-plan'))).height,
+        lessThan(100),
+      );
+      expect(
+        tester
+            .getSize(find.byKey(const Key('home-weekly-target-summary-row')))
+            .height,
+        lessThanOrEqualTo(60),
+      );
+      expect(find.byKey(const Key('learning-data-flow-card')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('home hides optional chrome and respects personalized ordering', (
     tester,
@@ -100,6 +111,7 @@ void main() {
     await pumpHome(
       tester,
       experience: const AppExperiencePreferences(
+        simpleHome: false,
         showHomeHeader: false,
         showXp: false,
         showTodayPlan: false,
@@ -142,6 +154,7 @@ void main() {
       tester,
       size: size,
       experience: const AppExperiencePreferences(
+        simpleHome: false,
         homeLayout: AppHomeLayout.balanced,
       ),
     );
@@ -156,6 +169,7 @@ void main() {
       tester,
       size: size,
       experience: const AppExperiencePreferences(
+        simpleHome: false,
         homeLayout: AppHomeLayout.insights,
       ),
     );
@@ -170,6 +184,7 @@ void main() {
       tester,
       size: size,
       experience: const AppExperiencePreferences(
+        simpleHome: false,
         homeLayout: AppHomeLayout.focus,
       ),
     );
@@ -187,7 +202,10 @@ void main() {
   ) async {
     await pumpHome(
       tester,
-      experience: const AppExperiencePreferences(density: AppDensity.compact),
+      experience: const AppExperiencePreferences(
+        simpleHome: false,
+        density: AppDensity.compact,
+      ),
     );
 
     final pagePadding = tester.widget<SliverPadding>(
@@ -228,9 +246,8 @@ void main() {
     );
 
     final actions = [
-      find.byKey(const Key('home-quick-action-0-study')),
-      find.byKey(const Key('home-quick-action-1-quickAdd')),
-      find.byKey(const Key('home-quick-action-2-practice')),
+      find.byKey(const Key('home-quick-action-0-quickAdd')),
+      find.byKey(const Key('home-quick-action-1-importData')),
     ];
     for (final action in actions) {
       expect(action, findsOneWidget);
@@ -243,10 +260,7 @@ void main() {
       tester.getTopLeft(actions[0]).dy,
       equals(tester.getTopLeft(actions[1]).dy),
     );
-    expect(
-      tester.getTopLeft(actions[2]).dy,
-      greaterThan(tester.getTopLeft(actions[0]).dy),
-    );
+    expect(tester.getTopLeft(actions[0]).dy, tester.getTopLeft(actions[1]).dy);
     expect(tester.takeException(), isNull);
   });
 
@@ -269,6 +283,7 @@ void main() {
     await pumpHome(
       tester,
       experience: const AppExperiencePreferences(
+        simpleHome: false,
         density: AppDensity.compact,
         showDataFlow: false,
       ),

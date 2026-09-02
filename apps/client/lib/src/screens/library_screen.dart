@@ -764,11 +764,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                   label: const Text('상세 필터'),
                 ),
               ),
-              const SizedBox(width: 7),
-              _LibraryViewModeControl(
-                value: _searchPreferences.libraryViewMode,
-                onChanged: _setLibraryViewMode,
-              ),
             ],
           ),
         );
@@ -817,9 +812,14 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         }
         return Row(
           children: [
-            Expanded(child: search),
+            Expanded(flex: 4, child: search),
             const SizedBox(width: 12),
-            filters,
+            Expanded(flex: 6, child: filters),
+            const SizedBox(width: 8),
+            _LibraryViewModeControl(
+              value: _searchPreferences.libraryViewMode,
+              onChanged: _setLibraryViewMode,
+            ),
           ],
         );
       },

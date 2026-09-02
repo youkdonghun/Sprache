@@ -737,6 +737,7 @@ class SyncSnapshotValidator {
     for (final field in const [
       'highContrast',
       'showFocusRing',
+      'simpleHome',
       'showHomeHeader',
       'showStreak',
       'showXp',

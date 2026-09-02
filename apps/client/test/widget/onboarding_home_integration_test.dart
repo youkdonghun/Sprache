@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/study_store.dart';
+import 'package:sprache/src/domain/app_experience_preferences.dart';
 import 'package:sprache/src/domain/onboarding_profile.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/services/app_clock.dart';
@@ -20,6 +21,7 @@ void main() {
       preferences: const StudyPreferences(
         onboardingCompleted: true,
         activeSubjectId: 'language:en',
+        experience: AppExperiencePreferences(simpleHome: false),
         onboardingProfile: OnboardingProfile(
           languageCode: 'en',
           studyWeekdays: {1, 3, 5},
@@ -55,65 +57,52 @@ void main() {
     expect(find.byKey(const Key('home-first-recommendation')), findsOneWidget);
   });
 
-  testWidgets(
-    'completed setup applies queue, game, theme, and access choices',
-    (tester) async {
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = const Size(900, 1100);
-      addTearDown(tester.view.reset);
+  testWidgets('completed quick setup applies the recommended queue and game', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 1100);
+    addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [studyStoreProvider.overrideWithValue(MemoryStudyStore())],
-          child: const SpracheApp(),
-        ),
-      );
-      await tester.pumpAndSettle();
-      final app = tester.element(find.byType(SpracheApp));
-      final container = ProviderScope.containerOf(app);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [studyStoreProvider.overrideWithValue(MemoryStudyStore())],
+        child: const SpracheApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final app = tester.element(find.byType(SpracheApp));
+    final container = ProviderScope.containerOf(app);
 
-      await tester.tap(find.byKey(const Key('open-first-run-setup')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('onboarding-purpose-travel')));
-      await tester.tap(find.byKey(const Key('onboarding-next')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('onboarding-level-intermediate')));
-      await tester.tap(find.byKey(const Key('onboarding-next')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('onboarding-next')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('편한 조작'));
-      await tester.tap(find.byKey(const Key('onboarding-theme-dark')));
-      await tester.tap(find.byKey(const Key('onboarding-accent-ocean')));
-      await tester.tap(find.byKey(const Key('onboarding-next')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('onboarding-next')));
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(
-        find.byKey(const Key('complete-first-run-setup')),
-      );
-      await tester.tap(find.byKey(const Key('complete-first-run-setup')));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('open-first-run-setup')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('onboarding-purpose-travel')));
+    await tester.tap(find.byKey(const Key('onboarding-next')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(
+      find.byKey(const Key('complete-first-run-setup')),
+    );
+    await tester.tap(find.byKey(const Key('complete-first-run-setup')));
+    await tester.pumpAndSettle();
 
-      final preferences = container.read(appControllerProvider).preferences;
-      expect(preferences.onboardingCompleted, isTrue);
-      expect(preferences.onboardingProfile.purpose, LearningPurpose.travel);
-      expect(preferences.newItemLimit, 6);
-      expect(preferences.sessionItemLimit, 10);
-      expect(preferences.sessionPlan.title, '여행 필수 표현');
-      expect(preferences.sessionPlan.mode, StudyMode.sentences);
-      expect(preferences.experience.highContrast, isTrue);
-      expect(preferences.experience.accentPalette.name, 'ocean');
-      expect(
-        preferences.interaction.practiceCatalog.quickLaunchActivityIds,
-        contains('pronunciation'),
-      );
-      expect(
-        preferences.interaction.practiceCatalog
-            .launchFor('pronunciation')
-            .largeControls,
-        isTrue,
-      );
-    },
-  );
+    final preferences = container.read(appControllerProvider).preferences;
+    expect(preferences.onboardingCompleted, isTrue);
+    expect(preferences.onboardingProfile.purpose, LearningPurpose.travel);
+    expect(preferences.newItemLimit, 10);
+    expect(preferences.sessionItemLimit, 10);
+    expect(preferences.sessionPlan.title, '여행 필수 표현');
+    expect(preferences.sessionPlan.mode, StudyMode.sentences);
+    expect(preferences.experience.highContrast, isFalse);
+    expect(preferences.experience.simpleHome, isTrue);
+    expect(
+      preferences.interaction.practiceCatalog.quickLaunchActivityIds,
+      contains('pronunciation'),
+    );
+    expect(
+      preferences.interaction.practiceCatalog
+          .launchFor('pronunciation')
+          .largeControls,
+      isFalse,
+    );
+  });
 }

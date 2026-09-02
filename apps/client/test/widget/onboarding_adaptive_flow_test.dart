@@ -36,7 +36,7 @@ void main() {
     final drafts = <OnboardingProfile>[];
     await pumpPanel(tester, onDraft: drafts.add);
 
-    expect(find.text('1/6단계 · 고른 내용은 이 기기에 바로 저장돼요.'), findsOneWidget);
+    expect(find.textContaining('1/2단계'), findsOneWidget);
     expect(find.byKey(const Key('onboarding-previous')), findsOneWidget);
     expect(find.byKey(const Key('onboarding-later')), findsOneWidget);
 
@@ -44,15 +44,14 @@ void main() {
     await tester.tap(find.byKey(const Key('onboarding-next')));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('2/6단계'), findsOneWidget);
+    expect(find.textContaining('2/2단계'), findsOneWidget);
     expect(drafts.last.purpose, LearningPurpose.travel);
     expect(drafts.last.draftStep, 1);
   });
 
-  testWidgets('saved draft resumes at appearance and previews actual theme', (
+  testWidgets('legacy saved draft resumes at the compact final step', (
     tester,
   ) async {
-    final drafts = <OnboardingProfile>[];
     await pumpPanel(
       tester,
       profile: const OnboardingProfile(
@@ -60,42 +59,14 @@ void main() {
         themeMode: OnboardingThemeMode.dark,
         accent: OnboardingAccent.ocean,
       ),
-      onDraft: drafts.add,
     );
 
-    expect(find.textContaining('4/6단계'), findsOneWidget);
-    expect(find.byKey(const Key('onboarding-theme-preview')), findsOneWidget);
-    await tester.tap(find.text('편한 조작'));
-    await tester.pumpAndSettle();
-
-    expect(drafts.last.easyAccess, isTrue);
-    expect(find.textContaining('큰 버튼 · 큰 글자 · 고대비'), findsOneWidget);
+    expect(find.textContaining('2/2단계'), findsOneWidget);
+    expect(find.text('준비됐어요'), findsOneWidget);
+    expect(find.byKey(const Key('complete-first-run-setup')), findsOneWidget);
   });
 
-  testWidgets('quick actions remain exactly three and can be reordered', (
-    tester,
-  ) async {
-    final drafts = <OnboardingProfile>[];
-    await pumpPanel(
-      tester,
-      profile: const OnboardingProfile(draftStep: 4),
-      onDraft: drafts.add,
-    );
-
-    expect(find.byKey(const Key('onboarding-quick-action-0')), findsOneWidget);
-    expect(find.byKey(const Key('onboarding-quick-action-1')), findsOneWidget);
-    expect(find.byKey(const Key('onboarding-quick-action-2')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('onboarding-quick-action-down-0')));
-    await tester.pumpAndSettle();
-
-    expect(drafts.last.quickActions, [
-      HomeQuickAction.quickAdd,
-      HomeQuickAction.study,
-      HomeQuickAction.practice,
-    ]);
-  });
-
-  testWidgets('review shows three samples, estimate, and account-free result', (
+  testWidgets('review shows one sample and an account-free quick start', (
     tester,
   ) async {
     OnboardingSetupResult? completed;
@@ -110,10 +81,8 @@ void main() {
     );
 
     expect(find.byKey(const Key('onboarding-sample-1')), findsOneWidget);
-    expect(find.byKey(const Key('onboarding-sample-2')), findsOneWidget);
-    expect(find.byKey(const Key('onboarding-sample-3')), findsOneWidget);
-    expect(find.textContaining('천천히 풀어도 괜찮아요'), findsOneWidget);
-    expect(find.textContaining('샘플 학습에는 계정이 필요 없어요'), findsOneWidget);
+    expect(find.byKey(const Key('onboarding-sample-2')), findsNothing);
+    expect(find.textContaining('로그인 없이 체험'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('complete-first-run-setup')));
     await tester.pump();

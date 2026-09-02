@@ -649,7 +649,7 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           if (experience.showHomeHeader)
                             _HomeHeader(
-                              compact: homeCompact,
+                              compact: homeCompact || experience.simpleHome,
                               now: now,
                               subjectName: activeSubject.name,
                               subjectSymbol: activeSubject.symbol,
@@ -800,39 +800,124 @@ class HomeScreen extends ConsumerWidget {
                                 );
                               },
                             ),
-                          ] else ...[
+                          ],
+                          if (experience.simpleHome) ...[
+                            SizedBox(height: layout.controlGap + 6),
+                            primaryStudyCard(compact: true),
                             SizedBox(height: layout.controlGap + 6),
                             _HomeQuickActions(
-                              actions: onboardingProfile.quickActions,
-                              compact: homeCompact,
+                              actions: _simpleHomeQuickActions(),
+                              compact: true,
+                              maxActions: 2,
                               onSelected: runHomeQuickAction,
                             ),
-                            if (!hasCompletedCourseSession &&
-                                onboardingProfile.languageCode.isNotEmpty) ...[
+                            SizedBox(height: layout.controlGap + 6),
+                            _SimpleHomeDetails(
+                              summary: reviewCount > 0
+                                  ? '복습 $reviewCount개가 기다리고 있어요'
+                                  : '계획, 기록, 최근 자료를 한곳에서 보세요',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _WeeklyTargetSummaryCard(
+                                    compact: true,
+                                    studiedDays: weeklyInsights
+                                        .studiedDaysInLastSeven(),
+                                    targetDays:
+                                        state.preferences.weeklyTargetDays,
+                                    studiedMinutes: weeklyInsights
+                                        .durationInLastSeven()
+                                        .inMinutes,
+                                    targetMinutes:
+                                        state.preferences.weeklyTargetMinutes,
+                                    progress: weeklyInsights
+                                        .weeklyCombinedGoalProgress(
+                                          targetDays: state
+                                              .preferences
+                                              .weeklyTargetDays,
+                                          targetMinutes: state
+                                              .preferences
+                                              .weeklyTargetMinutes,
+                                        ),
+                                    onOpen: () => context.go('/stats'),
+                                  ),
+                                  if (experience.showTodayPlan) ...[
+                                    SizedBox(height: layout.controlGap + 5),
+                                    _TodayPlan(
+                                      compact: true,
+                                      reviewCount: reviewCount,
+                                      newCount: newCount,
+                                      weakCount: weakCount,
+                                      isStudyDay: isPlannedStudyDay,
+                                      nextStudyDate: nextPlannedStudyDate,
+                                    ),
+                                  ],
+                                  if (primaryScheduledPlan
+                                      case final plan?) ...[
+                                    SizedBox(height: layout.controlGap + 5),
+                                    _ScheduleQuickActions(
+                                      plan: plan,
+                                      onComplete: () =>
+                                          completeScheduledPlan(plan),
+                                      onSnooze: () => snoozeScheduledPlan(plan),
+                                      onDefer: () => deferScheduledPlan(plan),
+                                      onChangeTime: () =>
+                                          changeScheduledPlanTime(plan),
+                                    ),
+                                  ],
+                                  if (quickStudyPlan != null) ...[
+                                    SizedBox(height: layout.controlGap + 5),
+                                    _TwoMinuteStudyRow(
+                                      itemCount:
+                                          quickStudyPlan.selectedItemIds.length,
+                                      compact: true,
+                                      onSchedule: () =>
+                                          unawaited(scheduleTwoMinuteStudy()),
+                                      onStart: startTwoMinuteStudy,
+                                    ),
+                                  ],
+                                  ...personalizedSections,
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            if (state.preferences.onboardingCompleted) ...[
                               SizedBox(height: layout.controlGap + 6),
-                              _FirstStartRecommendationCard(
-                                profile: onboardingProfile,
-                                mode: state.preferences.preferredMode,
-                                itemCount: state.preferences.sessionItemLimit,
+                              _HomeQuickActions(
+                                actions: onboardingProfile.quickActions,
                                 compact: homeCompact,
-                                onStart: () => context.push(recommendedRoute),
-                                onPractice: () => context.go('/learn'),
+                                onSelected: runHomeQuickAction,
+                              ),
+                              if (!hasCompletedCourseSession &&
+                                  onboardingProfile
+                                      .languageCode
+                                      .isNotEmpty) ...[
+                                SizedBox(height: layout.controlGap + 6),
+                                _FirstStartRecommendationCard(
+                                  profile: onboardingProfile,
+                                  mode: state.preferences.preferredMode,
+                                  itemCount: state.preferences.sessionItemLimit,
+                                  compact: homeCompact,
+                                  onStart: () => context.push(recommendedRoute),
+                                  onPractice: () => context.go('/learn'),
+                                ),
+                              ],
+                            ],
+                            SizedBox(height: layout.sectionGap),
+                            studyOverview(),
+                            if (quickStudyPlan != null) ...[
+                              SizedBox(height: layout.sectionGap),
+                              _TwoMinuteStudyRow(
+                                itemCount:
+                                    quickStudyPlan.selectedItemIds.length,
+                                compact: homeCompact,
+                                onSchedule: () =>
+                                    unawaited(scheduleTwoMinuteStudy()),
+                                onStart: startTwoMinuteStudy,
                               ),
                             ],
+                            ...personalizedSections,
                           ],
-                          SizedBox(height: layout.sectionGap),
-                          studyOverview(),
-                          if (quickStudyPlan != null) ...[
-                            SizedBox(height: layout.sectionGap),
-                            _TwoMinuteStudyRow(
-                              itemCount: quickStudyPlan.selectedItemIds.length,
-                              compact: homeCompact,
-                              onSchedule: () =>
-                                  unawaited(scheduleTwoMinuteStudy()),
-                              onStart: startTwoMinuteStudy,
-                            ),
-                          ],
-                          ...personalizedSections,
                         ],
                       ),
                     ),
@@ -847,23 +932,61 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
+class _SimpleHomeDetails extends StatelessWidget {
+  const _SimpleHomeDetails({required this.summary, required this.child});
+
+  final String summary;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      key: const Key('home-simple-details'),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        key: const Key('home-simple-details-toggle'),
+        initiallyExpanded: false,
+        maintainState: false,
+        leading: Icon(
+          Icons.dashboard_customize_outlined,
+          color: colors.primary,
+        ),
+        title: const Text(
+          '내 학습 현황 더보기',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        subtitle: Text(summary, maxLines: 2, overflow: TextOverflow.ellipsis),
+        childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+        children: [child],
+      ),
+    );
+  }
+}
+
+List<HomeQuickAction> _simpleHomeQuickActions() {
+  return const [HomeQuickAction.quickAdd, HomeQuickAction.importData];
+}
+
 class _HomeQuickActions extends StatelessWidget {
   const _HomeQuickActions({
     required this.actions,
     required this.compact,
     required this.onSelected,
+    this.maxActions = 3,
   });
 
   final List<HomeQuickAction> actions;
   final bool compact;
   final ValueChanged<HomeQuickAction> onSelected;
+  final int maxActions;
 
   @override
   Widget build(BuildContext context) {
     final safeActions = <HomeQuickAction>[];
     for (final action in [...actions, ...defaultHomeQuickActions]) {
       if (!safeActions.contains(action)) safeActions.add(action);
-      if (safeActions.length == 3) break;
+      if (safeActions.length == maxActions) break;
     }
     return Semantics(
       container: true,

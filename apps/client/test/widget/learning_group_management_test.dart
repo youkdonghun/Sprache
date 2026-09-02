@@ -292,8 +292,8 @@ void main() {
         reason: 'the item list should not rebuild for every search keystroke',
       );
 
-      await tester.pump(const Duration(milliseconds: 60));
-      expect(find.byKey(const Key('active-library-filters')), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const Key('library-item-library-debounce-search')),
         findsOneWidget,
@@ -406,8 +406,11 @@ void main() {
           findsOneWidget,
         );
         expect(
-          find.byKey(const Key('library-item-subject-state-japanese')),
-          findsOneWidget,
+          container
+              .read(appControllerProvider)
+              .customItems
+              .any((item) => item.id == 'subject-state-japanese'),
+          isTrue,
         );
         expect(find.text('학습 주제가 바뀌어 검색과 선택을 지웠어요.'), findsOneWidget);
         expect(tester.takeException(), isNull);

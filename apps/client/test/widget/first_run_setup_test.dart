@@ -41,13 +41,6 @@ void main() {
         await tester.tap(find.byKey(const Key('onboarding-next')));
         await tester.pumpAndSettle();
 
-        await tester.tap(find.byKey(const Key('onboarding-level-advanced')));
-        await tester.tap(find.byKey(const Key('onboarding-goal-150')));
-        for (var step = 0; step < 4; step++) {
-          await tester.tap(find.byKey(const Key('onboarding-next')));
-          await tester.pumpAndSettle();
-        }
-
         expect(find.byKey(const Key('onboarding-import-data')), findsOneWidget);
         await tester.ensureVisible(
           find.byKey(const Key('complete-first-run-setup')),
@@ -65,19 +58,19 @@ void main() {
         final state = container.read(appControllerProvider);
         expect(state.selectedLanguage, LanguageTag.japanese);
         expect(state.preferences.onboardingCompleted, isTrue);
-        expect(state.preferences.dailyGoal, 150);
+        expect(state.preferences.dailyGoal, 100);
         expect(state.preferences.preferredMode, StudyMode.words);
-        expect(state.preferences.newItemLimit, 5);
-        expect(state.preferences.sessionItemLimit, 15);
+        expect(state.preferences.newItemLimit, 10);
+        expect(state.preferences.sessionItemLimit, 10);
         expect(
           state.preferences.onboardingProfile.purpose,
           LearningPurpose.hobby,
         );
         expect(
           state.preferences.onboardingProfile.level,
-          SelfAssessedLevel.advanced,
+          SelfAssessedLevel.beginner,
         );
-        expect(state.preferences.onboardingProfile.dailyMinutes, 10);
+        expect(state.preferences.onboardingProfile.dailyMinutes, 5);
         expect(
           state.preferences.onboardingProfile.entryChoice,
           OnboardingEntryChoice.sampleLesson,

@@ -425,6 +425,7 @@ class AppExperiencePreferences {
     this.readingWidth = AppReadingWidth.balanced,
     this.highContrast = false,
     this.showFocusRing = true,
+    this.simpleHome = true,
     this.showHomeHeader = true,
     this.showStreak = true,
     this.showXp = true,
@@ -496,6 +497,7 @@ class AppExperiencePreferences {
   final AppReadingWidth readingWidth;
   final bool highContrast;
   final bool showFocusRing;
+  final bool simpleHome;
   final bool showHomeHeader;
   final bool showStreak;
   final bool showXp;
@@ -623,6 +625,7 @@ class AppExperiencePreferences {
     AppReadingWidth? readingWidth,
     bool? highContrast,
     bool? showFocusRing,
+    bool? simpleHome,
     bool? showHomeHeader,
     bool? showStreak,
     bool? showXp,
@@ -701,6 +704,7 @@ class AppExperiencePreferences {
       readingWidth: readingWidth ?? this.readingWidth,
       highContrast: highContrast ?? this.highContrast,
       showFocusRing: showFocusRing ?? this.showFocusRing,
+      simpleHome: simpleHome ?? this.simpleHome,
       showHomeHeader: showHomeHeader ?? this.showHomeHeader,
       showStreak: showStreak ?? this.showStreak,
       showXp: showXp ?? this.showXp,
@@ -789,6 +793,7 @@ class AppExperiencePreferences {
     'readingWidth': readingWidth.name,
     'highContrast': highContrast,
     'showFocusRing': showFocusRing,
+    'simpleHome': simpleHome,
     'showHomeHeader': showHomeHeader,
     'showStreak': showStreak,
     'showXp': showXp,
@@ -1018,6 +1023,7 @@ class AppExperiencePreferences {
       ),
       highContrast: _boolOr(json['highContrast'], false),
       showFocusRing: _boolOr(json['showFocusRing'], true),
+      simpleHome: _boolOr(json['simpleHome'], true),
       showHomeHeader: _boolOr(json['showHomeHeader'], true),
       showStreak: _boolOr(json['showStreak'], true),
       showXp: _boolOr(json['showXp'], true),

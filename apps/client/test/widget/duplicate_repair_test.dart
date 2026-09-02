@@ -73,7 +73,8 @@ void main() {
         await tester.pumpAndSettle();
 
         final open = find.byKey(const Key('open-duplicate-repair'));
-        await tester.ensureVisible(open);
+        await Scrollable.ensureVisible(tester.element(open), alignment: 0.5);
+        await tester.pump();
         await tester.tap(open);
         await tester.pumpAndSettle();
         expect(find.text('중복 자료 합치기'), findsOneWidget);

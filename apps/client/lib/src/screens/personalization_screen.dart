@@ -552,16 +552,26 @@ class PersonalizationPanel extends StatelessWidget {
                   sectionKey: const Key('personalization-home-section'),
                   icon: Icons.space_dashboard_outlined,
                   title: '홈 대시보드',
-                  summary:
-                      '${_homeLayoutLabel(preferences.homeLayout)} · '
-                      '${_visibleHomeSectionCount(preferences)}개 섹션',
+                  summary: preferences.simpleHome
+                      ? '간편 홈 · 자세한 내용은 필요할 때 펼침'
+                      : '${_homeLayoutLabel(preferences.homeLayout)} · '
+                            '${_visibleHomeSectionCount(preferences)}개 섹션',
                   children: [
+                    _PreferenceSwitch(
+                      controlKey: const Key('home-simple-mode'),
+                      title: '간편 홈',
+                      subtitle: '다음 학습과 자주 쓰는 기능만 먼저 보여줍니다.',
+                      value: preferences.simpleHome,
+                      onChanged: (value) =>
+                          onChanged(preferences.copyWith(simpleHome: value)),
+                    ),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: OutlinedButton.icon(
                         key: const Key('apply-compact-home-layout'),
                         onPressed: () => onChanged(
                           preferences.copyWith(
+                            simpleHome: true,
                             homeLayout: AppHomeLayout.focus,
                             showHomeHeader: false,
                             showStreak: true,
@@ -658,6 +668,7 @@ class PersonalizationPanel extends StatelessWidget {
                         key: const Key('reset-home-personalization'),
                         onPressed: () => onChanged(
                           preferences.copyWith(
+                            simpleHome: true,
                             homeLayout: AppHomeLayout.balanced,
                             showHomeHeader: true,
                             showStreak: true,
