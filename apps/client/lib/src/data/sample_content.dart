@@ -3,37 +3,44 @@ import '../domain/learning_item.dart';
 import '../domain/korean_pronunciation.dart';
 
 part 'sample_content_practical.dart';
+part 'sample_content_everyday.dart';
 
 final sampleContent = <LearningItem>[
   ..._buildWords(LanguageTag.english, _englishWords),
   ..._buildSentences(LanguageTag.english, [
     ..._englishSentences,
     ..._englishPracticalSentences,
+    ..._englishEverydaySentences,
   ]),
   ..._buildWords(LanguageTag.japanese, _japaneseWords),
   ..._buildSentences(LanguageTag.japanese, [
     ..._japaneseSentences,
     ..._japanesePracticalSentences,
+    ..._japaneseEverydaySentences,
   ]),
   ..._buildWords(LanguageTag.german, _germanWords),
   ..._buildSentences(LanguageTag.german, [
     ..._germanSentences,
     ..._germanPracticalSentences,
+    ..._germanEverydaySentences,
   ]),
   ..._buildWords(LanguageTag.french, _frenchWords),
   ..._buildSentences(LanguageTag.french, [
     ..._frenchSentences,
     ..._frenchPracticalSentences,
+    ..._frenchEverydaySentences,
   ]),
   ..._buildWords(LanguageTag.spanish, _spanishWords),
   ..._buildSentences(LanguageTag.spanish, [
     ..._spanishSentences,
     ..._spanishPracticalSentences,
+    ..._spanishEverydaySentences,
   ]),
   ..._buildWords(LanguageTag.simplifiedChinese, _chineseWords),
   ..._buildSentences(LanguageTag.simplifiedChinese, [
     ..._chineseSentences,
     ..._chinesePracticalSentences,
+    ..._chineseEverydaySentences,
   ]),
 ];
 

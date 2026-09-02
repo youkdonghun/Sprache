@@ -387,7 +387,7 @@ class _BulkItemEditorDialogState extends State<BulkItemEditorDialog> {
               title: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('모든 자료 Excel형 일괄 수정'),
+                  Text('모든 자료 표로 수정'),
                   Text(
                     '기본 데이터는 바꾼 행만 내 편집본으로 저장됩니다.',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),

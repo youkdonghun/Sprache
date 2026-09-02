@@ -116,9 +116,13 @@ void main() {
       platform: TargetPlatform.windows,
     );
 
-    expect(find.byKey(const Key('library-quick-word-button')), findsOneWidget);
     expect(find.byKey(const Key('library-add-button')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('library-quick-word-button')));
+    expect(find.byKey(const Key('library-bulk-edit-button')), findsOneWidget);
+    expect(find.byKey(const Key('library-more-menu')), findsOneWidget);
+    expect(find.byKey(const Key('library-quick-word-button')), findsNothing);
+    await tester.tap(find.byKey(const Key('library-add-button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('add-quick-word')));
     await tester.pumpAndSettle();
 
     expect(

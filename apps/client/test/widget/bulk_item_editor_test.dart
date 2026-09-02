@@ -207,7 +207,7 @@ void main() {
   ) async {
     final store = await pumpLibrary(tester);
 
-    await tester.tap(find.byKey(const Key('open-all-content-bulk-editor')));
+    await tester.tap(find.byKey(const Key('library-bulk-edit-button')));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('bulk-item-paste-grid')));

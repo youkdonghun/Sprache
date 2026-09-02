@@ -97,8 +97,8 @@ class ContentSource {
   static const starterCatalog = ContentSource(
     name: 'Sprache starter catalog',
     license: 'project-internal',
-    sourceVersion: '2026.08',
-    contentVersion: 3,
+    sourceVersion: '2026.09',
+    contentVersion: 4,
   );
 
   final String name;

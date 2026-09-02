@@ -28,6 +28,7 @@ import 'widgets/keyboard_help_overlay.dart';
 import 'widgets/privacy_mode_scope.dart';
 import 'widgets/quick_content_result_handler.dart';
 import 'widgets/quick_content_sheet.dart';
+import 'widgets/startup_release_update_prompt.dart';
 
 class SpracheApp extends ConsumerStatefulWidget {
   const SpracheApp({super.key, this.launchArguments = const []});
@@ -347,6 +348,7 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
   @override
   Widget build(BuildContext context) {
     final router = ref.watch(appRouterProvider);
+    final appConfig = ref.watch(appConfigProvider);
     final devicePrivacy = ref.watch(
       devicePreferencesControllerProvider.select(
         (state) => state.preferences.privacy,
@@ -486,6 +488,13 @@ class _SpracheAppState extends ConsumerState<SpracheApp>
           scaledChild = _PrivacyModeFrame(child: scaledChild);
         }
         scaledChild = DriveConnectionGate(child: scaledChild);
+        scaledChild = StartupReleaseUpdatePrompt(
+          currentVersion: appConfig.appVersion,
+          currentBuildNumber: appConfig.appBuildNumber,
+          manifestUrl: appConfig.releaseManifestUrl,
+          enabled: !appConfig.mockMode,
+          child: scaledChild,
+        );
         final globalBindings = effectiveAccessibilityProfile.globalBindingsFor({
           GlobalShortcutAction.openSearch: () =>
               unawaited(showGlobalSearchPalette(context, ref)),

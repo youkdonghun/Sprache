@@ -288,9 +288,8 @@ void main() {
       await tester.tap(find.text('자료실').last);
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('content-editing-actions')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('show-all-editable-content')));
-      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('content-editing-actions')), findsNothing);
+      expect(find.byKey(const Key('library-bulk-edit-button')), findsOneWidget);
       expect(
         find.byKey(const Key('edit-library-item-visible-edit-item')),
         findsOneWidget,

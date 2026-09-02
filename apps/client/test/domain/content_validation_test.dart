@@ -192,7 +192,7 @@ void main() {
           '${item.id}: ${validator.inspect(item).errors.map((issue) => issue.code).join(',')}',
     ];
 
-    expect(sampleContent, hasLength(720));
+    expect(sampleContent, hasLength(1080));
     expect(invalid, isEmpty, reason: invalid.take(20).join('\n'));
   });
 
@@ -278,8 +278,8 @@ void main() {
         (item) =>
             item.source.name == ContentSource.starterCatalog.name &&
             item.source.license == 'project-internal' &&
-            item.source.sourceVersion == '2026.08' &&
-            item.source.contentVersion == 3,
+            item.source.sourceVersion == '2026.09' &&
+            item.source.contentVersion == 4,
       ),
       isTrue,
     );

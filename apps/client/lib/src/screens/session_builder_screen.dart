@@ -64,6 +64,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
   final _titleController = TextEditingController();
   var _plan = const StudySessionPlan();
   var _initialized = false;
+  var _showDesktopAdvanced = false;
 
   void _setPlan(StudySessionPlan plan, {bool syncTitle = false}) {
     final normalized =
@@ -75,6 +76,9 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
       _titleController.text = normalized.title;
     }
     setState(() => _plan = normalized);
+    // 설정 화면을 잠시 벗어나도 같은 언어에서 방금 고른 조건을 이어서
+    // 사용할 수 있도록 초안을 즉시 기기 저장소에 반영한다.
+    ref.read(appControllerProvider.notifier).updateSessionPlan(normalized);
   }
 
   @override
@@ -120,7 +124,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
     final messenger = ScaffoldMessenger.of(context);
     messenger.removeCurrentSnackBar();
     final message = !hasFutureSchedule
-        ? '“${saved.title}” 학습 설정을 저장했습니다.'
+        ? '“${saved.title}”을 내 학습 설정에 저장했습니다.'
         : switch (permission) {
             StudyNotificationPermission.granted =>
               '“${saved.title}” 일정과 기기 알림을 저장했습니다.',
@@ -164,8 +168,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('저장한 일정 삭제'),
-        content: Text('“${plan.title}” 일정을 삭제할까요?\n학습 기록과 자료는 그대로 남아요.'),
+        title: const Text('내 학습 설정 삭제'),
+        content: Text('“${plan.title}” 설정을 삭제할까요?\n학습 기록과 자료는 그대로 남아요.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -174,7 +178,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
           FilledButton(
             key: const Key('confirm-delete-session-plan'),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('일정 삭제'),
+            child: const Text('설정 삭제'),
           ),
         ],
       ),
@@ -582,80 +586,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
               const SizedBox(height: 14),
               _BuilderSection(
                 number: '3',
-                title: '어떤 난이도로 풀까요?',
-                description: '학습 기록을 바탕으로 필요한 난이도만 골라요.',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _CompactSelectionField<StudyDifficulty>(
-                      fieldKey: const Key('session-difficulty-select'),
-                      label: '현재 기억 단계',
-                      value: _plan.difficulty,
-                      options: [
-                        for (final difficulty in StudyDifficulty.values)
-                          _SelectionOption(
-                            key: Key('session-difficulty-${difficulty.name}'),
-                            value: difficulty,
-                            label: difficulty.label,
-                          ),
-                      ],
-                      onChanged: (difficulty) =>
-                          _setPlan(_plan.copyWith(difficulty: difficulty)),
-                    ),
-                    const SizedBox(height: 14),
-                    _CompactSelectionField<StudyHistoryFilter>(
-                      fieldKey: const Key('session-history-select'),
-                      label: '학습 기록',
-                      value: _plan.historyFilter,
-                      options: [
-                        for (final filter in StudyHistoryFilter.values)
-                          _SelectionOption(
-                            key: Key('session-history-${filter.name}'),
-                            value: filter,
-                            label: filter.label,
-                          ),
-                      ],
-                      onChanged: (filter) =>
-                          _setPlan(_plan.copyWith(historyFilter: filter)),
-                    ),
-                    const SizedBox(height: 14),
-                    _CompactSelectionField<StudyQueuePriority>(
-                      fieldKey: const Key('session-priority-select'),
-                      label: '출제 순서',
-                      value: _plan.queuePriority,
-                      options: [
-                        for (final priority in StudyQueuePriority.values)
-                          _SelectionOption(
-                            key: Key('session-priority-${priority.name}'),
-                            value: priority,
-                            label: priority.label,
-                          ),
-                      ],
-                      onChanged: (priority) =>
-                          _setPlan(_plan.copyWith(queuePriority: priority)),
-                    ),
-                    const SizedBox(height: 18),
-                    _BacklogRecoveryEditor(
-                      settings: _plan.backlogRecovery,
-                      missedItems: preview.matchingCount,
-                      remainingStudyDays: _plan.routineWeekdays.isEmpty
-                          ? appState
-                                .preferences
-                                .onboardingProfile
-                                .normalizedStudyWeekdays
-                                .length
-                          : _plan.routineWeekdays.length,
-                      onChanged: (settings) =>
-                          _setPlan(_plan.copyWith(backlogRecovery: settings)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 14),
-              _BuilderSection(
-                number: '4',
-                title: '단어와 문장 비율',
-                description: '문제 수와 문장 비율을 정해 주세요.',
+                title: '문제 수와 자료 유형',
+                description: '단어·문장 구성과 한 번에 풀 분량을 정해요.',
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -699,120 +631,203 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                 ),
               ),
               const SizedBox(height: 14),
-              _BuilderSection(
-                number: '5',
-                title: '레벨과 태그',
-                description: '고르지 않으면 모든 레벨과 태그가 들어가요.',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _FilterChoices(
-                      label: '자료 레벨',
-                      emptyLabel: '현재 코스에 레벨 정보가 없습니다.',
-                      values: levels,
-                      selected: _plan.levels,
-                      keyPrefix: 'session-level',
-                      onChanged: (selected) =>
-                          _setPlan(_plan.copyWith(levels: selected)),
-                    ),
-                    const SizedBox(height: 18),
-                    _FilterChoices(
-                      label: '태그 · 여러 개 선택 시 하나라도 일치',
-                      emptyLabel: '현재 코스에 선택할 태그가 없습니다.',
-                      values: tags,
-                      selected: _plan.tags,
-                      keyPrefix: 'session-tag',
-                      onChanged: (selected) =>
-                          _setPlan(_plan.copyWith(tags: selected)),
-                    ),
-                  ],
+              _DesktopAdvancedToggle(
+                activeCount: _advancedSettingCount(_plan),
+                expanded: _showDesktopAdvanced,
+                onToggle: () => setState(
+                  () => _showDesktopAdvanced = !_showDesktopAdvanced,
                 ),
+                onReset: _resetAdvancedSettings,
               ),
-              const SizedBox(height: 14),
-              _BuilderSection(
-                number: '6',
-                title: '학습 일정 저장',
-                description: '이름과 다음 학습 시간을 정해 기기와 Drive에 저장해요.',
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextFormField(
-                      key: const Key('session-title'),
-                      controller: _titleController,
-                      maxLength: 60,
-                      decoration: const InputDecoration(
-                        labelText: '퀴즈·학습 이름',
-                        hintText: '예: 금요일 여행 표현 복습',
-                        prefixIcon: Icon(Icons.edit_calendar_rounded),
+              if (_showDesktopAdvanced) ...[
+                const SizedBox(height: 14),
+                _BuilderSection(
+                  number: 'A',
+                  title: '난이도와 출제 순서',
+                  description: '필요할 때만 기억 단계와 기록, 출제 순서를 조정해요.',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _CompactSelectionField<StudyDifficulty>(
+                        fieldKey: const Key('session-difficulty-select'),
+                        label: '현재 기억 단계',
+                        value: _plan.difficulty,
+                        options: [
+                          for (final difficulty in StudyDifficulty.values)
+                            _SelectionOption(
+                              key: Key('session-difficulty-${difficulty.name}'),
+                              value: difficulty,
+                              label: difficulty.label,
+                            ),
+                        ],
+                        onChanged: (difficulty) =>
+                            _setPlan(_plan.copyWith(difficulty: difficulty)),
                       ),
-                      onChanged: (value) =>
-                          _setPlan(_plan.copyWith(title: value)),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        OutlinedButton.icon(
-                          key: const Key('session-pick-schedule'),
-                          onPressed: _pickSchedule,
-                          icon: const Icon(Icons.event_rounded),
-                          label: Text(
-                            _plan.scheduledAt == null
-                                ? '날짜와 시간 선택'
-                                : _formatSchedule(_plan.scheduledAt!),
-                          ),
+                      const SizedBox(height: 14),
+                      _CompactSelectionField<StudyHistoryFilter>(
+                        fieldKey: const Key('session-history-select'),
+                        label: '학습 기록',
+                        value: _plan.historyFilter,
+                        options: [
+                          for (final filter in StudyHistoryFilter.values)
+                            _SelectionOption(
+                              key: Key('session-history-${filter.name}'),
+                              value: filter,
+                              label: filter.label,
+                            ),
+                        ],
+                        onChanged: (filter) =>
+                            _setPlan(_plan.copyWith(historyFilter: filter)),
+                      ),
+                      const SizedBox(height: 14),
+                      _CompactSelectionField<StudyQueuePriority>(
+                        fieldKey: const Key('session-priority-select'),
+                        label: '출제 순서',
+                        value: _plan.queuePriority,
+                        options: [
+                          for (final priority in StudyQueuePriority.values)
+                            _SelectionOption(
+                              key: Key('session-priority-${priority.name}'),
+                              value: priority,
+                              label: priority.label,
+                            ),
+                        ],
+                        onChanged: (priority) =>
+                            _setPlan(_plan.copyWith(queuePriority: priority)),
+                      ),
+                      const SizedBox(height: 18),
+                      _BacklogRecoveryEditor(
+                        settings: _plan.backlogRecovery,
+                        missedItems: preview.matchingCount,
+                        remainingStudyDays: _plan.routineWeekdays.isEmpty
+                            ? appState
+                                  .preferences
+                                  .onboardingProfile
+                                  .normalizedStudyWeekdays
+                                  .length
+                            : _plan.routineWeekdays.length,
+                        onChanged: (settings) =>
+                            _setPlan(_plan.copyWith(backlogRecovery: settings)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _BuilderSection(
+                  number: 'B',
+                  title: '레벨과 태그',
+                  description: '고르지 않으면 모든 레벨과 태그가 들어가요.',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _FilterChoices(
+                        label: '자료 레벨',
+                        emptyLabel: '현재 코스에 레벨 정보가 없습니다.',
+                        values: levels,
+                        selected: _plan.levels,
+                        keyPrefix: 'session-level',
+                        onChanged: (selected) =>
+                            _setPlan(_plan.copyWith(levels: selected)),
+                      ),
+                      const SizedBox(height: 18),
+                      _FilterChoices(
+                        label: '태그 · 여러 개 선택 시 하나라도 일치',
+                        emptyLabel: '현재 코스에 선택할 태그가 없습니다.',
+                        values: tags,
+                        selected: _plan.tags,
+                        keyPrefix: 'session-tag',
+                        onChanged: (selected) =>
+                            _setPlan(_plan.copyWith(tags: selected)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                _BuilderSection(
+                  number: 'C',
+                  title: '저장과 반복',
+                  description: '자주 쓸 설정에 이름을 붙이거나 다음 학습 시간을 정해요.',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextFormField(
+                        key: const Key('session-title'),
+                        controller: _titleController,
+                        maxLength: 60,
+                        decoration: const InputDecoration(
+                          labelText: '학습 설정 이름',
+                          hintText: '예: 금요일 여행 표현 복습',
+                          prefixIcon: Icon(Icons.edit_calendar_rounded),
                         ),
-                        if (_plan.scheduledAt != null)
-                          TextButton.icon(
-                            onPressed: () =>
-                                _setPlan(_plan.copyWith(scheduledAt: null)),
-                            icon: const Icon(Icons.event_busy_rounded),
-                            label: const Text('일정 지우기'),
+                        onChanged: (value) =>
+                            _setPlan(_plan.copyWith(title: value)),
+                      ),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          OutlinedButton.icon(
+                            key: const Key('session-pick-schedule'),
+                            onPressed: _pickSchedule,
+                            icon: const Icon(Icons.event_rounded),
+                            label: Text(
+                              _plan.scheduledAt == null
+                                  ? '날짜와 시간 선택'
+                                  : _formatSchedule(_plan.scheduledAt!),
+                            ),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      key: const Key('configure-study-routine'),
-                      onPressed: _configureRoutine,
-                      icon: const Icon(Icons.repeat_rounded),
-                      label: Text(
-                        _plan.routineName.isEmpty
-                            ? '요일·시간 루틴으로 묶기'
-                            : '${_plan.routineName} · '
-                                  '${_plan.routineWeekdays.length}일 · '
-                                  '${((_plan.routineMinuteOfDay ?? 0) ~/ 60).toString().padLeft(2, '0')}:'
-                                  '${((_plan.routineMinuteOfDay ?? 0) % 60).toString().padLeft(2, '0')}',
+                          if (_plan.scheduledAt != null)
+                            TextButton.icon(
+                              onPressed: () =>
+                                  _setPlan(_plan.copyWith(scheduledAt: null)),
+                              icon: const Icon(Icons.event_busy_rounded),
+                              label: const Text('일정 지우기'),
+                            ),
+                        ],
                       ),
-                    ),
-                    const Divider(height: 28),
-                    SwitchListTile.adaptive(
-                      key: const Key('session-record-progress'),
-                      contentPadding: EdgeInsets.zero,
-                      value: _plan.recordProgress,
-                      onChanged: (value) =>
-                          _setPlan(_plan.copyWith(recordProgress: value)),
-                      title: const Text('진도 기록'),
-                      subtitle: const Text(
-                        '끄면 XP·연속 학습일·SRS·정오답 통계를 바꾸지 않습니다.',
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        key: const Key('configure-study-routine'),
+                        onPressed: _configureRoutine,
+                        icon: const Icon(Icons.repeat_rounded),
+                        label: Text(
+                          _plan.routineName.isEmpty
+                              ? '요일·시간 루틴으로 묶기'
+                              : '${_plan.routineName} · '
+                                    '${_plan.routineWeekdays.length}일 · '
+                                    '${((_plan.routineMinuteOfDay ?? 0) ~/ 60).toString().padLeft(2, '0')}:'
+                                    '${((_plan.routineMinuteOfDay ?? 0) % 60).toString().padLeft(2, '0')}',
+                        ),
                       ),
-                    ),
-                    const Divider(height: 28),
-                    _ExamScheduleEditor(
-                      schedule: _plan.examSchedule,
-                      remainingItems: preview.matchingCount,
-                      now: now,
-                      onPickTargetDate: _pickExamTargetDate,
-                      onChanged: (schedule) =>
-                          _setPlan(_plan.copyWith(examSchedule: schedule)),
-                      onClear: () =>
-                          _setPlan(_plan.copyWith(examSchedule: null)),
-                    ),
-                  ],
+                      const Divider(height: 28),
+                      SwitchListTile.adaptive(
+                        key: const Key('session-record-progress'),
+                        contentPadding: EdgeInsets.zero,
+                        value: _plan.recordProgress,
+                        onChanged: (value) =>
+                            _setPlan(_plan.copyWith(recordProgress: value)),
+                        title: const Text('진도 기록'),
+                        subtitle: const Text(
+                          '끄면 XP·연속 학습일·SRS·정오답 통계를 바꾸지 않습니다.',
+                        ),
+                      ),
+                      const Divider(height: 28),
+                      _ExamScheduleEditor(
+                        schedule: _plan.examSchedule,
+                        remainingItems: preview.matchingCount,
+                        now: now,
+                        onPickTargetDate: _pickExamTargetDate,
+                        onChanged: (schedule) =>
+                            _setPlan(_plan.copyWith(examSchedule: schedule)),
+                        onClear: () =>
+                            _setPlan(_plan.copyWith(examSchedule: null)),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ],
           );
 
@@ -860,6 +875,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                           SizedBox(
                             width: 340,
                             child: _PreviewCard(
+                              languageName: activeSubject.name,
                               plan: _plan,
                               preview: preview,
                               units: units,
@@ -888,6 +904,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                       header,
                       const SizedBox(height: 12),
                       _MobileSessionSummary(
+                        languageName: activeSubject.name,
                         plan: _plan,
                         preview: preview,
                         averageSecondsPerItem: averageSecondsPerItem,
@@ -931,6 +948,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                 ),
               ),
               _BottomActions(
+                languageName: activeSubject.name,
                 preview: preview,
                 scheduledAt: _plan.scheduledAt,
                 onSave: _savePlan,
@@ -947,11 +965,13 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
 
 class _MobileSessionSummary extends StatelessWidget {
   const _MobileSessionSummary({
+    required this.languageName,
     required this.plan,
     required this.preview,
     required this.averageSecondsPerItem,
   });
 
+  final String languageName;
   final StudySessionPlan plan;
   final StudySessionBuildResult preview;
   final double averageSecondsPerItem;
@@ -984,19 +1004,21 @@ class _MobileSessionSummary extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: preview.isEmpty
-                          ? '조건에 맞는 자료가 없어요'
-                          : '${preview.items.length}문제 · 약 $minutes분',
+                          ? '$languageName · 조건에 맞는 자료가 없어요'
+                          : '$languageName · ${preview.items.length}문제 · 약 $minutes분',
                       style: const TextStyle(fontWeight: FontWeight.w900),
                     ),
                     TextSpan(
                       text: preview.isEmpty
                           ? '\n범위나 문제 수를 조정해 보세요.'
                           : '\n${plan.mode.label} · ${plan.deck.label} · '
+                                '${_contentKindLabel(plan)} · '
                                 '후보 ${preview.matchingCount}'
                                 '${plan.recordProgress ? '' : ' · 자유 연습'}',
                     ),
                   ],
                 ),
+                key: const Key('session-plan-summary'),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1049,27 +1071,7 @@ class _MobileSessionEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final advancedCount = [
-      plan.difficulty != StudyDifficulty.all,
-      plan.historyFilter != StudyHistoryFilter.all,
-      plan.queuePriority != StudyQueuePriority.dueFirst,
-      plan.groupIds.isNotEmpty,
-      plan.tags.isNotEmpty,
-      plan.levels.isNotEmpty,
-      plan.includeWords &&
-          plan.includeSentences &&
-          (plan.sentenceRatio - _defaultSentenceRatio(plan)).abs() > 0.001,
-      plan.backlogRecovery.enabled,
-      !plan.recordProgress,
-      plan.answerDirectionOverride != null,
-      plan.gradingStrictness != StudyGradingStrictness.balanced,
-      plan.choiceCount != 4,
-      !plan.hintsEnabled,
-      plan.autoAdvanceOverride != null,
-      plan.soundEffectsOverride != null,
-      plan.largeControls,
-      plan.examSchedule != null,
-    ].where((active) => active).length;
+    final advancedCount = _advancedSettingCount(plan);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1090,7 +1092,7 @@ class _MobileSessionEditor extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '핵심 설정',
+                            '간단 설정',
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
@@ -1224,7 +1226,7 @@ class _MobileSessionEditor extends StatelessWidget {
             key: const Key('session-advanced-settings'),
             leading: const Icon(Icons.tune_rounded),
             title: Text(
-              advancedCount == 0 ? '세부 조건' : '세부 조건 · $advancedCount개 적용',
+              advancedCount == 0 ? '세부 설정' : '세부 설정 · $advancedCount개 적용',
               style: const TextStyle(fontWeight: FontWeight.w900),
             ),
             subtitle: Text(
@@ -1343,7 +1345,7 @@ class _MobileSessionEditor extends StatelessWidget {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '학습 설정 이름과 일정',
+                  '내 학습 설정 이름과 일정',
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
               ),
@@ -1736,13 +1738,13 @@ class _QuickSessionPresets extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '빠른 설정',
+                      '바로 설정',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
                     ),
                     Text(
-                      '자주 쓰는 구성을 한 번에 적용',
+                      '자주 쓰는 학습 방식을 한 번에 적용',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -1771,6 +1773,35 @@ double _defaultSentenceRatio(StudySessionPlan plan) =>
       (true, false) => 0,
       (false, true) => 1,
       _ => 0.3,
+    };
+
+int _advancedSettingCount(StudySessionPlan plan) => [
+  plan.difficulty != StudyDifficulty.all,
+  plan.historyFilter != StudyHistoryFilter.all,
+  plan.queuePriority != StudyQueuePriority.dueFirst,
+  plan.groupIds.isNotEmpty,
+  plan.tags.isNotEmpty,
+  plan.levels.isNotEmpty,
+  plan.includeWords &&
+      plan.includeSentences &&
+      (plan.sentenceRatio - _defaultSentenceRatio(plan)).abs() > 0.001,
+  plan.backlogRecovery.enabled,
+  !plan.recordProgress,
+  plan.answerDirectionOverride != null,
+  plan.gradingStrictness != StudyGradingStrictness.balanced,
+  plan.choiceCount != 4,
+  !plan.hintsEnabled,
+  plan.autoAdvanceOverride != null,
+  plan.soundEffectsOverride != null,
+  plan.largeControls,
+  plan.examSchedule != null,
+].where((active) => active).length;
+
+String _contentKindLabel(StudySessionPlan plan) =>
+    switch ((plan.includeWords, plan.includeSentences)) {
+      (true, false) => '단어만',
+      (false, true) => '문장만',
+      _ => '단어 + 문장',
     };
 
 String _sessionDirectionLabel(StudyAnswerDirection direction) =>
@@ -1837,13 +1868,13 @@ class _SavedPlansCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '저장한 학습 일정',
+                        '내 학습 설정',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
                         plans.isEmpty
-                            ? '아래에서 퀴즈 조건과 시간을 정한 뒤 저장하세요.'
-                            : '${plans.length}개 · 누르면 편집기에 불러옵니다.',
+                            ? '자주 쓰는 학습 방식을 저장해 두세요.'
+                            : '${plans.length}개 · 설정을 골라 바로 불러오세요.',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -1859,137 +1890,148 @@ class _SavedPlansCard extends StatelessWidget {
                   children: [
                     for (final (index, plan) in ordered.indexed) ...[
                       if (index > 0) const SizedBox(width: 10),
-                      Container(
-                        width: 280,
-                        padding: const EdgeInsets.all(13),
-                        decoration: BoxDecoration(
-                          color: plan.planId == activePlanId
-                              ? colors.primaryContainer
-                              : colors.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
+                      InkWell(
+                        key: Key('load-session-plan-tile-${plan.planId}'),
+                        onTap: () => onLoad(plan),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          width: 280,
+                          padding: const EdgeInsets.all(13),
+                          decoration: BoxDecoration(
                             color: plan.planId == activePlanId
-                                ? colors.primary
-                                : colors.outlineVariant,
+                                ? colors.primaryContainer
+                                : colors.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: plan.planId == activePlanId
+                                  ? colors.primary
+                                  : colors.outlineVariant,
+                            ),
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              plan.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              plan.scheduledAt == null
-                                  ? plan.lengthMode ==
-                                            StudySessionLengthMode.timeBudget
-                                        ? '${plan.timeBudgetMinutes}분 · 일정 없음'
-                                        : '${plan.itemLimit}문제 · 일정 없음'
-                                  : _formatSchedule(plan.scheduledAt!),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            if (plan.routineName.isNotEmpty) ...[
-                              const SizedBox(height: 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
                               Text(
-                                '${plan.routineName} · 순서 ${plan.routineOrder + 1}',
-                                key: Key('routine-label-${plan.planId}'),
+                                plan.title,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelMedium
-                                    ?.copyWith(color: colors.primary),
-                              ),
-                            ],
-                            const SizedBox(height: 10),
-                            PopupMenuButton<_SavedPlanAction>(
-                              key: Key('saved-plan-actions-${plan.planId}'),
-                              tooltip: '저장한 학습 설정 열기 및 관리',
-                              onSelected: (action) {
-                                switch (action) {
-                                  case _SavedPlanAction.load:
-                                    onLoad(plan);
-                                    break;
-                                  case _SavedPlanAction.moveEarlier:
-                                    onMoveEarlier(plan);
-                                    break;
-                                  case _SavedPlanAction.moveLater:
-                                    onMoveLater(plan);
-                                    break;
-                                  case _SavedPlanAction.delete:
-                                    onDelete(plan);
-                                    break;
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                PopupMenuItem(
-                                  key: Key('load-session-plan-${plan.planId}'),
-                                  value: _SavedPlanAction.load,
-                                  child: const ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: Icon(Icons.edit_note_rounded),
-                                    title: Text('불러와서 편집'),
-                                  ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w900,
                                 ),
-                                if (plan.routineName.isNotEmpty) ...[
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                plan.scheduledAt == null
+                                    ? plan.lengthMode ==
+                                              StudySessionLengthMode.timeBudget
+                                          ? '${plan.timeBudgetMinutes}분 · 일정 없음'
+                                          : '${plan.itemLimit}문제 · 일정 없음'
+                                    : _formatSchedule(plan.scheduledAt!),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                              if (plan.routineName.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  '${plan.routineName} · 순서 ${plan.routineOrder + 1}',
+                                  key: Key('routine-label-${plan.planId}'),
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.labelMedium
+                                      ?.copyWith(color: colors.primary),
+                                ),
+                              ],
+                              const SizedBox(height: 10),
+                              PopupMenuButton<_SavedPlanAction>(
+                                key: Key('saved-plan-actions-${plan.planId}'),
+                                tooltip: '저장한 학습 설정 열기 및 관리',
+                                onSelected: (action) {
+                                  switch (action) {
+                                    case _SavedPlanAction.load:
+                                      onLoad(plan);
+                                      break;
+                                    case _SavedPlanAction.moveEarlier:
+                                      onMoveEarlier(plan);
+                                      break;
+                                    case _SavedPlanAction.moveLater:
+                                      onMoveLater(plan);
+                                      break;
+                                    case _SavedPlanAction.delete:
+                                      onDelete(plan);
+                                      break;
+                                  }
+                                },
+                                itemBuilder: (context) => [
                                   PopupMenuItem(
-                                    key: Key('routine-earlier-${plan.planId}'),
-                                    value: _SavedPlanAction.moveEarlier,
+                                    key: Key(
+                                      'load-session-plan-${plan.planId}',
+                                    ),
+                                    value: _SavedPlanAction.load,
                                     child: const ListTile(
                                       contentPadding: EdgeInsets.zero,
-                                      leading: Icon(Icons.arrow_back_rounded),
-                                      title: Text('루틴에서 앞 순서'),
+                                      leading: Icon(Icons.edit_note_rounded),
+                                      title: Text('불러와서 편집'),
                                     ),
                                   ),
+                                  if (plan.routineName.isNotEmpty) ...[
+                                    PopupMenuItem(
+                                      key: Key(
+                                        'routine-earlier-${plan.planId}',
+                                      ),
+                                      value: _SavedPlanAction.moveEarlier,
+                                      child: const ListTile(
+                                        contentPadding: EdgeInsets.zero,
+                                        leading: Icon(Icons.arrow_back_rounded),
+                                        title: Text('루틴에서 앞 순서'),
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      key: Key('routine-later-${plan.planId}'),
+                                      value: _SavedPlanAction.moveLater,
+                                      child: const ListTile(
+                                        contentPadding: EdgeInsets.zero,
+                                        leading: Icon(
+                                          Icons.arrow_forward_rounded,
+                                        ),
+                                        title: Text('루틴에서 뒤 순서'),
+                                      ),
+                                    ),
+                                  ],
                                   PopupMenuItem(
-                                    key: Key('routine-later-${plan.planId}'),
-                                    value: _SavedPlanAction.moveLater,
+                                    key: Key(
+                                      'delete-session-plan-${plan.planId}',
+                                    ),
+                                    value: _SavedPlanAction.delete,
                                     child: const ListTile(
                                       contentPadding: EdgeInsets.zero,
                                       leading: Icon(
-                                        Icons.arrow_forward_rounded,
+                                        Icons.delete_outline_rounded,
                                       ),
-                                      title: Text('루틴에서 뒤 순서'),
+                                      title: Text('학습 설정 삭제'),
                                     ),
                                   ),
                                 ],
-                                PopupMenuItem(
-                                  key: Key(
-                                    'delete-session-plan-${plan.planId}',
+                                child: Container(
+                                  height: 40,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: colors.outlineVariant,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                  value: _SavedPlanAction.delete,
-                                  child: const ListTile(
-                                    contentPadding: EdgeInsets.zero,
-                                    leading: Icon(Icons.delete_outline_rounded),
-                                    title: Text('저장한 일정 삭제'),
+                                  child: const Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.edit_note_rounded, size: 19),
+                                      SizedBox(width: 7),
+                                      Text('불러오기 · 관리'),
+                                      SizedBox(width: 4),
+                                      Icon(Icons.expand_more_rounded, size: 19),
+                                    ],
                                   ),
-                                ),
-                              ],
-                              child: Container(
-                                height: 40,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: colors.outlineVariant,
-                                  ),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.edit_note_rounded, size: 19),
-                                    SizedBox(width: 7),
-                                    Text('불러오기 · 관리'),
-                                    SizedBox(width: 4),
-                                    Icon(Icons.expand_more_rounded, size: 19),
-                                  ],
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -2533,14 +2575,14 @@ class _Header extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$languageName 학습 세션',
+                    '$languageName 학습 설정',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     generalTopic
-                        ? '이 설정과 퀴즈 기록은 $languageName 주제에만 적용됩니다.'
-                        : '이 설정과 퀴즈 기록은 $languageName 코스에만 적용됩니다.',
+                        ? '지금 고른 내용은 $languageName 주제에만 저장됩니다.'
+                        : '지금 고른 내용은 $languageName 학습에만 저장됩니다.',
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 5),
@@ -2580,6 +2622,51 @@ class _Header extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _DesktopAdvancedToggle extends StatelessWidget {
+  const _DesktopAdvancedToggle({
+    required this.activeCount,
+    required this.expanded,
+    required this.onToggle,
+    required this.onReset,
+  });
+
+  final int activeCount;
+  final bool expanded;
+  final VoidCallback onToggle;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Card.outlined(
+      key: const Key('desktop-session-advanced-settings'),
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        onTap: onToggle,
+        leading: Icon(Icons.tune_rounded, color: colors.primary),
+        title: Text(
+          activeCount == 0 ? '세부 설정' : '세부 설정 · $activeCount개 적용',
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+        subtitle: Text(
+          expanded ? '난이도·태그·일정 설정을 닫을 수 있어요.' : '기본값으로 바로 시작하거나 필요할 때만 여세요.',
+        ),
+        trailing: activeCount > 0 && expanded
+            ? TextButton(
+                key: const Key('reset-desktop-session-advanced-settings'),
+                onPressed: onReset,
+                child: const Text('초기화'),
+              )
+            : Icon(
+                expanded
+                    ? Icons.expand_less_rounded
+                    : Icons.expand_more_rounded,
+              ),
+      ),
     );
   }
 }
@@ -2709,6 +2796,7 @@ class _FilterChoices extends StatelessWidget {
 
 class _PreviewCard extends StatelessWidget {
   const _PreviewCard({
+    required this.languageName,
     required this.plan,
     required this.preview,
     required this.units,
@@ -2717,6 +2805,7 @@ class _PreviewCard extends StatelessWidget {
     required this.onStart,
   });
 
+  final String languageName;
   final StudySessionPlan plan;
   final StudySessionBuildResult preview;
   final List<CourseUnitSnapshot> units;
@@ -2757,7 +2846,10 @@ class _PreviewCard extends StatelessWidget {
             Text(
               preview.isEmpty
                   ? '덱·난이도·태그 또는 단어/문장 조건을 하나씩 넓혀 보세요.'
-                  : '후보 ${preview.matchingCount}개 중 ${preview.items.length}개를 학습합니다.',
+                  : '$languageName · ${preview.items.length}문제 · '
+                        '${plan.mode.label} · $_deckLabel · '
+                        '${_contentKindLabel(plan)}',
+              key: const Key('session-plan-summary'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: colors.onPrimaryContainer.withValues(alpha: 0.78),
               ),
@@ -2846,6 +2938,7 @@ class _PreviewCard extends StatelessWidget {
 
 class _BottomActions extends StatelessWidget {
   const _BottomActions({
+    required this.languageName,
     required this.preview,
     required this.scheduledAt,
     required this.onSave,
@@ -2853,6 +2946,7 @@ class _BottomActions extends StatelessWidget {
     required this.onStart,
   });
 
+  final String languageName;
   final StudySessionBuildResult preview;
   final DateTime? scheduledAt;
   final VoidCallback onSave;
@@ -2884,7 +2978,7 @@ class _BottomActions extends StatelessWidget {
                     child: Text(
                       preview.isEmpty
                           ? '조건을 조정해 주세요'
-                          : '준비 완료 · ${preview.items.length}문제',
+                          : '$languageName · ${preview.items.length}문제 · 준비 완료',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleSmall,

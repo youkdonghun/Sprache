@@ -5,6 +5,21 @@ import 'package:sprache/src/services/study_notification_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 void main() {
+  test('untitled settings get a clear subject and length name', () async {
+    final store = MemoryStudyStore();
+    final controller = AppController(store);
+    await Future<void>.delayed(Duration.zero);
+
+    final saved = controller.saveSessionPlan(
+      const StudySessionPlan(mode: StudyMode.review, itemLimit: 24),
+    );
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(saved.title, '영어 복습 예정만 24문제');
+    expect(store.savedPreferences.savedSessionPlans.single.title, saved.title);
+    controller.dispose();
+  });
+
   test('multiple named schedules can be saved, updated, and deleted', () async {
     final store = MemoryStudyStore();
     final controller = AppController(store);

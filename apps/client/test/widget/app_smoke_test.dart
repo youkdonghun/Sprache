@@ -51,7 +51,7 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          expect(find.text('다음 레슨'), findsOneWidget);
+          expect(find.text('바로 학습'), findsOneWidget);
           await tester.tap(find.byKey(const Key('nav-learn')));
           await tester.pumpAndSettle();
           await _selectAllGames(tester);
@@ -181,7 +181,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('다음 레슨'), findsOneWidget);
+      expect(find.text('바로 학습'), findsOneWidget);
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
       await _selectAllGames(tester);
@@ -220,7 +220,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('다음 레슨'), findsOneWidget);
+      expect(find.text('바로 학습'), findsOneWidget);
       final container = ProviderScope.containerOf(
         tester.element(find.byType(SpracheApp)),
       );
@@ -292,7 +292,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('다음 레슨'), findsOneWidget);
+    expect(find.text('바로 학습'), findsOneWidget);
     expect(find.textContaining('영어'), findsWidgets);
   });
 
@@ -350,7 +350,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('오늘 학습'), findsOneWidget);
-      expect(find.text('다음 학습'), findsOneWidget);
+      expect(find.text('바로 학습'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;
@@ -438,7 +438,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('다음 레슨'), findsOneWidget);
+      expect(find.text('바로 학습'), findsOneWidget);
       expect(find.text('일본어'), findsOneWidget);
       expect(find.text('자료실'), findsWidgets);
       expect(find.text('학습'), findsOneWidget);
@@ -477,7 +477,7 @@ void main() {
       expect(find.text('복습 예정'), findsOneWidget);
       expect(find.text('새 표현'), findsOneWidget);
       expect(find.text('학습 범위'), findsNothing);
-      expect(find.text('다음 학습'), findsOneWidget);
+      expect(find.text('바로 학습'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

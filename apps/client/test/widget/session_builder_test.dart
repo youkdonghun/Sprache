@@ -33,7 +33,7 @@ void main() {
       await tester.tap(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
 
-      expect(find.text('영어 학습 세션'), findsOneWidget);
+      expect(find.text('영어 학습 설정'), findsOneWidget);
       expect(find.text('언어키 · en'), findsOneWidget);
       expect(find.byKey(const Key('session-start-bottom')), findsOneWidget);
       expect(find.text('10문제 시작'), findsOneWidget);
@@ -66,6 +66,12 @@ void main() {
       );
       await tester.enterText(find.byKey(const Key('session-limit-input')), '5');
       await tester.pumpAndSettle();
+
+      // Leaving the builder no longer discards the most recent choices.
+      expect(store.savedPreferences.sessionPlan.deck, StudyDeckScope.unit);
+      expect(store.savedPreferences.sessionPlan.includeWords, isTrue);
+      expect(store.savedPreferences.sessionPlan.includeSentences, isFalse);
+      expect(store.savedPreferences.sessionPlan.itemLimit, 5);
 
       await _chooseOption(
         tester,
@@ -140,11 +146,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('출근길 복습'), findsOneWidget);
-      await _chooseOption(
-        tester,
-        fieldKey: 'saved-plan-actions-saved-commute',
-        optionKey: 'load-session-plan-saved-commute',
+      await tester.ensureVisible(
+        find.byKey(const Key('load-session-plan-tile-saved-commute')),
       );
+      await tester.tap(
+        find.byKey(const Key('load-session-plan-tile-saved-commute')),
+      );
+      await tester.pumpAndSettle();
 
       expect(store.savedPreferences.sessionPlan.planId, 'saved-commute');
       expect(store.savedPreferences.sessionPlan.mode, StudyMode.listening);
@@ -357,10 +365,17 @@ void main() {
         await tester.pumpAndSettle();
 
         if (size.width >= 900) {
+          await tester.ensureVisible(
+            find.byKey(const Key('desktop-session-advanced-settings')),
+          );
+          await tester.tap(
+            find.byKey(const Key('desktop-session-advanced-settings')),
+          );
+          await tester.pumpAndSettle();
           expect(find.text('레벨과 태그'), findsOneWidget);
         } else {
-          expect(find.text('핵심 설정'), findsOneWidget);
-          expect(find.text('세부 조건'), findsOneWidget);
+          expect(find.text('간단 설정'), findsOneWidget);
+          expect(find.text('세부 설정'), findsOneWidget);
           expect(find.byKey(const Key('session-start-bottom')), findsOneWidget);
         }
         expect(tester.takeException(), isNull);

@@ -327,7 +327,7 @@ class HomeScreen extends ConsumerWidget {
         description: queue.isEmpty
             ? '원하면 ${state.preferences.preferredMode.label}로 조금 더 연습할 수 있어요.'
             : '${state.preferences.preferredMode.label} · 새 표현 $newCount개',
-        buttonLabel: isDesktop ? '다음 학습' : '다음 레슨',
+        buttonLabel: '바로 학습',
         icon: Icons.play_arrow_rounded,
         onPressed: () => context.push(recommendedRoute),
       );
@@ -1123,7 +1123,7 @@ class _FirstStartRecommendationCard extends StatelessWidget {
                   key: const Key('start-onboarding-queue'),
                   onPressed: onStart,
                   icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                  label: const Text('추천 학습 시작'),
+                  label: const Text('바로 학습'),
                 ),
               ],
             ),

@@ -861,15 +861,15 @@ void main() {
     final harness = await _pumpPracticeHub(tester);
     final controller = harness.container.read(appControllerProvider.notifier);
     final availableCount = controller
-        .queue(_fixedNow(), mode: StudyMode.sentenceOrder, itemLimit: 100)
+        .queue(_fixedNow(), mode: StudyMode.sentenceOrder, itemLimit: 1000)
         .length;
     expect(availableCount, greaterThan(0));
-    expect(availableCount, lessThan(100));
+    expect(availableCount, lessThan(1000));
 
     await _openPracticeActivity(tester, '문장 배열');
     final countInput = find.byKey(const Key('practice-count-input'));
     await _ensureVisible(tester, countInput);
-    await tester.enterText(countInput, '100');
+    await tester.enterText(countInput, '1000');
     await tester.pump();
     expect(find.text('$availableCount문제 시작'), findsOneWidget);
     await _tapVisible(tester, find.byKey(const Key('start-practice-session')));

@@ -1699,8 +1699,13 @@ class AppController extends StateNotifier<AppState> {
     final planId = plan.planId.isEmpty
         ? 'plan-${now.microsecondsSinceEpoch}'
         : plan.planId;
+    final automaticLength = plan.lengthMode == StudySessionLengthMode.timeBudget
+        ? '${plan.timeBudgetMinutes}분'
+        : '${plan.itemLimit}문제';
+    final automaticTitle =
+        '${activeSubject.name} ${plan.mode.label} $automaticLength';
     final title = plan.title.trim().isEmpty
-        ? '학습 계획 ${state.preferences.savedSessionPlans.length + 1}'
+        ? String.fromCharCodes(automaticTitle.runes.take(60))
         : String.fromCharCodes(plan.title.trim().runes.take(60));
     final existingInRoutine = state.preferences.savedSessionPlans.where(
       (entry) =>

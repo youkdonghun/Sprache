@@ -15,12 +15,12 @@ void main() {
             .length,
     };
 
-    expect(counts[LanguageTag.english], 120);
-    expect(counts[LanguageTag.japanese], 120);
-    expect(counts[LanguageTag.german], 120);
-    expect(counts[LanguageTag.french], 120);
-    expect(counts[LanguageTag.spanish], 120);
-    expect(counts[LanguageTag.simplifiedChinese], 120);
+    expect(counts[LanguageTag.english], 180);
+    expect(counts[LanguageTag.japanese], 180);
+    expect(counts[LanguageTag.german], 180);
+    expect(counts[LanguageTag.french], 180);
+    expect(counts[LanguageTag.spanish], 180);
+    expect(counts[LanguageTag.simplifiedChinese], 180);
     expect(availableLanguages, hasLength(6));
     expect(LanguageTag.korean.available, isFalse);
   });
@@ -62,14 +62,14 @@ void main() {
     }
   });
 
-  test('all 720 starter items include a Korean pronunciation aid', () {
+  test('all 1080 starter items include a Korean pronunciation aid', () {
     for (final language in LanguageTag.values.where(
       (value) => value.available,
     )) {
       final items = sampleContent.where(
         (item) => item.learningLanguage == language,
       );
-      expect(items, hasLength(120), reason: language.code);
+      expect(items, hasLength(180), reason: language.code);
       for (final item in items) {
         final pronunciation = item.reading(ReadingScheme.hangul);
         expect(pronunciation, isNotNull, reason: item.id);
@@ -110,7 +110,7 @@ void main() {
   });
 
   test('built-in catalog IDs and localized texts stay unique', () {
-    expect(sampleContent.map((item) => item.id).toSet(), hasLength(720));
+    expect(sampleContent.map((item) => item.id).toSet(), hasLength(1080));
     for (final language in LanguageTag.values.where(
       (language) => language.available,
     )) {
@@ -118,7 +118,7 @@ void main() {
           .where((item) => item.learningLanguage == language)
           .map((item) => '${item.kind.name}:${item.text}')
           .toSet();
-      expect(localizedTexts, hasLength(120), reason: language.code);
+      expect(localizedTexts, hasLength(180), reason: language.code);
     }
   });
 }

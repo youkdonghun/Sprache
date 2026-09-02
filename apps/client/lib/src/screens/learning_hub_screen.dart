@@ -2217,7 +2217,7 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
               children: [
                 Expanded(
                   child: Text(
-                    '오늘의 추천 학습',
+                    '오늘 바로 학습',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                     ),
@@ -2228,7 +2228,7 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
                     key: const Key('configure-recommended-practice'),
                     onPressed: () =>
                         widget.onConfigure(recommendation.activity),
-                    tooltip: '추천 학습 설정',
+                    tooltip: '바로 학습 설정',
                     icon: const Icon(Icons.tune_rounded),
                   ),
                   const SizedBox(width: 2),

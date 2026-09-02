@@ -59,6 +59,8 @@ class _LibraryFilterSelection {
 
 enum _AddContentAction { quickWord, quickSentence, fullEditor, importFile }
 
+enum _LibraryHeaderAction { trash }
+
 enum _DesktopItemAction { open, edit, restore, group, study, export }
 
 String _librarySyncLabel(AppState state, ConnectionState connection) {
@@ -198,21 +200,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
     setState(() {
       _query = '';
       _filter = _LibraryFilter.registered;
-      _advancedCriteria = const LibrarySearchCriteria();
-      _groupFilter = null;
-      _groupSelectionMode = false;
-      _selectedForGroup.clear();
-      _resultPage = 0;
-    });
-    _revealSearchResults();
-  }
-
-  void _showAllItemsForEditing() {
-    _searchDebounce?.cancel();
-    _searchController.clear();
-    setState(() {
-      _query = '';
-      _filter = _LibraryFilter.all;
       _advancedCriteria = const LibrarySearchCriteria();
       _groupFilter = null;
       _groupSelectionMode = false;
@@ -837,20 +824,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           favoriteCount: favoriteCount,
           trashCount: trashEntries.length,
           editableCount: items.length,
-          onQuickWord: () => _openQuickContent(LearningItemKind.word),
           onAdd: _openAddMenu,
           onTrash: _openTrash,
           onBulkEdit: items.isEmpty ? null : () => _openBulkEditor(items),
         ),
-        if (items.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          _ContentEditingActions(
-            totalCount: items.length,
-            personalCount: registeredItems.length,
-            onShow: _showAllItemsForEditing,
-            onBulkEdit: () => _openBulkEditor(items),
-          ),
-        ],
         SizedBox(
           height: narrow
               ? 8
@@ -858,7 +835,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               ? 10
               : 16,
         ),
-        if (!mobile || items.isEmpty || !state.driveConnected) ...[
+        if (items.isEmpty || !state.driveConnected) ...[
           LearningDataFlowCard(
             condensed: true,
             totalCount: items.length,
@@ -3473,7 +3450,7 @@ class _ActiveLibraryFilters extends StatelessWidget {
           TextButton(
             key: const Key('clear-library-filters'),
             onPressed: onClear,
-            child: const Text('전체 보기'),
+            child: const Text('전체 해제'),
           ),
         ],
       ),
@@ -4801,7 +4778,6 @@ class _LibraryHeader extends StatelessWidget {
     required this.favoriteCount,
     required this.trashCount,
     required this.editableCount,
-    required this.onQuickWord,
     required this.onAdd,
     required this.onTrash,
     required this.onBulkEdit,
@@ -4815,7 +4791,6 @@ class _LibraryHeader extends StatelessWidget {
   final int favoriteCount;
   final int trashCount;
   final int editableCount;
-  final VoidCallback onQuickWord;
   final VoidCallback onAdd;
   final VoidCallback onTrash;
   final VoidCallback? onBulkEdit;
@@ -4844,72 +4819,58 @@ class _LibraryHeader extends StatelessWidget {
         ),
       ],
     );
-    final quickWordButton = FilledButton.icon(
-      key: const Key('library-quick-word-button'),
-      onPressed: onQuickWord,
-      icon: const Icon(Icons.add_rounded),
-      label: const Text('단어 추가'),
-    );
-    final compactQuickWordButton = FilledButton.icon(
-      key: const Key('library-quick-word-button'),
-      onPressed: onQuickWord,
-      icon: const Icon(Icons.add_rounded),
-      label: const Text('단어'),
-    );
-    final iconQuickWordButton = IconButton.filled(
-      key: const Key('library-quick-word-button'),
-      onPressed: onQuickWord,
-      icon: const Icon(Icons.add_rounded),
-      tooltip: '단어 바로 추가',
-    );
-    final addMenuButton = IconButton.outlined(
+    final addButton = FilledButton.icon(
       key: const Key('library-add-button'),
       onPressed: onAdd,
-      icon: const Icon(Icons.arrow_drop_down_rounded),
-      tooltip: '문장·상세 편집·파일 가져오기',
+      icon: const Icon(Icons.add_rounded),
+      label: const Text('추가'),
     );
-    final trashButton = Badge(
+    final moreButton = Badge(
       isLabelVisible: trashCount > 0,
       label: Text('$trashCount'),
-      child: IconButton.outlined(
-        key: const Key('open-library-trash'),
-        onPressed: onTrash,
-        icon: const Icon(Icons.delete_outline_rounded),
-        tooltip: '휴지통 열기',
+      child: PopupMenuButton<_LibraryHeaderAction>(
+        key: const Key('library-more-menu'),
+        tooltip: '자료실 더보기',
+        onSelected: (action) {
+          if (action == _LibraryHeaderAction.trash) onTrash();
+        },
+        itemBuilder: (context) => [
+          PopupMenuItem(
+            key: const Key('open-library-trash'),
+            value: _LibraryHeaderAction.trash,
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.delete_outline_rounded),
+              title: const Text('휴지통'),
+              trailing: trashCount == 0 ? null : Text('$trashCount개'),
+            ),
+          ),
+        ],
       ),
     );
-    final tableEditButton = IconButton.outlined(
-      key: const Key('library-bulk-edit-button'),
-      onPressed: onBulkEdit,
-      icon: const Icon(Icons.table_view_outlined),
-      tooltip: editableCount == 0
-          ? '수정할 자료가 없습니다.'
-          : '기본 자료를 포함한 $editableCount개를 Excel처럼 일괄 수정',
-    );
-    final wideTableEditButton = OutlinedButton.icon(
+    final tableEditButton = OutlinedButton.icon(
       key: const Key('library-bulk-edit-button'),
       onPressed: onBulkEdit,
       icon: const Icon(Icons.table_view_outlined, size: 18),
-      label: Text('전체 자료 일괄 수정 · $editableCount'),
+      label: Text('표로 수정${editableCount == 0 ? '' : ' · $editableCount'}'),
     );
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth < 520) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: copy(veryNarrow: constraints.maxWidth < 360)),
-              const SizedBox(width: 8),
-              trashButton,
-              const SizedBox(width: 6),
-              tableEditButton,
-              const SizedBox(width: 6),
-              if (constraints.maxWidth < 420)
-                iconQuickWordButton
-              else
-                compactQuickWordButton,
-              const SizedBox(width: 4),
-              addMenuButton,
+              copy(veryNarrow: constraints.maxWidth < 360),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(child: addButton),
+                  const SizedBox(width: 8),
+                  Expanded(child: tableEditButton),
+                  const SizedBox(width: 4),
+                  moreButton,
+                ],
+              ),
             ],
           );
         }
@@ -4917,96 +4878,14 @@ class _LibraryHeader extends StatelessWidget {
           children: [
             Expanded(child: copy(veryNarrow: false)),
             const SizedBox(width: 18),
-            trashButton,
+            tableEditButton,
             const SizedBox(width: 8),
-            wideTableEditButton,
-            const SizedBox(width: 8),
-            quickWordButton,
+            addButton,
             const SizedBox(width: 4),
-            addMenuButton,
+            moreButton,
           ],
         );
       },
-    );
-  }
-}
-
-class _ContentEditingActions extends StatelessWidget {
-  const _ContentEditingActions({
-    required this.totalCount,
-    required this.personalCount,
-    required this.onShow,
-    required this.onBulkEdit,
-  });
-
-  final int totalCount;
-  final int personalCount;
-  final VoidCallback onShow;
-  final VoidCallback onBulkEdit;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Card.outlined(
-      key: const Key('content-editing-actions'),
-      margin: EdgeInsets.zero,
-      color: colors.secondaryContainer.withValues(alpha: 0.28),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final description = Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '단어·문장 $totalCount개 수정',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '기본 데이터도 고칠 수 있어요. '
-                  '수정한 내용은 원본을 보호하면서 내 편집본으로 저장됩니다.'
-                  '${personalCount == 0 ? '' : ' 현재 내 편집본 $personalCount개.'}',
-                ),
-              ],
-            );
-            final actions = Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                OutlinedButton.icon(
-                  key: const Key('show-all-editable-content'),
-                  onPressed: onShow,
-                  icon: const Icon(Icons.edit_note_rounded),
-                  label: const Text('목록에서 하나씩 수정'),
-                ),
-                FilledButton.tonalIcon(
-                  key: const Key('open-all-content-bulk-editor'),
-                  onPressed: onBulkEdit,
-                  icon: const Icon(Icons.table_view_outlined),
-                  label: const Text('Excel처럼 일괄 수정'),
-                ),
-              ],
-            );
-            if (constraints.maxWidth < 720) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [description, const SizedBox(height: 10), actions],
-              );
-            }
-            return Row(
-              children: [
-                Expanded(child: description),
-                const SizedBox(width: 12),
-                actions,
-              ],
-            );
-          },
-        ),
-      ),
     );
   }
 }

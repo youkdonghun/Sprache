@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/release_link_share_service.dart';
 import '../services/release_update_coordinator.dart';
 import '../services/release_update_service.dart';
 
@@ -9,6 +10,7 @@ class ReleaseUpdateCard extends StatefulWidget {
     required this.manifestUrl,
     this.currentBuildNumber = 0,
     this.coordinator,
+    this.linkShareService,
     super.key,
   });
 
@@ -16,6 +18,7 @@ class ReleaseUpdateCard extends StatefulWidget {
   final int currentBuildNumber;
   final String manifestUrl;
   final ReleaseUpdateCoordinator? coordinator;
+  final ReleaseLinkShareService? linkShareService;
 
   @override
   State<ReleaseUpdateCard> createState() => _ReleaseUpdateCardState();
@@ -23,10 +26,12 @@ class ReleaseUpdateCard extends StatefulWidget {
 
 class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
   late ReleaseUpdateCoordinator _coordinator;
+  late ReleaseLinkShareService _linkShareService;
   ReleaseUpdateCheck? _check;
   String? _status;
   bool _checking = false;
   bool _applying = false;
+  bool _sharing = false;
   double? _progress;
 
   @override
@@ -37,13 +42,16 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
         DeviceReleaseUpdateCoordinator(
           manifestUri: Uri.parse(widget.manifestUrl),
         );
+    _linkShareService =
+        widget.linkShareService ?? const DeviceReleaseLinkShareService();
   }
 
   @override
   void didUpdateWidget(covariant ReleaseUpdateCard oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.coordinator != widget.coordinator ||
-        oldWidget.manifestUrl != widget.manifestUrl) {
+        oldWidget.manifestUrl != widget.manifestUrl ||
+        oldWidget.linkShareService != widget.linkShareService) {
       _coordinator =
           widget.coordinator ??
           DeviceReleaseUpdateCoordinator(
@@ -51,6 +59,8 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
           );
       _check = null;
       _status = null;
+      _linkShareService =
+          widget.linkShareService ?? const DeviceReleaseLinkShareService();
     }
   }
 
@@ -104,7 +114,9 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
           if (!mounted) return;
           setState(() {
             _progress = total <= 0 ? null : received / total;
-            _status = '다운로드 ${(_progress! * 100).clamp(0, 100).round()}%';
+            _status = _progress == null
+                ? '업데이트 파일을 다운로드하고 있습니다.'
+                : '다운로드 ${(_progress! * 100).clamp(0, 100).round()}%';
           });
         },
       );
@@ -116,12 +128,34 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
     }
   }
 
+  Future<void> _shareApkLink(BuildContext actionContext) async {
+    final check = _check;
+    if (check == null || _sharing) return;
+    setState(() => _sharing = true);
+    try {
+      final box = actionContext.findRenderObject();
+      final origin = box is RenderBox
+          ? box.localToGlobal(Offset.zero) & box.size
+          : null;
+      await _linkShareService.shareLatestAndroidApk(
+        manifest: check.manifest,
+        origin: origin,
+      );
+      if (mounted) setState(() => _status = '최신 APK 링크를 공유했습니다.');
+    } catch (error) {
+      if (mounted) setState(() => _status = _messageOf(error));
+    } finally {
+      if (mounted) setState(() => _sharing = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final check = _check;
     final updateAvailable = check?.updateAvailable ?? false;
     final canApply =
         updateAvailable || (check?.canRedownloadCurrentAndroidApk ?? false);
+    final canShareApk = check?.manifest.artifactFor('android')?.kind == 'apk';
     final latestVersion = check?.manifest.version.toString();
     final actionLabel =
         check?.canRedownloadCurrentAndroidApk == true && !updateAvailable
@@ -209,6 +243,17 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
                     onPressed: _applying ? null : _applyUpdate,
                     icon: const Icon(Icons.download_rounded),
                     label: Text(actionLabel),
+                  ),
+                if (canShareApk)
+                  Builder(
+                    builder: (actionContext) => OutlinedButton.icon(
+                      key: const Key('share-latest-apk-link'),
+                      onPressed: _sharing
+                          ? null
+                          : () => _shareApkLink(actionContext),
+                      icon: const Icon(Icons.share_outlined),
+                      label: const Text('최신 APK 링크 공유'),
+                    ),
                   ),
               ],
             ),

@@ -222,7 +222,7 @@ void main() {
           .initialValue,
       StudyQueuePriority.dueFirst,
     );
-    expect(find.text('세부 조건'), findsOneWidget);
+    expect(find.text('세부 설정'), findsOneWidget);
     expect(find.textContaining('개 적용'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -274,7 +274,7 @@ void main() {
           find.byKey(const Key('open-session-builder')),
         );
         expect(
-          find.text('세부 조건 · ${scenario.initialAdvancedCount}개 적용'),
+          find.text('세부 설정 · ${scenario.initialAdvancedCount}개 적용'),
           findsOneWidget,
         );
         await _tapVisible(
@@ -292,7 +292,7 @@ void main() {
               .value,
           closeTo(scenario.expectedRatio, 0.001),
         );
-        expect(find.text('세부 조건'), findsOneWidget);
+        expect(find.text('세부 설정'), findsOneWidget);
         expect(find.textContaining('개 적용'), findsNothing);
         expect(tester.takeException(), isNull);
       },
