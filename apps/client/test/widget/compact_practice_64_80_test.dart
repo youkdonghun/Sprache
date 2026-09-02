@@ -176,15 +176,20 @@ void main() {
     await _tapVisible(tester, find.byKey(const Key('open-session-builder')));
     final summary = find.byKey(const Key('mobile-session-summary'));
     final quick = find.byKey(const Key('quick-session-presets'));
-    final saved = find.byKey(const Key('saved-session-plans'));
+    final core = find.byKey(const Key('mobile-session-core-settings'));
     expect(tester.getSize(summary).height, lessThan(80));
-    expect(tester.getTopLeft(quick).dy, lessThan(tester.getTopLeft(saved).dy));
+    expect(find.byKey(const Key('saved-session-plans')), findsNothing);
+    expect(tester.getTopLeft(quick).dy, lessThan(tester.getTopLeft(core).dy));
 
     await _tapVisible(
       tester,
       find.byKey(const Key('session-advanced-settings')),
     );
-    await _tapVisible(tester, find.byKey(const Key('session-difficulty-weak')));
+    await _chooseOption(
+      tester,
+      fieldKey: 'session-difficulty-select',
+      optionKey: 'session-difficulty-weak',
+    );
     expect(
       find.byKey(const Key('reset-session-advanced-settings')),
       findsOneWidget,
@@ -195,23 +200,27 @@ void main() {
     );
     expect(
       tester
-          .widget<ChoiceChip>(find.byKey(const Key('session-difficulty-all')))
-          .selected,
-      isTrue,
-    );
-    expect(
-      tester
-          .widget<ChoiceChip>(find.byKey(const Key('session-history-all')))
-          .selected,
-      isTrue,
-    );
-    expect(
-      tester
-          .widget<ChoiceChip>(
-            find.byKey(const Key('session-priority-dueFirst')),
+          .widget<DropdownButtonFormField<StudyDifficulty>>(
+            find.byKey(const Key('session-difficulty-select')),
           )
-          .selected,
-      isTrue,
+          .initialValue,
+      StudyDifficulty.all,
+    );
+    expect(
+      tester
+          .widget<DropdownButtonFormField<StudyHistoryFilter>>(
+            find.byKey(const Key('session-history-select')),
+          )
+          .initialValue,
+      StudyHistoryFilter.all,
+    );
+    expect(
+      tester
+          .widget<DropdownButtonFormField<StudyQueuePriority>>(
+            find.byKey(const Key('session-priority-select')),
+          )
+          .initialValue,
+      StudyQueuePriority.dueFirst,
     );
     expect(find.text('세부 조건'), findsOneWidget);
     expect(find.textContaining('개 적용'), findsNothing);
@@ -326,5 +335,18 @@ Future<void> _tapVisible(WidgetTester tester, Finder finder) async {
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
   await tester.tap(finder);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _chooseOption(
+  WidgetTester tester, {
+  required String fieldKey,
+  required String optionKey,
+}) async {
+  final field = find.byKey(Key(fieldKey));
+  await _tapVisible(tester, field);
+  final option = find.byKey(Key(optionKey));
+  expect(option, findsWidgets);
+  await tester.tap(option.last);
   await tester.pumpAndSettle();
 }

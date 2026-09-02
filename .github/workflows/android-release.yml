@@ -153,9 +153,9 @@ jobs:
               "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "title": f"Sprache {version}",
               "notes": [
-                  "추천 학습은 복잡한 설정 없이 바로 시작하고, 필요할 때만 세부 조건을 바꿀 수 있습니다.",
-                  "자동 Google Drive 동기화는 조용히 처리하고, 사용자가 직접 동기화할 때만 진행 상태를 보여 줍니다.",
-                  "다른 언어에서 진행하던 퀴즈가 현재 언어의 새 퀴즈 시작을 막지 않도록 분리했습니다.",
+                  "퀴즈 설정과 저장 일정이 현재 언어키에만 적용되는지 화면에서 바로 확인할 수 있습니다.",
+                  "문제 방식, 범위, 난이도, 출제 순서와 문제 수 설정을 간결한 선택창으로 통합했습니다.",
+                  "빠른 설정, 저장과 예약, 저장 일정 관리를 각각 한 개의 메뉴로 정리했습니다.",
               ],
               "releasePageUrl": release_page,
               "artifacts": {
@@ -200,4 +200,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --title "Sprache ${{ steps.version.outputs.version }}" \
-            --notes "추천 학습은 바로 시작하고 필요할 때만 설정하도록 단순화했습니다. 자동 Drive 동기화 알림은 숨기고, 언어가 다른 진행 중 퀴즈가 새 퀴즈를 막지 않도록 분리했습니다."
+            --notes "퀴즈와 저장 일정을 언어키별로 명확히 구분하고, 흩어진 설정 버튼을 선택창과 통합 메뉴로 정리했습니다. Android에서는 추천 카드를 스와이프로 넘기고 Windows에서는 좌우 버튼과 키보드를 계속 사용할 수 있습니다."

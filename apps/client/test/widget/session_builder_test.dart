@@ -33,10 +33,11 @@ void main() {
       await tester.tap(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
 
-      expect(find.text('나만의 학습 세션'), findsOneWidget);
+      expect(find.text('영어 학습 세션'), findsOneWidget);
+      expect(find.text('언어키 · en'), findsOneWidget);
       expect(find.byKey(const Key('session-start-bottom')), findsOneWidget);
       expect(find.text('10문제 시작'), findsOneWidget);
-      expect(find.byKey(const Key('session-schedule-bottom')), findsOneWidget);
+      expect(find.byKey(const Key('session-save-menu-bottom')), findsOneWidget);
       expect(
         tester
             .widget<Material>(find.byKey(const Key('session-actions-bottom')))
@@ -52,20 +53,25 @@ void main() {
               as BoxDecoration;
       expect((actionsDecoration.border! as Border).top.width, 1);
 
-      await tester.ensureVisible(find.byKey(const Key('session-deck-unit')));
-      await tester.tap(find.byKey(const Key('session-deck-unit')));
-      await tester.pumpAndSettle();
-
-      await tester.ensureVisible(
-        find.byKey(const Key('session-include-sentences')),
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-deck-select',
+        optionKey: 'session-deck-unit',
       );
-      await tester.tap(find.byKey(const Key('session-include-sentences')));
-      await tester.pump();
+
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-content-kind-select',
+        optionKey: 'session-include-words',
+      );
       await tester.enterText(find.byKey(const Key('session-limit-input')), '5');
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.byKey(const Key('session-save-bottom')));
-      await tester.tap(find.byKey(const Key('session-save-bottom')));
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-save-menu-bottom',
+        optionKey: 'session-save-bottom',
+      );
       await tester.pump(const Duration(milliseconds: 30));
 
       expect(store.savedPreferences.sessionPlan.deck, StudyDeckScope.unit);
@@ -134,18 +140,22 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('출근길 복습'), findsOneWidget);
-      await tester.tap(
-        find.byKey(const Key('load-session-plan-saved-commute')),
+      await _chooseOption(
+        tester,
+        fieldKey: 'saved-plan-actions-saved-commute',
+        optionKey: 'load-session-plan-saved-commute',
       );
-      await tester.pumpAndSettle();
 
       expect(store.savedPreferences.sessionPlan.planId, 'saved-commute');
       expect(store.savedPreferences.sessionPlan.mode, StudyMode.listening);
       expect(store.savedPreferences.sessionPlan.itemLimit, 15);
+      await tester.pump(const Duration(seconds: 5));
 
-      await tester.ensureVisible(find.byKey(const Key('session-save-bottom')));
-      await tester.tap(find.byKey(const Key('session-save-bottom')));
-      await tester.pumpAndSettle();
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-save-menu-bottom',
+        optionKey: 'session-schedule-bottom',
+      );
 
       expect(notifications.permissionRequests, 1);
       expect(find.textContaining('기기 알림을 저장했습니다'), findsOneWidget);
@@ -178,15 +188,16 @@ void main() {
       await tester.tap(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(
-        find.byKey(const Key('session-length-time-budget')),
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-length-select',
+        optionKey: 'session-length-time-budget',
       );
-      await tester.tap(find.byKey(const Key('session-length-time-budget')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('session-time-3')), findsOneWidget);
-      expect(find.byKey(const Key('session-time-15')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('session-time-15')));
-      await tester.pumpAndSettle();
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-time-select',
+        optionKey: 'session-time-15',
+      );
 
       await tester.ensureVisible(
         find.byKey(const Key('session-advanced-settings')),
@@ -198,19 +209,22 @@ void main() {
       );
       await tester.tap(find.byKey(const Key('session-backlog-recovery')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(
-        find.byKey(const Key('session-backlog-limit-20')),
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-backlog-limit-select',
+        optionKey: 'session-backlog-limit-20',
       );
-      await tester.tap(find.byKey(const Key('session-backlog-limit-20')));
-      await tester.pumpAndSettle();
       await tester.ensureVisible(
         find.byKey(const Key('session-record-progress')),
       );
       await tester.tap(find.byKey(const Key('session-record-progress')));
       await tester.pumpAndSettle();
 
-      await tester.ensureVisible(find.byKey(const Key('session-save-bottom')));
-      await tester.tap(find.byKey(const Key('session-save-bottom')));
+      await _chooseOption(
+        tester,
+        fieldKey: 'session-save-menu-bottom',
+        optionKey: 'session-save-bottom',
+      );
       await tester.pump(const Duration(milliseconds: 30));
 
       final plan = store.savedPreferences.sessionPlan;
@@ -251,17 +265,16 @@ void main() {
         await tester.tap(find.byKey(const Key('open-session-builder')));
         await tester.pumpAndSettle();
 
-        await tester.ensureVisible(
-          find.byKey(const Key('session-mode-pronunciation')),
+        await _chooseOption(
+          tester,
+          fieldKey: 'session-mode-select',
+          optionKey: 'session-mode-pronunciation',
         );
-        await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const Key('session-mode-pronunciation')));
-        await tester.pumpAndSettle();
-        await tester.ensureVisible(
-          find.byKey(const Key('session-deck-selected')),
+        await _chooseOption(
+          tester,
+          fieldKey: 'session-deck-select',
+          optionKey: 'session-deck-selected',
         );
-        await tester.tap(find.byKey(const Key('session-deck-selected')));
-        await tester.pumpAndSettle();
         expect(find.byKey(const Key('session-item-search')), findsOneWidget);
 
         final firstItem = find.byType(CheckboxListTile).first;
@@ -269,10 +282,11 @@ void main() {
         await tester.tap(firstItem);
         await tester.pumpAndSettle();
 
-        await tester.ensureVisible(
-          find.byKey(const Key('session-save-bottom')),
+        await _chooseOption(
+          tester,
+          fieldKey: 'session-save-menu-bottom',
+          optionKey: 'session-save-bottom',
         );
-        await tester.tap(find.byKey(const Key('session-save-bottom')));
         await tester.pump(const Duration(milliseconds: 30));
 
         expect(
@@ -356,6 +370,23 @@ void main() {
       }
     });
   }
+}
+
+Future<void> _chooseOption(
+  WidgetTester tester, {
+  required String fieldKey,
+  required String optionKey,
+}) async {
+  final field = find.byKey(Key(fieldKey));
+  expect(field, findsOneWidget);
+  await tester.ensureVisible(field);
+  await tester.pumpAndSettle();
+  await tester.tap(field);
+  await tester.pumpAndSettle();
+  final option = find.byKey(Key(optionKey));
+  expect(option, findsWidgets);
+  await tester.tap(option.last);
+  await tester.pumpAndSettle();
 }
 
 class _GrantedStudyNotificationService implements StudyNotificationService {

@@ -265,6 +265,11 @@ void main() {
         100,
       );
       expect(
+        find.byKey(const Key('practice-hub-scroll-previous')),
+        findsNothing,
+      );
+      expect(find.byKey(const Key('practice-hub-scroll-next')), findsNothing);
+      expect(
         find.descendant(of: basis, matching: find.text('복습 0')),
         findsOneWidget,
       );

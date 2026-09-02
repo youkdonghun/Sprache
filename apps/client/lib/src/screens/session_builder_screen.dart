@@ -19,6 +19,30 @@ import '../services/app_clock.dart';
 import '../services/study_notification_service.dart';
 import '../state/app_state.dart';
 
+enum _SessionContentKind { mixed, words, sentences }
+
+enum _BuilderHeaderAction { reset }
+
+enum _BottomSessionAction { save, schedule }
+
+enum _SavedPlanAction { load, moveEarlier, moveLater, delete }
+
+enum _ManualSelectionAction { selectVisible, clear }
+
+class _SelectionOption<T> {
+  const _SelectionOption({
+    required this.value,
+    required this.label,
+    this.icon,
+    this.key,
+  });
+
+  final T value;
+  final String label;
+  final IconData? icon;
+  final Key? key;
+}
+
 class SessionBuilderScreen extends ConsumerStatefulWidget {
   const SessionBuilderScreen({super.key});
 
@@ -57,23 +81,6 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
   void dispose() {
     _titleController.dispose();
     super.dispose();
-  }
-
-  void _toggleKind({required bool words, required bool selected}) {
-    final includeWords = words ? selected : _plan.includeWords;
-    final includeSentences = words ? _plan.includeSentences : selected;
-    if (!includeWords && !includeSentences) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('단어 또는 문장을 하나 이상 선택해 주세요.')));
-      return;
-    }
-    _setPlan(
-      _plan.copyWith(
-        includeWords: includeWords,
-        includeSentences: includeSentences,
-      ),
-    );
   }
 
   void _resetAdvancedSettings() {
@@ -466,19 +473,27 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
+                    _CompactSelectionField<StudyMode>(
+                      fieldKey: const Key('session-mode-select'),
+                      label: '풀 방식',
+                      value: _plan.mode,
+                      helperText: _plan.mode.description,
+                      prefixIcon: Icons.quiz_outlined,
+                      options: [
+                        if (!_exerciseModes.contains(_plan.mode))
+                          _SelectionOption(
+                            key: Key('session-mode-${_plan.mode.name}'),
+                            value: _plan.mode,
+                            label: _plan.mode.label,
+                          ),
                         for (final mode in _exerciseModes)
-                          ChoiceChip(
+                          _SelectionOption(
                             key: Key('session-mode-${mode.name}'),
-                            label: Text(mode.label),
-                            selected: _plan.mode == mode,
-                            onSelected: (_) =>
-                                _setPlan(_plan.copyWith(mode: mode)),
+                            value: mode,
+                            label: mode.label,
                           ),
                       ],
+                      onChanged: (mode) => _setPlan(_plan.copyWith(mode: mode)),
                     ),
                     const SizedBox(height: 14),
                     _AnswerDirectionEditor(plan: _plan, onChanged: _setPlan),
@@ -493,31 +508,29 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    LayoutBuilder(
-                      builder: (context, sectionConstraints) {
-                        final columns = sectionConstraints.maxWidth >= 660
-                            ? 2
-                            : 1;
-                        final width =
-                            (sectionConstraints.maxWidth - (columns - 1) * 10) /
-                            columns;
-                        return Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            for (final deck in StudyDeckScope.values)
-                              SizedBox(
-                                width: width,
-                                child: _DeckChoice(
-                                  deck: deck,
-                                  selected: _plan.deck == deck,
-                                  onTap: () =>
-                                      _setPlan(_plan.copyWith(deck: deck)),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
+                    _CompactSelectionField<StudyDeckScope>(
+                      fieldKey: const Key('session-deck-select'),
+                      label: '학습할 자료',
+                      value: _plan.deck,
+                      helperText: _plan.deck.description,
+                      prefixIcon: Icons.folder_open_rounded,
+                      options: [
+                        for (final deck in StudyDeckScope.values)
+                          _SelectionOption(
+                            key: Key('session-deck-${deck.name}'),
+                            value: deck,
+                            label: deck.label,
+                            icon: switch (deck) {
+                              StudyDeckScope.course => Icons.language_rounded,
+                              StudyDeckScope.unit => Icons.view_module_rounded,
+                              StudyDeckScope.favorites => Icons.star_rounded,
+                              StudyDeckScope.personal => Icons.person_rounded,
+                              StudyDeckScope.selected =>
+                                Icons.checklist_rounded,
+                            },
+                          ),
+                      ],
+                      onChanged: (deck) => _setPlan(_plan.copyWith(deck: deck)),
                     ),
                     if (_plan.deck == StudyDeckScope.unit) ...[
                       const SizedBox(height: 14),
@@ -574,61 +587,52 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
+                    _CompactSelectionField<StudyDifficulty>(
+                      fieldKey: const Key('session-difficulty-select'),
+                      label: '현재 기억 단계',
+                      value: _plan.difficulty,
+                      options: [
                         for (final difficulty in StudyDifficulty.values)
-                          ChoiceChip(
+                          _SelectionOption(
                             key: Key('session-difficulty-${difficulty.name}'),
-                            label: Text(difficulty.label),
-                            selected: _plan.difficulty == difficulty,
-                            onSelected: (_) => _setPlan(
-                              _plan.copyWith(difficulty: difficulty),
-                            ),
+                            value: difficulty,
+                            label: difficulty.label,
                           ),
                       ],
+                      onChanged: (difficulty) =>
+                          _setPlan(_plan.copyWith(difficulty: difficulty)),
                     ),
-                    const SizedBox(height: 18),
-                    Text(
-                      '학습 기록',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
+                    const SizedBox(height: 14),
+                    _CompactSelectionField<StudyHistoryFilter>(
+                      fieldKey: const Key('session-history-select'),
+                      label: '학습 기록',
+                      value: _plan.historyFilter,
+                      options: [
                         for (final filter in StudyHistoryFilter.values)
-                          ChoiceChip(
+                          _SelectionOption(
                             key: Key('session-history-${filter.name}'),
-                            label: Text(filter.label),
-                            selected: _plan.historyFilter == filter,
-                            onSelected: (_) =>
-                                _setPlan(_plan.copyWith(historyFilter: filter)),
+                            value: filter,
+                            label: filter.label,
                           ),
                       ],
+                      onChanged: (filter) =>
+                          _setPlan(_plan.copyWith(historyFilter: filter)),
                     ),
-                    const SizedBox(height: 18),
-                    Text(
-                      '출제 순서',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
+                    const SizedBox(height: 14),
+                    _CompactSelectionField<StudyQueuePriority>(
+                      fieldKey: const Key('session-priority-select'),
+                      label: '출제 순서',
+                      value: _plan.queuePriority,
+                      options: [
                         for (final priority in StudyQueuePriority.values)
-                          ChoiceChip(
+                          _SelectionOption(
                             key: Key('session-priority-${priority.name}'),
-                            label: Text(priority.label),
-                            selected: _plan.queuePriority == priority,
-                            onSelected: (_) => _setPlan(
-                              _plan.copyWith(queuePriority: priority),
-                            ),
+                            value: priority,
+                            label: priority.label,
                           ),
                       ],
+                      onChanged: (priority) =>
+                          _setPlan(_plan.copyWith(queuePriority: priority)),
                     ),
                     const SizedBox(height: 18),
                     _BacklogRecoveryEditor(
@@ -655,31 +659,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        FilterChip(
-                          key: const Key('session-include-words'),
-                          avatar: const Icon(
-                            Icons.text_fields_rounded,
-                            size: 18,
-                          ),
-                          label: const Text('단어 포함'),
-                          selected: _plan.includeWords,
-                          onSelected: (selected) =>
-                              _toggleKind(words: true, selected: selected),
-                        ),
-                        FilterChip(
-                          key: const Key('session-include-sentences'),
-                          avatar: const Icon(Icons.notes_rounded, size: 18),
-                          label: const Text('문장 포함'),
-                          selected: _plan.includeSentences,
-                          onSelected: (selected) =>
-                              _toggleKind(words: false, selected: selected),
-                        ),
-                      ],
-                    ),
+                    _ContentKindField(plan: _plan, onChanged: _setPlan),
                     const SizedBox(height: 18),
                     _SessionLengthEditor(
                       plan: _plan,
@@ -838,6 +818,7 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
 
           final header = _Header(
             languageName: activeSubject.name,
+            subjectKey: appState.activeSubjectId,
             generalTopic: !activeSubject.isLanguage,
             onBack: () => context.go('/learn'),
             onReset: () => _setPlan(
@@ -853,6 +834,8 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
             onMoveEarlier: (plan) => _moveRoutinePlan(plan, -1),
             onMoveLater: (plan) => _moveRoutinePlan(plan, 1),
           );
+          final hasSavedPlans =
+              controller.activeSubjectSavedSessionPlans.isNotEmpty;
           if (desktop) {
             return SingleChildScrollView(
               key: const Key('session-builder-scroll'),
@@ -864,8 +847,10 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       header,
-                      const SizedBox(height: 18),
-                      savedPlans,
+                      if (hasSavedPlans) ...[
+                        const SizedBox(height: 18),
+                        savedPlans,
+                      ],
                       const SizedBox(height: 18),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -919,8 +904,10 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                           syncTitle: true,
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      savedPlans,
+                      if (hasSavedPlans) ...[
+                        const SizedBox(height: 12),
+                        savedPlans,
+                      ],
                       const SizedBox(height: 12),
                       _MobileSessionEditor(
                         plan: _plan,
@@ -936,7 +923,6 @@ class _SessionBuilderScreenState extends ConsumerState<SessionBuilderScreen> {
                         titleController: _titleController,
                         onChanged: _setPlan,
                         onResetAdvanced: _resetAdvancedSettings,
-                        onToggleKind: _toggleKind,
                         onPickSchedule: _pickSchedule,
                         onPickExamTargetDate: _pickExamTargetDate,
                       ),
@@ -1040,7 +1026,6 @@ class _MobileSessionEditor extends StatelessWidget {
     required this.titleController,
     required this.onChanged,
     required this.onResetAdvanced,
-    required this.onToggleKind,
     required this.onPickSchedule,
     required this.onPickExamTargetDate,
   });
@@ -1058,8 +1043,6 @@ class _MobileSessionEditor extends StatelessWidget {
   final TextEditingController titleController;
   final ValueChanged<StudySessionPlan> onChanged;
   final VoidCallback onResetAdvanced;
-  final void Function({required bool words, required bool selected})
-  onToggleKind;
   final Future<bool> Function() onPickSchedule;
   final Future<void> Function() onPickExamTargetDate;
 
@@ -1122,18 +1105,27 @@ class _MobileSessionEditor extends StatelessWidget {
                 const SizedBox(height: 14),
                 _MobileSettingLabel(number: '1', label: '문제 방식'),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: [
+                _CompactSelectionField<StudyMode>(
+                  fieldKey: const Key('session-mode-select'),
+                  label: '풀 방식',
+                  value: plan.mode,
+                  helperText: plan.mode.description,
+                  prefixIcon: Icons.quiz_outlined,
+                  options: [
+                    if (!modes.contains(plan.mode))
+                      _SelectionOption(
+                        key: Key('session-mode-${plan.mode.name}'),
+                        value: plan.mode,
+                        label: plan.mode.label,
+                      ),
                     for (final mode in modes)
-                      ChoiceChip(
+                      _SelectionOption(
                         key: Key('session-mode-${mode.name}'),
-                        label: Text(mode.label),
-                        selected: plan.mode == mode,
-                        onSelected: (_) => onChanged(plan.copyWith(mode: mode)),
+                        value: mode,
+                        label: mode.label,
                       ),
                   ],
+                  onChanged: (mode) => onChanged(plan.copyWith(mode: mode)),
                 ),
                 const SizedBox(height: 12),
                 _AnswerDirectionEditor(
@@ -1144,25 +1136,28 @@ class _MobileSessionEditor extends StatelessWidget {
                 const Divider(height: 26),
                 _MobileSettingLabel(number: '2', label: '자료 범위'),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: [
+                _CompactSelectionField<StudyDeckScope>(
+                  fieldKey: const Key('session-deck-select'),
+                  label: '학습할 자료',
+                  value: plan.deck,
+                  helperText: plan.deck.description,
+                  prefixIcon: Icons.folder_open_rounded,
+                  options: [
                     for (final deck in StudyDeckScope.values)
-                      ChoiceChip(
+                      _SelectionOption(
                         key: Key('session-deck-${deck.name}'),
-                        avatar: Icon(switch (deck) {
+                        value: deck,
+                        label: deck.label,
+                        icon: switch (deck) {
                           StudyDeckScope.course => Icons.language_rounded,
                           StudyDeckScope.unit => Icons.view_module_rounded,
                           StudyDeckScope.favorites => Icons.star_rounded,
                           StudyDeckScope.personal => Icons.person_rounded,
                           StudyDeckScope.selected => Icons.checklist_rounded,
-                        }, size: 17),
-                        label: Text(deck.label),
-                        selected: plan.deck == deck,
-                        onSelected: (_) => onChanged(plan.copyWith(deck: deck)),
+                        },
                       ),
                   ],
+                  onChanged: (deck) => onChanged(plan.copyWith(deck: deck)),
                 ),
                 if (plan.deck == StudyDeckScope.unit) ...[
                   const SizedBox(height: 10),
@@ -1207,28 +1202,7 @@ class _MobileSessionEditor extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: [
-                    FilterChip(
-                      key: const Key('session-include-words'),
-                      avatar: const Icon(Icons.text_fields_rounded, size: 17),
-                      label: const Text('단어'),
-                      selected: plan.includeWords,
-                      onSelected: (selected) =>
-                          onToggleKind(words: true, selected: selected),
-                    ),
-                    FilterChip(
-                      key: const Key('session-include-sentences'),
-                      avatar: const Icon(Icons.notes_rounded, size: 17),
-                      label: const Text('문장'),
-                      selected: plan.includeSentences,
-                      onSelected: (selected) =>
-                          onToggleKind(words: false, selected: selected),
-                    ),
-                  ],
-                ),
+                _ContentKindField(plan: plan, onChanged: onChanged),
                 const Divider(height: 26),
                 _MobileSettingLabel(number: '3', label: '세션 길이'),
                 const SizedBox(height: 8),
@@ -1267,82 +1241,52 @@ class _MobileSessionEditor extends StatelessWidget {
                   ),
             childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
             children: [
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '현재 기억 단계',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: [
-                    for (final difficulty in StudyDifficulty.values)
-                      ChoiceChip(
-                        key: Key('session-difficulty-${difficulty.name}'),
-                        label: Text(difficulty.label),
-                        selected: plan.difficulty == difficulty,
-                        onSelected: (_) =>
-                            onChanged(plan.copyWith(difficulty: difficulty)),
-                      ),
-                  ],
-                ),
+              _CompactSelectionField<StudyDifficulty>(
+                fieldKey: const Key('session-difficulty-select'),
+                label: '현재 기억 단계',
+                value: plan.difficulty,
+                options: [
+                  for (final difficulty in StudyDifficulty.values)
+                    _SelectionOption(
+                      key: Key('session-difficulty-${difficulty.name}'),
+                      value: difficulty,
+                      label: difficulty.label,
+                    ),
+                ],
+                onChanged: (difficulty) =>
+                    onChanged(plan.copyWith(difficulty: difficulty)),
               ),
               const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '학습 기록',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: [
-                    for (final filter in StudyHistoryFilter.values)
-                      ChoiceChip(
-                        key: Key('session-history-${filter.name}'),
-                        label: Text(filter.label),
-                        selected: plan.historyFilter == filter,
-                        onSelected: (_) =>
-                            onChanged(plan.copyWith(historyFilter: filter)),
-                      ),
-                  ],
-                ),
+              _CompactSelectionField<StudyHistoryFilter>(
+                fieldKey: const Key('session-history-select'),
+                label: '학습 기록',
+                value: plan.historyFilter,
+                options: [
+                  for (final filter in StudyHistoryFilter.values)
+                    _SelectionOption(
+                      key: Key('session-history-${filter.name}'),
+                      value: filter,
+                      label: filter.label,
+                    ),
+                ],
+                onChanged: (filter) =>
+                    onChanged(plan.copyWith(historyFilter: filter)),
               ),
               const SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '출제 순서',
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: [
-                    for (final priority in StudyQueuePriority.values)
-                      ChoiceChip(
-                        key: Key('session-priority-${priority.name}'),
-                        label: Text(priority.label),
-                        selected: plan.queuePriority == priority,
-                        onSelected: (_) =>
-                            onChanged(plan.copyWith(queuePriority: priority)),
-                      ),
-                  ],
-                ),
+              _CompactSelectionField<StudyQueuePriority>(
+                fieldKey: const Key('session-priority-select'),
+                label: '출제 순서',
+                value: plan.queuePriority,
+                options: [
+                  for (final priority in StudyQueuePriority.values)
+                    _SelectionOption(
+                      key: Key('session-priority-${priority.name}'),
+                      value: priority,
+                      label: priority.label,
+                    ),
+                ],
+                onChanged: (priority) =>
+                    onChanged(plan.copyWith(queuePriority: priority)),
               ),
               const SizedBox(height: 16),
               _BacklogRecoveryEditor(
@@ -1512,23 +1456,24 @@ class _AnswerDirectionEditor extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               if (canChoose)
-                Wrap(
-                  spacing: 7,
-                  runSpacing: 7,
-                  children: [
+                _CompactSelectionField<StudyAnswerDirection>(
+                  fieldKey: const Key('builder-direction-select'),
+                  label: '질문과 답의 방향',
+                  value:
+                      plan.answerDirectionOverride ??
+                      StudyAnswerDirection.mixed,
+                  prefixIcon: Icons.swap_horiz_rounded,
+                  options: [
                     for (final direction in StudyAnswerDirection.values)
-                      ChoiceChip(
+                      _SelectionOption(
                         key: Key('builder-direction-${direction.name}'),
-                        label: Text(_sessionDirectionLabel(direction)),
-                        selected:
-                            (plan.answerDirectionOverride ??
-                                StudyAnswerDirection.mixed) ==
-                            direction,
-                        onSelected: (_) => onChanged(
-                          plan.copyWith(answerDirectionOverride: direction),
-                        ),
+                        value: direction,
+                        label: _sessionDirectionLabel(direction),
                       ),
                   ],
+                  onChanged: (direction) => onChanged(
+                    plan.copyWith(answerDirectionOverride: direction),
+                  ),
                 )
               else
                 Align(
@@ -1585,6 +1530,130 @@ class _MobileSettingLabel extends StatelessWidget {
   }
 }
 
+class _CompactSelectionField<T> extends StatelessWidget {
+  const _CompactSelectionField({
+    required this.fieldKey,
+    required this.label,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+    this.helperText,
+    this.prefixIcon,
+  });
+
+  final Key fieldKey;
+  final String label;
+  final T value;
+  final List<_SelectionOption<T>> options;
+  final ValueChanged<T> onChanged;
+  final String? helperText;
+  final IconData? prefixIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<T>(
+      key: fieldKey,
+      initialValue: value,
+      isExpanded: true,
+      decoration: InputDecoration(
+        labelText: label,
+        helperText: helperText,
+        helperMaxLines: 2,
+        prefixIcon: prefixIcon == null ? null : Icon(prefixIcon),
+      ),
+      items: [
+        for (final option in options)
+          DropdownMenuItem<T>(
+            key: option.key,
+            value: option.value,
+            child: Row(
+              children: [
+                if (option.icon != null) ...[
+                  Icon(option.icon, size: 18),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(option.label, overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+          ),
+      ],
+      onChanged: (selected) {
+        if (selected != null && selected != value) onChanged(selected);
+      },
+    );
+  }
+}
+
+class _ContentKindField extends StatelessWidget {
+  const _ContentKindField({required this.plan, required this.onChanged});
+
+  final StudySessionPlan plan;
+  final ValueChanged<StudySessionPlan> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = switch ((plan.includeWords, plan.includeSentences)) {
+      (true, false) => _SessionContentKind.words,
+      (false, true) => _SessionContentKind.sentences,
+      _ => _SessionContentKind.mixed,
+    };
+    return _CompactSelectionField<_SessionContentKind>(
+      fieldKey: const Key('session-content-kind-select'),
+      label: '자료 유형',
+      value: value,
+      helperText: switch (value) {
+        _SessionContentKind.mixed => '단어와 문장을 현재 비율에 맞춰 섞습니다.',
+        _SessionContentKind.words => '단어 자료만 문제에 사용합니다.',
+        _SessionContentKind.sentences => '문장 자료만 문제에 사용합니다.',
+      },
+      prefixIcon: Icons.text_snippet_outlined,
+      options: const [
+        _SelectionOption(
+          value: _SessionContentKind.mixed,
+          label: '단어 + 문장',
+          icon: Icons.join_inner_rounded,
+          key: Key('session-include-mixed'),
+        ),
+        _SelectionOption(
+          value: _SessionContentKind.words,
+          label: '단어만',
+          icon: Icons.text_fields_rounded,
+          key: Key('session-include-words'),
+        ),
+        _SelectionOption(
+          value: _SessionContentKind.sentences,
+          label: '문장만',
+          icon: Icons.notes_rounded,
+          key: Key('session-include-sentences'),
+        ),
+      ],
+      onChanged: (selected) {
+        onChanged(switch (selected) {
+          _SessionContentKind.mixed => plan.copyWith(
+            includeWords: true,
+            includeSentences: true,
+            sentenceRatio: plan.sentenceRatio <= 0 || plan.sentenceRatio >= 1
+                ? 0.3
+                : plan.sentenceRatio,
+          ),
+          _SessionContentKind.words => plan.copyWith(
+            includeWords: true,
+            includeSentences: false,
+            sentenceRatio: 0,
+          ),
+          _SessionContentKind.sentences => plan.copyWith(
+            includeWords: false,
+            includeSentences: true,
+            sentenceRatio: 1,
+          ),
+        });
+      },
+    );
+  }
+}
+
 class _QuickSessionPresets extends StatelessWidget {
   const _QuickSessionPresets({required this.onSelected});
 
@@ -1637,38 +1706,51 @@ class _QuickSessionPresets extends StatelessWidget {
     return Card(
       key: const Key('quick-session-presets'),
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        child: Row(
-          children: [
-            const Icon(Icons.bolt_rounded, size: 19),
-            const SizedBox(width: 6),
-            Text(
-              '빠른 설정',
-              style: Theme.of(
-                context,
-              ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final (index, preset) in presets.indexed) ...[
-                      if (index > 0) const SizedBox(width: 7),
-                      ActionChip(
-                        key: Key('quick-session-preset-$index'),
-                        avatar: Icon(preset.icon, size: 17),
-                        label: Text(preset.label),
-                        onPressed: () => onSelected(preset.plan),
-                      ),
-                    ],
-                  ],
+      child: PopupMenuButton<int>(
+        key: const Key('quick-session-preset-menu'),
+        tooltip: '간단한 학습 설정 고르기',
+        onSelected: (index) => onSelected(presets[index].plan),
+        itemBuilder: (context) => [
+          for (final (index, preset) in presets.indexed)
+            PopupMenuItem<int>(
+              key: Key('quick-session-preset-$index'),
+              value: index,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(preset.icon),
+                title: Text(preset.label),
+                subtitle: Text(
+                  '${preset.plan.mode.label} · ${preset.plan.itemLimit}문제',
                 ),
               ),
             ),
-          ],
+        ],
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          child: Row(
+            children: [
+              const Icon(Icons.bolt_rounded, size: 20),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '빠른 설정',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    Text(
+                      '자주 쓰는 구성을 한 번에 적용',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.expand_more_rounded),
+            ],
+          ),
         ),
       ),
     );
@@ -1814,65 +1896,98 @@ class _SavedPlansCard extends StatelessWidget {
                             ),
                             if (plan.routineName.isNotEmpty) ...[
                               const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      '${plan.routineName} · 순서 ${plan.routineOrder + 1}',
-                                      key: Key('routine-label-${plan.planId}'),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelMedium
-                                          ?.copyWith(color: colors.primary),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    key: Key('routine-earlier-${plan.planId}'),
-                                    visualDensity: VisualDensity.compact,
-                                    tooltip: '루틴에서 앞 순서',
-                                    onPressed: () => onMoveEarlier(plan),
-                                    icon: const Icon(
-                                      Icons.arrow_back_rounded,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  IconButton(
-                                    key: Key('routine-later-${plan.planId}'),
-                                    visualDensity: VisualDensity.compact,
-                                    tooltip: '루틴에서 뒤 순서',
-                                    onPressed: () => onMoveLater(plan),
-                                    icon: const Icon(
-                                      Icons.arrow_forward_rounded,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                '${plan.routineName} · 순서 ${plan.routineOrder + 1}',
+                                key: Key('routine-label-${plan.planId}'),
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(color: colors.primary),
                               ),
                             ],
                             const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    key: Key(
-                                      'load-session-plan-${plan.planId}',
-                                    ),
-                                    onPressed: () => onLoad(plan),
-                                    child: const Text('불러오기'),
+                            PopupMenuButton<_SavedPlanAction>(
+                              key: Key('saved-plan-actions-${plan.planId}'),
+                              tooltip: '저장한 학습 설정 열기 및 관리',
+                              onSelected: (action) {
+                                switch (action) {
+                                  case _SavedPlanAction.load:
+                                    onLoad(plan);
+                                    break;
+                                  case _SavedPlanAction.moveEarlier:
+                                    onMoveEarlier(plan);
+                                    break;
+                                  case _SavedPlanAction.moveLater:
+                                    onMoveLater(plan);
+                                    break;
+                                  case _SavedPlanAction.delete:
+                                    onDelete(plan);
+                                    break;
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem(
+                                  key: Key('load-session-plan-${plan.planId}'),
+                                  value: _SavedPlanAction.load,
+                                  child: const ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(Icons.edit_note_rounded),
+                                    title: Text('불러와서 편집'),
                                   ),
                                 ),
-                                IconButton(
+                                if (plan.routineName.isNotEmpty) ...[
+                                  PopupMenuItem(
+                                    key: Key('routine-earlier-${plan.planId}'),
+                                    value: _SavedPlanAction.moveEarlier,
+                                    child: const ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: Icon(Icons.arrow_back_rounded),
+                                      title: Text('루틴에서 앞 순서'),
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    key: Key('routine-later-${plan.planId}'),
+                                    value: _SavedPlanAction.moveLater,
+                                    child: const ListTile(
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: Icon(
+                                        Icons.arrow_forward_rounded,
+                                      ),
+                                      title: Text('루틴에서 뒤 순서'),
+                                    ),
+                                  ),
+                                ],
+                                PopupMenuItem(
                                   key: Key(
                                     'delete-session-plan-${plan.planId}',
                                   ),
-                                  onPressed: () => onDelete(plan),
-                                  tooltip: '일정 삭제',
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
+                                  value: _SavedPlanAction.delete,
+                                  child: const ListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    leading: Icon(Icons.delete_outline_rounded),
+                                    title: Text('저장한 일정 삭제'),
                                   ),
                                 ),
                               ],
+                              child: Container(
+                                height: 40,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: colors.outlineVariant,
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.edit_note_rounded, size: 19),
+                                    SizedBox(width: 7),
+                                    Text('불러오기 · 관리'),
+                                    SizedBox(width: 4),
+                                    Icon(Icons.expand_more_rounded, size: 19),
+                                  ],
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -1980,29 +2095,26 @@ class _SessionLengthEditor extends StatelessWidget {
       children: [
         Text('세션 길이', style: Theme.of(context).textTheme.titleSmall),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            ChoiceChip(
-              key: const Key('session-length-item-count'),
-              avatar: const Icon(Icons.format_list_numbered_rounded, size: 17),
-              label: const Text('문제 수'),
-              selected: plan.lengthMode == StudySessionLengthMode.itemCount,
-              onSelected: (_) => onChanged(
-                plan.copyWith(lengthMode: StudySessionLengthMode.itemCount),
-              ),
+        _CompactSelectionField<StudySessionLengthMode>(
+          fieldKey: const Key('session-length-select'),
+          label: '길이 기준',
+          value: plan.lengthMode,
+          prefixIcon: Icons.straighten_rounded,
+          options: const [
+            _SelectionOption(
+              key: Key('session-length-item-count'),
+              value: StudySessionLengthMode.itemCount,
+              label: '문제 수로 정하기',
+              icon: Icons.format_list_numbered_rounded,
             ),
-            ChoiceChip(
-              key: const Key('session-length-time-budget'),
-              avatar: const Icon(Icons.timer_outlined, size: 17),
-              label: const Text('시간 기준'),
-              selected: plan.lengthMode == StudySessionLengthMode.timeBudget,
-              onSelected: (_) => onChanged(
-                plan.copyWith(lengthMode: StudySessionLengthMode.timeBudget),
-              ),
+            _SelectionOption(
+              key: Key('session-length-time-budget'),
+              value: StudySessionLengthMode.timeBudget,
+              label: '학습 시간으로 정하기',
+              icon: Icons.timer_outlined,
             ),
           ],
+          onChanged: (mode) => onChanged(plan.copyWith(lengthMode: mode)),
         ),
         const SizedBox(height: 10),
         if (plan.lengthMode == StudySessionLengthMode.itemCount)
@@ -2012,19 +2124,26 @@ class _SessionLengthEditor extends StatelessWidget {
             onChanged: (value) => onChanged(plan.copyWith(itemLimit: value)),
           )
         else ...[
-          Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            children: [
+          _CompactSelectionField<int>(
+            fieldKey: const Key('session-time-select'),
+            label: '학습 시간',
+            value: plan.timeBudgetMinutes,
+            prefixIcon: Icons.timer_rounded,
+            options: [
+              if (!const [2, 3, 5, 10, 15].contains(plan.timeBudgetMinutes))
+                _SelectionOption(
+                  value: plan.timeBudgetMinutes,
+                  label: '${plan.timeBudgetMinutes}분',
+                ),
               for (final minutes in const [2, 3, 5, 10, 15])
-                ChoiceChip(
+                _SelectionOption(
                   key: Key('session-time-$minutes'),
-                  label: Text('$minutes분'),
-                  selected: plan.timeBudgetMinutes == minutes,
-                  onSelected: (_) =>
-                      onChanged(plan.copyWith(timeBudgetMinutes: minutes)),
+                  value: minutes,
+                  label: '$minutes분',
                 ),
             ],
+            onChanged: (minutes) =>
+                onChanged(plan.copyWith(timeBudgetMinutes: minutes)),
           ),
           const SizedBox(height: 8),
           Text(
@@ -2081,28 +2200,33 @@ class _BacklogRecoveryEditor extends StatelessWidget {
             ),
             if (settings.enabled) ...[
               const SizedBox(height: 4),
-              Text(
-                '오늘 최대 ${settings.dailyLimit}문제',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 7,
-                runSpacing: 7,
-                children: [
+              _CompactSelectionField<int>(
+                fieldKey: const Key('session-backlog-limit-select'),
+                label: '오늘 최대 복습량',
+                value: settings.dailyLimit,
+                prefixIcon: Icons.inventory_2_outlined,
+                options: [
+                  if (!const [
+                    10,
+                    20,
+                    30,
+                    50,
+                    100,
+                  ].contains(settings.dailyLimit))
+                    _SelectionOption(
+                      value: settings.dailyLimit,
+                      label: '${settings.dailyLimit}문제',
+                    ),
                   for (final limit in const [10, 20, 30, 50, 100])
-                    ChoiceChip(
+                    _SelectionOption(
                       key: Key('session-backlog-limit-$limit'),
-                      label: Text('$limit'),
-                      selected: settings.dailyLimit == limit,
-                      onSelected: (_) => onChanged(
-                        BacklogRecoverySettings(
-                          enabled: true,
-                          dailyLimit: limit,
-                        ),
-                      ),
+                      value: limit,
+                      label: '$limit문제',
                     ),
                 ],
+                onChanged: (limit) => onChanged(
+                  BacklogRecoverySettings(enabled: true, dailyLimit: limit),
+                ),
               ),
               if (missedItems > 0) ...[
                 const SizedBox(height: 8),
@@ -2276,20 +2400,44 @@ class _ManualItemPickerState extends State<_ManualItemPicker> {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
-                TextButton(
-                  onPressed: visible.isEmpty
-                      ? null
-                      : () => widget.onChanged({
+                PopupMenuButton<_ManualSelectionAction>(
+                  key: const Key('session-manual-selection-menu'),
+                  tooltip: '직접 선택 관리',
+                  onSelected: (action) {
+                    switch (action) {
+                      case _ManualSelectionAction.selectVisible:
+                        widget.onChanged({
                           ...widget.selectedIds,
                           ...visible.map((item) => item.id),
-                        }),
-                  child: const Text('보이는 항목 선택'),
-                ),
-                TextButton(
-                  onPressed: widget.selectedIds.isEmpty
-                      ? null
-                      : () => widget.onChanged({}),
-                  child: const Text('해제'),
+                        });
+                        break;
+                      case _ManualSelectionAction.clear:
+                        widget.onChanged({});
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      key: const Key('session-select-visible-items'),
+                      value: _ManualSelectionAction.selectVisible,
+                      enabled: visible.isNotEmpty,
+                      child: const ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.select_all_rounded),
+                        title: Text('보이는 항목 모두 선택'),
+                      ),
+                    ),
+                    PopupMenuItem(
+                      key: const Key('session-clear-selected-items'),
+                      value: _ManualSelectionAction.clear,
+                      enabled: widget.selectedIds.isNotEmpty,
+                      child: const ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(Icons.deselect_rounded),
+                        title: Text('선택 모두 해제'),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -2351,21 +2499,25 @@ class _ManualItemPickerState extends State<_ManualItemPicker> {
 class _Header extends StatelessWidget {
   const _Header({
     required this.languageName,
+    required this.subjectKey,
     required this.generalTopic,
     required this.onBack,
     required this.onReset,
   });
 
   final String languageName;
+  final String subjectKey;
   final bool generalTopic;
   final VoidCallback onBack;
   final VoidCallback onReset;
 
   @override
   Widget build(BuildContext context) {
+    final keyLabel = subjectKey.contains(':')
+        ? subjectKey.substring(subjectKey.indexOf(':') + 1)
+        : subjectKey;
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final veryNarrow = constraints.maxWidth < 340;
+      builder: (context, _) {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2375,42 +2527,56 @@ class _Header extends StatelessWidget {
               tooltip: '학습실로 돌아가기',
               icon: const Icon(Icons.arrow_back_rounded),
             ),
-            SizedBox(width: veryNarrow ? 2 : 6),
+            const SizedBox(width: 6),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    veryNarrow ? '학습 세션 만들기' : '나만의 학습 세션',
+                    '$languageName 학습 세션',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    veryNarrow
-                        ? '$languageName 자료와 문제 방식을 고르세요.'
-                        : generalTopic
-                        ? '$languageName 주제에서 필요한 자료와 문제 방식만 조합하세요.'
-                        : '$languageName 코스에서 필요한 표현과 문제 방식만 조합하세요.',
+                    generalTopic
+                        ? '이 설정과 퀴즈 기록은 $languageName 주제에만 적용됩니다.'
+                        : '이 설정과 퀴즈 기록은 $languageName 코스에만 적용됩니다.',
                     style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 5),
+                  Semantics(
+                    label: '현재 학습 키 $subjectKey',
+                    child: Text(
+                      '${generalTopic ? '주제키' : '언어키'} · $keyLabel',
+                      key: const Key('session-subject-key'),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            SizedBox(width: veryNarrow ? 2 : 8),
-            if (veryNarrow)
-              IconButton(
-                key: const Key('session-builder-reset'),
-                onPressed: onReset,
-                tooltip: '설정 초기화',
-                icon: const Icon(Icons.restart_alt_rounded),
-              )
-            else
-              TextButton.icon(
-                key: const Key('session-builder-reset'),
-                onPressed: onReset,
-                icon: const Icon(Icons.restart_alt_rounded),
-                label: const Text('초기화'),
-              ),
+            const SizedBox(width: 4),
+            PopupMenuButton<_BuilderHeaderAction>(
+              key: const Key('session-builder-menu'),
+              tooltip: '세션 설정 메뉴',
+              onSelected: (action) {
+                if (action == _BuilderHeaderAction.reset) onReset();
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  key: Key('session-builder-reset'),
+                  value: _BuilderHeaderAction.reset,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.restart_alt_rounded),
+                    title: Text('기본값으로 초기화'),
+                  ),
+                ),
+              ],
+            ),
           ],
         );
       },
@@ -2482,71 +2648,6 @@ class _BuilderSection extends StatelessWidget {
             const SizedBox(height: 16),
             child,
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DeckChoice extends StatelessWidget {
-  const _DeckChoice({
-    required this.deck,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final StudyDeckScope deck;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: selected ? colors.secondaryContainer : colors.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(
-          color: selected ? colors.primary : colors.outlineVariant,
-          width: selected ? 1.5 : 1,
-        ),
-      ),
-      child: InkWell(
-        key: Key('session-deck-${deck.name}'),
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              Icon(switch (deck) {
-                StudyDeckScope.course => Icons.language_rounded,
-                StudyDeckScope.unit => Icons.view_module_rounded,
-                StudyDeckScope.favorites => Icons.star_rounded,
-                StudyDeckScope.personal => Icons.person_rounded,
-                StudyDeckScope.selected => Icons.checklist_rounded,
-              }, color: selected ? colors.primary : colors.onSurfaceVariant),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      deck.label,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      deck.description,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              if (selected)
-                Icon(Icons.check_circle_rounded, color: colors.primary),
-            ],
-          ),
         ),
       ),
     );
@@ -2789,12 +2890,6 @@ class _BottomActions extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                   ),
-                  IconButton(
-                    key: const Key('session-save-bottom'),
-                    onPressed: onSave,
-                    icon: const Icon(Icons.bookmark_add_outlined),
-                    tooltip: '현재 설정만 저장',
-                  ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -2810,16 +2905,55 @@ class _BottomActions extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    flex: 5,
-                    child: OutlinedButton.icon(
-                      key: const Key('session-schedule-bottom'),
-                      onPressed: onSchedule,
-                      icon: const Icon(Icons.event_rounded),
-                      label: Text(
-                        scheduledAt == null ? '나중에 학습' : '일정 저장',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                  PopupMenuButton<_BottomSessionAction>(
+                    key: const Key('session-save-menu-bottom'),
+                    tooltip: '현재 설정 저장 또는 예약',
+                    onSelected: (action) {
+                      switch (action) {
+                        case _BottomSessionAction.save:
+                          onSave();
+                          break;
+                        case _BottomSessionAction.schedule:
+                          onSchedule();
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        key: Key('session-save-bottom'),
+                        value: _BottomSessionAction.save,
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.bookmark_add_outlined),
+                          title: Text('현재 설정만 저장'),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        key: const Key('session-schedule-bottom'),
+                        value: _BottomSessionAction.schedule,
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.event_rounded),
+                          title: Text(scheduledAt == null ? '나중에 학습' : '일정 저장'),
+                        ),
+                      ),
+                    ],
+                    child: Container(
+                      height: 40,
+                      padding: const EdgeInsets.symmetric(horizontal: 13),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: colors.outlineVariant),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.bookmark_add_outlined, size: 19),
+                          SizedBox(width: 6),
+                          Text('저장'),
+                          Icon(Icons.expand_more_rounded, size: 19),
+                        ],
                       ),
                     ),
                   ),
@@ -2943,7 +3077,7 @@ class _SessionCountInputState extends State<_SessionCountInput> {
   @override
   Widget build(BuildContext context) {
     final input = SizedBox(
-      width: widget.compact ? 82 : 94,
+      width: widget.compact ? 116 : 140,
       child: TextField(
         key: const Key('session-limit-input'),
         controller: _controller,
@@ -2959,6 +3093,8 @@ class _SessionCountInputState extends State<_SessionCountInput> {
         ],
         decoration: const InputDecoration(
           isDense: true,
+          labelText: '문제 수',
+          suffixText: '개',
           helperText:
               '${StudyLimits.minSessionItems}~${StudyLimits.maxSessionItems}',
         ),
@@ -2972,24 +3108,21 @@ class _SessionCountInputState extends State<_SessionCountInput> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton.outlined(
-          key: const Key('session-limit-decrease'),
-          tooltip: '문제 수 줄이기',
-          onPressed: widget.value <= StudyLimits.minSessionItems
-              ? null
-              : () => _setValue(widget.value - 1),
-          icon: const Icon(Icons.remove_rounded),
-        ),
-        const SizedBox(width: 8),
         input,
         const SizedBox(width: 8),
-        IconButton.outlined(
-          key: const Key('session-limit-increase'),
-          tooltip: '문제 수 늘리기',
-          onPressed: widget.value >= StudyLimits.maxSessionItems
-              ? null
-              : () => _setValue(widget.value + 1),
-          icon: const Icon(Icons.add_rounded),
+        PopupMenuButton<int>(
+          key: const Key('session-limit-presets'),
+          tooltip: '자주 쓰는 문제 수',
+          onSelected: _setValue,
+          itemBuilder: (context) => [
+            for (final value in const [5, 10, 20, 50, 100])
+              PopupMenuItem(
+                key: Key('session-limit-preset-$value'),
+                value: value,
+                child: Text('$value문제'),
+              ),
+          ],
+          icon: const Icon(Icons.tune_rounded),
         ),
       ],
     );

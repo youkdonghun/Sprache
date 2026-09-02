@@ -140,6 +140,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('routine-label-routine-a')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('saved-plan-actions-routine-a')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('routine-later-routine-a')));
       await tester.pump(const Duration(milliseconds: 30));
       expect(

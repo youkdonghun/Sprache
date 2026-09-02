@@ -61,7 +61,7 @@ void main() {
       expect(store.savedPreferences.sessionPlan.selectedItemIds, {
         items.last.id,
       });
-      expect(find.text('나만의 학습 세션'), findsOneWidget);
+      expect(find.byKey(const Key('session-subject-key')), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {
       debugDefaultTargetPlatformOverride = null;

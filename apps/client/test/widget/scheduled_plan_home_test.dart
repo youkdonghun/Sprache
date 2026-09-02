@@ -65,7 +65,7 @@ void main() {
         await tester.tap(find.byKey(const Key('home-primary-study-button')));
         await tester.pumpAndSettle();
 
-        expect(find.text('나만의 학습 세션'), findsOneWidget);
+        expect(find.byKey(const Key('session-subject-key')), findsOneWidget);
         expect(store.savedPreferences.sessionPlan.planId, 'english-morning');
         await tester.ensureVisible(
           find.byKey(const Key('session-start-bottom')),
@@ -91,7 +91,7 @@ void main() {
         );
         container.read(appRouterProvider).pop();
         await tester.pumpAndSettle();
-        expect(find.text('나만의 학습 세션'), findsOneWidget);
+        expect(find.byKey(const Key('session-subject-key')), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
         debugDefaultTargetPlatformOverride = null;

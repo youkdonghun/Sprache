@@ -295,7 +295,7 @@ void main() {
     await tester.tap(find.byKey(const Key('pinned-collection-pinned-commute')));
     await tester.pumpAndSettle();
 
-    expect(find.text('나만의 학습 세션'), findsOneWidget);
+    expect(find.byKey(const Key('session-subject-key')), findsOneWidget);
     final container = ProviderScope.containerOf(
       tester.element(find.byType(SpracheApp)),
     );
@@ -391,7 +391,7 @@ void main() {
     expect(plan.selectedItemIds, contains(item.id));
     expect(plan.difficulty, StudyDifficulty.all);
     expect(plan.historyFilter, StudyHistoryFilter.all);
-    expect(find.text('나만의 학습 세션'), findsOneWidget);
+    expect(find.byKey(const Key('session-subject-key')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

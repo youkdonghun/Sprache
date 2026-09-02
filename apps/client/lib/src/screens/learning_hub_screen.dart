@@ -2192,6 +2192,9 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final largeText = MediaQuery.textScalerOf(context).scale(1) > 1.4;
+    final showPagingButtons =
+        defaultTargetPlatform == TargetPlatform.windows ||
+        MediaQuery.sizeOf(context).width >= 600;
     _PracticeRecommendation? primary;
     for (final recommendation in widget.recommendations) {
       if (widget.availabilityFor(recommendation.activity).enabled) {
@@ -2270,24 +2273,26 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                IconButton.outlined(
-                  key: const Key('practice-hub-scroll-previous'),
-                  onPressed: _canScrollBackward
-                      ? () => _scrollBy(-_navigationStep)
-                      : null,
-                  tooltip: '이전 추천 카드',
-                  icon: const Icon(Icons.chevron_left_rounded),
-                ),
-                const SizedBox(width: 4),
-                IconButton.filledTonal(
-                  key: const Key('practice-hub-scroll-next'),
-                  onPressed: _canScrollForward
-                      ? () => _scrollBy(_navigationStep)
-                      : null,
-                  tooltip: '다음 추천 카드',
-                  icon: const Icon(Icons.chevron_right_rounded),
-                ),
+                if (showPagingButtons) ...[
+                  const SizedBox(width: 6),
+                  IconButton.outlined(
+                    key: const Key('practice-hub-scroll-previous'),
+                    onPressed: _canScrollBackward
+                        ? () => _scrollBy(-_navigationStep)
+                        : null,
+                    tooltip: '이전 추천 카드',
+                    icon: const Icon(Icons.chevron_left_rounded),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton.filledTonal(
+                    key: const Key('practice-hub-scroll-next'),
+                    onPressed: _canScrollForward
+                        ? () => _scrollBy(_navigationStep)
+                        : null,
+                    tooltip: '다음 추천 카드',
+                    icon: const Icon(Icons.chevron_right_rounded),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 4),
