@@ -261,12 +261,14 @@ class _ImportDestination {
 class ImportScreen extends ConsumerStatefulWidget {
   const ImportScreen({
     super.key,
+    this.languagePackMode = false,
     this.initialPreview,
     this.initialFileName,
     this.initialSha256,
     this.initialPreviousImport,
   });
 
+  final bool languagePackMode;
   final ImportPreview? initialPreview;
   final String? initialFileName;
   final String? initialSha256;
@@ -1139,17 +1141,17 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
           '${now.hour.toString().padLeft(2, '0')}'
           '${now.minute.toString().padLeft(2, '0')}';
       final path = await FilePicker.platform.saveFile(
-        dialogTitle: '개인 내용을 뺀 오류 보고서 저장',
+        dialogTitle: '문제 행 목록 저장',
         fileName: 'sprache-import-report-$stamp.csv',
         type: FileType.custom,
         allowedExtensions: const ['csv'],
         bytes: Uint8List.fromList(utf8.encode(csvText)),
       );
       if (path != null) {
-        _showMessage('개인 내용은 빼고 오류 보고서만 저장했어요.');
+        _showMessage('문제가 있는 행 목록을 이 기기에 저장했어요.');
       }
     } catch (_) {
-      _showMessage('가져오기 보고서를 저장하지 못했습니다.');
+      _showMessage('문제 행 목록을 저장하지 못했어요.');
     }
   }
 
@@ -1987,126 +1989,140 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                       subjectName: activeSubject.name,
                       subjectSymbol: activeSubject.symbol,
                       generalTopic: !activeSubject.isLanguage,
+                      languagePackMode: widget.languagePackMode,
                     ),
                     const SizedBox(height: 20),
-                    _ImportRoutingCard(
-                      keyController: _distributionKeyController,
-                      groupController: _distributionGroupController,
-                      subjects: availableSubjects,
-                      selectedSubjectId: routeSubjectId,
-                      groupSuggestions: routeGroups,
-                      driveConnected: appState.driveConnected,
-                      enabled: !_busy,
-                      onKeyChanged: _loadDistributionRule,
-                      onSubjectChanged: (subjectId) {
-                        _invalidatePreviewForRoutingChange();
-                        setState(() => _routeSubjectId = subjectId);
-                      },
-                      onGroupChanged: (_) =>
-                          _invalidatePreviewForRoutingChange(),
-                    ),
-                    const SizedBox(height: 12),
-                    _UploadCard(
-                      fileName: _fileName,
-                      busyMessage: _busyMessage,
-                      onCancel: _pdfCancellationToken?.cancel,
-                      onPickFile: _busy ? null : _pickFile,
-                      onPaste: _busy ? null : _openBulkPaste,
-                      onSaveEasyTemplate: _busy
-                          ? null
-                          : () => _saveTemplate(
-                              assetFileName:
-                                  'Sprache-easy-import-template.xlsx',
-                              suggestedFileName: buildUploadTemplateFileName(
-                                DateTime.now(),
-                              ),
-                              templateLabel: '간편 엑셀 템플릿',
-                            ),
-                      onSaveFullTemplate: _busy
-                          ? null
-                          : () => _saveTemplate(
-                              assetFileName:
-                                  'Sprache-word-import-template.xlsx',
-                              suggestedFileName:
-                                  'Sprache-full-import-template.xlsx',
-                              templateLabel: '전체 엑셀 템플릿',
-                            ),
-                    ),
-                    if (receipts.isNotEmpty || mappingPresets.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      _ImportHistoryCard(
-                        receipts: receipts,
-                        mappingPresets: mappingPresets,
+                    if (!widget.languagePackMode) ...[
+                      _ImportRoutingCard(
+                        keyController: _distributionKeyController,
+                        groupController: _distributionGroupController,
                         subjects: availableSubjects,
-                        onUndo: _busy ? null : _undoImport,
-                        onDeletePreset: _busy ? null : _deleteMappingPreset,
+                        selectedSubjectId: routeSubjectId,
+                        groupSuggestions: routeGroups,
+                        driveConnected: appState.driveConnected,
+                        enabled: !_busy,
+                        onKeyChanged: _loadDistributionRule,
+                        onSubjectChanged: (subjectId) {
+                          _invalidatePreviewForRoutingChange();
+                          setState(() => _routeSubjectId = subjectId);
+                        },
+                        onGroupChanged: (_) =>
+                            _invalidatePreviewForRoutingChange(),
                       ),
-                    ],
-                    const SizedBox(height: 12),
-                    _WebSentencePackCard(
-                      busy: _busy,
-                      onBasics: _busy
-                          ? null
-                          : () => _loadBundledWebPack(
-                              fileName:
-                                  'tatoeba-korean-sentence-pack-2026-07-28.json',
-                              busyMessage: '기초 예문 팩을 준비하고 있습니다…',
-                            ),
-                      onPractical: _busy
-                          ? null
-                          : () => _loadBundledWebPack(
-                              fileName:
-                                  'tatoeba-practical-sentence-pack-2026-07-29.json',
-                              busyMessage: '출퇴근·학습 예문 팩을 준비하고 있습니다…',
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    _TopicStarterPacksCard(
-                      busy: _busy,
-                      onBaseball: _busy
-                          ? null
-                          : () => _loadBundledTopicPack(
-                              subjectId: 'general:baseball',
-                              subjectName: '야구 용어',
-                              symbol: '⚾',
-                              description: '야구 기록, 규칙, 포지션을 익히는 주제',
-                              fileName: 'baseball-starter-pack-2026-07-28.json',
-                            ),
-                      onIdol: _busy
-                          ? null
-                          : () => _loadBundledTopicPack(
-                              subjectId: 'general:idol-fandom',
-                              subjectName: '아이돌·팬덤 용어',
-                              symbol: '🎤',
-                              description: 'K-pop 팬덤과 일정 표현을 익히는 주제',
-                              fileName:
-                                  'idol-fandom-starter-pack-2026-07-28.json',
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    const _FormatGuide(),
-                    if (review != null) ...[
-                      const SizedBox(height: 18),
-                      _ReviewSummary(
-                        fileName: _fileName ?? '미리보기 파일',
-                        review: review,
-                        sourceSummary: _sourceSummary,
-                        selectedCount: selectedCount,
-                        destinationCount: destinations.length,
+                      const SizedBox(height: 12),
+                      _UploadCard(
+                        fileName: _fileName,
+                        busyMessage: _busyMessage,
+                        onCancel: _pdfCancellationToken?.cancel,
+                        onPickFile: _busy ? null : _pickFile,
+                        onPaste: _busy ? null : _openBulkPaste,
+                        onSaveEasyTemplate: _busy
+                            ? null
+                            : () => _saveTemplate(
+                                assetFileName:
+                                    'Sprache-easy-import-template.xlsx',
+                                suggestedFileName: buildUploadTemplateFileName(
+                                  DateTime.now(),
+                                ),
+                                templateLabel: '간편 엑셀 템플릿',
+                              ),
+                        onSaveFullTemplate: _busy
+                            ? null
+                            : () => _saveTemplate(
+                                assetFileName:
+                                    'Sprache-word-import-template.xlsx',
+                                suggestedFileName:
+                                    'Sprache-full-import-template.xlsx',
+                                templateLabel: '전체 엑셀 템플릿',
+                              ),
                       ),
-                      if (_sourceSummary case final summary?) ...[
-                        const SizedBox(height: 8),
-                        Card(
-                          child: ListTile(
-                            key: const Key('import-source-summary'),
-                            leading: const Icon(Icons.source_rounded),
-                            title: const Text('확인한 파일 원본'),
-                            subtitle: Text(summary),
-                            trailing: const Icon(Icons.verified_rounded),
-                          ),
+                      if (receipts.isNotEmpty || mappingPresets.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        _ImportHistoryCard(
+                          receipts: receipts,
+                          mappingPresets: mappingPresets,
+                          subjects: availableSubjects,
+                          onUndo: _busy ? null : _undoImport,
+                          onDeletePreset: _busy ? null : _deleteMappingPreset,
                         ),
                       ],
-                      if (_columnMapping.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _WebSentencePackCard(
+                        busy: _busy,
+                        onBasics: _busy
+                            ? null
+                            : () => _loadBundledWebPack(
+                                fileName:
+                                    'tatoeba-korean-sentence-pack-2026-07-28.json',
+                                busyMessage: '기초 예문 팩을 준비하고 있습니다…',
+                              ),
+                        onPractical: _busy
+                            ? null
+                            : () => _loadBundledWebPack(
+                                fileName:
+                                    'tatoeba-practical-sentence-pack-2026-07-29.json',
+                                busyMessage: '출퇴근·학습 예문 팩을 준비하고 있습니다…',
+                              ),
+                      ),
+                      const SizedBox(height: 12),
+                      _TopicStarterPacksCard(
+                        busy: _busy,
+                        onBaseball: _busy
+                            ? null
+                            : () => _loadBundledTopicPack(
+                                subjectId: 'general:baseball',
+                                subjectName: '야구 용어',
+                                symbol: '⚾',
+                                description: '야구 기록, 규칙, 포지션을 익히는 주제',
+                                fileName:
+                                    'baseball-starter-pack-2026-07-28.json',
+                              ),
+                        onIdol: _busy
+                            ? null
+                            : () => _loadBundledTopicPack(
+                                subjectId: 'general:idol-fandom',
+                                subjectName: '아이돌·팬덤 용어',
+                                symbol: '🎤',
+                                description: 'K-pop 팬덤과 일정 표현을 익히는 주제',
+                                fileName:
+                                    'idol-fandom-starter-pack-2026-07-28.json',
+                              ),
+                      ),
+                      const SizedBox(height: 12),
+                      const _FormatGuide(),
+                    ] else if (review == null) ...[
+                      const _LanguagePackPreparingCard(),
+                    ],
+                    if (review != null) ...[
+                      const SizedBox(height: 18),
+                      if (widget.languagePackMode)
+                        _LanguagePackReviewSummary(
+                          review: review,
+                          selectedCount: selectedCount,
+                        )
+                      else
+                        _ReviewSummary(
+                          fileName: _fileName ?? '미리보기 파일',
+                          review: review,
+                          sourceSummary: _sourceSummary,
+                          selectedCount: selectedCount,
+                          destinationCount: destinations.length,
+                        ),
+                      if (!widget.languagePackMode)
+                        if (_sourceSummary case final summary?) ...[
+                          const SizedBox(height: 8),
+                          Card(
+                            child: ListTile(
+                              key: const Key('import-source-summary'),
+                              leading: const Icon(Icons.source_rounded),
+                              title: const Text('확인한 파일 원본'),
+                              subtitle: Text(summary),
+                              trailing: const Icon(Icons.verified_rounded),
+                            ),
+                          ),
+                        ],
+                      if (!widget.languagePackMode &&
+                          _columnMapping.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         _ColumnMappingSummary(mapping: _columnMapping),
                       ],
@@ -2119,79 +2135,35 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                         _RepeatedImportNotice(record: previous),
                       ],
                       const SizedBox(height: 12),
-                      _BulkActions(
+                      _ImportReviewDetails(
+                        compact: widget.languagePackMode,
                         review: review,
-                        onNewAction: (action) => _setBulkAction(
+                        filtered: filtered,
+                        visible: visible,
+                        filter: _filter,
+                        selectedCount: selectedCount,
+                        busy: _busy,
+                        actionFor: _actionFor,
+                        onActionChanged: _setAction,
+                        onEditBlocked: _editBlockedEntry,
+                        onEditRejected: _editRejectedIssue,
+                        onBulkNewAction: (action) => _setBulkAction(
                           review,
                           ImportReviewStatus.newItem,
                           action,
                         ),
-                        onChangedAction: (action) => _setBulkAction(
+                        onBulkChangedAction: (action) => _setBulkAction(
                           review,
                           ImportReviewStatus.changed,
                           action,
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      _FilterBar(
-                        filter: _filter,
-                        totalCount: review.entries.length,
-                        selectedCount: selectedCount,
-                        changedCount: review.changedCount,
-                        problemCount:
-                            review.blockedCount +
-                            review.issues.length +
-                            review.duplicates.length,
-                        onChanged: (filter) => setState(() {
+                        onFilterChanged: (filter) => setState(() {
                           _filter = filter;
                           _visibleLimit = 50;
                         }),
+                        onShowMore: () => setState(() => _visibleLimit += 50),
+                        onExportProblems: () => _exportImportReport(review),
                       ),
-                      const SizedBox(height: 10),
-                      if (visible.isEmpty)
-                        const _EmptyFilterResult()
-                      else
-                        for (final entry in visible) ...[
-                          _ImportEntryCard(
-                            entry: entry,
-                            action: _actionFor(entry),
-                            onActionChanged: (action) =>
-                                _setAction(entry, action),
-                            onEdit: entry.status == ImportReviewStatus.blocked
-                                ? () => _editBlockedEntry(entry)
-                                : null,
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                      if (visible.length < filtered.length)
-                        OutlinedButton.icon(
-                          onPressed: () => setState(() => _visibleLimit += 50),
-                          icon: const Icon(Icons.expand_more_rounded),
-                          label: Text(
-                            '항목 더 보기 (${filtered.length - visible.length}개 남음)',
-                          ),
-                        ),
-                      if (review.duplicates.isNotEmpty ||
-                          review.issues.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        _RejectedRows(
-                          review: review,
-                          onEditIssue: _busy ? null : _editRejectedIssue,
-                        ),
-                      ],
-                      if (review.blockedCount > 0 ||
-                          review.issues.isNotEmpty ||
-                          review.duplicates.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          key: const Key('export-import-report'),
-                          onPressed: _busy
-                              ? null
-                              : () => _exportImportReport(review),
-                          icon: const Icon(Icons.privacy_tip_outlined),
-                          label: const Text('개인 내용을 뺀 오류 보고서 저장'),
-                        ),
-                      ],
                       const SizedBox(height: 14),
                       _ImportDestinationSummaryCard(
                         destinations: destinations,
@@ -2199,6 +2171,7 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
                       ),
                       const SizedBox(height: 10),
                       _ImportCommitBar(
+                        languagePackMode: widget.languagePackMode,
                         selectedCount: selectedCount,
                         skippedCount: review.entries.length - selectedCount,
                         issueCount:
@@ -3241,11 +3214,13 @@ class _PageHeader extends StatelessWidget {
     required this.subjectName,
     required this.subjectSymbol,
     required this.generalTopic,
+    this.languagePackMode = false,
   });
 
   final String subjectName;
   final String subjectSymbol;
   final bool generalTopic;
+  final bool languagePackMode;
 
   @override
   Widget build(BuildContext context) {
@@ -3263,12 +3238,14 @@ class _PageHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '내 자료 가져오기',
+                languagePackMode ? '추천 자료 추가' : '내 자료 가져오기',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 4),
               Text(
-                generalTopic
+                languagePackMode
+                    ? '추가될 자료 수를 확인하고 저장하면 끝이에요.'
+                    : generalTopic
                     ? '$subjectSymbol $subjectName에 저장하기 전에 새 내용과 바뀔 내용을 확인해요.'
                     : '$subjectName에 저장하기 전에 새 내용과 바뀔 내용을 확인해요.',
                 style: Theme.of(context).textTheme.bodyMedium,
@@ -3964,6 +3941,205 @@ class _FormatGuide extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LanguagePackPreparingCard extends StatelessWidget {
+  const _LanguagePackPreparingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(24),
+        child: Row(
+          children: [
+            SizedBox.square(
+              dimension: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.4),
+            ),
+            SizedBox(width: 14),
+            Expanded(child: Text('추가할 학습 자료를 확인하고 있어요…')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguagePackReviewSummary extends StatelessWidget {
+  const _LanguagePackReviewSummary({
+    required this.review,
+    required this.selectedCount,
+  });
+
+  final ImportReview review;
+  final int selectedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final skipped = review.entries.length - selectedCount;
+    final problems =
+        review.blockedCount + review.issues.length + review.duplicates.length;
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      key: const Key('language-pack-review-summary'),
+      color: colors.primaryContainer.withValues(alpha: 0.42),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.check_circle_outline_rounded, color: colors.primary),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    '$selectedCount개를 추가할 준비가 됐어요',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 7),
+            Text(
+              problems > 0
+                  ? '확인이 필요한 $problems개는 저장하지 않아요. 아래에서 자세히 볼 수 있어요.'
+                  : skipped > 0
+                  ? '이미 있는 $skipped개는 자동으로 건너뛰어요.'
+                  : '버튼을 누르면 자료실에 추가하고 바로 이동해요.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ImportReviewDetails extends StatelessWidget {
+  const _ImportReviewDetails({
+    required this.compact,
+    required this.review,
+    required this.filtered,
+    required this.visible,
+    required this.filter,
+    required this.selectedCount,
+    required this.busy,
+    required this.actionFor,
+    required this.onActionChanged,
+    required this.onEditBlocked,
+    required this.onEditRejected,
+    required this.onBulkNewAction,
+    required this.onBulkChangedAction,
+    required this.onFilterChanged,
+    required this.onShowMore,
+    required this.onExportProblems,
+  });
+
+  final bool compact;
+  final ImportReview review;
+  final List<ImportReviewEntry> filtered;
+  final List<ImportReviewEntry> visible;
+  final _ReviewFilter filter;
+  final int selectedCount;
+  final bool busy;
+  final ImportReviewAction Function(ImportReviewEntry) actionFor;
+  final void Function(ImportReviewEntry, ImportReviewAction) onActionChanged;
+  final Future<void> Function(ImportReviewEntry) onEditBlocked;
+  final Future<void> Function(ImportIssue) onEditRejected;
+  final ValueChanged<ImportReviewAction> onBulkNewAction;
+  final ValueChanged<ImportReviewAction> onBulkChangedAction;
+  final ValueChanged<_ReviewFilter> onFilterChanged;
+  final VoidCallback onShowMore;
+  final VoidCallback onExportProblems;
+
+  int get problemCount =>
+      review.blockedCount + review.issues.length + review.duplicates.length;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Padding(
+      padding: EdgeInsets.fromLTRB(compact ? 12 : 0, 4, compact ? 12 : 0, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _BulkActions(
+            review: review,
+            onNewAction: onBulkNewAction,
+            onChangedAction: onBulkChangedAction,
+          ),
+          const SizedBox(height: 14),
+          _FilterBar(
+            filter: filter,
+            totalCount: review.entries.length,
+            selectedCount: selectedCount,
+            changedCount: review.changedCount,
+            problemCount: problemCount,
+            onChanged: onFilterChanged,
+          ),
+          const SizedBox(height: 10),
+          if (visible.isEmpty)
+            const _EmptyFilterResult()
+          else
+            for (final entry in visible) ...[
+              _ImportEntryCard(
+                entry: entry,
+                action: actionFor(entry),
+                onActionChanged: (action) => onActionChanged(entry, action),
+                onEdit: entry.status == ImportReviewStatus.blocked
+                    ? () => unawaited(onEditBlocked(entry))
+                    : null,
+              ),
+              const SizedBox(height: 10),
+            ],
+          if (visible.length < filtered.length)
+            OutlinedButton.icon(
+              onPressed: onShowMore,
+              icon: const Icon(Icons.expand_more_rounded),
+              label: Text('항목 더 보기 (${filtered.length - visible.length}개 남음)'),
+            ),
+          if (review.duplicates.isNotEmpty || review.issues.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            _RejectedRows(
+              review: review,
+              onEditIssue: busy
+                  ? null
+                  : (issue) => unawaited(onEditRejected(issue)),
+            ),
+          ],
+          if (problemCount > 0) ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('export-import-report'),
+              onPressed: busy ? null : onExportProblems,
+              icon: const Icon(Icons.save_alt_rounded),
+              label: const Text('문제 행 목록 저장'),
+            ),
+          ],
+        ],
+      ),
+    );
+    if (!compact) return content;
+    return Card(
+      child: ExpansionTile(
+        key: const Key('language-pack-review-details'),
+        initiallyExpanded: problemCount > 0,
+        leading: const Icon(Icons.list_alt_rounded),
+        title: const Text(
+          '추가될 자료 살펴보기',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+        subtitle: Text(
+          problemCount > 0
+              ? '확인 필요 $problemCount개'
+              : '선택한 단어를 바꾸고 싶을 때만 열어 보세요.',
+        ),
+        children: [content],
       ),
     );
   }
@@ -4778,6 +4954,7 @@ class _ImportCommitBar extends StatelessWidget {
     required this.issueCount,
     required this.busy,
     required this.onImport,
+    this.languagePackMode = false,
   });
 
   final int selectedCount;
@@ -4785,6 +4962,7 @@ class _ImportCommitBar extends StatelessWidget {
   final int issueCount;
   final bool busy;
   final VoidCallback? onImport;
+  final bool languagePackMode;
 
   @override
   Widget build(BuildContext context) {
@@ -4799,12 +4977,16 @@ class _ImportCommitBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$selectedCount개를 자료실에 저장해요.',
+                  languagePackMode
+                      ? '준비된 $selectedCount개를 자료실에 추가해요.'
+                      : '$selectedCount개를 자료실에 저장해요.',
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '기존 유지·제외 $skippedCount개 · 파일 오류 $issueCount개',
+                  languagePackMode
+                      ? '이미 있음·제외 $skippedCount개 · 확인 필요 $issueCount개'
+                      : '기존 유지·제외 $skippedCount개 · 파일 오류 $issueCount개',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -4818,7 +5000,13 @@ class _ImportCommitBar extends StatelessWidget {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.save_alt_rounded),
-              label: Text(busy ? '저장 중…' : '$selectedCount개 가져오기'),
+              label: Text(
+                busy
+                    ? '저장 중…'
+                    : languagePackMode
+                    ? '$selectedCount개 추가하기'
+                    : '$selectedCount개 가져오기',
+              ),
             );
             if (narrow) {
               return Column(

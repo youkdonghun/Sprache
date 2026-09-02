@@ -46,6 +46,68 @@ void main() {
     });
   }
 
+  testWidgets('언어팩은 저장에 필요한 핵심 확인만 먼저 보여 준다', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.reset);
+    const preview = ImportPreview(
+      entries: [
+        ParsedImportEntry(
+          row: 2,
+          item: LearningItem(
+            id: 'language-pack-friendly-word',
+            kind: LearningItemKind.word,
+            learningLanguage: LanguageTag.english,
+            subjectId: 'language:en',
+            text: 'friendly',
+            translations: ['친근한'],
+            acceptedAnswers: ['친근한'],
+          ),
+        ),
+      ],
+      issues: [],
+      duplicates: [],
+    );
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [studyStoreProvider.overrideWithValue(MemoryStudyStore())],
+        child: MaterialApp(
+          theme: AppTheme.mobile,
+          home: const Scaffold(
+            body: ImportScreen(
+              languagePackMode: true,
+              initialPreview: preview,
+              initialFileName: 'friendly-pack.json',
+              initialSha256: 'friendly-pack-sha256',
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('추천 자료 추가'), findsOneWidget);
+    expect(
+      find.byKey(const Key('language-pack-review-summary')),
+      findsOneWidget,
+    );
+    expect(find.text('1개를 추가할 준비가 됐어요'), findsOneWidget);
+    expect(
+      find.byKey(const Key('language-pack-review-details')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('import-distribution-key')), findsNothing);
+    expect(find.byKey(const Key('load-tatoeba-practical-pack')), findsNothing);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('import-commit-button')),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('1개 추가하기'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'distribution key restores and clears its subject and group on mobile',
     (tester) async {

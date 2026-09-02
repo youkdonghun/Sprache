@@ -88,7 +88,7 @@ void main() {
     expect(recent, findsOneWidget);
     expect(
       find.byKey(const Key('library-search-suggestion-state:due')),
-      findsOneWidget,
+      findsNothing,
     );
 
     await tester.tap(recent);

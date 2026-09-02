@@ -550,7 +550,8 @@ void main() {
       await tester.tap(find.byKey(const Key('settings-overview-privacy')));
       await tester.pumpAndSettle();
       expect(find.text('데이터와 개인정보'), findsOneWidget);
-      expect(find.textContaining('운영자 서버로 보내지 않습니다'), findsOneWidget);
+      expect(find.text('Drive에서 보는 범위'), findsOneWidget);
+      expect(find.textContaining('운영자'), findsNothing);
       expect(find.text('테스트 모드'), findsOneWidget);
       expect(tester.takeException(), isNull);
     } finally {

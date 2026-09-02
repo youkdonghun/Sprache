@@ -103,7 +103,7 @@ class DriveConnectionGate extends ConsumerWidget {
                           defaultTargetPlatform == TargetPlatform.windows) ...[
                         const SizedBox(height: 10),
                         const Text(
-                          '로그인 중 주소창에 127.0.0.1이 보여도 괜찮아요. 이 PC의 Sprache로 결과를 돌려주는 주소이며 별도 중계 서버를 거치지 않습니다.',
+                          '127.0.0.1은 Google 로그인을 마친 뒤 이 PC의 Sprache로 돌아오기 위한 Windows용 주소예요.',
                           textAlign: TextAlign.center,
                         ),
                       ],

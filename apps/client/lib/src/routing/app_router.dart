@@ -186,7 +186,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
               GoRoute(
                 path: '/import',
-                builder: (context, state) => const ImportScreen(),
+                builder: (context, state) => ImportScreen(
+                  languagePackMode:
+                      state.uri.queryParameters['source'] == 'language-pack',
+                ),
               ),
             ],
           ),

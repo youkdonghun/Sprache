@@ -504,17 +504,8 @@ void main() {
         container.read(appRouterProvider).go('/library');
         await tester.pumpAndSettle();
 
-        expect(
-          find.byKey(const Key('learning-data-flow-card')),
-          findsOneWidget,
-        );
-        await tester.tap(find.byKey(const Key('learning-data-flow-card')));
-        await tester.pumpAndSettle();
-
-        expect(find.text('내 학습 데이터는 어디에 있나요?'), findsOneWidget);
-        expect(find.text('앱 내부 오프라인 캐시'), findsOneWidget);
-        expect(find.text('Google Drive'), findsOneWidget);
-        expect(find.text('Drive의 숨김 연결 정보'), findsOneWidget);
+        expect(find.byKey(const Key('learning-data-flow-card')), findsNothing);
+        expect(find.byKey(const Key('library-search-field')), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
         debugDefaultTargetPlatformOverride = null;

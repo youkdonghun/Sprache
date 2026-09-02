@@ -201,9 +201,7 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
               ],
             ),
             const SizedBox(height: 10),
-            const Text(
-              '공개 GitHub Release에서 파일을 받고 크기와 SHA-256을 확인한 뒤 설치 화면을 엽니다.',
-            ),
+            const Text('공식 배포 파일이 맞는지 확인한 뒤 설치 화면을 열어요.'),
             if (check != null && check.manifest.notes.isNotEmpty) ...[
               const SizedBox(height: 10),
               for (final note in check.manifest.notes.take(3))

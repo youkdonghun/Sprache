@@ -210,6 +210,8 @@ void main() {
       await tester.tap(find.text('자료실').last);
       await tester.pumpAndSettle();
 
+      await tester.tap(find.byKey(const Key('library-group-tools-menu')));
+      await tester.pumpAndSettle();
       final select = find.byKey(const Key('library-select-materials'));
       await tester.ensureVisible(select);
       await tester.tap(select);
@@ -362,8 +364,13 @@ void main() {
         await tester.tap(englishGroup);
         await tester.pumpAndSettle();
 
+        final groupTools = find.byKey(const Key('library-group-tools-menu'));
+        await tester.ensureVisible(groupTools);
+        await tester.pumpAndSettle();
+        await tester.tap(groupTools);
+        await tester.pumpAndSettle();
         final select = find.byKey(const Key('library-select-materials'));
-        tester.widget<OutlinedButton>(select).onPressed?.call();
+        await tester.tap(select);
         await tester.pumpAndSettle();
         await tester.tap(
           find.byKey(const Key('library-item-subject-state-english')),

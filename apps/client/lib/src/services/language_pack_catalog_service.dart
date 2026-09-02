@@ -157,7 +157,7 @@ class LanguagePackCatalogService {
     }
     if (bytes.length != descriptor.sizeBytes) {
       throw const LanguagePackCatalogException(
-        '언어팩 크기가 목록 정보와 다릅니다. GitHub 반영이 끝난 뒤 다시 시도해 주세요.',
+        '학습 자료가 아직 준비 중이에요. 잠시 후 다시 시도해 주세요.',
       );
     }
     final digest = sha256.convert(bytes).toString();
@@ -190,7 +190,7 @@ class LanguagePackCatalogService {
       );
     } on http.ClientException {
       throw const LanguagePackCatalogException(
-        'GitHub에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.',
+        '학습 자료 목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.',
       );
     }
   }
@@ -216,7 +216,7 @@ class LanguagePackCatalogService {
     _validateRelativePath(path);
     final digest = _requiredString(json, 'sha256', maxLength: 64).toLowerCase();
     if (!RegExp(r'^[a-f0-9]{64}$').hasMatch(digest)) {
-      throw LanguagePackCatalogException('$id 언어팩의 SHA-256 값이 올바르지 않습니다.');
+      throw LanguagePackCatalogException('$id 학습 자료의 확인 정보가 올바르지 않아요.');
     }
     final itemCount = _integer(json['itemCount'], field: 'itemCount');
     final sizeBytes = _integer(json['sizeBytes'], field: 'sizeBytes');
@@ -335,9 +335,7 @@ class LanguagePackCatalogService {
     final resolved = catalogUri.resolve(path);
     _ensureHttpsUri(resolved, label: '언어팩 주소');
     if (resolved.host != catalogUri.host) {
-      throw const LanguagePackCatalogException(
-        '언어팩은 목록과 같은 GitHub 저장소 주소에서만 받을 수 있습니다.',
-      );
+      throw const LanguagePackCatalogException('학습 자료 주소를 확인할 수 없어요.');
     }
     return resolved;
   }

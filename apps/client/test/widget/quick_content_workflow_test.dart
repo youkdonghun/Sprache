@@ -52,8 +52,8 @@ void main() {
             findsOneWidget,
           );
           expect(find.byKey(const Key('add-language-pack')), findsOneWidget);
-          expect(find.text('GitHub 언어팩 받기'), findsOneWidget);
-          expect(find.textContaining('6개 언어'), findsOneWidget);
+          expect(find.text('무료 추천 학습 자료'), findsOneWidget);
+          expect(find.textContaining('현재 언어의 단어'), findsOneWidget);
           await tester.tap(find.byKey(const Key('add-quick-word')));
           await tester.pumpAndSettle();
 
@@ -85,7 +85,7 @@ void main() {
       await tester.tap(find.byKey(const Key('nav-library')));
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('learning-data-flow-card')), findsOneWidget);
+      expect(find.byKey(const Key('learning-data-flow-card')), findsNothing);
       await tester.tap(find.byKey(const Key('library-add-button')));
       await tester.pumpAndSettle();
       expect(find.text('무엇을 추가할까요?'), findsOneWidget);

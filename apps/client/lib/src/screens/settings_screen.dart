@@ -3111,11 +3111,6 @@ class _SyncCenterDialog extends ConsumerWidget {
           child: ListView(
             shrinkWrap: true,
             children: [
-              Text(
-                '학습 자료와 연결 정보는 이 기기와 Google Drive 사이에서만 처리하며 별도 서버에 저장하지 않습니다.',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 12),
               _SyncPolicyPanel(
                 policy: connection.policy,
                 onChanged: controller.setPolicy,
@@ -3649,9 +3644,8 @@ class _ConnectionProgressPanel extends StatelessWidget {
                   stage == GoogleConnectionStage.folderSelection)) ...[
             const SizedBox(height: 8),
             const Text(
-              '주소에 127.0.0.1이 보여도 괜찮아요. 로그인 결과를 이 PC의 '
-              'Sprache로 돌려주는 임시 주소이며, 로그인 정보는 Google과 이 앱 '
-              '사이에서만 전달됩니다.',
+              '127.0.0.1은 Google 로그인을 마친 뒤 이 PC의 Sprache로 '
+              '돌아오기 위한 Windows용 주소예요.',
               style: TextStyle(fontWeight: FontWeight.w700),
             ),
           ],
@@ -3680,8 +3674,8 @@ class _WindowsLoopbackNote extends StatelessWidget {
           SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Windows 로그인 중 보이는 127.0.0.1은 결과를 이 앱으로 돌려주는 '
-              '임시 주소입니다. 별도 중계 서버를 거치지 않고 Google에 직접 연결합니다.',
+              '127.0.0.1은 Google 로그인을 마친 뒤 이 PC의 Sprache로 '
+              '돌아오기 위한 Windows용 주소예요.',
             ),
           ),
         ],
@@ -4379,31 +4373,9 @@ class _PrivacyCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             const _PrivacyRow(
-              icon: Icons.cloud_done_outlined,
-              title: '별도 데이터 서버 없음',
-              detail: '학습 자료와 연결 정보는 내 기기와 Drive에만 저장',
-            ),
-            const SizedBox(height: 14),
-            const _PrivacyRow(
               icon: Icons.key_rounded,
               title: 'Google 로그인 정보',
               detail: '이 기기의 안전한 저장소에만 보관',
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '단어, 문장, 학습 기록을 Sprache 운영자 서버로 보내지 않습니다.',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -4487,17 +4459,10 @@ Future<void> _showPrivacyDetails(
                     '다른 Drive 문서는 읽지 않습니다.',
               ),
               const _PrivacyDetailSection(
-                title: '운영자 서버를 쓰지 않습니다',
-                body:
-                    '학습 자료와 자세한 진도를 운영자 데이터베이스에 저장하지 않습니다. '
-                    '선택한 폴더의 ID와 이름은 내 Drive의 숨김 앱 설정에만, '
-                    'Google 로그인 정보는 이 기기의 안전한 저장소에만 보관합니다.',
-              ),
-              const _PrivacyDetailSection(
                 title: '발음 연습',
                 body:
                     '마이크 입력은 기기의 음성 인식 기능이 처리합니다. 오디오와 인식된 '
-                    '문장은 Drive나 별도 서버에 저장하지 않고, 연습 결과만 학습 진도에 남깁니다.',
+                    '문장은 저장하지 않고, 연습 결과만 학습 진도에 남깁니다.',
               ),
               const _PrivacyDetailSection(
                 title: '공유·판매',

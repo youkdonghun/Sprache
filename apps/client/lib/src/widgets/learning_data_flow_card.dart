@@ -268,7 +268,7 @@ class LearningDataFlowCard extends StatelessWidget {
                 key: const Key('open-learning-data-details'),
                 onPressed: () => _showStorageDetails(context),
                 icon: const Icon(Icons.info_outline_rounded),
-                label: const Text('저장 구조'),
+                label: const Text('저장 위치'),
               );
               if (compact) {
                 return Column(
@@ -353,7 +353,7 @@ class LearningDataFlowCard extends StatelessWidget {
                 const _StorageRow(
                   icon: Icons.settings_suggest_outlined,
                   title: 'Drive의 숨김 연결 정보',
-                  detail: '선택한 폴더의 ID와 이름만 내 Drive에 보관합니다. 별도 서버는 쓰지 않습니다.',
+                  detail: '다른 기기에서도 같은 Sprache 폴더를 찾을 수 있게 연결 정보만 보관합니다.',
                   last: true,
                 ),
                 if (!driveConnected && onConnectDrive != null) ...[

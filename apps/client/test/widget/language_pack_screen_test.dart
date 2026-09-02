@@ -67,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('영어 첫걸음 테스트팩'), findsOneWidget);
-    expect(find.text('검토하고 설치'), findsOneWidget);
+    expect(find.text('120개 추가하기'), findsOneWidget);
     expect(find.textContaining('앱 업데이트 없이'), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -102,8 +102,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('공개된 언어팩이 아직 없어요.'), findsOneWidget);
-    expect(find.textContaining('앱 업데이트 없이'), findsOneWidget);
+    expect(find.text('아직 받을 수 있는 학습 자료가 없어요.'), findsOneWidget);
+    expect(find.textContaining('잠시 후 목록을 다시'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

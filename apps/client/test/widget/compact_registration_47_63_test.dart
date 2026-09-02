@@ -347,9 +347,7 @@ void main() {
     ]);
     await _pumpApp(tester, store);
 
-    expect(find.text('복습할 자료'), findsOneWidget);
-    expect(find.text('즐겨찾기'), findsWidgets);
-    expect(find.text('문장만'), findsOneWidget);
+    expect(find.text('복습할 자료'), findsNothing);
     expect(
       find.byKey(const Key('library-mobile-filter-summary')),
       findsOneWidget,
@@ -359,13 +357,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.textContaining('필터 · 전체 ·'), findsOneWidget);
-    expect(
-      tester.getCenter(find.byKey(const Key('library-select-materials'))).dy,
-      closeTo(
-        tester.getCenter(find.byKey(const Key('library-group-selection'))).dy,
-        1,
-      ),
-    );
+    expect(find.byKey(const Key('library-group-tools-menu')), findsOneWidget);
 
     await tester.enterText(
       find.byKey(const Key('library-search-field')),
@@ -503,11 +495,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final repair = find.byKey(const Key('duplicate-repair-card'));
-    expect(repair, findsOneWidget);
-    expect(tester.getSize(repair).height, lessThanOrEqualTo(58));
-    expect(find.byKey(const Key('open-duplicate-repair')), findsOneWidget);
-    expect(find.textContaining('중복 1묶음'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('library-more-menu')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('open-library-duplicate-repair')),
+      findsOneWidget,
+    );
+    expect(find.text('중복 자료 정리'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

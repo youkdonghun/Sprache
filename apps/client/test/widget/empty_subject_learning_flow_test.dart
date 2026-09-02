@@ -16,21 +16,21 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('empty subject home prioritizes adding the first learning item', (
+  testWidgets('empty subject home prioritizes ready-to-use learning material', (
     tester,
   ) async {
     await _pumpEmptySubjectApp(tester);
 
-    expect(find.text('첫 단어나 문장을 추가해 보세요'), findsOneWidget);
-    expect(find.text('단어·문장 추가'), findsOneWidget);
+    expect(find.text('추천 학습 자료로 바로 시작하세요'), findsOneWidget);
+    expect(find.text('무료 학습 자료 받기'), findsOneWidget);
     expect(find.text('오늘 목표를 마쳤어요'), findsNothing);
     expect(find.text('다음 레슨'), findsNothing);
 
     await tester.tap(find.byKey(const Key('home-primary-study-button')));
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('item-editor-scroll')), findsOneWidget);
-    expect(find.text('새 표현 추가'), findsOneWidget);
+    expect(find.text('무료 학습 자료'), findsOneWidget);
+    expect(find.text('영어 학습 자료를 준비해 두었어요'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

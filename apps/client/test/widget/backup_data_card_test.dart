@@ -88,7 +88,8 @@ void main() {
 
       expect(find.byKey(const Key('privacy-details-dialog')), findsOneWidget);
       expect(find.text('Google 계정과 Drive 사용'), findsOneWidget);
-      expect(find.text('운영자 서버를 쓰지 않습니다'), findsOneWidget);
+      expect(find.text('학습 자료를 저장하는 곳'), findsOneWidget);
+      expect(find.textContaining('운영자'), findsNothing);
       expect(find.text('발음 연습'), findsOneWidget);
       expect(find.text('삭제와 연결 해제'), findsOneWidget);
       expect(find.textContaining('앱 버전 1.22.7'), findsOneWidget);

@@ -1,7 +1,7 @@
 param(
     [string[]]$Notes = @(
         '앱 안에서 새 버전을 확인하고 바로 설치할 수 있습니다.',
-        '다운로드 파일의 크기와 SHA-256을 확인한 뒤에만 설치합니다.',
+        '공식 배포 파일인지 확인한 뒤에만 설치합니다.',
         '업데이트 확인은 사용자가 버튼을 누를 때만 실행됩니다.'
     )
 )
@@ -21,12 +21,18 @@ if ($null -eq $versionMatch) {
 $version = $versionMatch.Matches[0].Groups['name'].Value
 $buildNumber = [int]$versionMatch.Matches[0].Groups['build'].Value
 
-$androidCandidates = @(
-    Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Android-$version-google-*-signed.apk"
-)
-$windowsCandidates = @(
-    Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Windows-Setup-$version-google-x64.exe"
-)
+$publicAndroidPath = Join-Path $artifactsRoot "Sprache-Android-$version.apk"
+$publicWindowsPath = Join-Path $artifactsRoot "Sprache-Windows-$version.exe"
+$androidCandidates = if (Test-Path -LiteralPath $publicAndroidPath -PathType Leaf) {
+    @(Get-Item -LiteralPath $publicAndroidPath)
+} else {
+    @(Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Android-$version-google-*-signed.apk")
+}
+$windowsCandidates = if (Test-Path -LiteralPath $publicWindowsPath -PathType Leaf) {
+    @(Get-Item -LiteralPath $publicWindowsPath)
+} else {
+    @(Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Windows-Setup-$version-google-x64.exe")
+}
 if ($androidCandidates.Count -ne 1) {
     throw "Expected exactly one Android $version APK, found $($androidCandidates.Count)."
 }
@@ -70,12 +76,12 @@ $manifest = [ordered]@{
             url = 'https://sprache6.github.io/app/'
         }
         macos = [ordered]@{
-            kind = 'releasePage'
-            url = $releasePage
+            kind = 'web'
+            url = 'https://sprache6.github.io/app/'
         }
         ios = [ordered]@{
-            kind = 'releasePage'
-            url = $releasePage
+            kind = 'web'
+            url = 'https://sprache6.github.io/app/'
         }
     }
 }

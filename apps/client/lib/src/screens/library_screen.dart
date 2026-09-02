@@ -65,7 +65,9 @@ enum _AddContentAction {
   importFile,
 }
 
-enum _LibraryHeaderAction { trash }
+enum _LibraryHeaderAction { bulkEdit, organizeGroups, repairDuplicates, trash }
+
+enum _GroupToolbarAction { selectMaterials, organizeGroups }
 
 enum _DesktopItemAction { open, edit, restore, group, study, export }
 
@@ -583,6 +585,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       'type:sentence',
       if (sortedTags.isNotEmpty) 'tag:${sortedTags.first}',
     ];
+    final visibleSearchSuggestions = mobile
+        ? const <String>[]
+        : emptySearchSuggestions;
     final similarSearches = filtered.isEmpty && _query.isNotEmpty
         ? suggestSimilarSearches(
             query: _query,
@@ -639,7 +644,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             ),
             if (_query.isEmpty &&
                 (recentSearches.isNotEmpty ||
-                    emptySearchSuggestions.isNotEmpty)) ...[
+                    visibleSearchSuggestions.isNotEmpty)) ...[
               const SizedBox(height: 7),
               SingleChildScrollView(
                 key: const Key('library-search-suggestions'),
@@ -657,7 +662,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       ),
                       const SizedBox(width: 7),
                     ],
-                    for (final suggestion in emptySearchSuggestions) ...[
+                    for (final suggestion in visibleSearchSuggestions) ...[
                       ActionChip(
                         key: Key('library-search-suggestion-$suggestion'),
                         label: Text(switch (suggestion) {
@@ -830,9 +835,16 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           favoriteCount: favoriteCount,
           trashCount: trashEntries.length,
           editableCount: items.length,
+          duplicateCount:
+              duplicateCatalog.exactGroups.length +
+              duplicateCatalog.similarSuggestions.length,
           onAdd: _openAddMenu,
           onTrash: _openTrash,
           onBulkEdit: items.isEmpty ? null : () => _openBulkEditor(items),
+          onOrganizeGroups: () => context.go('/library/groups'),
+          onRepairDuplicates: duplicateCatalog.isEmpty
+              ? null
+              : () => _openDuplicateRepair(duplicateCatalog),
         ),
         SizedBox(
           height: narrow
@@ -841,7 +853,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               ? 10
               : 16,
         ),
-        if (items.isEmpty || !state.driveConnected) ...[
+        if (items.isEmpty) ...[
           LearningDataFlowCard(
             condensed: true,
             totalCount: items.length,
@@ -933,7 +945,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           onRename: groupFilter == null ? null : _renameSelectedGroup,
           onDelete: groupFilter == null ? null : _deleteSelectedGroup,
         ),
-        if (groupFilter == null) ...[
+        if (groupFilter == null &&
+            (weakItems.isNotEmpty || recentWrongItems.isNotEmpty)) ...[
           const SizedBox(height: 8),
           _SmartCollectionsBar(
             weakCount: weakItems.length,
@@ -977,18 +990,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             onSelect: _applySmartCollection,
             onDelete: _deleteSmartCollection,
             onTogglePin: _toggleSmartCollectionPin,
-          ),
-        ],
-        if (!duplicateCatalog.isEmpty) ...[
-          const SizedBox(height: 8),
-          _DuplicateRepairCard(
-            exactGroupCount: duplicateCatalog.exactGroups.length,
-            suggestionCount: duplicateCatalog.similarSuggestions.length,
-            itemCount: duplicateCatalog.exactGroups.fold(
-              0,
-              (count, group) => count + group.items.length,
-            ),
-            onOpen: () => _openDuplicateRepair(duplicateCatalog),
           ),
         ],
         if (_groupSelectionMode) ...[
@@ -3219,10 +3220,22 @@ class _AddContentMenu extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                '한두 개는 바로 입력하고, 여러 개는 파일로 한 번에 가져오세요.',
+                '처음이라면 추천 자료를 받은 뒤 바로 학습해 보세요.',
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 14),
+              _AddContentChoice(
+                key: const Key('add-language-pack'),
+                icon: Icons.cloud_download_outlined,
+                title: '무료 추천 학습 자료',
+                description: '현재 언어의 단어를 한 번에 추가',
+                highlighted: true,
+                onTap: () =>
+                    Navigator.pop(context, _AddContentAction.languagePack),
+              ),
+              const SizedBox(height: 14),
+              Text('직접 추가', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 7),
               _AddContentChoice(
                 key: const Key('add-quick-word'),
                 icon: Icons.text_fields_rounded,
@@ -3242,19 +3255,10 @@ class _AddContentMenu extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _AddContentChoice(
-                key: const Key('add-language-pack'),
-                icon: Icons.cloud_download_outlined,
-                title: 'GitHub 언어팩 받기',
-                description: '6개 언어의 검증된 추가 어휘를 골라 다운로드',
-                onTap: () =>
-                    Navigator.pop(context, _AddContentAction.languagePack),
-              ),
-              const SizedBox(height: 8),
-              _AddContentChoice(
                 key: const Key('add-import-file'),
                 icon: Icons.upload_file_rounded,
-                title: 'Excel·CSV 파일 가져오기',
-                description: '단어·문장·그룹을 한 번에 가져오기',
+                title: '내 파일로 여러 개 추가',
+                description: 'Excel·CSV·PDF에서 단어와 문장 가져오기',
                 onTap: () =>
                     Navigator.pop(context, _AddContentAction.importFile),
               ),
@@ -3272,6 +3276,7 @@ class _AddContentChoice extends StatelessWidget {
     required this.title,
     required this.description,
     required this.onTap,
+    this.highlighted = false,
     super.key,
   });
 
@@ -3279,12 +3284,15 @@ class _AddContentChoice extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback onTap;
+  final bool highlighted;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Material(
-      color: colors.surfaceContainerLow,
+      color: highlighted
+          ? colors.primaryContainer.withValues(alpha: 0.55)
+          : colors.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
         side: BorderSide(color: colors.outlineVariant),
@@ -4055,56 +4063,6 @@ class _SavedSmartCollectionsBar extends StatelessWidget {
   }
 }
 
-class _DuplicateRepairCard extends StatelessWidget {
-  const _DuplicateRepairCard({
-    required this.exactGroupCount,
-    required this.suggestionCount,
-    required this.itemCount,
-    required this.onOpen,
-  });
-
-  final int exactGroupCount;
-  final int suggestionCount;
-  final int itemCount;
-  final VoidCallback onOpen;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      key: const Key('duplicate-repair-card'),
-      padding: const EdgeInsets.fromLTRB(10, 4, 4, 4),
-      decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.errorContainer.withValues(alpha: 0.35),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.merge_type_rounded),
-          const SizedBox(width: 9),
-          Expanded(
-            child: Text(
-              exactGroupCount == 0
-                  ? '유사 후보 $suggestionCount쌍 · 직접 비교 필요'
-                  : '중복 $exactGroupCount묶음 · $itemCount개 · 유사 $suggestionCount쌍',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton.outlined(
-            key: const Key('open-duplicate-repair'),
-            onPressed: onOpen,
-            icon: const Icon(Icons.chevron_right_rounded),
-            tooltip: '중복 자료 검토',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _DuplicateRepairSheet extends StatelessWidget {
   const _DuplicateRepairSheet({required this.catalog, required this.progress});
 
@@ -4548,34 +4506,44 @@ class _GroupToolbar extends StatelessWidget {
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
                           ),
-                          Tooltip(
-                            message: selectionMode ? '자료 선택 종료' : '자료 선택',
-                            child: OutlinedButton(
-                              key: const Key('library-select-materials'),
-                              onPressed: onToggleSelectionMode,
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.square(44),
-                                padding: EdgeInsets.zero,
+                          PopupMenuButton<_GroupToolbarAction>(
+                            key: const Key('library-group-tools-menu'),
+                            tooltip: '그룹·선택 도구',
+                            icon: const Icon(Icons.more_horiz_rounded),
+                            onSelected: (action) {
+                              switch (action) {
+                                case _GroupToolbarAction.selectMaterials:
+                                  onToggleSelectionMode();
+                                case _GroupToolbarAction.organizeGroups:
+                                  onOpenOrganizer();
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              PopupMenuItem(
+                                key: const Key('library-select-materials'),
+                                value: _GroupToolbarAction.selectMaterials,
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: Icon(
+                                    selectionMode
+                                        ? Icons.check_box_rounded
+                                        : Icons.check_box_outline_blank_rounded,
+                                  ),
+                                  title: Text(
+                                    selectionMode ? '자료 선택 종료' : '여러 자료 선택',
+                                  ),
+                                ),
                               ),
-                              child: Icon(
-                                selectionMode
-                                    ? Icons.check_box_rounded
-                                    : Icons.check_box_outline_blank_rounded,
+                              const PopupMenuItem(
+                                key: Key('library-group-selection'),
+                                value: _GroupToolbarAction.organizeGroups,
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: Icon(Icons.view_week_outlined),
+                                  title: Text('그룹 정리'),
+                                ),
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Tooltip(
-                            message: '그룹 정리',
-                            child: OutlinedButton(
-                              key: const Key('library-group-selection'),
-                              onPressed: onOpenOrganizer,
-                              style: OutlinedButton.styleFrom(
-                                minimumSize: const Size.square(44),
-                                padding: EdgeInsets.zero,
-                              ),
-                              child: const Icon(Icons.view_week_outlined),
-                            ),
+                            ],
                           ),
                         ],
                       ),
@@ -4799,9 +4767,12 @@ class _LibraryHeader extends StatelessWidget {
     required this.favoriteCount,
     required this.trashCount,
     required this.editableCount,
+    required this.duplicateCount,
     required this.onAdd,
     required this.onTrash,
     required this.onBulkEdit,
+    required this.onOrganizeGroups,
+    required this.onRepairDuplicates,
   });
 
   final String subjectName;
@@ -4812,9 +4783,12 @@ class _LibraryHeader extends StatelessWidget {
   final int favoriteCount;
   final int trashCount;
   final int editableCount;
+  final int duplicateCount;
   final VoidCallback onAdd;
   final VoidCallback onTrash;
   final VoidCallback? onBulkEdit;
+  final VoidCallback onOrganizeGroups;
+  final VoidCallback? onRepairDuplicates;
 
   @override
   Widget build(BuildContext context) {
@@ -4846,16 +4820,58 @@ class _LibraryHeader extends StatelessWidget {
       icon: const Icon(Icons.add_rounded),
       label: const Text('추가'),
     );
+    final attentionCount = trashCount + duplicateCount;
     final moreButton = Badge(
-      isLabelVisible: trashCount > 0,
-      label: Text('$trashCount'),
+      isLabelVisible: attentionCount > 0,
+      label: Text('$attentionCount'),
       child: PopupMenuButton<_LibraryHeaderAction>(
         key: const Key('library-more-menu'),
-        tooltip: '자료실 더보기',
+        tooltip: '자료 관리',
         onSelected: (action) {
-          if (action == _LibraryHeaderAction.trash) onTrash();
+          switch (action) {
+            case _LibraryHeaderAction.bulkEdit:
+              onBulkEdit?.call();
+            case _LibraryHeaderAction.organizeGroups:
+              onOrganizeGroups();
+            case _LibraryHeaderAction.repairDuplicates:
+              onRepairDuplicates?.call();
+            case _LibraryHeaderAction.trash:
+              onTrash();
+          }
         },
         itemBuilder: (context) => [
+          PopupMenuItem(
+            key: const Key('open-library-bulk-edit'),
+            value: _LibraryHeaderAction.bulkEdit,
+            enabled: onBulkEdit != null,
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.table_view_outlined),
+              title: const Text('표로 일괄 수정'),
+              trailing: editableCount == 0 ? null : Text('$editableCount개'),
+            ),
+          ),
+          const PopupMenuItem(
+            key: Key('open-library-group-organizer'),
+            value: _LibraryHeaderAction.organizeGroups,
+            child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.folder_copy_outlined),
+              title: Text('그룹 정리'),
+            ),
+          ),
+          if (onRepairDuplicates != null)
+            PopupMenuItem(
+              key: const Key('open-library-duplicate-repair'),
+              value: _LibraryHeaderAction.repairDuplicates,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.merge_type_rounded),
+                title: const Text('중복 자료 정리'),
+                trailing: Text('$duplicateCount건'),
+              ),
+            ),
+          const PopupMenuDivider(),
           PopupMenuItem(
             key: const Key('open-library-trash'),
             value: _LibraryHeaderAction.trash,

@@ -26,6 +26,7 @@ class _LanguagePackScreenState extends ConsumerState<LanguagePackScreen> {
   String? _errorMessage;
   String? _downloadingPackId;
   var _loading = true;
+  var _showLanguageChooser = false;
 
   @override
   void initState() {
@@ -127,7 +128,7 @@ class _LanguagePackScreenState extends ConsumerState<LanguagePackScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('언어팩 받기'),
+        title: const Text('무료 학습 자료'),
         leading: IconButton(
           tooltip: '자료실로 돌아가기',
           onPressed: () => context.pop(),
@@ -158,33 +159,68 @@ class _LanguagePackScreenState extends ConsumerState<LanguagePackScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _LanguagePackIntro(
+                        language: _languageFilter,
                         driveConnected: appState.driveConnected,
                       ),
                       if (availableLanguages.isNotEmpty) ...[
-                        const SizedBox(height: 14),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: [
-                            ChoiceChip(
-                              key: const Key('language-pack-filter-all'),
-                              label: const Text('전체'),
-                              selected: _languageFilter == null,
-                              onSelected: (_) =>
-                                  setState(() => _languageFilter = null),
-                            ),
-                            for (final language in availableLanguages)
-                              ChoiceChip(
-                                key: Key(
-                                  'language-pack-filter-${language.code}',
+                        const SizedBox(height: 10),
+                        Card(
+                          margin: EdgeInsets.zero,
+                          child: Column(
+                            children: [
+                              ListTile(
+                                key: const Key(
+                                  'toggle-language-pack-languages',
                                 ),
-                                avatar: Text(language.symbol),
-                                label: Text(language.koreanName),
-                                selected: _languageFilter == language,
-                                onSelected: (_) =>
-                                    setState(() => _languageFilter = language),
+                                leading: Text(
+                                  (_languageFilter ?? availableLanguages.first)
+                                      .symbol,
+                                  style: const TextStyle(fontSize: 22),
+                                ),
+                                title: Text(
+                                  '${(_languageFilter ?? availableLanguages.first).koreanName} 자료를 보고 있어요',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                subtitle: const Text('다른 언어로 바꾸려면 여기를 누르세요.'),
+                                trailing: Icon(
+                                  _showLanguageChooser
+                                      ? Icons.expand_less_rounded
+                                      : Icons.expand_more_rounded,
+                                ),
+                                onTap: () => setState(
+                                  () => _showLanguageChooser =
+                                      !_showLanguageChooser,
+                                ),
                               ),
-                          ],
+                              if (_showLanguageChooser) ...[
+                                const Divider(height: 1),
+                                Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Wrap(
+                                    spacing: 8,
+                                    runSpacing: 8,
+                                    children: [
+                                      for (final language in availableLanguages)
+                                        ChoiceChip(
+                                          key: Key(
+                                            'language-pack-filter-${language.code}',
+                                          ),
+                                          avatar: Text(language.symbol),
+                                          label: Text(language.koreanName),
+                                          selected: _languageFilter == language,
+                                          onSelected: (_) => setState(() {
+                                            _languageFilter = language;
+                                            _showLanguageChooser = false;
+                                          }),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -199,7 +235,7 @@ class _LanguagePackScreenState extends ConsumerState<LanguagePackScreen> {
                         _LanguagePackEmpty(
                           filtered: (catalog?.packs.isNotEmpty ?? false),
                           onShowAll: () =>
-                              setState(() => _languageFilter = null),
+                              setState(() => _showLanguageChooser = true),
                         )
                       else
                         for (final pack in packs) ...[
@@ -255,8 +291,12 @@ class _LanguagePackScreenState extends ConsumerState<LanguagePackScreen> {
 }
 
 class _LanguagePackIntro extends StatelessWidget {
-  const _LanguagePackIntro({required this.driveConnected});
+  const _LanguagePackIntro({
+    required this.language,
+    required this.driveConnected,
+  });
 
+  final LanguageTag? language;
   final bool driveConnected;
 
   @override
@@ -277,21 +317,18 @@ class _LanguagePackIntro extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '필요한 자료만 골라 추가하세요',
+                    '${language?.koreanName ?? '현재 언어'} 학습 자료를 준비해 두었어요',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 5),
-                  const Text(
-                    'GitHub에 공개된 팩의 크기와 SHA-256을 확인한 뒤 기존 가져오기 '
-                    '검토 화면에서 저장할 항목을 고릅니다.',
-                  ),
+                  const Text('버튼을 누르고 추가될 자료 수만 확인하면 바로 학습할 수 있어요.'),
                   const SizedBox(height: 8),
                   Text(
                     driveConnected
-                        ? '설치한 자료는 내 자료로 저장되고 Google Drive 동기화 대상에 포함됩니다.'
-                        : '설치한 자료는 이 기기에 먼저 저장됩니다. Drive를 연결하면 다른 기기와 동기화됩니다.',
+                        ? '추가한 자료는 Google Drive에 함께 저장돼요.'
+                        : '자료를 저장하려면 Google Drive 연결이 필요해요.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -316,7 +353,7 @@ class _LanguagePackLoading extends StatelessWidget {
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 14),
-            Text('GitHub 언어팩 목록을 확인하고 있습니다…'),
+            Text('추천 학습 자료를 불러오고 있어요…'),
           ],
         ),
       ),
@@ -370,18 +407,15 @@ class _LanguagePackEmpty extends StatelessWidget {
             const Icon(Icons.inventory_2_outlined, size: 38),
             const SizedBox(height: 10),
             Text(
-              filtered ? '이 언어로 공개된 팩이 아직 없어요.' : '공개된 언어팩이 아직 없어요.',
+              filtered ? '이 언어의 추천 자료는 준비 중이에요.' : '아직 받을 수 있는 학습 자료가 없어요.',
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
-            const Text(
-              '새 팩이 GitHub에 올라오면 앱 업데이트 없이 이 목록에 나타납니다.',
-              textAlign: TextAlign.center,
-            ),
+            const Text('잠시 후 목록을 다시 확인해 주세요.', textAlign: TextAlign.center),
             if (filtered) ...[
               const SizedBox(height: 12),
-              TextButton(onPressed: onShowAll, child: const Text('전체 언어 보기')),
+              TextButton(onPressed: onShowAll, child: const Text('다른 언어 선택')),
             ],
           ],
         ),
@@ -431,8 +465,7 @@ class _LanguagePackCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${descriptor.language.koreanName} · v${descriptor.version} · '
-                        '${descriptor.itemCount}개 · ${_sizeLabel(descriptor.sizeBytes)}',
+                        '${descriptor.language.koreanName} · ${descriptor.itemCount}개',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -456,10 +489,22 @@ class _LanguagePackCard extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(descriptor.description),
-            const SizedBox(height: 10),
-            Text(
-              '${descriptor.license} · ${descriptor.attribution}',
-              style: Theme.of(context).textTheme.bodySmall,
+            const SizedBox(height: 6),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: EdgeInsets.zero,
+              dense: true,
+              title: const Text('출처·파일 정보'),
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'v${descriptor.version} · ${_sizeLabel(descriptor.sizeBytes)}\n'
+                    '${descriptor.license} · ${descriptor.attribution}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 14),
             Align(
@@ -481,10 +526,10 @@ class _LanguagePackCard extends StatelessWidget {
                   busy
                       ? '확인 중…'
                       : installation.current
-                      ? '다시 검토'
+                      ? '최신 자료 확인'
                       : installation.installedCount > 0
-                      ? '업데이트 검토'
-                      : '검토하고 설치',
+                      ? '업데이트 확인'
+                      : '${descriptor.itemCount}개 추가하기',
                 ),
               ),
             ),
@@ -512,7 +557,7 @@ class _PackInstallation {
     : this._(installedCount: 0, current: false, label: null);
 
   const _PackInstallation.current(int count)
-    : this._(installedCount: count, current: true, label: '설치됨');
+    : this._(installedCount: count, current: true, label: '사용 중');
 
   const _PackInstallation.updateAvailable(int count)
     : this._(installedCount: count, current: false, label: '업데이트');

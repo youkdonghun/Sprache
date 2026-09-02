@@ -266,7 +266,7 @@ class HomeScreen extends ConsumerWidget {
         case HomeQuickAction.library:
           context.go('/library');
         case HomeQuickAction.importData:
-          context.push('/import');
+          context.push('/library/language-packs');
         case HomeQuickAction.stats:
           context.go('/stats');
       }
@@ -276,11 +276,11 @@ class HomeScreen extends ConsumerWidget {
     if (selectedItems.isEmpty) {
       nextAction = _HomeNextAction(
         eyebrow: '${activeSubject.name} · 학습 준비',
-        title: '첫 단어나 문장을 추가해 보세요',
-        description: '표현과 뜻 하나만 입력하면 바로 학습할 수 있어요.',
-        buttonLabel: '단어·문장 추가',
-        icon: Icons.add_rounded,
-        onPressed: () => context.go('/library/new'),
+        title: '추천 학습 자료로 바로 시작하세요',
+        description: '${activeSubject.name} 단어를 한 번에 받고 곧바로 학습할 수 있어요.',
+        buttonLabel: '무료 학습 자료 받기',
+        icon: Icons.cloud_download_outlined,
+        onPressed: () => context.push('/library/language-packs'),
       );
     } else if (reviewCount > 0) {
       nextAction = _HomeNextAction(

@@ -44,7 +44,11 @@ void main() {
           find.byKey(const Key('required-google-drive-connect')),
           findsOneWidget,
         );
-        expect(find.textContaining('별도 중계 서버'), findsOneWidget);
+        expect(
+          find.textContaining('127.0.0.1은 Google 로그인을 마친 뒤'),
+          findsOneWidget,
+        );
+        expect(find.textContaining('운영자'), findsNothing);
 
         final connectGoogle = find.byKey(
           const Key('required-google-drive-connect'),
@@ -58,7 +62,10 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('2/4 Drive 폴더 선택'), findsOneWidget);
-        expect(find.textContaining('127.0.0.1이 보여도 괜찮아요'), findsOneWidget);
+        expect(
+          find.textContaining('127.0.0.1은 Google 로그인을 마친 뒤'),
+          findsOneWidget,
+        );
 
         service.complete();
         await tester.pumpAndSettle();

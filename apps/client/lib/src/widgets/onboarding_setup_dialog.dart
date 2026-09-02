@@ -402,7 +402,7 @@ String _quickActionLabel(HomeQuickAction value) => switch (value) {
   HomeQuickAction.quickAdd => '빠른 추가',
   HomeQuickAction.practice => '게임·퀴즈',
   HomeQuickAction.library => '자료함',
-  HomeQuickAction.importData => '가져오기',
+  HomeQuickAction.importData => '무료 자료',
   HomeQuickAction.stats => '통계',
 };
 
@@ -411,7 +411,7 @@ IconData _quickActionIcon(HomeQuickAction value) => switch (value) {
   HomeQuickAction.quickAdd => Icons.add_circle_outline_rounded,
   HomeQuickAction.practice => Icons.sports_esports_rounded,
   HomeQuickAction.library => Icons.folder_copy_outlined,
-  HomeQuickAction.importData => Icons.upload_file_rounded,
+  HomeQuickAction.importData => Icons.cloud_download_outlined,
   HomeQuickAction.stats => Icons.insights_rounded,
 };
 

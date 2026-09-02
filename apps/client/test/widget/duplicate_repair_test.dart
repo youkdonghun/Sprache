@@ -72,9 +72,9 @@ void main() {
         await tester.tap(find.text('자료실').last);
         await tester.pumpAndSettle();
 
-        final open = find.byKey(const Key('open-duplicate-repair'));
-        await Scrollable.ensureVisible(tester.element(open), alignment: 0.5);
-        await tester.pump();
+        await tester.tap(find.byKey(const Key('library-more-menu')));
+        await tester.pumpAndSettle();
+        final open = find.byKey(const Key('open-library-duplicate-repair'));
         await tester.tap(open);
         await tester.pumpAndSettle();
         expect(find.text('중복 자료 합치기'), findsOneWidget);

@@ -68,8 +68,8 @@ const appCommandPaletteCommands = <CommandPaletteCommand>[
   ),
   CommandPaletteCommand(
     id: 'language-packs',
-    title: 'GitHub 언어팩 받기',
-    description: '공개 언어팩을 확인하고 내 자료에 추가',
+    title: '무료 추천 학습 자료',
+    description: '현재 언어의 단어를 한 번에 추가',
     keywords: [
       '언어팩',
       '어휘팩',
