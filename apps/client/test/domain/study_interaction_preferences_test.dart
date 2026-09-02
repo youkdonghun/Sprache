@@ -123,4 +123,14 @@ void main() {
     expect(restored.launchFor('/study?mode=meaning').choiceCount, 4);
     expect(restored.launchByActivityId, hasLength(1));
   });
+
+  test('reverse meaning choice keeps a stable downloadable practice route', () {
+    const id = 'reverse-meaning-choice';
+    const route =
+        '/study?mode=meaning&direction=reverse&practiceActivityId=reverse-meaning-choice';
+
+    expect(practiceRouteForActivityId(id), route);
+    expect(practiceRouteForActivityId(route), route);
+    expect(isPlaylistCompatiblePracticeActivity(id), isTrue);
+  });
 }

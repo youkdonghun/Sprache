@@ -917,13 +917,8 @@ Map<String, List<String>> _normalizeDailyQuestAssignmentMap(
         _practiceLocalDayKey(parsedDay) == day;
     final rawSubject = separator < 0 ? '' : entry.key.substring(separator + 1);
     final subject = _decodeDailyQuestSubject(rawSubject);
-    final ids = _normalizePracticeActivityOrder(
-      entry.value,
-      maximumEntries: 3,
-    );
-    if (safeDay &&
-        _isSafeDailyQuestSubject(subject) &&
-        ids.isNotEmpty) {
+    final ids = _normalizePracticeActivityOrder(entry.value, maximumEntries: 3);
+    if (safeDay && _isSafeDailyQuestSubject(subject) && ids.isNotEmpty) {
       result['$day|$subject'] = List.unmodifiable(ids);
     }
   }
@@ -1100,6 +1095,8 @@ String? practiceRouteForActivityId(String activityId) {
   return switch (_canonicalPracticeActivityId(activityId)) {
     'mixed-quiz' => '/study?mode=mixed',
     'meaning-choice' => '/study?mode=meaning',
+    'reverse-meaning-choice' =>
+      '/study?mode=meaning&direction=reverse&practiceActivityId=reverse-meaning-choice',
     'production-writing' => '/study?mode=production',
     'sentence-cloze' => '/study?mode=cloze',
     'sentence-order' => '/study?mode=sentenceOrder',
@@ -1129,6 +1126,10 @@ String _canonicalPracticeActivityId(String raw) {
     if (uri.queryParameters['practiceActivityId'] ==
         'listening-discrimination') {
       return 'listening-discrimination';
+    }
+    if (uri.queryParameters['practiceActivityId'] == 'reverse-meaning-choice' ||
+        (mode == 'meaning' && uri.queryParameters['direction'] == 'reverse')) {
+      return 'reverse-meaning-choice';
     }
     if (mode == 'weak' && uri.queryParameters['historyFilter'] == 'wrongOnly') {
       return 'recent-wrong';

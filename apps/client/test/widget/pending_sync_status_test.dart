@@ -65,10 +65,18 @@ void main() {
 
         await tester.tap(find.byKey(const Key('home-settings')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('settings-overview-storage')));
+        await tester.pumpAndSettle();
 
         expect(find.byKey(const Key('pending-sync-status')), findsOneWidget);
         expect(find.textContaining('동기화 재시도 2회'), findsOneWidget);
         expect(find.text('Google 다시 연결'), findsOneWidget);
+        final privacyCategory = find.byKey(
+          const Key('settings-category-privacy'),
+        );
+        await tester.ensureVisible(privacyCategory);
+        await tester.tap(privacyCategory);
+        await tester.pumpAndSettle();
         expect(
           find.byKey(const Key('delete-google-account-binding')),
           findsOneWidget,
@@ -114,6 +122,8 @@ void main() {
 
         await tester.tap(find.byKey(const Key('home-settings')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('settings-overview-storage')));
+        await tester.pumpAndSettle();
 
         expect(find.byKey(const Key('active-storage-target')), findsOneWidget);
         expect(
@@ -131,6 +141,12 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(service.disconnected, isTrue);
+        final privacyCategory = find.byKey(
+          const Key('settings-category-privacy'),
+        );
+        await tester.ensureVisible(privacyCategory);
+        await tester.tap(privacyCategory);
+        await tester.pumpAndSettle();
         expect(
           find.byKey(const Key('delete-google-account-binding')),
           findsOneWidget,

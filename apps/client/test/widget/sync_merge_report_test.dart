@@ -33,7 +33,7 @@ void main() {
       expect(find.byKey(const Key('shell-storage-status')), findsNothing);
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('settings-category-storage')));
+      await tester.tap(find.byKey(const Key('settings-overview-storage')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const Key('connect-google')));
       await tester.pumpAndSettle();

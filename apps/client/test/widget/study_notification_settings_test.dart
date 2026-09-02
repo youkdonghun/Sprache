@@ -45,6 +45,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('settings-overview-learning')));
+      await tester.pumpAndSettle();
 
       expect(find.text('학습 일정 알림'), findsOneWidget);
       expect(find.text('미래 일정 1개를 Android 알림으로 관리합니다.'), findsOneWidget);

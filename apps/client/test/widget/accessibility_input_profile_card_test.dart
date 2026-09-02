@@ -116,6 +116,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const Key('settings-overview-display')),
+      );
+      await tester.pumpAndSettle();
 
       expect(
         find.byKey(const Key('accessibility-input-profile-card')),

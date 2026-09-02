@@ -313,6 +313,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         showWindows ||
         showPrivacy ||
         showAbout;
+    final showOverview =
+        _query.trim().isEmpty && _selectedCategory == _SettingsCategory.all;
 
     ref.listen(connectionControllerProvider, (previous, next) {
       if (next.userInitiatedOperation &&
@@ -331,7 +333,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 600;
-          final veryNarrow = constraints.maxWidth < 360;
           return ListView(
             padding: EdgeInsets.fromLTRB(
               compact ? 14 : 20,
@@ -349,26 +350,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Row(
                         children: [
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '설정',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.headlineSmall,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  veryNarrow
-                                      ? '학습 방식과 저장 위치를 바꿀 수 있어요.'
-                                      : '저장 위치와 학습 환경을 한눈에 확인하세요.',
-                                  style: Theme.of(context).textTheme.bodyMedium,
-                                ),
-                              ],
+                            child: Text(
+                              '설정',
+                              style: Theme.of(context).textTheme.headlineSmall,
                             ),
                           ),
-                          _ModePill(mock: config.mockMode),
+                          if (config.mockMode) _ModePill(mock: true),
                         ],
                       ),
                       SizedBox(height: compact ? 14 : 18),
@@ -382,35 +369,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           _searchController.clear();
                           setState(() => _query = '');
                         },
-                        onResetAll: () => _confirmAndResetAll(context, ref),
-                        onJumpStorage: () => _selectCategory(
-                          _SettingsCategory.storage,
-                          jumpTarget: _storageSectionKey,
-                        ),
-                        onJumpDisplay: () => _selectCategory(
-                          _SettingsCategory.display,
-                          jumpTarget: _displaySectionKey,
-                        ),
-                        onJumpLearning: () => _selectCategory(
-                          _SettingsCategory.learning,
-                          jumpTarget: _learningSectionKey,
-                        ),
-                        onJumpPrivacy: () => _selectCategory(
-                          _SettingsCategory.privacy,
-                          jumpTarget: _privacySectionKey,
-                        ),
                       ),
-                      const SizedBox(height: 10),
-                      _SettingsCategoryPicker(
-                        selected: _selectedCategory,
-                        showWindows: supportsFocusWorkspace,
-                        onSelected: _selectCategory,
-                      ),
+                      if (showOverview) ...[
+                        const SizedBox(height: 10),
+                        _SettingsOverview(
+                          connected: connected,
+                          appVersion: config.appVersion,
+                          showWindows: supportsFocusWorkspace,
+                          onSelected: _selectCategory,
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 10),
+                        _SettingsCategoryPicker(
+                          selected: _selectedCategory,
+                          showWindows: supportsFocusWorkspace,
+                          onSelected: _selectCategory,
+                        ),
+                      ],
                       if (!hasSearchResult) ...[
                         const SizedBox(height: 16),
                         _SettingsEmptySearch(query: _query),
                       ],
-                      if (showStorage) ...[
+                      if (!showOverview && showStorage) ...[
                         const SizedBox(height: 20),
                         Focus(
                           key: const Key('settings-section-focus-storage'),
@@ -441,7 +421,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               .disconnect(),
                         ),
                       ],
-                      if (showDisplay) ...[
+                      if (!showOverview && showDisplay) ...[
                         const SizedBox(height: 20),
                         Focus(
                           key: const Key('settings-section-focus-display'),
@@ -513,7 +493,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ),
                       ],
-                      if (showLearning) ...[
+                      if (!showOverview && showLearning) ...[
                         const SizedBox(height: 20),
                         Focus(
                           key: const Key('settings-section-focus-learning'),
@@ -570,7 +550,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ),
                       ],
-                      if (showWindows) ...[
+                      if (!showOverview && showWindows) ...[
                         const SizedBox(height: 20),
                         Focus(
                           key: const Key('settings-section-focus-windows'),
@@ -606,7 +586,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 .minimize(),
                           ),
                       ],
-                      if (showPrivacy) ...[
+                      if (!showOverview && showPrivacy) ...[
                         const SizedBox(height: 20),
                         Focus(
                           key: const Key('settings-section-focus-privacy'),
@@ -708,7 +688,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           },
                         ),
                       ],
-                      if (showAbout) ...[
+                      if (!showOverview && showAbout) ...[
                         const SizedBox(height: 20),
                         Focus(
                           key: const Key('settings-section-focus-about'),
@@ -879,20 +859,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('학습 분량을 기본값으로 되돌렸습니다.')));
-  }
-
-  Future<void> _confirmAndResetAll(BuildContext context, WidgetRef ref) async {
-    final approved = await _confirmReset(
-      context,
-      title: '편의 설정을 모두 초기화할까요?',
-      changes: const ['화면, 소리, 읽기와 퀴즈 편의 설정', '현재 주제의 하루 목표와 기본 세션 분량'],
-    );
-    if (!approved || !context.mounted) return;
-    _applyDisplayReset(ref);
-    _applyLearningReset(ref);
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('편의 설정을 모두 기본값으로 되돌렸습니다.')));
   }
 
   Future<void> _configureStudyNotifications(
@@ -4072,6 +4038,77 @@ class _ConnectionStatus extends StatelessWidget {
   }
 }
 
+class _SettingsOverview extends StatelessWidget {
+  const _SettingsOverview({
+    required this.connected,
+    required this.appVersion,
+    required this.showWindows,
+    required this.onSelected,
+  });
+
+  final bool connected;
+  final String appVersion;
+  final bool showWindows;
+  final ValueChanged<_SettingsCategory> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries =
+        <({_SettingsCategory category, String title, String summary})>[
+          (
+            category: _SettingsCategory.storage,
+            title: '저장·동기화',
+            summary: connected ? 'Google Drive 연결됨' : 'Google Drive 연결 필요',
+          ),
+          (
+            category: _SettingsCategory.display,
+            title: '화면·소리',
+            summary: '테마와 사용 편의',
+          ),
+          (
+            category: _SettingsCategory.learning,
+            title: '학습',
+            summary: '목표와 문제 수',
+          ),
+          if (showWindows)
+            (
+              category: _SettingsCategory.windows,
+              title: kIsWeb ? '집중 화면' : 'Windows 창',
+              summary: kIsWeb ? '전체 화면 설정' : '창 동작 설정',
+            ),
+          (
+            category: _SettingsCategory.privacy,
+            title: '데이터·개인정보',
+            summary: '백업과 데이터 관리',
+          ),
+          (
+            category: _SettingsCategory.about,
+            title: '앱 정보',
+            summary: '버전 $appVersion · 앱 공유',
+          ),
+        ];
+    return Card(
+      key: const Key('settings-overview'),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var index = 0; index < entries.length; index++) ...[
+            if (index > 0) const Divider(height: 1),
+            ListTile(
+              key: Key('settings-overview-${entries[index].category.name}'),
+              leading: Icon(_settingsCategoryIcon(entries[index].category)),
+              title: Text(entries[index].title),
+              subtitle: Text(entries[index].summary),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: () => onSelected(entries[index].category),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _SettingsCategoryPicker extends StatelessWidget {
   const _SettingsCategoryPicker({
     required this.selected,
@@ -4128,11 +4165,6 @@ class _SettingsSearchPanel extends StatelessWidget {
     required this.onChanged,
     required this.onSubmitted,
     required this.onClear,
-    required this.onResetAll,
-    required this.onJumpStorage,
-    required this.onJumpDisplay,
-    required this.onJumpLearning,
-    required this.onJumpPrivacy,
   });
 
   final TextEditingController controller;
@@ -4140,11 +4172,6 @@ class _SettingsSearchPanel extends StatelessWidget {
   final ValueChanged<String> onChanged;
   final ValueChanged<String> onSubmitted;
   final VoidCallback onClear;
-  final VoidCallback onResetAll;
-  final VoidCallback onJumpStorage;
-  final VoidCallback onJumpDisplay;
-  final VoidCallback onJumpLearning;
-  final VoidCallback onJumpPrivacy;
 
   @override
   Widget build(BuildContext context) {
@@ -4176,80 +4203,9 @@ class _SettingsSearchPanel extends StatelessWidget {
                 isDense: true,
               ),
             ),
-            if (query.trim().isEmpty) ...[
-              const SizedBox(height: 10),
-              Text(
-                '바로 이동',
-                style: Theme.of(
-                  context,
-                ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 7,
-                runSpacing: 7,
-                children: [
-                  _SettingsJumpButton(
-                    label: '저장',
-                    icon: Icons.cloud_outlined,
-                    onPressed: onJumpStorage,
-                  ),
-                  _SettingsJumpButton(
-                    label: '화면·편의',
-                    icon: Icons.palette_outlined,
-                    onPressed: onJumpDisplay,
-                  ),
-                  _SettingsJumpButton(
-                    label: '학습 분량',
-                    icon: Icons.school_outlined,
-                    onPressed: onJumpLearning,
-                  ),
-                  _SettingsJumpButton(
-                    label: '개인정보',
-                    icon: Icons.shield_outlined,
-                    onPressed: onJumpPrivacy,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  key: const Key('reset-all-settings'),
-                  onPressed: onResetAll,
-                  icon: const Icon(Icons.restart_alt_rounded),
-                  label: const Text('편의 설정 전체 초기화'),
-                ),
-              ),
-            ],
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SettingsJumpButton extends StatelessWidget {
-  const _SettingsJumpButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size(48, 44),
-        visualDensity: VisualDensity.compact,
-      ),
-      onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      label: Text(label),
     );
   }
 }

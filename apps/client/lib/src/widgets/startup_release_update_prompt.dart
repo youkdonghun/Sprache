@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/release_link_share_service.dart';
 import '../services/release_update_coordinator.dart';
@@ -122,7 +123,7 @@ class _StartupReleaseUpdatePromptState
     }
   }
 
-  Future<void> _shareApk(BuildContext actionContext) async {
+  Future<void> _shareAppLinks(BuildContext actionContext) async {
     final check = _check;
     if (check == null || _sharing) return;
     setState(() => _sharing = true);
@@ -131,13 +132,18 @@ class _StartupReleaseUpdatePromptState
       final origin = box is RenderBox
           ? box.localToGlobal(Offset.zero) & box.size
           : null;
-      await _linkShareService.shareLatestAndroidApk(
+      await _linkShareService.shareAppLinks(
         manifest: check.manifest,
         origin: origin,
       );
-      if (mounted) setState(() => _status = '최신 APK 링크를 공유했습니다.');
+      if (mounted) setState(() => _status = 'Android·iPhone 설치 링크를 공유했습니다.');
     } catch (error) {
-      if (mounted) setState(() => _status = _updateMessageOf(error));
+      await Clipboard.setData(
+        ClipboardData(text: appInstallShareText(check.manifest)),
+      );
+      if (mounted) {
+        setState(() => _status = '공유창을 열 수 없어 설치 링크를 복사했습니다.');
+      }
     } finally {
       if (mounted) setState(() => _sharing = false);
     }
@@ -147,8 +153,6 @@ class _StartupReleaseUpdatePromptState
   Widget build(BuildContext context) {
     final check = _check;
     if (check == null || _dismissed) return widget.child;
-    final androidArtifact = check.manifest.artifactFor('android');
-    final canShareApk = androidArtifact?.kind == 'apk';
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -222,17 +226,16 @@ class _StartupReleaseUpdatePromptState
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          if (canShareApk)
-                            Builder(
-                              builder: (actionContext) => OutlinedButton.icon(
-                                key: const Key('share-startup-apk-link'),
-                                onPressed: _sharing
-                                    ? null
-                                    : () => _shareApk(actionContext),
-                                icon: const Icon(Icons.share_outlined),
-                                label: const Text('APK 링크 공유'),
-                              ),
+                          Builder(
+                            builder: (actionContext) => OutlinedButton.icon(
+                              key: const Key('share-startup-app-links'),
+                              onPressed: _sharing
+                                  ? null
+                                  : () => _shareAppLinks(actionContext),
+                              icon: const Icon(Icons.share_outlined),
+                              label: const Text('앱 링크 공유'),
                             ),
+                          ),
                           FilledButton.icon(
                             key: const Key('apply-startup-update'),
                             onPressed: _applying ? null : _applyUpdate,

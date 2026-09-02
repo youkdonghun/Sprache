@@ -19,6 +19,30 @@ import 'package:sprache/src/services/app_clock.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 void main() {
+  testWidgets(
+    'default hub shows three primary choices and hides advanced tools',
+    (tester) async {
+      await _pumpPracticeHub(tester, openAdvanced: false, openGames: false);
+
+      expect(
+        find.byKey(const Key('primary-practice-meaning-choice')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('primary-practice-reverse-meaning-choice')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('primary-practice-sentence-order')),
+        findsOneWidget,
+      );
+      expect(find.text('뜻풀이'), findsOneWidget);
+      expect(find.text('뜻 보고 단어 선택'), findsOneWidget);
+      expect(find.text('문장 맞추기'), findsOneWidget);
+      expect(find.byKey(const Key('practice-hub-tabs')), findsNothing);
+    },
+  );
+
   testWidgets('hub tabs separate recommendations, games, and missions', (
     tester,
   ) async {
@@ -114,6 +138,11 @@ void main() {
     controller.selectSubject(subjectId);
     await tester.pumpAndSettle();
     if (find.byKey(const Key('practice-game-search')).evaluate().isEmpty) {
+      final advanced = find.byKey(const Key('toggle-advanced-practice'));
+      if (advanced.evaluate().isNotEmpty) {
+        await tester.tap(advanced);
+        await tester.pumpAndSettle();
+      }
       await tester.tap(find.text('전체 게임'));
       await tester.pumpAndSettle();
     }
@@ -285,6 +314,8 @@ void main() {
       await tester.pumpAndSettle();
       harness.container.read(appRouterProvider).go('/learn');
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
+      await tester.pumpAndSettle();
       expect(find.text(challengeTitle), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -315,6 +346,8 @@ void main() {
         expect(tester.widget<IconButton>(nextFinder).onPressed, isNotNull);
         expect(controller.offset, 0);
 
+        await tester.ensureVisible(nextFinder);
+        await tester.pumpAndSettle();
         await tester.tap(nextFinder);
         await tester.pumpAndSettle();
         expect(controller.offset, greaterThan(0));
@@ -920,6 +953,7 @@ DateTime _fixedNow() => DateTime(2026, 8, 2, 12);
 Future<_PracticeHarness> _pumpPracticeHub(
   WidgetTester tester, {
   DateTime Function()? now,
+  bool openAdvanced = true,
   bool openGames = true,
   Size size = const Size(412, 915),
 }) async {
@@ -941,6 +975,10 @@ Future<_PracticeHarness> _pumpPracticeHub(
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('nav-learn')));
   await tester.pumpAndSettle();
+  if (openAdvanced) {
+    await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
+    await tester.pumpAndSettle();
+  }
   if (openGames) {
     await tester.tap(find.text('전체 게임'));
     await tester.pumpAndSettle();

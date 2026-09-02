@@ -8,6 +8,42 @@ import 'package:sprache/src/widgets/release_update_card.dart';
 import 'package:sprache/src/widgets/startup_release_update_prompt.dart';
 
 void main() {
+  test('app share payload includes Android and iPhone install paths', () {
+    final text = appInstallShareText(_manifest);
+
+    expect(text, contains('Android 설치:'));
+    expect(text, contains('Sprache-Android-1.38.0-google-debug-signed.apk'));
+    expect(text, contains('iPhone·iPad에서 실행:'));
+    expect(text, contains('https://sprache6.github.io/app/'));
+  });
+
+  testWidgets('shares both install links before an update check', (
+    tester,
+  ) async {
+    final coordinator = _FakeCoordinator(platformKey: 'pwa');
+    final sharing = _FakeLinkShareService();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReleaseUpdateCard(
+            currentVersion: '1.38.0',
+            manifestUrl: 'https://sprache6.github.io/app/release.json',
+            coordinator: coordinator,
+            linkShareService: sharing,
+          ),
+        ),
+      ),
+    );
+
+    expect(coordinator.checkCalls, 0);
+    await tester.tap(find.byKey(const Key('share-app-install-links')));
+    await tester.pumpAndSettle();
+
+    expect(sharing.calls, 1);
+    expect(sharing.lastManifest, isNull);
+    expect(find.text('Android·iPhone 설치 링크를 공유했습니다.'), findsOneWidget);
+  });
+
   testWidgets('checks only on demand and applies an available update', (
     tester,
   ) async {
@@ -68,7 +104,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('최신 APK 다시 받기'), findsOneWidget);
-    expect(find.text('최신 APK 링크 공유'), findsOneWidget);
+    expect(find.text('앱 설치 링크 공유'), findsOneWidget);
     expect(find.textContaining('APK를 다시 받을 수 있습니다'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('apply-release-update')));
@@ -76,11 +112,11 @@ void main() {
 
     expect(coordinator.applyCalls, 1);
 
-    await tester.tap(find.byKey(const Key('share-latest-apk-link')));
+    await tester.tap(find.byKey(const Key('share-app-install-links')));
     await tester.pumpAndSettle();
 
     expect(sharing.calls, 1);
-    expect(find.text('최신 APK 링크를 공유했습니다.'), findsOneWidget);
+    expect(find.text('Android·iPhone 설치 링크를 공유했습니다.'), findsOneWidget);
   });
 
   testWidgets('checks once at startup and only prompts for a newer release', (
@@ -112,7 +148,7 @@ void main() {
     );
     expect(find.text('새 버전 1.38.0이 있어요'), findsOneWidget);
 
-    await tester.tap(find.byKey(const Key('share-startup-apk-link')));
+    await tester.tap(find.byKey(const Key('share-startup-app-links')));
     await tester.pumpAndSettle();
     expect(sharing.calls, 1);
 
@@ -185,13 +221,12 @@ void main() {
 
 class _FakeLinkShareService implements ReleaseLinkShareService {
   int calls = 0;
+  ReleaseManifest? lastManifest;
 
   @override
-  Future<void> shareLatestAndroidApk({
-    required ReleaseManifest manifest,
-    Rect? origin,
-  }) async {
+  Future<void> shareAppLinks({ReleaseManifest? manifest, Rect? origin}) async {
     calls += 1;
+    lastManifest = manifest;
   }
 }
 

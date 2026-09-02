@@ -193,13 +193,6 @@ class LearningHubScreen extends ConsumerWidget {
                                           context,
                                         ).textTheme.headlineSmall,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '익힌 뒤 문제를 풀고, 소리 내어 말해 보세요.',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium,
-                                      ),
                                     ],
                                   ),
                                 ),
@@ -329,35 +322,18 @@ class _RecentSubjectSessionCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '최근 학습 · ${local.month}/${local.day} · ${session.itemIds.length}문제 · 정답률 $accuracy%',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
-                    ),
-                    Text(
-                      '${session.mode.label} · ${session.historyFilter.label}'
-                      '${session.recordProgress ? '' : ' · 진도 비기록'}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                child: Text(
+                  '최근 학습 · ${local.month}/${local.day} · ${session.itemIds.length}문제 · 정답률 $accuracy%',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
                 ),
               ),
               const SizedBox(width: 6),
-              TextButton.icon(
+              Icon(
+                Icons.chevron_right_rounded,
                 key: const Key('reopen-recent-subject-session'),
-                onPressed: onPressed,
-                style: TextButton.styleFrom(
-                  minimumSize: const Size(44, 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                ),
-                icon: const Icon(Icons.replay_rounded, size: 18),
-                label: const Text('다시 학습'),
+                color: colors.onSecondaryContainer,
               ),
             ],
           ),
@@ -397,6 +373,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
   final _playlistSelection = <String>[];
   var _query = '';
   var _selectedTab = _PracticeHubTab.recommended;
+  var _showAdvanced = false;
   String? _handledPlaylistToken;
   String? _handledLaunchToken;
 
@@ -629,6 +606,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     }
     if (activity.id == 'match-sprint' ||
         activity.id == 'meaning-choice' ||
+        activity.id == 'reverse-meaning-choice' ||
         activity.id == 'word-cards') {
       return PracticeDurationFilter.threeMinutes;
     }
@@ -648,6 +626,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         'mixed-quiz',
         'exam-simulator',
         'meaning-choice',
+        'reverse-meaning-choice',
         'match-sprint',
         'word-cards',
         'due-review',
@@ -748,6 +727,17 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     for (final category in _PracticeCategory.values)
       ..._activitiesFor(category),
   ];
+
+  List<_Activity> get _primaryActivities {
+    const primaryIds = {
+      'meaning-choice',
+      'reverse-meaning-choice',
+      'sentence-order',
+    };
+    return _activitiesFor(
+      _PracticeCategory.quiz,
+    ).where((activity) => primaryIds.contains(activity.id)).toList();
+  }
 
   List<_Activity> _orderedFavorites(PracticeCatalogPreferences catalog) {
     final favorites = _allActivities
@@ -1289,8 +1279,17 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'meaning-choice',
           icon: Icons.touch_app_rounded,
           title: '뜻 고르기',
-          description: '표현에 맞는 뜻을 골라요',
+          description: '단어를 보고 알맞은 뜻을 골라요',
           route: '/study?mode=meaning',
+          badge: '선택',
+        ),
+        _Activity(
+          id: 'reverse-meaning-choice',
+          icon: Icons.swap_horiz_rounded,
+          title: '뜻 보고 단어 선택',
+          description: '뜻을 보고 알맞은 단어를 골라요',
+          route:
+              '/study?mode=meaning&direction=reverse&practiceActivityId=reverse-meaning-choice',
           badge: '선택',
         ),
         _Activity(
@@ -1313,7 +1312,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
           id: 'sentence-order',
           icon: Icons.reorder_rounded,
           title: '문장 배열',
-          description: '단어를 올바른 순서로 놓아요',
+          description: '단어를 순서대로 놓아 문장을 완성해요',
           route: '/study?mode=sentenceOrder',
           badge: '문장',
         ),
@@ -1645,296 +1644,410 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('학습 방식', style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 3),
-                  Text(
-                    '퀴즈, 암기, 실전 연습 중 원하는 방식을 고르세요.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Tooltip(
-              message: planSummary,
-              child: OutlinedButton.icon(
-                key: const Key('open-session-builder'),
-                onPressed: widget.onConfigure,
-                icon: const Icon(Icons.tune_rounded, size: 19),
-                label: const Text('맞춤 설정'),
-              ),
-            ),
-          ],
-        ),
+        Text('바로 학습', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 10),
-        SegmentedButton<_PracticeHubTab>(
-          key: const Key('practice-hub-tabs'),
-          showSelectedIcon: false,
-          segments: const [
-            ButtonSegment(
-              value: _PracticeHubTab.recommended,
-              icon: Icon(Icons.auto_awesome_outlined),
-              label: Text('추천'),
-            ),
-            ButtonSegment(
-              value: _PracticeHubTab.games,
-              icon: Icon(Icons.sports_esports_outlined),
-              label: Text('전체 게임'),
-            ),
-            ButtonSegment(
-              value: _PracticeHubTab.missions,
-              icon: Icon(Icons.explore_outlined),
-              label: Text('미션'),
-            ),
-          ],
-          selected: {_selectedTab},
-          onSelectionChanged: (selection) {
-            if (selection.isNotEmpty) {
-              setState(() => _selectedTab = selection.first);
-            }
-          },
-        ),
-        const SizedBox(height: 10),
-        if (_selectedTab == _PracticeHubTab.recommended &&
-            _hasMissingMaterialCapability &&
-            widget.items.isEmpty) ...[
-          _MissingMaterialNotice(
-            isEmpty: true,
-            onAdd: () => context.go('/library/new'),
-          ),
-          const SizedBox(height: 10),
-        ],
-        if (_selectedTab == _PracticeHubTab.recommended)
-          _PersonalizedPracticeHub(
-            recommendations: recommendations,
-            basis: recommendationBasis,
-            recommendationWeights: catalog.recommendationWeightByActivityId,
-            availabilityFor: _availabilityFor,
-            onPressed: (activity) =>
-                _openActivity(activity, useSavedRules: true),
-            onConfigure: (activity) =>
-                _openActivity(activity, forceConfigure: true),
-            onSeeMore: (activity) => _adjustRecommendationWeight(activity, 1),
-            onSeeLess: (activity) => _adjustRecommendationWeight(activity, -1),
-            onHideToday: (activity) =>
-                _snoozeRecommendation(activity, const Duration(days: 1)),
-            onHideSevenDays: (activity) =>
-                _snoozeRecommendation(activity, const Duration(days: 7)),
-          ),
-        if (_selectedTab == _PracticeHubTab.recommended &&
-            dailyChallenges.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          _DailyQuestBoard(
-            activities: dailyChallenges,
-            completedActivityIds: completedDailyChallengeIds,
-            quickLaunchActivityIds: catalog.quickLaunchActivityIds,
-            onPressed: _openDailyChallenge,
-          ),
-        ],
-        if (_selectedTab != _PracticeHubTab.missions &&
-            recentActivities.isNotEmpty) ...[
-          const SizedBox(height: 10),
-          _RecentPracticeRow(
-            activities: recentActivities,
-            launchCounts: catalog.launchCountByActivityId,
-            onPressed: (activity) =>
-                _openActivity(activity, useSavedRules: true),
-          ),
-        ],
-        if (_selectedTab != _PracticeHubTab.missions &&
-            favorites.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          _FavoritePracticeRow(
-            activities: favorites,
-            onPressed: (activity) =>
-                _openActivity(activity, useSavedRules: true),
-          ),
-        ],
-        if (_selectedTab == _PracticeHubTab.missions)
-          _MissionHubPanel(
-            recommendedUnitIndex: widget.recommendedUnitIndex,
-            onOpenMissions: () => context.go('/missions'),
-            onOpenPath: () => context.go('/path'),
-          ),
-        if (_selectedTab == _PracticeHubTab.games) ...[
-          const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final search = TextField(
-                key: const Key('practice-game-search'),
-                controller: _searchController,
-                textInputAction: TextInputAction.search,
-                onChanged: (value) => setState(() => _query = value),
-                decoration: InputDecoration(
-                  isDense: true,
-                  constraints: const BoxConstraints(minHeight: 44),
-                  hintText: '게임 검색 · 쓰기, 듣기, 문장…',
-                  prefixIcon: const Icon(Icons.search_rounded),
-                  suffixIcon: _query.isEmpty
-                      ? null
-                      : IconButton(
-                          tooltip: '검색 지우기',
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _query = '');
-                          },
-                          icon: const Icon(Icons.close_rounded),
-                        ),
-                ),
-              );
-              final surprise = Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FilledButton.tonalIcon(
-                    key: const Key('practice-surprise-game'),
-                    onPressed: _openSurpriseGame,
-                    icon: const Icon(Icons.casino_outlined),
-                    label: const Text('깜짝 게임'),
-                  ),
-                  IconButton(
-                    key: const Key('practice-surprise-settings'),
-                    tooltip: '깜짝 게임 조건',
-                    onPressed: _showSurpriseSettings,
-                    icon: const Icon(Icons.tune_rounded),
-                  ),
-                ],
-              );
-              if (constraints.maxWidth < 560) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [search, const SizedBox(height: 8), surprise],
-                );
-              }
-              return Row(
-                children: [
-                  Expanded(child: search),
-                  const SizedBox(width: 10),
-                  surprise,
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 6),
-          _PracticeDiscoveryControls(
-            catalog: catalog,
-            activeFilterCount: activeDiscoveryFilterCount,
-            onDurationChanged: (value) =>
-                _updateCatalog(catalog.copyWith(durationFilter: value)),
-            onSkillChanged: (value) =>
-                _updateCatalog(catalog.copyWith(skillFilter: value)),
-            onSortChanged: (value) =>
-                _updateCatalog(catalog.copyWith(sortOrder: value)),
-            onReset: activeDiscoveryFilterCount == 0
-                ? null
-                : () => _updateCatalog(
-                    catalog.copyWith(
-                      durationFilter: PracticeDurationFilter.any,
-                      skillFilter: PracticeSkillFilter.all,
-                      sortOrder: PracticeCatalogSort.recommended,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columns = constraints.maxWidth >= 760 ? 3 : 1;
+            final width = (constraints.maxWidth - (columns - 1) * 10) / columns;
+            return Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final activity in _primaryActivities)
+                  SizedBox(
+                    width: width,
+                    child: _PrimaryPracticeCard(
+                      activity: activity,
+                      availability: _availabilityFor(activity),
+                      onPressed: () =>
+                          _openActivity(activity, useSavedRules: true),
                     ),
                   ),
-            onClearRecommendationSnoozes:
-                catalog.recommendationSnoozedUntilByActivityId.isEmpty
-                ? null
-                : () => _updateCatalog(catalog.clearRecommendationSnoozes()),
+              ],
+            );
+          },
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const Key('toggle-advanced-practice'),
+            onPressed: () => setState(() => _showAdvanced = !_showAdvanced),
+            icon: Icon(
+              _showAdvanced
+                  ? Icons.expand_less_rounded
+                  : Icons.expand_more_rounded,
+            ),
+            label: Text(_showAdvanced ? '추가 학습 닫기' : '더 많은 학습 방식'),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Semantics(
-              key: const Key('practice-search-result-summary'),
-              liveRegion: true,
-              label: '현재 조건에 맞는 게임 $visibleResultCount개',
-              child: Text(
-                '${_query.trim().isEmpty && activeDiscoveryFilterCount == 0 ? '전체' : '현재 조건'} · '
-                '$visibleResultCount개 게임',
-                textAlign: TextAlign.end,
-                style: Theme.of(context).textTheme.labelSmall,
+        ),
+        if (_showAdvanced) ...[
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '추가 학습',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Tooltip(
+                message: planSummary,
+                child: OutlinedButton.icon(
+                  key: const Key('open-session-builder'),
+                  onPressed: widget.onConfigure,
+                  icon: const Icon(Icons.tune_rounded, size: 19),
+                  label: const Text('맞춤 설정'),
+                ),
+              ),
+            ],
           ),
-          if (_playlistSelection.isNotEmpty ||
-              catalog.playlists.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            _PracticePlaylistPanel(
-              selectedIds: _playlistSelection,
-              titleForId: (id) => _allActivities
-                  .cast<_Activity?>()
-                  .firstWhere(
-                    (activity) => activity?.id == id,
-                    orElse: () => null,
-                  )
-                  ?.title,
-              playlists: catalog.playlists,
-              onSave: _savePlaylist,
-              onStart: _startPlaylist,
-              onRemove: _removePlaylist,
-              onClearSelection: () => setState(_playlistSelection.clear),
-            ),
-          ],
-          const SizedBox(height: 12),
-          if (categorySection(_PracticeCategory.quiz)
-              case final quizSection?) ...[
-            quizSection,
-            const SizedBox(height: 10),
-          ],
-          if (_hasMissingMaterialCapability && widget.items.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          SegmentedButton<_PracticeHubTab>(
+            key: const Key('practice-hub-tabs'),
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(
+                value: _PracticeHubTab.recommended,
+                icon: Icon(Icons.auto_awesome_outlined),
+                label: Text('추천'),
+              ),
+              ButtonSegment(
+                value: _PracticeHubTab.games,
+                icon: Icon(Icons.sports_esports_outlined),
+                label: Text('전체 게임'),
+              ),
+              ButtonSegment(
+                value: _PracticeHubTab.missions,
+                icon: Icon(Icons.explore_outlined),
+                label: Text('미션'),
+              ),
+            ],
+            selected: {_selectedTab},
+            onSelectionChanged: (selection) {
+              if (selection.isNotEmpty) {
+                setState(() => _selectedTab = selection.first);
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+          if (_selectedTab == _PracticeHubTab.recommended &&
+              _hasMissingMaterialCapability &&
+              widget.items.isEmpty) ...[
             _MissingMaterialNotice(
-              isEmpty: false,
+              isEmpty: true,
               onAdd: () => context.go('/library/new'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
           ],
-          for (final category in _PracticeCategory.values)
-            if (category != _PracticeCategory.quiz)
-              if (categorySection(category) case final section?) ...[
-                const SizedBox(height: 12),
-                section,
-              ],
-          if (_query.trim().isNotEmpty &&
-              _PracticeCategory.values.every(
-                (category) => _visibleActivities(category, catalog).isEmpty,
-              )) ...[
-            const SizedBox(height: 18),
-            const Center(child: Text('조건에 맞는 게임이 없어요.')),
-          ],
-          if (hidden.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            ExpansionTile(
-              key: const Key('hidden-practice-games'),
-              tilePadding: EdgeInsets.zero,
-              title: Text('숨긴 게임 ${hidden.length}개'),
-              subtitle: const Text('언제든 다시 표시할 수 있어요.'),
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final activity in hidden)
-                        ActionChip(
-                          avatar: const Icon(
-                            Icons.visibility_outlined,
-                            size: 18,
-                          ),
-                          label: Text('${activity.title} 복원'),
-                          onPressed: () => _restoreActivity(activity),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
+          if (_selectedTab == _PracticeHubTab.recommended)
+            _PersonalizedPracticeHub(
+              recommendations: recommendations,
+              basis: recommendationBasis,
+              recommendationWeights: catalog.recommendationWeightByActivityId,
+              availabilityFor: _availabilityFor,
+              onPressed: (activity) =>
+                  _openActivity(activity, useSavedRules: true),
+              onConfigure: (activity) =>
+                  _openActivity(activity, forceConfigure: true),
+              onSeeMore: (activity) => _adjustRecommendationWeight(activity, 1),
+              onSeeLess: (activity) =>
+                  _adjustRecommendationWeight(activity, -1),
+              onHideToday: (activity) =>
+                  _snoozeRecommendation(activity, const Duration(days: 1)),
+              onHideSevenDays: (activity) =>
+                  _snoozeRecommendation(activity, const Duration(days: 7)),
             ),
+          if (_selectedTab == _PracticeHubTab.recommended &&
+              dailyChallenges.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _DailyQuestBoard(
+              activities: dailyChallenges,
+              completedActivityIds: completedDailyChallengeIds,
+              quickLaunchActivityIds: catalog.quickLaunchActivityIds,
+              onPressed: _openDailyChallenge,
+            ),
+          ],
+          if (_selectedTab != _PracticeHubTab.missions &&
+              recentActivities.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            _RecentPracticeRow(
+              activities: recentActivities,
+              launchCounts: catalog.launchCountByActivityId,
+              onPressed: (activity) =>
+                  _openActivity(activity, useSavedRules: true),
+            ),
+          ],
+          if (_selectedTab != _PracticeHubTab.missions &&
+              favorites.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _FavoritePracticeRow(
+              activities: favorites,
+              onPressed: (activity) =>
+                  _openActivity(activity, useSavedRules: true),
+            ),
+          ],
+          if (_selectedTab == _PracticeHubTab.missions)
+            _MissionHubPanel(
+              recommendedUnitIndex: widget.recommendedUnitIndex,
+              onOpenMissions: () => context.go('/missions'),
+              onOpenPath: () => context.go('/path'),
+            ),
+          if (_selectedTab == _PracticeHubTab.games) ...[
+            const SizedBox(height: 10),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final search = TextField(
+                  key: const Key('practice-game-search'),
+                  controller: _searchController,
+                  textInputAction: TextInputAction.search,
+                  onChanged: (value) => setState(() => _query = value),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    constraints: const BoxConstraints(minHeight: 44),
+                    hintText: '게임 검색 · 쓰기, 듣기, 문장…',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: _query.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: '검색 지우기',
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _query = '');
+                            },
+                            icon: const Icon(Icons.close_rounded),
+                          ),
+                  ),
+                );
+                final surprise = Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FilledButton.tonalIcon(
+                      key: const Key('practice-surprise-game'),
+                      onPressed: _openSurpriseGame,
+                      icon: const Icon(Icons.casino_outlined),
+                      label: const Text('깜짝 게임'),
+                    ),
+                    IconButton(
+                      key: const Key('practice-surprise-settings'),
+                      tooltip: '깜짝 게임 조건',
+                      onPressed: _showSurpriseSettings,
+                      icon: const Icon(Icons.tune_rounded),
+                    ),
+                  ],
+                );
+                if (constraints.maxWidth < 560) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [search, const SizedBox(height: 8), surprise],
+                  );
+                }
+                return Row(
+                  children: [
+                    Expanded(child: search),
+                    const SizedBox(width: 10),
+                    surprise,
+                  ],
+                );
+              },
+            ),
+            const SizedBox(height: 6),
+            _PracticeDiscoveryControls(
+              catalog: catalog,
+              activeFilterCount: activeDiscoveryFilterCount,
+              onDurationChanged: (value) =>
+                  _updateCatalog(catalog.copyWith(durationFilter: value)),
+              onSkillChanged: (value) =>
+                  _updateCatalog(catalog.copyWith(skillFilter: value)),
+              onSortChanged: (value) =>
+                  _updateCatalog(catalog.copyWith(sortOrder: value)),
+              onReset: activeDiscoveryFilterCount == 0
+                  ? null
+                  : () => _updateCatalog(
+                      catalog.copyWith(
+                        durationFilter: PracticeDurationFilter.any,
+                        skillFilter: PracticeSkillFilter.all,
+                        sortOrder: PracticeCatalogSort.recommended,
+                      ),
+                    ),
+              onClearRecommendationSnoozes:
+                  catalog.recommendationSnoozedUntilByActivityId.isEmpty
+                  ? null
+                  : () => _updateCatalog(catalog.clearRecommendationSnoozes()),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Semantics(
+                key: const Key('practice-search-result-summary'),
+                liveRegion: true,
+                label: '현재 조건에 맞는 게임 $visibleResultCount개',
+                child: Text(
+                  '${_query.trim().isEmpty && activeDiscoveryFilterCount == 0 ? '전체' : '현재 조건'} · '
+                  '$visibleResultCount개 게임',
+                  textAlign: TextAlign.end,
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ),
+            if (_playlistSelection.isNotEmpty ||
+                catalog.playlists.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              _PracticePlaylistPanel(
+                selectedIds: _playlistSelection,
+                titleForId: (id) => _allActivities
+                    .cast<_Activity?>()
+                    .firstWhere(
+                      (activity) => activity?.id == id,
+                      orElse: () => null,
+                    )
+                    ?.title,
+                playlists: catalog.playlists,
+                onSave: _savePlaylist,
+                onStart: _startPlaylist,
+                onRemove: _removePlaylist,
+                onClearSelection: () => setState(_playlistSelection.clear),
+              ),
+            ],
+            const SizedBox(height: 12),
+            if (categorySection(_PracticeCategory.quiz)
+                case final quizSection?) ...[
+              quizSection,
+              const SizedBox(height: 10),
+            ],
+            if (_hasMissingMaterialCapability && widget.items.isNotEmpty) ...[
+              _MissingMaterialNotice(
+                isEmpty: false,
+                onAdd: () => context.go('/library/new'),
+              ),
+              const SizedBox(height: 12),
+            ],
+            for (final category in _PracticeCategory.values)
+              if (category != _PracticeCategory.quiz)
+                if (categorySection(category) case final section?) ...[
+                  const SizedBox(height: 12),
+                  section,
+                ],
+            if (_query.trim().isNotEmpty &&
+                _PracticeCategory.values.every(
+                  (category) => _visibleActivities(category, catalog).isEmpty,
+                )) ...[
+              const SizedBox(height: 18),
+              const Center(child: Text('조건에 맞는 게임이 없어요.')),
+            ],
+            if (hidden.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              ExpansionTile(
+                key: const Key('hidden-practice-games'),
+                tilePadding: EdgeInsets.zero,
+                title: Text('숨긴 게임 ${hidden.length}개'),
+                subtitle: const Text('언제든 다시 표시할 수 있어요.'),
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final activity in hidden)
+                          ActionChip(
+                            avatar: const Icon(
+                              Icons.visibility_outlined,
+                              size: 18,
+                            ),
+                            label: Text('${activity.title} 복원'),
+                            onPressed: () => _restoreActivity(activity),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ],
       ],
+    );
+  }
+}
+
+class _PrimaryPracticeCard extends StatelessWidget {
+  const _PrimaryPracticeCard({
+    required this.activity,
+    required this.availability,
+    required this.onPressed,
+  });
+
+  final _Activity activity;
+  final _ActivityAvailability availability;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final enabled = availability.enabled;
+    final primaryTitle = switch (activity.id) {
+      'meaning-choice' => '뜻풀이',
+      'sentence-order' => '문장 맞추기',
+      _ => activity.title,
+    };
+    return Card(
+      key: Key('primary-practice-${activity.id}'),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: enabled ? onPressed : null,
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: enabled
+                    ? colors.primaryContainer
+                    : colors.surfaceContainerHighest,
+                foregroundColor: enabled
+                    ? colors.onPrimaryContainer
+                    : colors.onSurfaceVariant,
+                child: Icon(activity.icon),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      primaryTitle,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      enabled
+                          ? activity.description
+                          : availability.disabledReason ?? '학습 자료가 필요해요',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: enabled ? colors.primary : colors.outline,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

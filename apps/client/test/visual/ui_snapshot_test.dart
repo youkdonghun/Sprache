@@ -16,7 +16,19 @@ import 'package:sprache/src/state/app_state.dart';
 
 DateTime _goldenNow() => DateTime(2026, 7, 27, 10);
 
+Future<void> _openAdvancedPractice(WidgetTester tester) async {
+  if (find.byKey(const Key('practice-hub-tabs')).evaluate().isNotEmpty) {
+    return;
+  }
+  final toggle = find.byKey(const Key('toggle-advanced-practice'));
+  await tester.ensureVisible(toggle);
+  await tester.pumpAndSettle();
+  await tester.tap(toggle);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _selectPracticeHubTab(WidgetTester tester, String label) async {
+  await _openAdvancedPractice(tester);
   final tab = find.descendant(
     of: find.byKey(const Key('practice-hub-tabs')),
     matching: find.text(label),
@@ -459,6 +471,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _openAdvancedPractice(tester);
       await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-session-builder')));
@@ -495,6 +508,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _openAdvancedPractice(tester);
       await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-session-builder')));
@@ -528,6 +542,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      await _openAdvancedPractice(tester);
       await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('open-session-builder')));
@@ -574,6 +589,8 @@ void main() {
       );
 
       await tester.tap(find.byKey(const Key('home-settings')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('settings-overview-windows')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(
         find.byKey(const Key('windows-workspace-card')),

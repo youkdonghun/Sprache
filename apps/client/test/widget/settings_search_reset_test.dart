@@ -106,10 +106,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.byKey(const Key('settings-category-picker')), findsOneWidget);
-      expect(find.byKey(const Key('connection-card')), findsOneWidget);
-      await tester.tap(find.byKey(const Key('settings-category-display')));
+      expect(find.byKey(const Key('settings-overview')), findsOneWidget);
+      expect(find.byKey(const Key('connection-card')), findsNothing);
+      await tester.tap(find.byKey(const Key('settings-overview-display')));
       await tester.pumpAndSettle();
+      expect(find.byKey(const Key('settings-category-picker')), findsOneWidget);
       expect(find.byKey(const Key('connection-card')), findsNothing);
       expect(
         find.byKey(const Key('advanced-preferences-panel')),
@@ -117,7 +118,8 @@ void main() {
       );
       await tester.tap(find.byKey(const Key('settings-category-all')));
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('connection-card')), findsOneWidget);
+      expect(find.byKey(const Key('settings-overview')), findsOneWidget);
+      expect(find.byKey(const Key('connection-card')), findsNothing);
       await tester.enterText(
         find.byKey(const Key('settings-search-field')),
         '테마',
@@ -144,7 +146,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(clearSearch);
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('connection-card')), findsOneWidget);
+      expect(find.byKey(const Key('settings-overview')), findsOneWidget);
+      expect(find.byKey(const Key('connection-card')), findsNothing);
 
       await tester.enterText(
         find.byKey(const Key('settings-search-field')),
@@ -202,6 +205,9 @@ void main() {
         .read(appControllerProvider)
         .preferences
         .favoriteItemIds;
+
+    await tester.tap(find.byKey(const Key('settings-overview-display')));
+    await tester.pumpAndSettle();
 
     final resetButton = find.byKey(const Key('reset-display-settings'));
     await tester.scrollUntilVisible(

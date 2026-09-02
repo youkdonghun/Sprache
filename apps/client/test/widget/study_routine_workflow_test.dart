@@ -135,6 +135,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
+      final advanced = find.byKey(const Key('toggle-advanced-practice'));
+      await tester.ensureVisible(advanced);
+      await tester.tap(advanced);
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
       await tester.tap(find.byKey(const Key('open-session-builder')));
       await tester.pumpAndSettle();

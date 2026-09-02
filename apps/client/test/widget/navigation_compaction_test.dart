@@ -32,6 +32,10 @@ void main() {
   }
 
   Future<void> openAllGames(WidgetTester tester) async {
+    if (find.byKey(const Key('practice-hub-tabs')).evaluate().isEmpty) {
+      await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
+      await tester.pumpAndSettle();
+    }
     await tester.tap(find.text('전체 게임'));
     await tester.pumpAndSettle();
   }
@@ -207,6 +211,8 @@ void main() {
     await pumpApp(tester);
     await tester.tap(find.byKey(const Key('nav-learn')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
+    await tester.pumpAndSettle();
 
     expect(find.text('오늘의 추천 시작'), findsNothing);
     expect(find.byKey(const Key('personalized-practice-hub')), findsOneWidget);
@@ -253,6 +259,8 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('nav-learn')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
     await tester.pumpAndSettle();
 
     expect(find.text('오늘 복습'), findsOneWidget);
@@ -429,7 +437,7 @@ void main() {
       find.byKey(const Key('recent-subject-session-card')),
       findsOneWidget,
     );
-    expect(find.textContaining('단어 연습 · 맞힌 항목 제외'), findsOneWidget);
+    expect(find.textContaining('최근 학습 ·'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('reopen-recent-subject-session')));
     await tester.pumpAndSettle();

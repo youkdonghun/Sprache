@@ -18,8 +18,16 @@ import 'package:sprache/src/services/window_workspace_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 Future<void> _selectAllGames(WidgetTester tester) async {
+  final advancedToggle = find.byKey(const Key('toggle-advanced-practice'));
+  if (advancedToggle.evaluate().isNotEmpty) {
+    await tester.ensureVisible(advancedToggle);
+    await tester.tap(advancedToggle);
+    await tester.pumpAndSettle();
+  }
   final gamesTab = find.text('전체 게임');
   expect(gamesTab, findsOneWidget);
+  await tester.ensureVisible(gamesTab);
+  await tester.pumpAndSettle();
   await tester.tap(gamesTab);
   await tester.pumpAndSettle();
 }
@@ -55,7 +63,7 @@ void main() {
           await tester.tap(find.byKey(const Key('nav-learn')));
           await tester.pumpAndSettle();
           await _selectAllGames(tester);
-          expect(find.text('학습 방식'), findsOneWidget);
+          expect(find.text('추가 학습'), findsOneWidget);
           await tester.drag(
             find.byKey(const Key('learning-hub-scroll')),
             const Offset(0, -1500),
@@ -185,7 +193,7 @@ void main() {
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
       await _selectAllGames(tester);
-      expect(find.text('학습 방식'), findsOneWidget);
+      expect(find.text('추가 학습'), findsOneWidget);
 
       final container = ProviderScope.containerOf(
         tester.element(find.byType(SpracheApp)),
@@ -265,7 +273,7 @@ void main() {
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
       await _selectAllGames(tester);
-      expect(find.text('학습 방식'), findsOneWidget);
+      expect(find.text('추가 학습'), findsOneWidget);
       expect(tester.takeException(), isNull);
 
       final container = ProviderScope.containerOf(
@@ -539,6 +547,8 @@ void main() {
 
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('settings-overview-privacy')));
+      await tester.pumpAndSettle();
       expect(find.text('데이터와 개인정보'), findsOneWidget);
       expect(find.textContaining('운영자 서버로 보내지 않습니다'), findsOneWidget);
       expect(find.text('테스트 모드'), findsOneWidget);
@@ -713,7 +723,7 @@ void main() {
         find.byKey(const Key('quick-practice-pronunciation')),
         findsOneWidget,
       );
-      expect(find.text('학습 방식'), findsOneWidget);
+      expect(find.text('추가 학습'), findsOneWidget);
       expect(find.text('혼합 퀴즈'), findsWidgets);
       expect(find.text('문장 빈칸'), findsWidgets);
       expect(

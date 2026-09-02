@@ -64,6 +64,39 @@ void main() {
     },
   );
 
+  testWidgets('reverse meaning choice shows a meaning and selectable words', (
+    tester,
+  ) async {
+    await _pumpStudy(
+      tester,
+      preferences: const StudyPreferences(
+        interaction: StudyInteractionPreferences(
+          choiceLayout: StudyChoiceLayout.list,
+          shuffleChoices: false,
+        ),
+      ),
+      screen: const StudyScreen(
+        mode: StudyMode.meaning,
+        itemLimit: 5,
+        practiceActivityId: 'reverse-meaning-choice',
+      ),
+    );
+
+    expect(find.text('알맞은 학습어를 고르세요'), findsOneWidget);
+    final prompt = tester
+        .widget<Text>(find.byKey(const Key('study-question-prompt')))
+        .data;
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(StudyScreen)),
+    );
+    final item = container
+        .read(appControllerProvider.notifier)
+        .selectedItems
+        .firstWhere((candidate) => candidate.primaryTranslation == prompt);
+    expect(find.text(item.text), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('explicit grid layout stays selected on a narrow large-text UI', (
     tester,
   ) async {

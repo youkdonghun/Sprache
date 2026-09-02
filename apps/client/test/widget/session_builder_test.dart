@@ -9,6 +9,18 @@ import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/services/study_notification_service.dart';
 import 'package:sprache/src/state/app_state.dart';
 
+Future<void> _openSessionBuilderFromHub(WidgetTester tester) async {
+  final toggle = find.byKey(const Key('toggle-advanced-practice'));
+  await tester.ensureVisible(toggle);
+  await tester.tap(toggle);
+  await tester.pumpAndSettle();
+  final builder = find.byKey(const Key('open-session-builder'));
+  await tester.ensureVisible(builder);
+  await tester.pumpAndSettle();
+  await tester.tap(builder);
+  await tester.pumpAndSettle();
+}
+
 void main() {
   testWidgets('a user can save and start a filtered learning session', (
     tester,
@@ -28,10 +40,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('open-session-builder')));
-      await tester.pumpAndSettle();
+      await _openSessionBuilderFromHub(tester);
 
       expect(find.text('영어 학습 설정'), findsOneWidget);
       expect(find.text('언어키 · en'), findsOneWidget);
@@ -140,10 +149,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('open-session-builder')));
-      await tester.pumpAndSettle();
+      await _openSessionBuilderFromHub(tester);
 
       expect(find.text('출근길 복습'), findsOneWidget);
       await tester.ensureVisible(
@@ -192,9 +198,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('nav-learn')));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.byKey(const Key('open-session-builder')));
-      await tester.tap(find.byKey(const Key('open-session-builder')));
-      await tester.pumpAndSettle();
+      await _openSessionBuilderFromHub(tester);
 
       await _chooseOption(
         tester,
@@ -266,12 +270,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('nav-learn')));
         await tester.pumpAndSettle();
-        await tester.ensureVisible(
-          find.byKey(const Key('open-session-builder')),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const Key('open-session-builder')));
-        await tester.pumpAndSettle();
+        await _openSessionBuilderFromHub(tester);
 
         await _chooseOption(
           tester,
@@ -352,12 +351,7 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const Key('nav-learn')));
         await tester.pumpAndSettle();
-        await tester.ensureVisible(
-          find.byKey(const Key('open-session-builder')),
-        );
-        await tester.pumpAndSettle();
-        await tester.tap(find.byKey(const Key('open-session-builder')));
-        await tester.pumpAndSettle();
+        await _openSessionBuilderFromHub(tester);
         await tester.drag(
           find.byKey(const Key('session-builder-scroll')),
           const Offset(0, -2200),

@@ -65,6 +65,8 @@ void main() {
         expect(find.byKey(const Key('home-settings')), findsOneWidget);
         await tester.tap(find.byKey(const Key('home-settings')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('settings-overview-storage')));
+        await tester.pumpAndSettle();
         expect(find.text('연결됨'), findsOneWidget);
         expect(tester.takeException(), isNull);
       } finally {
@@ -103,7 +105,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('settings-category-storage')));
+      await tester.tap(find.byKey(const Key('settings-overview-storage')));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.byKey(const Key('connect-google')));
       await tester.pumpAndSettle();
@@ -147,7 +149,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('home-settings')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('settings-category-storage')));
+    await tester.tap(find.byKey(const Key('settings-overview-storage')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('connect-google')));
     await tester.pumpAndSettle();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../services/release_link_share_service.dart';
 import '../services/release_update_coordinator.dart';
@@ -128,22 +129,26 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
     }
   }
 
-  Future<void> _shareApkLink(BuildContext actionContext) async {
-    final check = _check;
-    if (check == null || _sharing) return;
+  Future<void> _shareAppLinks(BuildContext actionContext) async {
+    if (_sharing) return;
     setState(() => _sharing = true);
     try {
       final box = actionContext.findRenderObject();
       final origin = box is RenderBox
           ? box.localToGlobal(Offset.zero) & box.size
           : null;
-      await _linkShareService.shareLatestAndroidApk(
-        manifest: check.manifest,
+      await _linkShareService.shareAppLinks(
+        manifest: _check?.manifest,
         origin: origin,
       );
-      if (mounted) setState(() => _status = '최신 APK 링크를 공유했습니다.');
+      if (mounted) setState(() => _status = 'Android·iPhone 설치 링크를 공유했습니다.');
     } catch (error) {
-      if (mounted) setState(() => _status = _messageOf(error));
+      await Clipboard.setData(
+        ClipboardData(text: appInstallShareText(_check?.manifest)),
+      );
+      if (mounted) {
+        setState(() => _status = '공유창을 열 수 없어 설치 링크를 복사했습니다.');
+      }
     } finally {
       if (mounted) setState(() => _sharing = false);
     }
@@ -155,7 +160,6 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
     final updateAvailable = check?.updateAvailable ?? false;
     final canApply =
         updateAvailable || (check?.canRedownloadCurrentAndroidApk ?? false);
-    final canShareApk = check?.manifest.artifactFor('android')?.kind == 'apk';
     final latestVersion = check?.manifest.version.toString();
     final actionLabel =
         check?.canRedownloadCurrentAndroidApk == true && !updateAvailable
@@ -183,7 +187,7 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '앱 업데이트',
+                        '업데이트·앱 공유',
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
@@ -244,17 +248,16 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
                     icon: const Icon(Icons.download_rounded),
                     label: Text(actionLabel),
                   ),
-                if (canShareApk)
-                  Builder(
-                    builder: (actionContext) => OutlinedButton.icon(
-                      key: const Key('share-latest-apk-link'),
-                      onPressed: _sharing
-                          ? null
-                          : () => _shareApkLink(actionContext),
-                      icon: const Icon(Icons.share_outlined),
-                      label: const Text('최신 APK 링크 공유'),
-                    ),
+                Builder(
+                  builder: (actionContext) => OutlinedButton.icon(
+                    key: const Key('share-app-install-links'),
+                    onPressed: _sharing
+                        ? null
+                        : () => _shareAppLinks(actionContext),
+                    icon: const Icon(Icons.share_outlined),
+                    label: const Text('앱 설치 링크 공유'),
                   ),
+                ),
               ],
             ),
           ],

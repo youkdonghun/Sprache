@@ -8,6 +8,8 @@ import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 Future<void> _openAllGames(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('전체 게임'));
   await tester.pumpAndSettle();
 }

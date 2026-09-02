@@ -11,6 +11,11 @@ import 'package:sprache/src/routing/app_router.dart';
 import 'package:sprache/src/state/app_state.dart';
 
 void main() {
+  Future<void> openAdvancedPractice(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('empty subject home prioritizes adding the first learning item', (
     tester,
   ) async {
@@ -38,13 +43,14 @@ void main() {
         container.read(appRouterProvider).go('/learn');
         await tester.pumpAndSettle();
 
+        expect(find.text('이 주제에 학습 자료가 없어요.'), findsWidgets);
+
+        await openAdvancedPractice(tester);
         expect(
           find.byKey(const Key('learning-hub-missing-material-notice')),
           findsOneWidget,
         );
         expect(find.text('학습할 자료가 없어요'), findsOneWidget);
-        expect(find.text('이 주제에 학습 자료가 없어요.'), findsWidgets);
-
         await tester.tap(find.text('전체 게임'));
         await tester.pumpAndSettle();
         expect(_activityInkWell(tester, '혼합 퀴즈').onTap, isNull);
@@ -87,6 +93,7 @@ void main() {
     final container = await _pumpEmptySubjectApp(tester, store: store);
     container.read(appRouterProvider).go('/learn');
     await tester.pumpAndSettle();
+    await openAdvancedPractice(tester);
     await tester.tap(find.text('전체 게임'));
     await tester.pumpAndSettle();
 

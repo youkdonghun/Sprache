@@ -38,6 +38,10 @@ void main() {
           ),
         );
         await tester.pumpAndSettle();
+        await tester.tap(
+          find.byKey(const Key('settings-overview-display')),
+        );
+        await tester.pumpAndSettle();
 
         final card = find.byKey(const Key('device-feedback-preferences-card'));
         await tester.scrollUntilVisible(

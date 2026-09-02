@@ -302,6 +302,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             practiceActivityId:
                 activeSession?.runtimeOptions.practiceActivityId ??
                 state.uri.queryParameters['practiceActivityId'],
+            reverseRecognition:
+                state.uri.queryParameters['direction'] == 'reverse' ||
+                activeSession?.runtimeOptions.practiceActivityId ==
+                    'reverse-meaning-choice',
             playlistActivityIds: playlistActivityIds,
             playlistIndex:
                 int.tryParse(

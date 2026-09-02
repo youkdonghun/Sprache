@@ -157,6 +157,10 @@ void main() {
                 ),
               );
               await tester.pumpAndSettle();
+              await tester.tap(
+                find.byKey(const Key('settings-overview-display')),
+              );
+              await tester.pumpAndSettle();
             } finally {
               FlutterError.onError = previousErrorHandler;
             }
@@ -177,6 +181,12 @@ void main() {
             );
             expect(panel, findsOneWidget);
             expect(Theme.of(tester.element(panel)).brightness, brightness);
+            final learningCategory = find.byKey(
+              const Key('settings-category-learning'),
+            );
+            await tester.ensureVisible(learningCategory);
+            await tester.tap(learningCategory);
+            await tester.pumpAndSettle();
             for (final keyName in [
               'session-item-limit-decrease',
               'session-item-limit-increase',

@@ -96,6 +96,7 @@ class StudyScreen extends ConsumerStatefulWidget {
     this.examMode = false,
     this.startMatchSprint = false,
     this.practiceActivityId,
+    this.reverseRecognition = false,
     this.playlistActivityIds = const [],
     this.playlistIndex = 0,
     super.key,
@@ -111,6 +112,7 @@ class StudyScreen extends ConsumerStatefulWidget {
   final bool examMode;
   final bool startMatchSprint;
   final String? practiceActivityId;
+  final bool reverseRecognition;
   final List<String> playlistActivityIds;
   final int playlistIndex;
 
@@ -306,8 +308,11 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
 
   bool get _recognitionIsReversed =>
       _mode == _ExerciseMode.recognition &&
-      widget.mode != StudyMode.meaning &&
-      _sessionAnswerDirection == StudyAnswerDirection.meaningToLearning;
+      (widget.reverseRecognition ||
+          widget.practiceActivityId == 'reverse-meaning-choice' ||
+          (widget.mode != StudyMode.meaning &&
+              _sessionAnswerDirection ==
+                  StudyAnswerDirection.meaningToLearning));
 
   bool get _isChoiceMode =>
       _mode == _ExerciseMode.recognition ||

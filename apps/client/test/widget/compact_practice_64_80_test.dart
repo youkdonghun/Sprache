@@ -323,6 +323,8 @@ Future<ProviderContainer> _pumpApp(
   await tester.pumpAndSettle();
   await tester.tap(find.byKey(const Key('nav-learn')));
   await tester.pumpAndSettle();
+  await tester.tap(find.byKey(const Key('toggle-advanced-practice')));
+  await tester.pumpAndSettle();
   if (openGames) {
     await tester.tap(find.text('전체 게임'));
     await tester.pumpAndSettle();

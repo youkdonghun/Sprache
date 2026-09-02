@@ -25,6 +25,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('home-settings')));
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-overview-privacy')));
+    await tester.pumpAndSettle();
     await tester.scrollUntilVisible(
       find.byKey(const Key('backup-data-card')),
       500,
@@ -74,6 +76,8 @@ void main() {
       await tester.tap(find.byKey(const Key('required-google-drive-connect')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('home-settings')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('settings-overview-privacy')));
       await tester.pumpAndSettle();
       await tester.drag(find.byType(ListView), const Offset(0, -1100));
       await tester.pumpAndSettle();

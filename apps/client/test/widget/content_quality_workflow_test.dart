@@ -48,6 +48,8 @@ void main() {
 
     container.read(appRouterProvider).go('/settings');
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-overview-privacy')));
+    await tester.pumpAndSettle();
     final entry = find.byKey(const Key('open-content-quality'));
     expect(entry, findsOneWidget);
     container.read(appRouterProvider).go('/library/quality');
