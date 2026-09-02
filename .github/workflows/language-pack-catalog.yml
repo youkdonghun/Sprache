@@ -1,0 +1,48 @@
+name: Update language-pack catalog
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "language-packs/packs/*.json"
+      - "tool/build-language-pack-catalog.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: language-pack-catalog-main
+  cancel-in-progress: false
+
+jobs:
+  update-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate packs and rebuild the catalog
+        run: |
+          set -euo pipefail
+          node --test ./tool/test/language-pack-catalog.test.mjs
+          node ./tool/build-language-pack-catalog.mjs
+      - name: Commit a changed catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add language-packs/catalog.json
+          if git diff --cached --quiet; then
+            echo "Language-pack catalog is already current."
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git commit -m "chore: 언어팩 카탈로그 갱신"
+          git push origin HEAD:main

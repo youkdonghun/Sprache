@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sprache6.github.io/schema/language-pack-catalog-v1.json",
+  "title": "Sprache language-pack catalog v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "updatedAt", "packs"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "updatedAt": { "type": ["string", "null"], "format": "date-time" },
+    "packs": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id", "title", "description", "language", "version", "revision",
+          "publishedAt", "license", "attribution", "path", "itemCount",
+          "sizeBytes", "sha256"
+        ],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+          "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "description": { "type": "string", "minLength": 1, "maxLength": 240 },
+          "language": { "enum": ["ko", "en", "ja", "de", "fr", "es", "zh-Hans"] },
+          "version": { "type": "string", "minLength": 1, "maxLength": 40 },
+          "revision": { "type": "integer", "minimum": 1 },
+          "publishedAt": { "type": "string", "format": "date-time" },
+          "license": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "attribution": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "path": { "type": "string", "pattern": "^packs/[A-Za-z0-9._-]+\\.json$" },
+          "itemCount": { "type": "integer", "minimum": 1, "maximum": 20000 },
+          "sizeBytes": { "type": "integer", "minimum": 1, "maximum": 20971520 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    }
+  }
+}

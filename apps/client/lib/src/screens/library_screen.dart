@@ -57,7 +57,13 @@ class _LibraryFilterSelection {
   final LibrarySearchCriteria criteria;
 }
 
-enum _AddContentAction { quickWord, quickSentence, fullEditor, importFile }
+enum _AddContentAction {
+  quickWord,
+  quickSentence,
+  languagePack,
+  fullEditor,
+  importFile,
+}
 
 enum _LibraryHeaderAction { trash }
 
@@ -1966,6 +1972,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         await _openQuickContent(LearningItemKind.word);
       case _AddContentAction.quickSentence:
         await _openQuickContent(LearningItemKind.sentence);
+      case _AddContentAction.languagePack:
+        context.push('/library/language-packs');
       case _AddContentAction.fullEditor:
         context.go('/library/new');
       case _AddContentAction.importFile:
@@ -3230,12 +3238,30 @@ class _AddContentMenu extends StatelessWidget {
                     Navigator.pop(context, _AddContentAction.importFile),
               ),
               const SizedBox(height: 8),
-              TextButton.icon(
-                key: const Key('add-full-editor'),
-                onPressed: () =>
-                    Navigator.pop(context, _AddContentAction.fullEditor),
-                icon: const Icon(Icons.tune_rounded),
-                label: const Text('출처·품사까지 자세히 입력'),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton.icon(
+                      key: const Key('add-language-pack'),
+                      onPressed: () => Navigator.pop(
+                        context,
+                        _AddContentAction.languagePack,
+                      ),
+                      icon: const Icon(Icons.translate_rounded),
+                      label: const Text('언어팩 받기'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextButton.icon(
+                      key: const Key('add-full-editor'),
+                      onPressed: () =>
+                          Navigator.pop(context, _AddContentAction.fullEditor),
+                      icon: const Icon(Icons.tune_rounded),
+                      label: const Text('상세 입력'),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

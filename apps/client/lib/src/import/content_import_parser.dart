@@ -296,6 +296,9 @@ class ContentImportParser {
         : decoded is Map<String, Object?> && decoded['items'] is List<Object?>
         ? decoded['items']! as List<Object?>
         : throw const FormatException('JSON은 배열 또는 items 배열이어야 합니다.');
+    final defaults = decoded is Map<String, Object?>
+        ? _mapOrNull(decoded['defaults']) ?? const <String, Object?>{}
+        : const <String, Object?>{};
     limits.ensureRowCount(rows.length);
     final parsedRows = <_ImportRow>[];
     final issues = <ImportIssue>[];
@@ -306,8 +309,11 @@ class ContentImportParser {
           ImportIssue(row: index + 1, message: '각 항목은 JSON 객체여야 합니다.'),
         );
       } else {
-        limits.ensureMapCells(map, rowNumber: index + 1);
-        parsedRows.add(_ImportRow(index + 1, map));
+        final effectiveRow = defaults.isEmpty
+            ? map
+            : <String, Object?>{...map, ...defaults};
+        limits.ensureMapCells(effectiveRow, rowNumber: index + 1);
+        parsedRows.add(_ImportRow(index + 1, effectiveRow));
       }
     }
     final parsed = _parseRows(

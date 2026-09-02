@@ -51,6 +51,7 @@ void main() {
             find.byKey(const Key('add-content-menu-scroll')),
             findsOneWidget,
           );
+          expect(find.byKey(const Key('add-language-pack')), findsOneWidget);
           await tester.tap(find.byKey(const Key('add-quick-word')));
           await tester.pumpAndSettle();
 

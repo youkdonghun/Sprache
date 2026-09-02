@@ -14,6 +14,7 @@ import '../screens/home_screen.dart';
 import '../screens/import_screen.dart';
 import '../screens/item_editor_screen.dart';
 import '../screens/learning_hub_screen.dart';
+import '../screens/language_pack_screen.dart';
 import '../screens/library_screen.dart';
 import '../screens/mission_screen.dart';
 import '../screens/personalization_screen.dart';
@@ -169,6 +170,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/library/quality',
                 builder: (context, state) => const ContentQualityScreen(),
+              ),
+              GoRoute(
+                path: '/library/language-packs',
+                builder: (context, state) => const LanguagePackScreen(),
               ),
               GoRoute(
                 path: '/library/new',

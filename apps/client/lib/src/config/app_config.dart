@@ -1,3 +1,4 @@
+import '../services/language_pack_catalog_service.dart';
 import '../services/release_update_service.dart';
 
 class AppConfig {
@@ -14,6 +15,7 @@ class AppConfig {
     this.appBuildNumber = 0,
     this.privacyPolicyUrl = '',
     this.releaseManifestUrl = defaultReleaseManifestUrl,
+    this.languagePackCatalogUrl = defaultLanguagePackCatalogUrl,
   });
 
   factory AppConfig.fromEnvironment() => const AppConfig(
@@ -41,6 +43,10 @@ class AppConfig {
       'RELEASE_MANIFEST_URL',
       defaultValue: defaultReleaseManifestUrl,
     ),
+    languagePackCatalogUrl: String.fromEnvironment(
+      'LANGUAGE_PACK_CATALOG_URL',
+      defaultValue: defaultLanguagePackCatalogUrl,
+    ),
   );
 
   final String googleAndroidClientId;
@@ -55,6 +61,7 @@ class AppConfig {
   final int appBuildNumber;
   final String privacyPolicyUrl;
   final String releaseManifestUrl;
+  final String languagePackCatalogUrl;
 
   bool get hasDesktopGoogleCredentials => googleDesktopClientId.isNotEmpty;
   bool get hasAndroidGoogleCredentials =>

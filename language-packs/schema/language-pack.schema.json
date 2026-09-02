@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sprache6.github.io/schema/language-pack-v1.json",
+  "title": "Sprache language pack v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "id", "title", "description", "language", "version",
+    "revision", "publishedAt", "license", "attribution", "items"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 240 },
+    "language": { "enum": ["ko", "en", "ja", "de", "fr", "es", "zh-Hans"] },
+    "version": { "type": "string", "minLength": 1, "maxLength": 40 },
+    "revision": { "type": "integer", "minimum": 1 },
+    "publishedAt": { "type": "string", "format": "date-time" },
+    "license": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "attribution": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20000,
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "term", "meaning"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 160 },
+          "type": { "enum": ["word", "sentence"] },
+          "term": { "type": "string", "minLength": 1, "maxLength": 20000 },
+          "meaning": { "type": "string", "minLength": 1, "maxLength": 20000 },
+          "language": { "enum": ["ko", "en", "ja", "de", "fr", "es", "zh-Hans"] }
+        }
+      }
+    }
+  }
+}

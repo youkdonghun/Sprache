@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "en-everyday-example",
+  "title": "영어 일상 표현 예제팩",
+  "description": "언어팩 작성 형식을 보여 주는 저장소 템플릿입니다.",
+  "language": "en",
+  "version": "1.0.0",
+  "revision": 1,
+  "publishedAt": "2026-09-02T00:00:00Z",
+  "license": "project-internal",
+  "attribution": "Sprache 프로젝트 작성 예제",
+  "items": [
+    {
+      "id": "f2507d70-a4df-5c34-89d2-8e8432a0ef33",
+      "type": "word",
+      "term": "example",
+      "meaning": "예시",
+      "part_of_speech": "noun",
+      "group": "예제",
+      "accepted_answers": "예",
+      "level": "입문",
+      "priority": 1
+    },
+    {
+      "id": "2c2a09e4-2370-5d5f-9ef8-9553b7079fb1",
+      "type": "sentence",
+      "term": "This is an example.",
+      "meaning": "이것은 예시입니다.",
+      "sentence_tokens": "This|is|an|example.",
+      "group": "예제",
+      "level": "입문",
+      "priority": 1
+    }
+  ]
+}

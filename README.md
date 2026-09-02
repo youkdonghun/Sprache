@@ -25,6 +25,19 @@ Sprache는 별도 API나 중앙 데이터베이스 없이 동작하는 Local-Fir
 [아키텍처](docs/architecture.md)와
 [Google Cloud 연결 설정](docs/google-setup.md)을 기준으로 한다.
 
+## 1.38.6 GitHub 언어팩
+
+- `language-packs/packs/`에 규격을 지킨 JSON 하나만 올리면 GitHub가 항목 수,
+  파일 크기와 SHA-256을 계산해 공개 카탈로그를 자동 갱신한다.
+- 앱의 `자료실 → 추가 → 언어팩 받기`에서 언어별 팩을 확인하고 앱 업데이트 없이
+  내려받을 수 있다.
+- 다운로드 파일은 크기·SHA-256·형식·언어·버전·라이선스를 검증한 뒤 기존
+  가져오기 검토 화면으로 넘긴다. 검토 전에는 학습 자료를 바꾸지 않는다.
+- 설치한 항목은 기존 사용자 자료와 같은 SQLite·중복 병합·되돌리기·Google Drive
+  snapshot 동기화 규칙을 사용한다. 원본 팩 JSON은 Drive에 복제하지 않는다.
+- 새 팩 작성 규칙과 예시는 [GitHub 언어팩 안내](language-packs/README.md),
+  이번 배포 내역은 [1.38.6 릴리스 노트](docs/release-notes-1.38.6.md)에 있다.
+
 ## 1.32.0 컴팩트 작업 공간과 빠른 학습
 
 - 백그라운드 복귀 때 화면을 덮던 보호 커튼과 지연 설정을 제거하고, 알림 내용
@@ -172,6 +185,7 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 - 여섯 언어 한국어 발음 표기, 일본어 가나·로마자와 중국어 병음 읽기 보조
 - Android 게임형 UI와 Windows 크기 조절형 업무 도구 UI
 - SQLite 기반 Local-First 저장과 Excel·CSV·JSON·JSONL 가져오기
+- GitHub 공개 카탈로그에서 검증 언어팩을 선택해 추가·업데이트
 - 사용자 주제 생성, 주제별 자료함·학습 그룹·암기·퀴즈·일정 구성
 - 사용자가 고른 Google Drive `WordStudyData` 폴더를 이용한 기기 간 동기화
 - Drive `appDataFolder`에는 폴더 재연결용 포인터만 저장

@@ -18,6 +18,8 @@
     "capture:runtime:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\capture-android-runtime-evidence.ps1",
     "test:windows:ui-e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\test-windows-ui-e2e.ps1",
     "test:release-bundle": "node --test ./tool/test/release-bundle.test.mjs",
+    "test:language-packs": "node --test ./tool/test/language-pack-catalog.test.mjs && node ./tool/build-language-pack-catalog.mjs --check",
+    "build:language-pack-catalog": "node ./tool/build-language-pack-catalog.mjs",
     "create:release-bundle": "node ./tool/release-bundle.mjs create",
     "verify:release": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\verify-release.ps1",
     "verify:release-bundle": "node ./tool/release-bundle.mjs verify",
@@ -27,7 +29,7 @@
     "build:real:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -Target android",
     "build:apple:preview": "bash ./tool/build-apple-preview.sh",
     "build:release-gated": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\build-real.ps1 -RequirePrivacyPolicyUrl -RequireAndroidReleaseSigning -RequireWindowsCodeSigning",
-    "test": "npm run test:release-bundle && npm run test:client"
+    "test": "npm run test:release-bundle && npm run test:language-packs && npm run test:client"
   },
   "engines": {
     "node": ">=22"
