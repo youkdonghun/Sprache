@@ -7,11 +7,13 @@ class ReleaseUpdateCard extends StatefulWidget {
   const ReleaseUpdateCard({
     required this.currentVersion,
     required this.manifestUrl,
+    this.currentBuildNumber = 0,
     this.coordinator,
     super.key,
   });
 
   final String currentVersion;
+  final int currentBuildNumber;
   final String manifestUrl;
   final ReleaseUpdateCoordinator? coordinator;
 
@@ -30,7 +32,8 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
   @override
   void initState() {
     super.initState();
-    _coordinator = widget.coordinator ??
+    _coordinator =
+        widget.coordinator ??
         DeviceReleaseUpdateCoordinator(
           manifestUri: Uri.parse(widget.manifestUrl),
         );
@@ -41,7 +44,8 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.coordinator != widget.coordinator ||
         oldWidget.manifestUrl != widget.manifestUrl) {
-      _coordinator = widget.coordinator ??
+      _coordinator =
+          widget.coordinator ??
           DeviceReleaseUpdateCoordinator(
             manifestUri: Uri.parse(widget.manifestUrl),
           );
@@ -58,12 +62,17 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
       _check = null;
     });
     try {
-      final result = await _coordinator.check(widget.currentVersion);
+      final result = await _coordinator.check(
+        widget.currentVersion,
+        currentBuildNumber: widget.currentBuildNumber,
+      );
       if (!mounted) return;
       setState(() {
         _check = result;
         _status = result.updateAvailable
             ? '${result.manifest.version} 업데이트를 사용할 수 있습니다.'
+            : result.canRedownloadCurrentAndroidApk
+            ? '현재 최신 버전입니다. 필요하면 APK를 다시 받을 수 있습니다.'
             : '현재 최신 버전을 사용하고 있습니다.';
       });
     } catch (error) {
@@ -76,7 +85,11 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
 
   Future<void> _applyUpdate() async {
     final check = _check;
-    if (check == null || !check.updateAvailable || _applying) return;
+    if (check == null ||
+        (!check.updateAvailable && !check.canRedownloadCurrentAndroidApk) ||
+        _applying) {
+      return;
+    }
     setState(() {
       _applying = true;
       _progress = null;
@@ -107,8 +120,15 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
   Widget build(BuildContext context) {
     final check = _check;
     final updateAvailable = check?.updateAvailable ?? false;
+    final canApply =
+        updateAvailable || (check?.canRedownloadCurrentAndroidApk ?? false);
     final latestVersion = check?.manifest.version.toString();
-    final actionLabel = _coordinator.platformKey == 'pwa'
+    final actionLabel =
+        check?.canRedownloadCurrentAndroidApk == true && !updateAvailable
+        ? '최신 APK 다시 받기'
+        : _coordinator.platformKey == 'android'
+        ? 'APK 업데이트 받기'
+        : _coordinator.platformKey == 'pwa'
         ? '새 버전 적용'
         : check?.artifact == null
         ? '릴리스 페이지 열기'
@@ -177,11 +197,13 @@ class _ReleaseUpdateCardState extends State<ReleaseUpdateCard> {
                   key: const Key('check-release-update'),
                   onPressed: _checking || _applying ? null : _checkForUpdate,
                   icon: Icon(
-                    _checking ? Icons.hourglass_top_rounded : Icons.refresh_rounded,
+                    _checking
+                        ? Icons.hourglass_top_rounded
+                        : Icons.refresh_rounded,
                   ),
                   label: Text(_checking ? '확인 중' : '업데이트 확인'),
                 ),
-                if (updateAvailable)
+                if (canApply)
                   FilledButton.icon(
                     key: const Key('apply-release-update'),
                     onPressed: _applying ? null : _applyUpdate,

@@ -4,7 +4,10 @@ import 'release_update_service.dart';
 abstract interface class ReleaseUpdateCoordinator {
   String get platformKey;
 
-  Future<ReleaseUpdateCheck> check(String currentVersion);
+  Future<ReleaseUpdateCheck> check(
+    String currentVersion, {
+    int currentBuildNumber = 0,
+  });
 
   Future<ReleaseInstallResult> apply(
     ReleaseUpdateCheck check, {
@@ -27,9 +30,13 @@ class DeviceReleaseUpdateCoordinator implements ReleaseUpdateCoordinator {
   String get platformKey => _installer.platformKey;
 
   @override
-  Future<ReleaseUpdateCheck> check(String currentVersion) => _service.check(
+  Future<ReleaseUpdateCheck> check(
+    String currentVersion, {
+    int currentBuildNumber = 0,
+  }) => _service.check(
     currentVersion: currentVersion,
     platform: platformKey,
+    currentBuildNumber: currentBuildNumber,
   );
 
   @override

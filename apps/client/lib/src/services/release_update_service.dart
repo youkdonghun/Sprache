@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 const defaultReleaseManifestUrl =
-    'https://sprache6.github.io/app/release.json';
+    'https://github.com/youkdonghun/Sprache/releases/latest/download/release.json';
 
 class ReleaseVersion implements Comparable<ReleaseVersion> {
   const ReleaseVersion(this.major, this.minor, this.patch);
@@ -68,7 +68,9 @@ class ReleaseArtifact {
     final sizeBytes = rawSize is int ? rawSize : int.tryParse('$rawSize');
     if (kind == 'installer' || kind == 'apk') {
       if (rawFileName == null ||
-          !RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$').hasMatch(rawFileName) ||
+          !RegExp(
+            r'^[A-Za-z0-9][A-Za-z0-9._-]{0,159}$',
+          ).hasMatch(rawFileName) ||
           rawSha256 == null ||
           !RegExp(r'^[0-9a-f]{64}$').hasMatch(rawSha256) ||
           sizeBytes == null ||
@@ -118,7 +120,9 @@ class ReleaseManifest {
     final buildNumber = json['buildNumber'] is int
         ? json['buildNumber']! as int
         : int.tryParse('${json['buildNumber']}');
-    final publishedAt = DateTime.tryParse(json['publishedAt']?.toString() ?? '');
+    final publishedAt = DateTime.tryParse(
+      json['publishedAt']?.toString() ?? '',
+    );
     final title = json['title']?.toString().trim() ?? '';
     final releasePageUrl = _safeReleaseUri(json['releasePageUrl']);
     if (version == null ||
@@ -171,14 +175,21 @@ class ReleaseUpdateCheck {
     required this.manifest,
     required this.platform,
     required this.updateAvailable,
+    this.currentBuildNumber = 0,
   });
 
   final ReleaseVersion currentVersion;
   final ReleaseManifest manifest;
   final String platform;
   final bool updateAvailable;
+  final int currentBuildNumber;
 
   ReleaseArtifact? get artifact => manifest.artifactFor(platform);
+
+  bool get canRedownloadCurrentAndroidApk =>
+      platform == 'android' &&
+      artifact?.kind == 'apk' &&
+      manifest.version.compareTo(currentVersion) == 0;
 }
 
 class ReleaseUpdateException implements Exception {
@@ -200,6 +211,7 @@ class ReleaseUpdateService {
   Future<ReleaseUpdateCheck> check({
     required String currentVersion,
     required String platform,
+    int currentBuildNumber = 0,
   }) async {
     final parsedCurrent = ReleaseVersion.tryParse(currentVersion);
     if (parsedCurrent == null) {
@@ -239,7 +251,12 @@ class ReleaseUpdateService {
         currentVersion: parsedCurrent,
         manifest: manifest,
         platform: platform,
-        updateAvailable: manifest.version.compareTo(parsedCurrent) > 0,
+        currentBuildNumber: currentBuildNumber,
+        updateAvailable:
+            manifest.version.compareTo(parsedCurrent) > 0 ||
+            (manifest.version.compareTo(parsedCurrent) == 0 &&
+                currentBuildNumber > 0 &&
+                manifest.buildNumber > currentBuildNumber),
       );
     } on ReleaseUpdateException {
       rethrow;

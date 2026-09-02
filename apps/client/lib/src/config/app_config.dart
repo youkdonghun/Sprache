@@ -11,6 +11,7 @@ class AppConfig {
     this.googleWebClientId = '',
     this.googlePickerApiKey = '',
     this.appVersion = '개발 빌드',
+    this.appBuildNumber = 0,
     this.privacyPolicyUrl = '',
     this.releaseManifestUrl = defaultReleaseManifestUrl,
   });
@@ -28,6 +29,10 @@ class AppConfig {
     ),
     mockMode: bool.fromEnvironment('ENABLE_MOCK_MODE', defaultValue: true),
     appVersion: String.fromEnvironment('APP_VERSION', defaultValue: '개발 빌드'),
+    appBuildNumber: int.fromEnvironment(
+      'RELEASE_BUILD_NUMBER',
+      defaultValue: 0,
+    ),
     privacyPolicyUrl: String.fromEnvironment(
       'PRIVACY_POLICY_URL',
       defaultValue: 'https://sprache6.github.io/privacy/',
@@ -47,6 +52,7 @@ class AppConfig {
   final String appEnvironment;
   final bool mockMode;
   final String appVersion;
+  final int appBuildNumber;
   final String privacyPolicyUrl;
   final String releaseManifestUrl;
 

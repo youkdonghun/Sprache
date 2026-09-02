@@ -38,23 +38,64 @@ void main() {
     expect(coordinator.applyCalls, 1);
     expect(find.text('설치 화면을 열었습니다.'), findsOneWidget);
   });
+
+  testWidgets('offers the current Android APK again after checking', (
+    tester,
+  ) async {
+    final coordinator = _FakeCoordinator(
+      platformKey: 'android',
+      updateAvailable: false,
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ReleaseUpdateCard(
+            currentVersion: '1.38.0',
+            currentBuildNumber: 68,
+            manifestUrl:
+                'https://github.com/youkdonghun/Sprache/releases/latest/download/release.json',
+            coordinator: coordinator,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const Key('check-release-update')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('최신 APK 다시 받기'), findsOneWidget);
+    expect(find.textContaining('APK를 다시 받을 수 있습니다'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('apply-release-update')));
+    await tester.pumpAndSettle();
+
+    expect(coordinator.applyCalls, 1);
+  });
 }
 
 class _FakeCoordinator implements ReleaseUpdateCoordinator {
+  _FakeCoordinator({this.platformKey = 'windows', this.updateAvailable = true});
+
   int checkCalls = 0;
   int applyCalls = 0;
 
   @override
-  String get platformKey => 'windows';
+  final String platformKey;
+
+  final bool updateAvailable;
 
   @override
-  Future<ReleaseUpdateCheck> check(String currentVersion) async {
+  Future<ReleaseUpdateCheck> check(
+    String currentVersion, {
+    int currentBuildNumber = 0,
+  }) async {
     checkCalls += 1;
     return ReleaseUpdateCheck(
       currentVersion: ReleaseVersion.tryParse(currentVersion)!,
       manifest: _manifest,
       platform: platformKey,
-      updateAvailable: true,
+      currentBuildNumber: currentBuildNumber,
+      updateAvailable: updateAvailable,
     );
   }
 
@@ -87,6 +128,15 @@ final _manifest = ReleaseManifest.fromJson(<String, Object?>{
       'sha256':
           'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
       'sizeBytes': 1024,
+    },
+    'android': <String, Object?>{
+      'kind': 'apk',
+      'url':
+          'https://github.com/youkdonghun/Sprache/releases/download/v1.38.0/Sprache-Android-1.38.0-google-debug-signed.apk',
+      'fileName': 'Sprache-Android-1.38.0-google-debug-signed.apk',
+      'sha256':
+          'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+      'sizeBytes': 2048,
     },
   },
 });

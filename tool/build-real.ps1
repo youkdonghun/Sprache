@@ -824,6 +824,7 @@ if ($runDirectAndroid -or $runDirectWindows) {
                 --dart-define=APP_ENV=production `
                 --dart-define=ENABLE_MOCK_MODE=false `
                 --dart-define="APP_VERSION=$releaseVersion" `
+                --dart-define="RELEASE_BUILD_NUMBER=$releaseBuildNumber" `
                 --dart-define="PRIVACY_POLICY_URL=$PrivacyPolicyUrl" `
                 --dart-define="GOOGLE_ANDROID_CLIENT_ID=$AndroidClientId" `
                 --dart-define="GOOGLE_SERVER_CLIENT_ID=$ServerClientId"
