@@ -23,16 +23,20 @@ $buildNumber = [int]$versionMatch.Matches[0].Groups['build'].Value
 
 $publicAndroidPath = Join-Path $artifactsRoot "Sprache-Android-$version.apk"
 $publicWindowsPath = Join-Path $artifactsRoot "Sprache-Windows-$version.exe"
-$androidCandidates = if (Test-Path -LiteralPath $publicAndroidPath -PathType Leaf) {
-    @(Get-Item -LiteralPath $publicAndroidPath)
-} else {
-    @(Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Android-$version-google-*-signed.apk")
-}
-$windowsCandidates = if (Test-Path -LiteralPath $publicWindowsPath -PathType Leaf) {
-    @(Get-Item -LiteralPath $publicWindowsPath)
-} else {
-    @(Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Windows-Setup-$version-google-x64.exe")
-}
+$androidCandidates = @(
+    if (Test-Path -LiteralPath $publicAndroidPath -PathType Leaf) {
+        Get-Item -LiteralPath $publicAndroidPath
+    } else {
+        Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Android-$version-google-*-signed.apk"
+    }
+)
+$windowsCandidates = @(
+    if (Test-Path -LiteralPath $publicWindowsPath -PathType Leaf) {
+        Get-Item -LiteralPath $publicWindowsPath
+    } else {
+        Get-ChildItem -LiteralPath $artifactsRoot -File -Filter "Sprache-Windows-Setup-$version-google-x64.exe"
+    }
+)
 if ($androidCandidates.Count -ne 1) {
     throw "Expected exactly one Android $version APK, found $($androidCandidates.Count)."
 }
