@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "version": "1.39.1",
+  "buildNumber": 79,
+  "publishedAt": "2026-09-02T23:28:13.1921329Z",
+  "title": "Sprache 1.39.1",
+  "notes": [
+    "언어팩 발음 표기를 바로잡고 검수되지 않은 한글 추측 표기를 숨겼습니다.",
+    "여섯 언어의 TUFS 전체 어휘팩을 복원하고 여러 뜻을 빠짐없이 합쳤습니다.",
+    "언어팩 설치 뒤 화면 버벅임을 줄이고 기존 축소판 업데이트를 지원합니다."
+  ],
+  "releasePageUrl": "https://github.com/youkdonghun/Sprache/releases/tag/v1.39.1",
+  "artifacts": {
+    "windows": {
+      "kind": "installer",
+      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.39.1/Sprache-Windows-Setup-1.39.1-google-x64.exe",
+      "fileName": "Sprache-Windows-Setup-1.39.1-google-x64.exe",
+      "sha256": "57de81edd0230bcaf7d2aaf9fcbf30098fb9eb6d8d76d13376a6c8544c87e1c5",
+      "sizeBytes": 21450738
+    },
+    "android": {
+      "kind": "apk",
+      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.39.1/Sprache-Android-1.39.1-google-debug-signed.apk",
+      "fileName": "Sprache-Android-1.39.1-google-debug-signed.apk",
+      "sha256": "6a50ca64a22768c8737f172c477c87a39436b482b21102a09008262ce36d2e48",
+      "sizeBytes": 108158145
+    },
+    "pwa": {
+      "kind": "web",
+      "url": "https://sprache6.github.io/app/"
+    },
+    "macos": {
+      "kind": "web",
+      "url": "https://sprache6.github.io/app/"
+    },
+    "ios": {
+      "kind": "web",
+      "url": "https://sprache6.github.io/app/"
+    }
+  }
+}

@@ -1514,9 +1514,11 @@ class _ImportScreenState extends ConsumerState<ImportScreen> {
   }
 
   ImportReviewAction _actionFor(ImportReviewEntry entry) {
-    return entry
-        .resolve(_decisions[entry.reviewKey] ?? entry.defaultAction)
-        .action;
+    final defaultAction =
+        widget.languagePackMode && entry.status == ImportReviewStatus.changed
+        ? ImportReviewAction.replace
+        : entry.defaultAction;
+    return entry.resolve(_decisions[entry.reviewKey] ?? defaultAction).action;
   }
 
   void _saveReviewDraft() {

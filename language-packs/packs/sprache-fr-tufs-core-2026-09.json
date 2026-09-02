@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "sprache-fr-tufs-core-2026-09",
-  "title": "프랑스어 생활 핵심 추가 어휘 360",
-  "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+  "title": "프랑스어 생활 핵심 어휘 458",
+  "description": "TUFS의 한국어 대응 생활 핵심 어휘 전체본입니다. 앱 기본 자료와 겹치면 중복 없이 합쳐집니다.",
   "language": "fr",
-  "version": "2026.09.1",
-  "revision": 1,
-  "publishedAt": "2026-09-02T00:00:00Z",
+  "version": "2026.09.2",
+  "revision": 2,
+  "publishedAt": "2026-09-03T00:00:00Z",
   "license": "CC-BY-4.0",
   "attribution": "TUFS Open Language Resources, adapted by Sprache",
   "items": [
@@ -22,23 +22,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
     {
-      "id": "sprache-fr-tufs-core-2026-09-word-7603",
+      "id": "sprache-fr-tufs-core-2026-09-word-7449",
       "type": "word",
       "language": "fr",
       "term": "quand",
-      "meaning": "언제",
+      "meaning": "시간",
       "accepted_answers": [
+        "시간",
         "언제"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -54,7 +55,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -70,7 +71,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -86,7 +87,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -102,7 +103,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -118,7 +119,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -134,7 +135,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -150,7 +151,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-8510",
+      "type": "word",
+      "language": "fr",
+      "term": "mai",
+      "meaning": "오월",
+      "accepted_answers": [
+        "오월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -166,7 +183,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -182,7 +199,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -198,7 +215,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -214,7 +231,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -230,7 +247,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -246,7 +263,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -262,7 +279,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -270,15 +287,16 @@
       "id": "sprache-fr-tufs-core-2026-09-word-8822",
       "type": "word",
       "language": "fr",
-      "term": "matinée",
+      "term": "matin",
       "meaning": "오전",
       "accepted_answers": [
-        "오전"
+        "오전",
+        "아침"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -294,7 +312,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -310,7 +328,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -318,7 +336,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-8891",
       "type": "word",
       "language": "fr",
-      "term": "soirée",
+      "term": "soir",
       "meaning": "저녁",
       "accepted_answers": [
         "저녁"
@@ -326,7 +344,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -342,7 +360,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -358,7 +376,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -374,7 +392,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -390,7 +408,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-9026",
+      "type": "word",
+      "language": "fr",
+      "term": "aujourd'hui",
+      "meaning": "오늘",
+      "accepted_answers": [
+        "오늘"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -406,7 +440,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -422,7 +456,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -438,7 +472,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -454,7 +488,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -470,7 +504,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -486,7 +520,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -502,7 +536,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -518,7 +552,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -534,7 +568,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -550,7 +584,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -566,7 +600,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-9211",
+      "type": "word",
+      "language": "fr",
+      "term": "demain",
+      "meaning": "내일",
+      "accepted_answers": [
+        "내일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -582,7 +632,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -600,7 +650,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -618,7 +668,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -636,7 +686,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-10137",
+      "type": "word",
+      "language": "fr",
+      "term": "avant",
+      "meaning": "앞",
+      "accepted_answers": [
+        "앞"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -654,7 +720,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -670,7 +736,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -686,7 +752,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -702,7 +768,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -718,7 +784,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -734,7 +800,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -750,7 +816,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -766,7 +832,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -782,7 +848,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-10985",
+      "type": "word",
+      "language": "fr",
+      "term": "après",
+      "meaning": "뒤",
+      "accepted_answers": [
+        "뒤"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -798,7 +880,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -814,7 +896,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -822,7 +904,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-11063",
       "type": "word",
       "language": "fr",
-      "term": "au-dessus",
+      "term": "sur",
       "meaning": "위",
       "accepted_answers": [
         "위"
@@ -830,7 +912,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -838,7 +920,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-11065",
       "type": "word",
       "language": "fr",
-      "term": "au-dessous",
+      "term": "sous",
       "meaning": "아래",
       "accepted_answers": [
         "아래"
@@ -846,7 +928,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -862,7 +944,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -878,7 +960,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -894,7 +976,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -910,7 +992,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -926,7 +1008,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -937,12 +1019,13 @@
       "term": "entrée",
       "meaning": "입구",
       "accepted_answers": [
-        "입구"
+        "입구",
+        "현관"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -950,7 +1033,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-13006",
       "type": "word",
       "language": "fr",
-      "term": "un grand nombre de",
+      "term": "beaucoup de gens",
       "meaning": "여러 사람",
       "accepted_answers": [
         "여러 사람"
@@ -958,7 +1041,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-13195",
+      "type": "word",
+      "language": "fr",
+      "term": "hauteur",
+      "meaning": "높이",
+      "accepted_answers": [
+        "높이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -974,7 +1073,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -990,7 +1089,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1001,12 +1100,189 @@
       "term": "combien",
       "meaning": "몇 개",
       "accepted_answers": [
-        "몇 개"
+        "몇 개",
+        "얼마"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14674",
+      "type": "word",
+      "language": "fr",
+      "term": "janvier",
+      "meaning": "일월",
+      "accepted_answers": [
+        "일월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14675",
+      "type": "word",
+      "language": "fr",
+      "term": "février",
+      "meaning": "이월",
+      "accepted_answers": [
+        "이월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14676",
+      "type": "word",
+      "language": "fr",
+      "term": "mars",
+      "meaning": "삼월",
+      "accepted_answers": [
+        "삼월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14677",
+      "type": "word",
+      "language": "fr",
+      "term": "avril",
+      "meaning": "사월",
+      "accepted_answers": [
+        "사월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14679",
+      "type": "word",
+      "language": "fr",
+      "term": "juin",
+      "meaning": "유월",
+      "accepted_answers": [
+        "유월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14680",
+      "type": "word",
+      "language": "fr",
+      "term": "juillet",
+      "meaning": "칠월",
+      "accepted_answers": [
+        "칠월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14681",
+      "type": "word",
+      "language": "fr",
+      "term": "août",
+      "meaning": "팔월",
+      "accepted_answers": [
+        "팔월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14682",
+      "type": "word",
+      "language": "fr",
+      "term": "septembre",
+      "meaning": "구월",
+      "accepted_answers": [
+        "구월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14683",
+      "type": "word",
+      "language": "fr",
+      "term": "octobre",
+      "meaning": "시월",
+      "accepted_answers": [
+        "시월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14684",
+      "type": "word",
+      "language": "fr",
+      "term": "novembre",
+      "meaning": "십일월",
+      "accepted_answers": [
+        "십일월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14685",
+      "type": "word",
+      "language": "fr",
+      "term": "décembre",
+      "meaning": "십이월",
+      "accepted_answers": [
+        "십이월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1014,7 +1290,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-14871",
       "type": "word",
       "language": "fr",
-      "term": "année",
+      "term": "an",
       "meaning": "년",
       "accepted_answers": [
         "년"
@@ -1022,7 +1298,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-14890",
+      "type": "word",
+      "language": "fr",
+      "term": "semaine",
+      "meaning": "주일",
+      "accepted_answers": [
+        "주일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1033,12 +1325,13 @@
       "term": "heure",
       "meaning": "시",
       "accepted_answers": [
-        "시"
+        "시",
+        "시간"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1054,7 +1347,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1070,7 +1363,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-15216",
+      "type": "word",
+      "language": "fr",
+      "term": "exemplaire",
+      "meaning": "권",
+      "accepted_answers": [
+        "권"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1081,12 +1390,13 @@
       "term": "on",
       "meaning": "사람",
       "accepted_answers": [
-        "사람"
+        "사람",
+        "저희"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1094,7 +1404,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-15476",
       "type": "word",
       "language": "fr",
-      "term": "moi",
+      "term": "je",
       "meaning": "저",
       "accepted_answers": [
         "저"
@@ -1102,12 +1412,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
     {
-      "id": "sprache-fr-tufs-core-2026-09-word-15605",
+      "id": "sprache-fr-tufs-core-2026-09-word-15527",
+      "type": "word",
+      "language": "fr",
+      "term": "tu",
+      "meaning": "너",
+      "accepted_answers": [
+        "너"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-15578",
+      "type": "word",
+      "language": "fr",
+      "term": "elle",
+      "meaning": "그 사람들",
+      "accepted_answers": [
+        "그 사람들"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-15603",
       "type": "word",
       "language": "fr",
       "term": "qui",
@@ -1118,7 +1460,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1134,7 +1476,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1150,7 +1492,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1166,7 +1508,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1182,7 +1524,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1193,12 +1535,45 @@
       "term": "femme",
       "meaning": "여자",
       "accepted_answers": [
-        "여자"
+        "여자",
+        "아내"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16081",
+      "type": "word",
+      "language": "fr",
+      "term": "jeune fille",
+      "meaning": "여자 아이",
+      "accepted_answers": [
+        "여자 아이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16114",
+      "type": "word",
+      "language": "fr",
+      "term": "enfant",
+      "meaning": "아이",
+      "accepted_answers": [
+        "아이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1214,7 +1589,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1230,7 +1605,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1246,7 +1621,56 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16247",
+      "type": "word",
+      "language": "fr",
+      "term": "famille",
+      "meaning": "가족",
+      "accepted_answers": [
+        "가족",
+        "가정"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16331",
+      "type": "word",
+      "language": "fr",
+      "term": "couple",
+      "meaning": "부부",
+      "accepted_answers": [
+        "부부"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16343",
+      "type": "word",
+      "language": "fr",
+      "term": "mari",
+      "meaning": "남편",
+      "accepted_answers": [
+        "남편"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1262,7 +1686,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1278,7 +1702,41 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16495",
+      "type": "word",
+      "language": "fr",
+      "term": "père",
+      "meaning": "아버지",
+      "accepted_answers": [
+        "아버지",
+        "아빠"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16496",
+      "type": "word",
+      "language": "fr",
+      "term": "mère",
+      "meaning": "어머니",
+      "accepted_answers": [
+        "어머니",
+        "엄마"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1289,12 +1747,13 @@
       "term": "frère",
       "meaning": "형제",
       "accepted_answers": [
-        "형제"
+        "형제",
+        "형"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1303,14 +1762,62 @@
       "type": "word",
       "language": "fr",
       "term": "sœur",
-      "meaning": "자매",
+      "meaning": "누나",
       "accepted_answers": [
-        "자매"
+        "누나"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16866",
+      "type": "word",
+      "language": "fr",
+      "term": "oncle",
+      "meaning": "삼촌",
+      "accepted_answers": [
+        "삼촌"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16869",
+      "type": "word",
+      "language": "fr",
+      "term": "tante",
+      "meaning": "고모",
+      "accepted_answers": [
+        "고모"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-16892",
+      "type": "word",
+      "language": "fr",
+      "term": "cousin",
+      "meaning": "사촌",
+      "accepted_answers": [
+        "사촌"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1318,7 +1825,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-17007",
       "type": "word",
       "language": "fr",
-      "term": "copain",
+      "term": "ami",
       "meaning": "친구",
       "accepted_answers": [
         "친구"
@@ -1326,7 +1833,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1337,12 +1844,13 @@
       "term": "étranger",
       "meaning": "외국인",
       "accepted_answers": [
-        "외국인"
+        "외국인",
+        "외국"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1358,7 +1866,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1374,7 +1882,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1390,7 +1898,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1406,7 +1914,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1422,7 +1930,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-20241",
+      "type": "word",
+      "language": "fr",
+      "term": "élève",
+      "meaning": "학생",
+      "accepted_answers": [
+        "학생"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1438,7 +1962,39 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-21338",
+      "type": "word",
+      "language": "fr",
+      "term": "pays",
+      "meaning": "나라",
+      "accepted_answers": [
+        "나라"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-22471",
+      "type": "word",
+      "language": "fr",
+      "term": "école",
+      "meaning": "학교",
+      "accepted_answers": [
+        "학교"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1449,12 +2005,14 @@
       "term": "classe",
       "meaning": "교실",
       "accepted_answers": [
-        "교실"
+        "교실",
+        "반",
+        "수업"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1470,7 +2028,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1486,7 +2044,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1502,7 +2060,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1510,7 +2068,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-22785",
       "type": "word",
       "language": "fr",
-      "term": "station",
+      "term": "gare",
       "meaning": "역",
       "accepted_answers": [
         "역"
@@ -1518,7 +2076,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1534,7 +2092,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1542,7 +2100,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-22828",
       "type": "word",
       "language": "fr",
-      "term": "boutique",
+      "term": "magasin",
       "meaning": "가게",
       "accepted_answers": [
         "가게"
@@ -1550,7 +2108,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-22888",
+      "type": "word",
+      "language": "fr",
+      "term": "restaurant",
+      "meaning": "레스토랑",
+      "accepted_answers": [
+        "레스토랑"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1558,7 +2132,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-22896",
       "type": "word",
       "language": "fr",
-      "term": "salle à manger",
+      "term": "cantine",
       "meaning": "식당",
       "accepted_answers": [
         "식당"
@@ -1566,7 +2140,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-22917",
+      "type": "word",
+      "language": "fr",
+      "term": "café",
+      "meaning": "카페",
+      "accepted_answers": [
+        "카페",
+        "커피"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1582,7 +2173,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1598,7 +2189,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1614,7 +2205,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-23103",
+      "type": "word",
+      "language": "fr",
+      "term": "hôpital",
+      "meaning": "병원",
+      "accepted_answers": [
+        "병원"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1625,12 +2232,13 @@
       "term": "bibliothèque",
       "meaning": "도서관",
       "accepted_answers": [
-        "도서관"
+        "도서관",
+        "책장"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1638,7 +2246,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-23140",
       "type": "word",
       "language": "fr",
-      "term": "jardin",
+      "term": "parc",
       "meaning": "공원",
       "accepted_answers": [
         "공원"
@@ -1646,7 +2254,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1662,7 +2270,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1678,7 +2286,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1694,7 +2302,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1710,7 +2318,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1726,7 +2334,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-26775",
+      "type": "word",
+      "language": "fr",
+      "term": "étude",
+      "meaning": "공부",
+      "accepted_answers": [
+        "공부"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1742,7 +2366,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1750,7 +2374,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-28234",
       "type": "word",
       "language": "fr",
-      "term": "signification",
+      "term": "sens",
       "meaning": "뜻",
       "accepted_answers": [
         "뜻"
@@ -1758,7 +2382,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1774,7 +2398,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1790,7 +2414,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-30521",
+      "type": "word",
+      "language": "fr",
+      "term": "langue",
+      "meaning": "말",
+      "accepted_answers": [
+        "말"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1806,7 +2446,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1822,7 +2462,39 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-30586",
+      "type": "word",
+      "language": "fr",
+      "term": "français",
+      "meaning": "한국말",
+      "accepted_answers": [
+        "한국말"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-30813",
+      "type": "word",
+      "language": "fr",
+      "term": "thème",
+      "meaning": "작문",
+      "accepted_answers": [
+        "작문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1838,7 +2510,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1854,7 +2526,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1870,7 +2542,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1886,7 +2558,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-32370",
+      "type": "word",
+      "language": "fr",
+      "term": "téléphone",
+      "meaning": "전화",
+      "accepted_answers": [
+        "전화"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1902,7 +2590,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1918,7 +2606,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-32796",
+      "type": "word",
+      "language": "fr",
+      "term": "problème",
+      "meaning": "문제",
+      "accepted_answers": [
+        "문제"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1934,7 +2638,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1950,7 +2654,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-34173",
+      "type": "word",
+      "language": "fr",
+      "term": "livre",
+      "meaning": "책",
+      "accepted_answers": [
+        "책"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1966,7 +2686,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1982,7 +2702,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1998,7 +2718,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2014,7 +2734,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2030,7 +2750,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2046,7 +2766,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2062,7 +2782,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2078,7 +2798,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-36429",
+      "type": "word",
+      "language": "fr",
+      "term": "travail",
+      "meaning": "일",
+      "accepted_answers": [
+        "일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2094,7 +2830,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2110,7 +2846,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2118,7 +2854,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-36910",
       "type": "word",
       "language": "fr",
-      "term": "repas",
+      "term": "riz",
       "meaning": "밥",
       "accepted_answers": [
         "밥"
@@ -2126,7 +2862,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2142,7 +2878,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2158,7 +2894,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2174,7 +2910,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2190,7 +2926,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2198,7 +2934,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-38140",
       "type": "word",
       "language": "fr",
-      "term": "se promener",
+      "term": "promenade",
       "meaning": "산책",
       "accepted_answers": [
         "산책"
@@ -2206,7 +2942,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2222,7 +2958,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2238,7 +2974,39 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-39936",
+      "type": "word",
+      "language": "fr",
+      "term": "mal",
+      "meaning": "서투르다",
+      "accepted_answers": [
+        "서투르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-40795",
+      "type": "word",
+      "language": "fr",
+      "term": "fête",
+      "meaning": "파티",
+      "accepted_answers": [
+        "파티"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2246,7 +3014,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-45301",
       "type": "word",
       "language": "fr",
-      "term": "courses",
+      "term": "achat",
       "meaning": "쇼핑",
       "accepted_answers": [
         "쇼핑"
@@ -2254,7 +3022,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2270,7 +3038,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2286,7 +3054,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2302,7 +3070,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-48177",
+      "type": "word",
+      "language": "fr",
+      "term": "argent",
+      "meaning": "돈",
+      "accepted_answers": [
+        "돈"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2318,7 +3102,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2334,7 +3118,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2350,12 +3134,12 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
     {
-      "id": "sprache-fr-tufs-core-2026-09-word-49632",
+      "id": "sprache-fr-tufs-core-2026-09-word-49629",
       "type": "word",
       "language": "fr",
       "term": "vêtement",
@@ -2366,7 +3150,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2382,7 +3166,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2398,7 +3182,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2414,7 +3198,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2430,7 +3214,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2446,7 +3230,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2462,7 +3246,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2478,7 +3262,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2494,7 +3278,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2510,7 +3294,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2526,7 +3310,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2542,7 +3326,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2558,7 +3342,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2574,7 +3358,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2590,7 +3374,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2606,7 +3390,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2622,7 +3406,40 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-50577",
+      "type": "word",
+      "language": "fr",
+      "term": "plat",
+      "meaning": "요리",
+      "accepted_answers": [
+        "요리",
+        "접시"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-50788",
+      "type": "word",
+      "language": "fr",
+      "term": "pain",
+      "meaning": "빵",
+      "accepted_answers": [
+        "빵"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2638,7 +3455,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2654,7 +3471,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2670,7 +3487,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2686,7 +3503,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2702,7 +3519,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2718,7 +3535,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2734,7 +3551,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2750,7 +3567,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2766,7 +3583,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-51478",
+      "type": "word",
+      "language": "fr",
+      "term": "fromage",
+      "meaning": "치즈",
+      "accepted_answers": [
+        "치즈"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2782,7 +3615,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2798,7 +3631,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2814,7 +3647,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2830,7 +3663,40 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-51744",
+      "type": "word",
+      "language": "fr",
+      "term": "thé",
+      "meaning": "차",
+      "accepted_answers": [
+        "차",
+        "홍차"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-51821",
+      "type": "word",
+      "language": "fr",
+      "term": "vin",
+      "meaning": "술",
+      "accepted_answers": [
+        "술"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2838,7 +3704,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-51920",
       "type": "word",
       "language": "fr",
-      "term": "cigarette",
+      "term": "tabac",
       "meaning": "담배",
       "accepted_answers": [
         "담배"
@@ -2846,7 +3712,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2862,7 +3728,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-52391",
+      "type": "word",
+      "language": "fr",
+      "term": "maison",
+      "meaning": "집",
+      "accepted_answers": [
+        "집"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2878,7 +3760,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-52812",
+      "type": "word",
+      "language": "fr",
+      "term": "porte",
+      "meaning": "대문",
+      "accepted_answers": [
+        "대문",
+        "문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2886,15 +3785,15 @@
       "id": "sprache-fr-tufs-core-2026-09-word-52878",
       "type": "word",
       "language": "fr",
-      "term": "salle",
-      "meaning": "아파트",
+      "term": "pièce",
+      "meaning": "방",
       "accepted_answers": [
-        "아파트"
+        "방"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2910,7 +3809,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2926,7 +3825,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2942,7 +3841,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2958,7 +3857,39 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-53210",
+      "type": "word",
+      "language": "fr",
+      "term": "fenêtre",
+      "meaning": "창문",
+      "accepted_answers": [
+        "창문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-53456",
+      "type": "word",
+      "language": "fr",
+      "term": "bureau",
+      "meaning": "책상",
+      "accepted_answers": [
+        "책상"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2974,7 +3905,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2982,7 +3913,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-53482",
       "type": "word",
       "language": "fr",
-      "term": "fauteuil",
+      "term": "chaise",
       "meaning": "의자",
       "accepted_answers": [
         "의자"
@@ -2990,7 +3921,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3006,7 +3937,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3022,7 +3953,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3038,7 +3969,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3054,7 +3985,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3070,7 +4001,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3086,7 +4017,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3094,31 +4025,16 @@
       "id": "sprache-fr-tufs-core-2026-09-word-54021",
       "type": "word",
       "language": "fr",
-      "term": "valise",
+      "term": "sac",
       "meaning": "가방",
       "accepted_answers": [
-        "가방"
+        "가방",
+        "나쁘다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
-      ],
-      "priority": 3
-    },
-    {
-      "id": "sprache-fr-tufs-core-2026-09-word-54077",
-      "type": "word",
-      "language": "fr",
-      "term": "plat",
-      "meaning": "접시",
-      "accepted_answers": [
-        "접시"
-      ],
-      "tags": [
-        "TUFS",
-        "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3134,7 +4050,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3150,7 +4066,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3166,7 +4082,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3182,7 +4098,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3198,7 +4114,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3206,7 +4122,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-54192",
       "type": "word",
       "language": "fr",
-      "term": "cuillère",
+      "term": "cuiller",
       "meaning": "숟가락",
       "accepted_answers": [
         "숟가락"
@@ -3214,7 +4130,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3230,7 +4146,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3241,12 +4157,13 @@
       "term": "stylo",
       "meaning": "만년필",
       "accepted_answers": [
-        "만년필"
+        "만년필",
+        "펜"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3262,7 +4179,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3270,7 +4187,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-54498",
       "type": "word",
       "language": "fr",
-      "term": "clef",
+      "term": "clé",
       "meaning": "열쇄",
       "accepted_answers": [
         "열쇄"
@@ -3278,7 +4195,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3294,7 +4211,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3310,7 +4227,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3326,7 +4243,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3342,7 +4259,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3358,7 +4275,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3374,7 +4291,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3390,7 +4307,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3406,7 +4323,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3422,7 +4339,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3438,7 +4355,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3454,7 +4371,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3462,7 +4379,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-55994",
       "type": "word",
       "language": "fr",
-      "term": "télévision",
+      "term": "télé",
       "meaning": "텔레비젼",
       "accepted_answers": [
         "텔레비젼"
@@ -3470,7 +4387,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3486,7 +4403,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-56126",
+      "type": "word",
+      "language": "fr",
+      "term": "ordinateur",
+      "meaning": "컴퓨터",
+      "accepted_answers": [
+        "컴퓨터"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3502,7 +4435,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3510,7 +4443,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-56398",
       "type": "word",
       "language": "fr",
-      "term": "horloge",
+      "term": "montre",
       "meaning": "시계",
       "accepted_answers": [
         "시계"
@@ -3518,7 +4451,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3526,7 +4459,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-56482",
       "type": "word",
       "language": "fr",
-      "term": "bicyclette",
+      "term": "vélo",
       "meaning": "자전거",
       "accepted_answers": [
         "자전거"
@@ -3534,7 +4467,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-56506",
+      "type": "word",
+      "language": "fr",
+      "term": "voiture",
+      "meaning": "자동차",
+      "accepted_answers": [
+        "자동차"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3550,7 +4499,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3566,7 +4515,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-56645",
+      "type": "word",
+      "language": "fr",
+      "term": "train",
+      "meaning": "전철",
+      "accepted_answers": [
+        "전철"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3582,7 +4547,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3598,7 +4563,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3614,7 +4579,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-57040",
+      "type": "word",
+      "language": "fr",
+      "term": "jardin",
+      "meaning": "마당",
+      "accepted_answers": [
+        "마당"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3622,7 +4603,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-57152",
       "type": "word",
       "language": "fr",
-      "term": "chemin",
+      "term": "rue",
       "meaning": "길",
       "accepted_answers": [
         "길"
@@ -3630,7 +4611,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3646,7 +4627,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3662,7 +4643,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3680,7 +4661,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3698,7 +4679,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-58007",
+      "type": "word",
+      "language": "fr",
+      "term": "brun",
+      "meaning": "갈색",
+      "accepted_answers": [
+        "갈색"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3716,7 +4713,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3732,7 +4729,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3750,7 +4747,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3766,7 +4763,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-59793",
+      "type": "word",
+      "language": "fr",
+      "term": "pluie",
+      "meaning": "비",
+      "accepted_answers": [
+        "비"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3782,7 +4795,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3793,12 +4806,13 @@
       "term": "faire",
       "meaning": "날씨",
       "accepted_answers": [
-        "날씨"
+        "날씨",
+        "하다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3806,7 +4820,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-59985",
       "type": "word",
       "language": "fr",
-      "term": "être couvert",
+      "term": "nuageux",
       "meaning": "흐림",
       "accepted_answers": [
         "흐림"
@@ -3814,7 +4828,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3830,7 +4844,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3846,7 +4860,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-61891",
+      "type": "word",
+      "language": "fr",
+      "term": "citron",
+      "meaning": "레몬",
+      "accepted_answers": [
+        "레몬"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3862,7 +4892,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3878,7 +4908,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3894,7 +4924,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3910,7 +4940,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3926,7 +4956,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3942,7 +4972,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-64470",
+      "type": "word",
+      "language": "fr",
+      "term": "nez",
+      "meaning": "코",
+      "accepted_answers": [
+        "코"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3958,7 +5004,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3974,7 +5020,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3990,7 +5036,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4006,7 +5052,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-64741",
+      "type": "word",
+      "language": "fr",
+      "term": "bras",
+      "meaning": "팔",
+      "accepted_answers": [
+        "팔"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4014,7 +5076,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-64769",
       "type": "word",
       "language": "fr",
-      "term": "jambe",
+      "term": "pied",
       "meaning": "발",
       "accepted_answers": [
         "발"
@@ -4022,7 +5084,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4038,7 +5100,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4054,7 +5116,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4070,7 +5132,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4086,7 +5148,41 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-66730",
+      "type": "word",
+      "language": "fr",
+      "term": "rhume",
+      "meaning": "감기",
+      "accepted_answers": [
+        "감기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-67104",
+      "type": "word",
+      "language": "fr",
+      "term": "devenir",
+      "meaning": "(...이/가) 되다",
+      "accepted_answers": [
+        "(...이/가) 되다",
+        "(...이",
+        "가) 되다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4102,7 +5198,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-67762",
+      "type": "word",
+      "language": "fr",
+      "term": "arriver",
+      "meaning": "일어나다",
+      "accepted_answers": [
+        "일어나다",
+        "도착하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4118,7 +5231,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-68583",
+      "type": "word",
+      "language": "fr",
+      "term": "serrer",
+      "meaning": "조르다",
+      "accepted_answers": [
+        "조르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4134,7 +5263,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4145,12 +5274,15 @@
       "term": "mettre",
       "meaning": "걸다",
       "accepted_answers": [
-        "걸다"
+        "걸다",
+        "넣다",
+        "쓰다",
+        "입다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4166,23 +5298,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
-      ],
-      "priority": 3
-    },
-    {
-      "id": "sprache-fr-tufs-core-2026-09-word-70181",
-      "type": "word",
-      "language": "fr",
-      "term": "arriver",
-      "meaning": "도착하다",
-      "accepted_answers": [
-        "도착하다"
-      ],
-      "tags": [
-        "TUFS",
-        "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4198,7 +5314,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4214,7 +5330,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4230,7 +5346,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4246,23 +5362,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
     {
-      "id": "sprache-fr-tufs-core-2026-09-word-71458",
+      "id": "sprache-fr-tufs-core-2026-09-word-71127",
       "type": "word",
       "language": "fr",
-      "term": "introduire",
-      "meaning": "넣다",
+      "term": "aller",
+      "meaning": "가다",
       "accepted_answers": [
-        "넣다"
+        "가다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4278,7 +5394,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-72062",
+      "type": "word",
+      "language": "fr",
+      "term": "neiger",
+      "meaning": "비가 내리다",
+      "accepted_answers": [
+        "비가 내리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4286,7 +5418,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-72074",
       "type": "word",
       "language": "fr",
-      "term": "prendre",
+      "term": "monter",
       "meaning": "타다",
       "accepted_answers": [
         "타다"
@@ -4294,7 +5426,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4310,7 +5442,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4326,7 +5458,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-72782",
+      "type": "word",
+      "language": "fr",
+      "term": "allumer",
+      "meaning": "붙이다",
+      "accepted_answers": [
+        "붙이다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4342,7 +5490,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4358,7 +5506,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4374,7 +5522,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-73997",
+      "type": "word",
+      "language": "fr",
+      "term": "ajouter",
+      "meaning": "더하다",
+      "accepted_answers": [
+        "더하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4390,7 +5554,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4406,7 +5570,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4422,7 +5586,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4430,7 +5594,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-79279",
       "type": "word",
       "language": "fr",
-      "term": "entendre",
+      "term": "dire",
       "meaning": "말하다",
       "accepted_answers": [
         "말하다"
@@ -4438,7 +5602,71 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-79593",
+      "type": "word",
+      "language": "fr",
+      "term": "s'appeler",
+      "meaning": "~(이)라고 합니다",
+      "accepted_answers": [
+        "~(이)라고 합니다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-80000",
+      "type": "word",
+      "language": "fr",
+      "term": "parler",
+      "meaning": "이야기하다",
+      "accepted_answers": [
+        "이야기하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-80001",
+      "type": "word",
+      "language": "fr",
+      "term": "raconter",
+      "meaning": "말하다",
+      "accepted_answers": [
+        "말하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-80087",
+      "type": "word",
+      "language": "fr",
+      "term": "écouter",
+      "meaning": "듣다",
+      "accepted_answers": [
+        "듣다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4454,7 +5682,39 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-80639",
+      "type": "word",
+      "language": "fr",
+      "term": "lire",
+      "meaning": "읽다",
+      "accepted_answers": [
+        "읽다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-80727",
+      "type": "word",
+      "language": "fr",
+      "term": "écrire",
+      "meaning": "쓰다",
+      "accepted_answers": [
+        "쓰다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4470,7 +5730,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4481,12 +5741,29 @@
       "term": "jouer",
       "meaning": "치다",
       "accepted_answers": [
-        "치다"
+        "치다",
+        "놀다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-81700",
+      "type": "word",
+      "language": "fr",
+      "term": "manger",
+      "meaning": "먹다",
+      "accepted_answers": [
+        "먹다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4502,7 +5779,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4518,7 +5795,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-82121",
+      "type": "word",
+      "language": "fr",
+      "term": "prendre",
+      "meaning": "샤워(를) 하다",
+      "accepted_answers": [
+        "샤워(를) 하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4534,7 +5827,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4550,7 +5843,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4558,7 +5851,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-82608",
       "type": "word",
       "language": "fr",
-      "term": "être debout",
+      "term": "se lever",
       "meaning": "서다",
       "accepted_answers": [
         "서다"
@@ -4566,7 +5859,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4582,7 +5875,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4598,7 +5891,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-83154",
+      "type": "word",
+      "language": "fr",
+      "term": "boire",
+      "meaning": "마시다",
+      "accepted_answers": [
+        "마시다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4606,7 +5915,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-83250",
       "type": "word",
       "language": "fr",
-      "term": "respirer",
+      "term": "aspirer",
       "meaning": "빨다",
       "accepted_answers": [
         "빨다"
@@ -4614,7 +5923,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4630,7 +5939,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4638,7 +5947,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-84044",
       "type": "word",
       "language": "fr",
-      "term": "rencontrer",
+      "term": "voir",
       "meaning": "만나다",
       "accepted_answers": [
         "만나다"
@@ -4646,7 +5955,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4662,7 +5971,25 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-85910",
+      "type": "word",
+      "language": "fr",
+      "term": "s'il vous plaît",
+      "meaning": "~아/어 주세요",
+      "accepted_answers": [
+        "~아/어 주세요",
+        "~아",
+        "어 주세요"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4678,7 +6005,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4686,7 +6013,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-87307",
       "type": "word",
       "language": "fr",
-      "term": "faire des courses",
+      "term": "acheter",
       "meaning": "사다",
       "accepted_answers": [
         "사다"
@@ -4694,7 +6021,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4710,7 +6037,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4721,12 +6048,13 @@
       "term": "louer",
       "meaning": "빌려주다",
       "accepted_answers": [
-        "빌려주다"
+        "빌려주다",
+        "빌리다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4742,7 +6070,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4758,7 +6086,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4774,7 +6102,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4790,7 +6118,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-89503",
+      "type": "word",
+      "language": "fr",
+      "term": "se couvrir",
+      "meaning": "흐리다",
+      "accepted_answers": [
+        "흐리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4806,7 +6150,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4822,7 +6166,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4830,15 +6174,16 @@
       "id": "sprache-fr-tufs-core-2026-09-word-90777",
       "type": "word",
       "language": "fr",
-      "term": "ce ...-ci",
+      "term": "ce",
       "meaning": "이",
       "accepted_answers": [
-        "이"
+        "이",
+        "그"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4854,23 +6199,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
     {
-      "id": "sprache-fr-tufs-core-2026-09-word-90814",
+      "id": "sprache-fr-tufs-core-2026-09-word-90799",
       "type": "word",
       "language": "fr",
-      "term": "ce ...-là",
-      "meaning": "그",
+      "term": "oui",
+      "meaning": "그렇다",
       "accepted_answers": [
-        "그"
+        "그렇다",
+        "네"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4886,7 +6232,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4902,7 +6248,39 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-90827",
+      "type": "word",
+      "language": "fr",
+      "term": "comment",
+      "meaning": "어떻다",
+      "accepted_answers": [
+        "어떻다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-91162",
+      "type": "word",
+      "language": "fr",
+      "term": "juste",
+      "meaning": "마침",
+      "accepted_answers": [
+        "마침"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4918,23 +6296,40 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
     {
-      "id": "sprache-fr-tufs-core-2026-09-word-91682",
+      "id": "sprache-fr-tufs-core-2026-09-word-91633",
       "type": "word",
       "language": "fr",
-      "term": "sac",
-      "meaning": "나쁘다",
+      "term": "bon",
+      "meaning": "좋다",
       "accepted_answers": [
-        "나쁘다"
+        "좋다",
+        "맛(이)있다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-91975",
+      "type": "word",
+      "language": "fr",
+      "term": "mince",
+      "meaning": "얇다",
+      "accepted_answers": [
+        "얇다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4942,7 +6337,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-92053",
       "type": "word",
       "language": "fr",
-      "term": "joli",
+      "term": "beau",
       "meaning": "예쁘다",
       "accepted_answers": [
         "예쁘다"
@@ -4950,7 +6345,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4966,7 +6361,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4982,7 +6377,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4998,7 +6393,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5014,7 +6409,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5030,7 +6425,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5046,7 +6441,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5062,7 +6457,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5078,7 +6473,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5086,7 +6481,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-93413",
       "type": "word",
       "language": "fr",
-      "term": "ancien",
+      "term": "vieux",
       "meaning": "낡다",
       "accepted_answers": [
         "낡다"
@@ -5094,7 +6489,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5110,7 +6505,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-93490",
+      "type": "word",
+      "language": "fr",
+      "term": "lent",
+      "meaning": "늦다",
+      "accepted_answers": [
+        "늦다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5126,7 +6537,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5142,7 +6553,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5158,7 +6569,55 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-93640",
+      "type": "word",
+      "language": "fr",
+      "term": "en+現在分詞( -ant)",
+      "meaning": "...면서",
+      "accepted_answers": [
+        "...면서"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-93723",
+      "type": "word",
+      "language": "fr",
+      "term": "droite",
+      "meaning": "쭉",
+      "accepted_answers": [
+        "쭉"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-93826",
+      "type": "word",
+      "language": "fr",
+      "term": "nombreux",
+      "meaning": "많다",
+      "accepted_answers": [
+        "많다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5174,7 +6633,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5190,7 +6649,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5206,7 +6665,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5222,7 +6681,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5238,7 +6697,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5254,7 +6713,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5270,7 +6729,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5286,7 +6745,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5302,7 +6761,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5318,7 +6777,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5334,7 +6793,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5342,7 +6801,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-94125",
       "type": "word",
       "language": "fr",
-      "term": "mince",
+      "term": "fin",
       "meaning": "가늘다",
       "accepted_answers": [
         "가늘다"
@@ -5350,7 +6809,55 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-94142",
+      "type": "word",
+      "language": "fr",
+      "term": "grand",
+      "meaning": "크다",
+      "accepted_answers": [
+        "크다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-94186",
+      "type": "word",
+      "language": "fr",
+      "term": "petit",
+      "meaning": "작다",
+      "accepted_answers": [
+        "작다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-94225",
+      "type": "word",
+      "language": "fr",
+      "term": "vite",
+      "meaning": "빠르다",
+      "accepted_answers": [
+        "빠르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5366,7 +6873,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5382,7 +6889,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5398,7 +6905,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-94344",
+      "type": "word",
+      "language": "fr",
+      "term": "chaud",
+      "meaning": "덥다",
+      "accepted_answers": [
+        "덥다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5414,7 +6937,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-94373",
+      "type": "word",
+      "language": "fr",
+      "term": "froid",
+      "meaning": "춥다",
+      "accepted_answers": [
+        "춥다",
+        "차다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5430,7 +6970,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5446,7 +6986,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5462,7 +7002,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5478,7 +7018,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5494,7 +7034,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5502,7 +7042,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-95586",
       "type": "word",
       "language": "fr",
-      "term": "plaire",
+      "term": "aimer",
       "meaning": "좋아하다",
       "accepted_answers": [
         "좋아하다"
@@ -5510,7 +7050,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-95587",
+      "type": "word",
+      "language": "fr",
+      "term": "adorer",
+      "meaning": "많이 좋아하다",
+      "accepted_answers": [
+        "많이 좋아하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5526,7 +7082,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-96159",
+      "type": "word",
+      "language": "fr",
+      "term": "vouloir",
+      "meaning": "가지고 싶다",
+      "accepted_answers": [
+        "가지고 싶다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5542,7 +7114,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5558,7 +7130,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5574,7 +7146,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5590,7 +7162,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5599,16 +7171,14 @@
       "type": "word",
       "language": "fr",
       "term": "clair",
-      "meaning": "밝다, 엷다",
+      "meaning": "밝다",
       "accepted_answers": [
-        "밝다, 엷다",
-        "밝다",
-        "엷다"
+        "밝다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5624,7 +7194,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5642,7 +7212,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5650,7 +7220,7 @@
       "id": "sprache-fr-tufs-core-2026-09-word-99157",
       "type": "word",
       "language": "fr",
-      "term": "tranquille",
+      "term": "calme",
       "meaning": "조용하다",
       "accepted_answers": [
         "조용하다"
@@ -5658,7 +7228,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5674,23 +7244,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
     {
-      "id": "sprache-fr-tufs-core-2026-09-word-99489",
+      "id": "sprache-fr-tufs-core-2026-09-word-99491",
       "type": "word",
       "language": "fr",
-      "term": "excellent",
-      "meaning": "맛(이)있다",
+      "term": "mauvais",
+      "meaning": "맛(이)없다",
       "accepted_answers": [
-        "맛(이)있다"
+        "맛(이)없다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5706,7 +7276,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5722,7 +7292,25 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-99575",
+      "type": "word",
+      "language": "fr",
+      "term": "foncé",
+      "meaning": "짙다, 어둡다",
+      "accepted_answers": [
+        "짙다, 어둡다",
+        "짙다",
+        "어둡다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5738,7 +7326,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5754,7 +7342,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5770,7 +7358,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -5786,7 +7374,23 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09-word-100827",
+      "type": "word",
+      "language": "fr",
+      "term": "non",
+      "meaning": "아뇨",
+      "accepted_answers": [
+        "아뇨"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
       ],
       "priority": 3
     }

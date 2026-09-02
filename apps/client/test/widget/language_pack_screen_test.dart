@@ -67,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('영어 첫걸음 테스트팩'), findsOneWidget);
-    expect(find.text('120개 추가하기'), findsOneWidget);
+    expect(find.text('전체 120개 받기'), findsOneWidget);
     expect(find.textContaining('앱 업데이트 없이'), findsNothing);
     expect(tester.takeException(), isNull);
   });

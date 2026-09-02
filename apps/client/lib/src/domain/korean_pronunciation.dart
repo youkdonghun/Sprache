@@ -418,13 +418,16 @@ String _latinSyllables(String source, {required LanguageTag language}) {
     }
     final reachesEnd = cursor == units.length;
     if (reachesEnd && trailing.isNotEmpty) {
-      final coda = _codaIndexes[trailing.first] ?? 0;
-      final attached = _attachCoda(output.toString(), coda);
-      output
-        ..clear()
-        ..write(attached);
-      index += 1;
-      for (final consonant in trailing.skip(1)) {
+      final first = trailing.first;
+      final coda = _codaIndexes[first];
+      if (coda != null) {
+        final attached = _attachCoda(output.toString(), coda);
+        output
+          ..clear()
+          ..write(attached);
+        index += 1;
+      }
+      for (final consonant in coda == null ? trailing : trailing.skip(1)) {
         output.write(_compose(_onsetIndexes[consonant] ?? 11, 18));
         index += 1;
       }
@@ -1042,6 +1045,7 @@ const _latinLetterNames = <String, String>{
 
 const _latinOverrides = <LanguageTag, Map<String, String>>{
   LanguageTag.english: {
+    'beef': '비프',
     'hello': '헬로',
     'goodbye': '굿바이',
     'please': '플리즈',

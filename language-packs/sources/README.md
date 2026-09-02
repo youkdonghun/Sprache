@@ -1,25 +1,26 @@
 # 언어팩 원본과 재현 방법
 
 `tufs-core-alignment.json`은 도쿄외국어대 TUFS Open Language Resources의
-24개 언어 기초 어휘 모듈 중 `ko`, `en`, `de`, `fr`, `es`, `ja`, `zh`를
-같은 `classified_id`로 연결한 자료다.
+24개 언어 기초 어휘 모듈 중 한국어와 `en`, `de`, `fr`, `es`, `ja`,
+`zh`를 각각 같은 `classified_id`로 연결한 자료다.
 
 - 원본: https://www.coelang.tufs.ac.jp/mt/vmod/
 - 라이선스: CC BY 4.0
 - 인용: Kawaguchi, Yuji. 2007. *Foundations of Center of Usage-Based
   Linguistic Informatics (UBLI).*
-- 가공: 일곱 모듈에 모두 존재하고 표현이 비어 있지 않은 444개 개념만 보존,
-  공백 NFKC 정규화, 중국어 표기와 병음 분리
+- 가공: 모든 언어의 교집합이 아니라 한국어–학습 언어 짝별 교집합을
+  보존, 표준 표제어 우선, 공백 NFKC 정규화, 일본어의 안전하게
+  대응되는 가나와 중국어 병음 분리
 
-`bundled-word-terms.json`은 Flutter 내장 어휘에서 생성한다. 아래 명령으로
-내장 자료와 GitHub 팩의 중복 제외 기준을 갱신한다.
+TUFS zip을 풀어 얻은 PostgreSQL dump에서 원본 정렬 파일을 다시
+만들려면 `pgdumplib`을 설치한 후 아래 명령을 사용한다.
 
 ```powershell
-cd apps/client
-dart run tool/export_bundled_word_index.dart
+python tool/extract-tufs-pairwise.py --input-root <풀어 둔 목록> `
+  --output language-packs/sources/tufs-core-alignment.json
 ```
 
-두 원본을 반영해 실제 팩을 다시 만들고 카탈로그를 갱신하려면 저장소 루트에서
+정렬 원본을 반영해 실제 팩을 다시 만들고 카탈로그를 갱신하려면 저장소 루트에서
 다음을 실행한다.
 
 ```powershell

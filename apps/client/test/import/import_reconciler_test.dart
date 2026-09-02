@@ -162,4 +162,56 @@ void main() {
       ImportReviewAction.skip,
     );
   });
+
+  test('treats a stable-id pack revision as a replaceable update', () {
+    const current = LearningItem(
+      id: 'pack-word-1',
+      kind: LearningItemKind.word,
+      learningLanguage: LanguageTag.english,
+      text: 'beef',
+      translations: ['쇠고기'],
+      acceptedAnswers: ['쇠고기'],
+      readings: [Reading(scheme: ReadingScheme.hangul, value: '비')],
+      source: ContentSource(
+        name: '영어 생활 핵심 어휘',
+        license: 'CC-BY-4.0',
+        sourceVersion: '2026.09.1',
+        contentVersion: 1,
+      ),
+    );
+    const incoming = LearningItem(
+      id: 'pack-word-1',
+      kind: LearningItemKind.word,
+      learningLanguage: LanguageTag.english,
+      text: 'beef',
+      translations: ['쇠고기'],
+      acceptedAnswers: ['쇠고기'],
+      readings: [Reading(scheme: ReadingScheme.hangul, value: '비프')],
+      source: ContentSource(
+        name: '영어 생활 핵심 어휘',
+        license: 'CC-BY-4.0',
+        sourceVersion: '2026.09.2',
+        contentVersion: 2,
+      ),
+    );
+    const preview = ImportPreview(
+      entries: [ParsedImportEntry(row: 1, item: incoming)],
+      issues: [],
+      duplicates: [],
+    );
+
+    final entry = reconciler
+        .review(
+          preview: preview,
+          existingItems: const [current],
+          replaceableItemIds: const {'pack-word-1'},
+        )
+        .entries
+        .single;
+
+    expect(entry.status, ImportReviewStatus.changed);
+    expect(entry.mergeOnly, isFalse);
+    expect(entry.incoming.reading(ReadingScheme.hangul), '비프');
+    expect(entry.incoming.source.sourceVersion, '2026.09.2');
+  });
 }

@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "sprache-ja-tufs-core-2026-09",
-  "title": "일본어 생활 핵심 추가 어휘 402",
-  "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+  "title": "일본어 생활 핵심 어휘 455",
+  "description": "TUFS의 한국어 대응 생활 핵심 어휘 전체본입니다. 앱 기본 자료와 겹치면 중복 없이 합쳐집니다.",
   "language": "ja",
-  "version": "2026.09.1",
-  "revision": 1,
-  "publishedAt": "2026-09-02T00:00:00Z",
+  "version": "2026.09.2",
+  "revision": 2,
+  "publishedAt": "2026-09-03T00:00:00Z",
   "license": "CC-BY-4.0",
   "attribution": "TUFS Open Language Resources, adapted by Sprache",
   "items": [
@@ -22,9 +22,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "べんり"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-7603",
@@ -38,9 +39,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-7864",
@@ -54,9 +56,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まいしゅう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-7865",
@@ -70,9 +73,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まいつき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-7870",
@@ -86,9 +90,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まいとし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8361",
@@ -102,9 +107,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はる"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8375",
@@ -118,9 +124,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "なつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8389",
@@ -134,9 +141,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8403",
@@ -150,9 +158,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ふゆ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8555",
@@ -166,9 +175,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "げつようび"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8556",
@@ -182,9 +192,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かようび"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8557",
@@ -198,9 +209,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "すいようび"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8558",
@@ -214,9 +226,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "もくようび"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8559",
@@ -230,9 +243,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きんようび"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8560",
@@ -246,9 +260,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "どようび"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8561",
@@ -262,9 +277,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "にちようび"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8822",
@@ -278,9 +294,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ごぜん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8824",
@@ -294,9 +311,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ごご"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-8856",
+      "type": "word",
+      "language": "ja",
+      "term": "朝",
+      "meaning": "아침",
+      "accepted_answers": [
+        "아침"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "あさ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8873",
@@ -310,9 +345,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひる"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-8891",
@@ -326,9 +362,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ゆうがた"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-8908",
+      "type": "word",
+      "language": "ja",
+      "term": "夜",
+      "meaning": "밤",
+      "accepted_answers": [
+        "밤"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "よる"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9013",
@@ -342,9 +396,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ことし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9022",
@@ -358,9 +413,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こんげつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9025",
@@ -374,9 +430,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こんしゅう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9026",
@@ -390,9 +447,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きょう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9103",
@@ -406,9 +464,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きょねん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9108",
@@ -422,9 +481,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おととし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9112",
@@ -438,9 +498,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せんげつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9116",
@@ -454,9 +515,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せんしゅう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9118",
@@ -470,9 +532,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きのう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9122",
@@ -486,9 +549,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おととい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9127",
@@ -502,9 +566,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ゆうべ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9196",
@@ -518,9 +583,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "らいねん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9201",
@@ -534,7 +600,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -550,9 +616,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "らいげつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9208",
@@ -566,9 +633,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "らいしゅう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9211",
@@ -582,9 +650,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あした"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9219",
@@ -598,9 +667,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あさって"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9986",
@@ -616,9 +686,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "そちら"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-9997",
@@ -634,9 +705,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あっち"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10006",
@@ -652,9 +724,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "どちら"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10765",
@@ -670,9 +743,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こちら"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10903",
@@ -686,9 +760,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひがし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10905",
@@ -702,9 +777,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "にし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10910",
@@ -718,9 +794,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "みなみ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10912",
@@ -734,9 +811,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きた"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10954",
@@ -750,9 +828,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひだり"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10956",
@@ -766,9 +845,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "みぎ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10981",
@@ -782,9 +862,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まえ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-10983",
@@ -798,9 +879,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "うしろ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11034",
@@ -814,9 +896,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たて"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11035",
@@ -830,9 +913,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "よこ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11063",
@@ -846,9 +930,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "うえ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11065",
@@ -862,9 +947,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "した"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11437",
@@ -878,9 +964,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "そと"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11443",
@@ -894,9 +981,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "なか"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11633",
@@ -910,9 +998,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "そば"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11678",
@@ -926,9 +1015,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "となり"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-11706",
@@ -942,9 +1032,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ちかく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-12247",
@@ -958,9 +1049,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "でぐち"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-12249",
@@ -974,7 +1066,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -990,9 +1082,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おおぜい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-14011",
@@ -1006,9 +1099,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "みんな"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-14623",
@@ -1022,9 +1116,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひとつき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-14656",
@@ -1038,9 +1133,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いくつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-14658",
@@ -1054,9 +1150,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いくら"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-14871",
@@ -1070,7 +1167,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1086,7 +1183,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1094,7 +1191,7 @@
       "id": "sprache-ja-tufs-core-2026-09-word-14901",
       "type": "word",
       "language": "ja",
-      "term": "~時間",
+      "term": "時間",
       "meaning": "시간",
       "accepted_answers": [
         "시간"
@@ -1102,9 +1199,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じかん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15048",
@@ -1118,7 +1216,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1134,9 +1232,42 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-15216",
+      "type": "word",
+      "language": "ja",
+      "term": "~冊",
+      "meaning": "권",
+      "accepted_answers": [
+        "권"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-15353",
+      "type": "word",
+      "language": "ja",
+      "term": "人",
+      "meaning": "사람",
+      "accepted_answers": [
+        "사람"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ひと"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15476",
@@ -1150,9 +1281,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "わたし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15603",
@@ -1166,9 +1298,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "だれ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15605",
@@ -1182,9 +1315,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "どなた"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15612",
@@ -1198,9 +1332,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "だれか"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15636",
@@ -1214,9 +1349,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じぶん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15939",
@@ -1230,9 +1366,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おとこ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15944",
@@ -1246,9 +1383,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おとこのこ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-15965",
@@ -1262,9 +1400,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おんな"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16114",
@@ -1278,7 +1417,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -1294,9 +1433,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おとな"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16223",
@@ -1310,9 +1450,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おじいさん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16229",
@@ -1326,9 +1467,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おばあさん"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-16247",
+      "type": "word",
+      "language": "ja",
+      "term": "家族",
+      "meaning": "가족",
+      "accepted_answers": [
+        "가족"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "かぞく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16402",
@@ -1342,9 +1501,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おくさん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16488",
@@ -1358,9 +1518,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "りょうしん"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-16495",
+      "type": "word",
+      "language": "ja",
+      "term": "父",
+      "meaning": "아버지",
+      "accepted_answers": [
+        "아버지"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ちち"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-16496",
+      "type": "word",
+      "language": "ja",
+      "term": "母",
+      "meaning": "어머니",
+      "accepted_answers": [
+        "어머니"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "はは"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16500",
@@ -1374,9 +1569,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おとうさん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16507",
@@ -1390,9 +1586,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おかあさん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16780",
@@ -1406,9 +1603,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きょうだい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16785",
@@ -1422,9 +1620,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あに"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16797",
@@ -1438,25 +1637,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おにいさん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16799",
       "type": "word",
       "language": "ja",
       "term": "姉",
-      "meaning": "자매",
+      "meaning": "누나",
       "accepted_answers": [
-        "자매"
+        "누나"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あね"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-16806",
@@ -1470,9 +1671,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おねえさん"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-17007",
+      "type": "word",
+      "language": "ja",
+      "term": "友達",
+      "meaning": "친구",
+      "accepted_answers": [
+        "친구"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ともだち"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-17302",
@@ -1486,9 +1705,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "がいこくじん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-19186",
@@ -1502,9 +1722,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せんせい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-19217",
@@ -1518,9 +1739,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いしゃ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-20056",
@@ -1534,9 +1756,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "けいかん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-20065",
@@ -1550,9 +1773,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おまわりさん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-20240",
@@ -1566,9 +1790,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "がくせい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-20241",
@@ -1582,9 +1807,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せいと"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-20281",
@@ -1598,9 +1824,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "りゅうがくせい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-21220",
@@ -1614,9 +1841,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かてい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-21338",
@@ -1630,9 +1858,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くに"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-21365",
@@ -1646,9 +1875,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "がいこく"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-22471",
+      "type": "word",
+      "language": "ja",
+      "term": "学校",
+      "meaning": "학교",
+      "accepted_answers": [
+        "학교"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "がっこう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-22500",
@@ -1662,9 +1909,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きょうしつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-22517",
@@ -1678,9 +1926,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "だいがく"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-22666",
+      "type": "word",
+      "language": "ja",
+      "term": "会社",
+      "meaning": "회사",
+      "accepted_answers": [
+        "회사"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "かいしゃ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-22692",
@@ -1694,9 +1960,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ぎんこう"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-22785",
+      "type": "word",
+      "language": "ja",
+      "term": "駅",
+      "meaning": "역",
+      "accepted_answers": [
+        "역"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "えき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-22810",
@@ -1710,9 +1994,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "プール"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-22828",
+      "type": "word",
+      "language": "ja",
+      "term": "店",
+      "meaning": "가게",
+      "accepted_answers": [
+        "가게"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "みせ"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-22888",
+      "type": "word",
+      "language": "ja",
+      "term": "レストラン",
+      "meaning": "레스토랑",
+      "accepted_answers": [
+        "레스토랑"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "レストラン"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-22896",
@@ -1726,9 +2045,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しょくどう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-22917",
@@ -1742,9 +2062,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きっさてん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-22952",
@@ -1758,9 +2079,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "やおや"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23049",
@@ -1774,9 +2096,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "デパート"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23065",
@@ -1790,9 +2113,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ホテル"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-23103",
+      "type": "word",
+      "language": "ja",
+      "term": "病院",
+      "meaning": "병원",
+      "accepted_answers": [
+        "병원"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "びょういん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23121",
@@ -1806,9 +2147,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "としょかん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23140",
@@ -1822,9 +2164,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こうえん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23216",
@@ -1838,9 +2181,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こうばん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23402",
@@ -1854,9 +2198,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たいしかん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23439",
@@ -1870,9 +2215,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ゆうびんきょく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-23913",
@@ -1886,9 +2232,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "クラス"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-25605",
@@ -1902,9 +2249,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こえ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-26691",
@@ -1918,9 +2266,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "れんしゅう"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-26775",
+      "type": "word",
+      "language": "ja",
+      "term": "勉強",
+      "meaning": "공부",
+      "accepted_answers": [
+        "공부"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "べんきょう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-27779",
@@ -1934,9 +2300,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "テスト"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-28234",
@@ -1950,9 +2317,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いみ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-28288",
@@ -1966,9 +2334,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しゅくだい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-30264",
@@ -1982,23 +2351,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ことば"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-30521",
       "type": "word",
       "language": "ja",
       "term": "~語",
-      "meaning": "단어",
+      "meaning": "말",
       "accepted_answers": [
-        "단어"
+        "말"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2014,9 +2384,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "にほんご"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-30580",
@@ -2030,9 +2401,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "えいご"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-31526",
@@ -2046,9 +2418,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かんじ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-32060",
@@ -2062,9 +2435,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ちず"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-32261",
@@ -2078,9 +2452,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "てがみ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-32265",
@@ -2094,9 +2469,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はがき"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-32370",
+      "type": "word",
+      "language": "ja",
+      "term": "電話",
+      "meaning": "전화",
+      "accepted_answers": [
+        "전화"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "でんわ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-32575",
@@ -2110,9 +2503,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はなし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-32755",
@@ -2126,9 +2520,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しつもん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-32796",
@@ -2142,9 +2537,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "もんだい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-33488",
@@ -2158,9 +2554,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "コピー"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-33734",
@@ -2174,9 +2571,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ぶんしょう"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-34173",
+      "type": "word",
+      "language": "ja",
+      "term": "本",
+      "meaning": "책",
+      "accepted_answers": [
+        "책"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ほん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-34482",
@@ -2190,9 +2605,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ざっし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-34508",
@@ -2206,9 +2622,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しんぶん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-34541",
@@ -2222,9 +2639,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じしょ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-34792",
@@ -2238,9 +2656,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "うた"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-35036",
@@ -2254,9 +2673,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "え"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-35159",
@@ -2270,9 +2690,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しゃしん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-35232",
@@ -2286,9 +2707,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おんがく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-35701",
@@ -2302,9 +2724,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "えいが"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-36429",
+      "type": "word",
+      "language": "ja",
+      "term": "仕事",
+      "meaning": "일",
+      "accepted_answers": [
+        "일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "しごと"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-36595",
@@ -2318,9 +2758,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "なつやすみ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-36602",
@@ -2334,9 +2775,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "やすみ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-36910",
@@ -2350,9 +2792,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ごはん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-36929",
@@ -2366,7 +2809,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2382,7 +2825,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2398,9 +2841,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ゆうはん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-36954",
@@ -2414,7 +2858,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2430,9 +2874,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "りょこう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-38140",
@@ -2446,9 +2891,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "さんぽ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-38202",
@@ -2462,9 +2908,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "スポーツ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-39927",
@@ -2478,9 +2925,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じょうず"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-39936",
+      "type": "word",
+      "language": "ja",
+      "term": "下手",
+      "meaning": "서투르다",
+      "accepted_answers": [
+        "서투르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "へた"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-40795",
@@ -2494,9 +2959,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "パーティー"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-42954",
@@ -2510,9 +2976,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じゅぎょう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-45301",
@@ -2526,9 +2993,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かいもの"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-47235",
@@ -2542,9 +3010,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せんたく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-47401",
@@ -2558,9 +3027,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "そうじ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-48148",
@@ -2574,9 +3044,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "にもつ"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-48177",
+      "type": "word",
+      "language": "ja",
+      "term": "お金",
+      "meaning": "돈",
+      "accepted_answers": [
+        "돈"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "おかね"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-48231",
@@ -2590,9 +3078,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きっぷ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-48275",
@@ -2606,9 +3095,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きって"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-48362",
@@ -2622,9 +3112,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かみ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49632",
@@ -2638,9 +3129,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ようふく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49803",
@@ -2654,9 +3146,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "うわぎ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49814",
@@ -2670,9 +3163,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せびろ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49843",
@@ -2686,9 +3180,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "セーター"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49847",
@@ -2702,9 +3197,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ワイシャツ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49881",
@@ -2718,9 +3214,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "コート"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49909",
@@ -2734,9 +3231,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ズボン"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49927",
@@ -2750,9 +3248,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "スカート"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-49945",
@@ -2766,9 +3265,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "シャツ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50065",
@@ -2782,9 +3282,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ポケット"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50073",
@@ -2798,9 +3299,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ぼうし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50149",
@@ -2814,9 +3316,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ネクタイ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50205",
@@ -2830,9 +3333,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くつした"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50246",
@@ -2846,9 +3350,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50294",
@@ -2862,9 +3367,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "スリッパ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50300",
@@ -2878,9 +3384,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かさ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-50330",
@@ -2894,9 +3401,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ベッド"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-50441",
+      "type": "word",
+      "language": "ja",
+      "term": "食べ物",
+      "meaning": "음식",
+      "accepted_answers": [
+        "음식"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "たべもの"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-50788",
+      "type": "word",
+      "language": "ja",
+      "term": "パン",
+      "meaning": "빵",
+      "accepted_answers": [
+        "빵"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "パン"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51101",
@@ -2910,9 +3452,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "やさい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51286",
@@ -2926,9 +3469,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "にく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51294",
@@ -2942,7 +3486,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2958,9 +3502,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ぎゅうにく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51303",
@@ -2974,7 +3519,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2990,9 +3535,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "さとう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51398",
@@ -3006,9 +3552,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しお"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51442",
@@ -3022,9 +3569,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しょうゆ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51476",
@@ -3038,9 +3586,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "バター"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51510",
@@ -3054,9 +3603,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "カレー"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51546",
@@ -3070,9 +3620,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おかし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51586",
@@ -3086,7 +3637,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3102,9 +3653,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "のみもの"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-51744",
+      "type": "word",
+      "language": "ja",
+      "term": "お茶",
+      "meaning": "차",
+      "accepted_answers": [
+        "차"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "おちゃ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51748",
@@ -3118,23 +3687,41 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こうちゃ"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-51777",
+      "type": "word",
+      "language": "ja",
+      "term": "コーヒー",
+      "meaning": "커피",
+      "accepted_answers": [
+        "커피"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "コーヒー"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51821",
       "type": "word",
       "language": "ja",
       "term": "お酒",
-      "meaning": "와인",
+      "meaning": "술",
       "accepted_answers": [
-        "와인"
+        "술"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3150,9 +3737,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たばこ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-51929",
@@ -3166,9 +3754,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くすり"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-52391",
+      "type": "word",
+      "language": "ja",
+      "term": "家",
+      "meaning": "집",
+      "accepted_answers": [
+        "집"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "いえ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-52392",
@@ -3182,9 +3788,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "うち"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-52553",
@@ -3198,9 +3805,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たてもの"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-52812",
@@ -3214,9 +3822,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "もん"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-52878",
+      "type": "word",
+      "language": "ja",
+      "term": "部屋",
+      "meaning": "방",
+      "accepted_answers": [
+        "방"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "へや"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53018",
@@ -3230,9 +3856,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "げんかん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53027",
@@ -3246,9 +3873,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "だいどころ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53060",
@@ -3262,9 +3890,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "トイレ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53064",
@@ -3278,9 +3907,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おてあらい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53080",
@@ -3294,9 +3924,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ろうか"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53094",
@@ -3310,9 +3941,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かいだん"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-53210",
+      "type": "word",
+      "language": "ja",
+      "term": "窓",
+      "meaning": "창문",
+      "accepted_answers": [
+        "창문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "まど"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53263",
@@ -3326,9 +3975,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ほんだな"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53346",
@@ -3342,9 +3992,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "と"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-53347",
+      "type": "word",
+      "language": "ja",
+      "term": "ドア",
+      "meaning": "문",
+      "accepted_answers": [
+        "문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ドア"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53456",
@@ -3358,9 +4026,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "つくえ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53468",
@@ -3374,9 +4043,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "テーブル"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53482",
@@ -3390,9 +4060,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いす"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53573",
@@ -3406,9 +4077,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ストーブ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53579",
@@ -3422,9 +4094,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ふろ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53826",
@@ -3438,9 +4111,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はいざら"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53950",
@@ -3454,9 +4128,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ポスト"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-53969",
@@ -3470,9 +4145,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ふうとう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54008",
@@ -3486,9 +4162,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "さいふ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54021",
@@ -3502,9 +4179,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かばん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54077",
@@ -3518,7 +4196,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3534,9 +4212,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ちゃわん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54101",
@@ -3550,9 +4229,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "コップ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54102",
@@ -3566,9 +4246,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "カップ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54175",
@@ -3582,9 +4263,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おはし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54190",
@@ -3598,9 +4280,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "フォーク"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54192",
@@ -3614,9 +4297,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "スプーン"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54236",
@@ -3630,9 +4314,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "えんぴつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54238",
@@ -3646,9 +4331,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まんねんひつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54239",
@@ -3662,9 +4348,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ボールペン"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54250",
@@ -3678,9 +4365,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ペン"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54498",
@@ -3694,9 +4382,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かぎ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54580",
@@ -3710,9 +4399,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ハンカチ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54653",
@@ -3726,9 +4416,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "シャワー"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-54781",
@@ -3742,9 +4433,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ナイフ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55090",
@@ -3758,9 +4450,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ギター"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55164",
@@ -3774,9 +4467,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "レコード"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55740",
@@ -3790,9 +4484,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ノート"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55889",
@@ -3806,9 +4501,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "めがね"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55928",
@@ -3822,9 +4518,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "カメラ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55946",
@@ -3838,9 +4535,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "フィルム"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55970",
@@ -3854,9 +4552,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "れいぞうこ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55992",
@@ -3870,9 +4569,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ラジオ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-55994",
@@ -3886,9 +4586,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "テレビ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56004",
@@ -3902,9 +4603,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "テープレコーダー"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56126",
@@ -3918,9 +4620,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "コンピューター"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56144",
@@ -3934,9 +4637,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ラジカセ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56398",
@@ -3950,9 +4654,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "とけい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56482",
@@ -3966,9 +4671,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じてんしゃ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56506",
@@ -3982,9 +4688,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じどうしゃ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56572",
@@ -3998,9 +4705,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "タクシー"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-56602",
+      "type": "word",
+      "language": "ja",
+      "term": "バス",
+      "meaning": "버스",
+      "accepted_answers": [
+        "버스"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "バス"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-56645",
+      "type": "word",
+      "language": "ja",
+      "term": "電車",
+      "meaning": "전철",
+      "accepted_answers": [
+        "전철"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "でんしゃ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56688",
@@ -4014,9 +4756,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ちかてつ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56712",
@@ -4030,9 +4773,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "エレベーター"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-56868",
@@ -4046,9 +4790,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひこうき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-57040",
@@ -4062,9 +4807,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "にわ"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-57152",
+      "type": "word",
+      "language": "ja",
+      "term": "道",
+      "meaning": "길",
+      "accepted_answers": [
+        "길"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "みち"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-57316",
@@ -4078,9 +4841,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こうさてん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-57861",
@@ -4094,9 +4858,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いろ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-57943",
@@ -4112,9 +4877,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くろ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-57967",
@@ -4130,9 +4896,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あか"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-58007",
+      "type": "word",
+      "language": "ja",
+      "term": "茶色",
+      "meaning": "갈색",
+      "accepted_answers": [
+        "갈색"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ちゃいろ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-58033",
@@ -4148,9 +4932,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きいろ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-58041",
@@ -4164,9 +4949,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "みどり"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-58059",
@@ -4182,9 +4968,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あお"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-59611",
@@ -4198,9 +4985,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かぜ"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-59793",
+      "type": "word",
+      "language": "ja",
+      "term": "雨",
+      "meaning": "비",
+      "accepted_answers": [
+        "비"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "あめ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-59878",
@@ -4214,9 +5019,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ゆき"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-59928",
+      "type": "word",
+      "language": "ja",
+      "term": "天気",
+      "meaning": "날씨",
+      "accepted_answers": [
+        "날씨"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "てんき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-59985",
@@ -4230,9 +5053,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くもり"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-60947",
@@ -4246,7 +5070,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4262,9 +5086,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いけ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-62825",
@@ -4278,9 +5103,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くだもの"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-63577",
@@ -4294,9 +5120,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "さかな"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64143",
@@ -4310,9 +5137,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "からだ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64318",
@@ -4326,9 +5154,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あたま"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64388",
@@ -4342,9 +5171,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かお"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64415",
@@ -4358,9 +5188,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "め"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64491",
@@ -4374,9 +5205,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "みみ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64505",
@@ -4390,9 +5222,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くち"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64638",
@@ -4406,9 +5239,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おなか"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64713",
@@ -4422,9 +5256,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "て"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-64769",
@@ -4438,9 +5273,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あし"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-65338",
@@ -4454,9 +5290,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "は"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-65461",
@@ -4470,9 +5307,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ぎゅうにゅう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-65581",
@@ -4486,9 +5324,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たまご"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-66408",
@@ -4502,9 +5341,29 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "びょうき"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-67104",
+      "type": "word",
+      "language": "ja",
+      "term": "なります",
+      "meaning": "(...이/가) 되다",
+      "accepted_answers": [
+        "(...이/가) 되다",
+        "(...이",
+        "가) 되다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "なります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-67613",
@@ -4518,9 +5377,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "だします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-68092",
@@ -4534,9 +5394,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "けします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-68797",
@@ -4550,9 +5411,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-69867",
@@ -4566,9 +5428,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かけます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-70119",
@@ -4582,7 +5445,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4598,9 +5461,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "つきます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-70238",
@@ -4614,9 +5478,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あるきます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-70265",
@@ -4630,9 +5495,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はしります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-70316",
@@ -4646,9 +5512,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "とびます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-70931",
@@ -4662,7 +5529,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4678,9 +5545,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いきます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-71458",
@@ -4694,9 +5562,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いれます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-71811",
@@ -4710,9 +5579,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かぶります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-71949",
@@ -4726,7 +5596,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4742,9 +5612,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "のります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-72635",
@@ -4758,9 +5629,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あけます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-72672",
@@ -4774,9 +5646,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しめます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-72816",
@@ -4790,9 +5663,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-73436",
@@ -4806,15 +5680,16 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まがります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-73645",
       "type": "word",
       "language": "ja",
-      "term": "切ります(2)",
+      "term": "切ります(1)",
       "meaning": "자르다",
       "accepted_answers": [
         "자르다"
@@ -4822,9 +5697,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-74751",
@@ -4838,9 +5714,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はじまります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-76527",
@@ -4854,9 +5731,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "うたいます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-77118",
@@ -4870,9 +5748,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "れんしゅうします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-79279",
@@ -4886,9 +5765,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いいます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-80000",
@@ -4902,9 +5782,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はなします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-80142",
@@ -4918,9 +5799,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こたえます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-80639",
@@ -4934,9 +5816,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "よみます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-80727",
@@ -4950,9 +5833,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かきます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-80748",
@@ -4966,9 +5850,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "コピーします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-81068",
@@ -4982,9 +5867,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひきます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-81700",
@@ -4998,9 +5884,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たべます"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-81835",
+      "type": "word",
+      "language": "ja",
+      "term": "着ます",
+      "meaning": "입다",
+      "accepted_answers": [
+        "입다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "きます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-81858",
@@ -5014,9 +5918,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はきます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-81872",
@@ -5030,9 +5935,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ぬぎます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-81948",
@@ -5046,9 +5952,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "すみます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-82121",
@@ -5062,9 +5969,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あびます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-82317",
@@ -5078,9 +5986,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あそびます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-82358",
@@ -5094,9 +6003,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "りょこうします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-82483",
@@ -5110,9 +6020,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "およぎます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-82608",
@@ -5126,9 +6037,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たちます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-82694",
@@ -5142,9 +6054,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ねます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-82724",
@@ -5158,9 +6071,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "すわります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-83154",
@@ -5174,9 +6088,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "のみます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-83250",
@@ -5190,9 +6105,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "すいます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-83509",
@@ -5206,9 +6122,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "やります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-83625",
@@ -5222,9 +6139,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はたらきます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-84044",
@@ -5238,9 +6156,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あいます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-85608",
@@ -5254,9 +6173,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おしえます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-85910",
@@ -5272,9 +6192,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "...てください"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-87238",
@@ -5288,9 +6209,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "うります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-87307",
@@ -5304,9 +6226,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かいます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-87493",
@@ -5320,9 +6243,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "わたします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-87572",
@@ -5336,9 +6260,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かします"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-87585",
+      "type": "word",
+      "language": "ja",
+      "term": "借ります",
+      "meaning": "빌리다",
+      "accepted_answers": [
+        "빌리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "かります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-87624",
@@ -5352,9 +6294,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かえします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-88468",
@@ -5368,9 +6311,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あらいます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-88469",
@@ -5384,9 +6328,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せんたくします"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-88631",
@@ -5400,9 +6345,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "そうじします"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-89503",
+      "type": "word",
+      "language": "ja",
+      "term": "曇ります",
+      "meaning": "흐리다",
+      "accepted_answers": [
+        "흐리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "くもります"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-89542",
@@ -5416,9 +6379,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "はれます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-90096",
@@ -5432,9 +6396,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しにます"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-90777",
@@ -5448,9 +6413,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "この"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-90778",
@@ -5464,9 +6430,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "こんな"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-90799",
@@ -5480,9 +6447,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "そう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-90814",
@@ -5496,9 +6464,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あの"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-90820",
@@ -5512,9 +6481,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "どの"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-90821",
@@ -5528,9 +6498,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "どんな"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-90827",
+      "type": "word",
+      "language": "ja",
+      "term": "いかが",
+      "meaning": "어떻다",
+      "accepted_answers": [
+        "어떻다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "いかが"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-91248",
@@ -5544,9 +6532,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ない"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-91633",
@@ -5560,9 +6549,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-91682",
+      "type": "word",
+      "language": "ja",
+      "term": "悪い",
+      "meaning": "나쁘다",
+      "accepted_answers": [
+        "나쁘다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "わるい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-92053",
@@ -5576,9 +6583,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きれい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-92133",
@@ -5592,9 +6600,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きたない"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-92156",
@@ -5608,9 +6617,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "むずかしい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-92207",
@@ -5624,9 +6634,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "やさしい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-92331",
@@ -5640,9 +6651,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "つよい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-92363",
@@ -5656,9 +6668,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "よわい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93175",
@@ -5672,9 +6685,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "よく"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93190",
@@ -5688,9 +6702,43 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-93391",
+      "type": "word",
+      "language": "ja",
+      "term": "新しい",
+      "meaning": "새롭다",
+      "accepted_answers": [
+        "새롭다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "あたらしい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-93413",
+      "type": "word",
+      "language": "ja",
+      "term": "古い",
+      "meaning": "낡다",
+      "accepted_answers": [
+        "낡다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ふるい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93460",
@@ -5704,9 +6752,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "わかい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93490",
@@ -5720,9 +6769,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おそい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93503",
@@ -5736,9 +6786,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まだ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93515",
@@ -5752,9 +6803,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "もう"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93581",
@@ -5768,9 +6820,42 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-93640",
+      "type": "word",
+      "language": "ja",
+      "term": "~ながら",
+      "meaning": "...면서",
+      "accepted_answers": [
+        "...면서"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-93723",
+      "type": "word",
+      "language": "ja",
+      "term": "まっすぐ",
+      "meaning": "쭉",
+      "accepted_answers": [
+        "쭉"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "まっすぐ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93826",
@@ -5784,9 +6869,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おおい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-93928",
@@ -5800,9 +6886,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "すくない"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94000",
@@ -5816,15 +6903,16 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ながい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94005",
       "type": "word",
       "language": "ja",
-      "term": "短い (2)",
+      "term": "短い (1)",
       "meaning": "짧다",
       "accepted_answers": [
         "짧다"
@@ -5832,9 +6920,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "みじかい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94023",
@@ -5848,9 +6937,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たかい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94030",
@@ -5864,9 +6954,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひくい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94048",
@@ -5880,9 +6971,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あつい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94059",
@@ -5896,9 +6988,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "とおい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94068",
@@ -5912,9 +7005,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ちかい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94080",
@@ -5928,9 +7022,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ひろい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94110",
@@ -5944,9 +7039,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "せまい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94124",
@@ -5960,9 +7056,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ふとい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94125",
@@ -5976,9 +7073,61 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ほそい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-94142",
+      "type": "word",
+      "language": "ja",
+      "term": "大きい",
+      "meaning": "크다",
+      "accepted_answers": [
+        "크다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "おおきい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-94186",
+      "type": "word",
+      "language": "ja",
+      "term": "小さい",
+      "meaning": "작다",
+      "accepted_answers": [
+        "작다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ちいさい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-94225",
+      "type": "word",
+      "language": "ja",
+      "term": "速い",
+      "meaning": "빠르다",
+      "accepted_answers": [
+        "빠르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "はやい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94288",
@@ -5992,9 +7141,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ゆっくり"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94318",
@@ -6008,9 +7158,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おもい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94320",
@@ -6024,9 +7175,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "かるい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-94344",
+      "type": "word",
+      "language": "ja",
+      "term": "暑い",
+      "meaning": "덥다",
+      "accepted_answers": [
+        "덥다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "あつい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94363",
@@ -6040,9 +7209,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "すずしい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-94373",
+      "type": "word",
+      "language": "ja",
+      "term": "寒い",
+      "meaning": "춥다",
+      "accepted_answers": [
+        "춥다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "さむい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-94851",
@@ -6056,7 +7243,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -6072,9 +7259,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いたい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-95240",
@@ -6088,9 +7276,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たのしい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-95258",
@@ -6104,9 +7293,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おもしろい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-95270",
@@ -6120,9 +7310,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "つまらない"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-95586",
+      "type": "word",
+      "language": "ja",
+      "term": "好き",
+      "meaning": "좋아하다",
+      "accepted_answers": [
+        "좋아하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "すき"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-95587",
+      "type": "word",
+      "language": "ja",
+      "term": "大好き",
+      "meaning": "많이 좋아하다",
+      "accepted_answers": [
+        "많이 좋아하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "だいすき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-95610",
@@ -6136,9 +7361,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "きらい"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-96159",
+      "type": "word",
+      "language": "ja",
+      "term": "欲しい",
+      "meaning": "가지고 싶다",
+      "accepted_answers": [
+        "가지고 싶다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "ほしい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-97137",
@@ -6152,9 +7395,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ゆうめい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-97485",
@@ -6168,9 +7412,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "いそがしい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-98390",
@@ -6184,9 +7429,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "げんき"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-98904",
@@ -6200,27 +7446,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "やすい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-98991",
       "type": "word",
       "language": "ja",
       "term": "明るい",
-      "meaning": "밝다, 엷다",
+      "meaning": "밝다",
       "accepted_answers": [
-        "밝다, 엷다",
-        "밝다",
-        "엷다"
+        "밝다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あかるい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99001",
@@ -6234,9 +7480,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "くらい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99105",
@@ -6252,9 +7499,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しろい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99157",
@@ -6268,9 +7516,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "しずか"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99217",
@@ -6284,9 +7533,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "にぎやか"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99489",
@@ -6300,9 +7550,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "おいしい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99491",
@@ -6316,9 +7567,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "まずい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99501",
@@ -6332,9 +7584,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あまい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99511",
@@ -6348,9 +7601,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "からい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99848",
@@ -6364,9 +7618,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "つめたい"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-99853",
@@ -6380,7 +7635,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -6396,9 +7651,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "じゃあ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-100468",
@@ -6412,9 +7668,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "あの"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-100538",
@@ -6428,9 +7685,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "たぶん"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-100800",
@@ -6444,9 +7702,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "ええ"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09-word-100827",
+      "type": "word",
+      "language": "ja",
+      "term": "いいえ",
+      "meaning": "아뇨",
+      "accepted_answers": [
+        "아뇨"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "kana": "いいえ"
     },
     {
       "id": "sprache-ja-tufs-core-2026-09-word-100928",
@@ -6460,9 +7736,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3
+      "priority": 3,
+      "kana": "では"
     }
   ]
 }

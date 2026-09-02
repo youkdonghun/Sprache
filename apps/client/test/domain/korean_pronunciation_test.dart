@@ -6,6 +6,10 @@ void main() {
   group('deriveKoreanPronunciation', () {
     test('uses curated starter-word readings for Latin languages', () {
       expect(
+        deriveKoreanPronunciation(language: LanguageTag.english, text: 'beef'),
+        '비프',
+      );
+      expect(
         deriveKoreanPronunciation(
           language: LanguageTag.english,
           text: 'friend',
@@ -123,5 +127,18 @@ void main() {
         isNull,
       );
     });
+
+    test(
+      'does not silently drop a terminal consonant without a Hangul coda',
+      () {
+        expect(
+          deriveKoreanPronunciation(
+            language: LanguageTag.english,
+            text: 'reef',
+          ),
+          endsWith('프'),
+        );
+      },
+    );
   });
 }

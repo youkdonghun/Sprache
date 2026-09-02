@@ -288,6 +288,11 @@ class AppController extends StateNotifier<AppState> {
   List<LearningItem> _cachedAllContentItems = const [];
   final Map<String, List<LearningItem>> _cachedItemsBySubject = {};
   final Map<String, Map<String, LearningItem>> _cachedItemsByIdentity = {};
+  final Map<String, DuplicateRepairCatalog> _cachedDuplicateCatalogBySubject =
+      {};
+  ImportPreview? _cachedReviewedPreview;
+  List<LearningItem>? _cachedReviewedCustomItems;
+  ImportReview? _cachedImportReview;
   SyncMergeReport? lastMergeReport;
 
   Future<void> _hydrate() async {
@@ -621,6 +626,10 @@ class AppController extends StateNotifier<AppState> {
     ]);
     _cachedItemsBySubject.clear();
     _cachedItemsByIdentity.clear();
+    _cachedDuplicateCatalogBySubject.clear();
+    _cachedReviewedPreview = null;
+    _cachedReviewedCustomItems = null;
+    _cachedImportReview = null;
   }
 
   List<StudySubject> get allSubjects {
@@ -2731,11 +2740,20 @@ class AppController extends StateNotifier<AppState> {
   }
 
   ImportReview reviewImport(ImportPreview preview) {
-    return _importReconciler.review(
+    if (identical(_cachedReviewedPreview, preview) &&
+        identical(_cachedReviewedCustomItems, state.customItems) &&
+        _cachedImportReview != null) {
+      return _cachedImportReview!;
+    }
+    final review = _importReconciler.review(
       preview: preview,
       existingItems: [...state.customItems, ...sampleContent],
       replaceableItemIds: state.customItems.map((item) => item.id).toSet(),
     );
+    _cachedReviewedPreview = preview;
+    _cachedReviewedCustomItems = state.customItems;
+    _cachedImportReview = review;
+    return review;
   }
 
   Future<ImportCommitRecord?> previousImportBySha256(String sha256) {
@@ -3453,10 +3471,12 @@ class AppController extends StateNotifier<AppState> {
   }
 
   DuplicateRepairCatalog duplicateRepairCatalog({String? subjectId}) {
-    final scope = subjectId ?? state.activeSubjectId;
-    return _duplicateRepairAnalyzer.analyze(
-      state.customItems,
-      subjectId: scope,
+    final scope = normalizeStudySubjectId(subjectId ?? state.activeSubjectId);
+    _refreshContentCache();
+    return _cachedDuplicateCatalogBySubject.putIfAbsent(
+      scope,
+      () =>
+          _duplicateRepairAnalyzer.analyze(state.customItems, subjectId: scope),
     );
   }
 

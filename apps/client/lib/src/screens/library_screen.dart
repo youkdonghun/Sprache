@@ -28,6 +28,7 @@ import '../state/app_state.dart';
 import '../state/connection_state.dart';
 import '../state/device_preferences_state.dart';
 import '../services/platform_completion_service.dart';
+import '../services/language_pack_catalog_service.dart';
 import '../services/recovery_checkpoint_service.dart';
 import '../services/tts_service.dart';
 import '../theme/app_theme.dart';
@@ -5797,7 +5798,10 @@ class _ItemDetailsState extends ConsumerState<_ItemDetails> {
                             label:
                                 '출처 ${item.source.sourceVersion} · 콘텐츠 v${item.source.contentVersion}',
                           ),
-                          if (item.source.sourceId case final sourceId?)
+                          if (item.source.sourceId case final sourceId?
+                              when !sourceId.startsWith(
+                                languagePackSourceIdPrefix,
+                              ))
                             _ContentMetadataChip(
                               icon: Icons.tag_rounded,
                               label: sourceId,

@@ -173,7 +173,12 @@ class ImportReconciler {
         continue;
       }
 
-      final mergeOnly = semanticMatch != null;
+      // A semantic-only match is merged so a pack can enrich bundled content.
+      // When the stable id also matches, this is a real version update and the
+      // incoming source version/readings must remain visible for review.
+      final mergeOnly =
+          semanticMatch != null &&
+          (idMatch == null || !replaceableItemIds.contains(idMatch.id));
       final candidate = mergeOnly
           ? mergeAdditions(existing, incoming)
           : incoming;

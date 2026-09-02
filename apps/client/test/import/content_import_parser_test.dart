@@ -375,6 +375,19 @@ word,water,물,워터,식수,여행,생존
     expect(example.reading(ReadingScheme.hangul), '헬로우 어게인.');
   });
 
+  test('does not guess Hangul pronunciation from Latin spelling on import', () {
+    final preview = parser.parseJson('''
+      {
+        "items": [
+          {"type":"word","language":"en","term":"beef","meaning":"쇠고기"}
+        ]
+      }
+      ''', defaultLanguage: LanguageTag.english);
+
+    expect(preview.issues, isEmpty);
+    expect(preview.items.single.reading(ReadingScheme.hangul), isNull);
+  });
+
   test('reports invalid Japanese and Chinese reading formats by row', () {
     final japanese = parser.parseCsv(
       'type,term,meaning,kana,romaji\nword,水,물,mizu,みず',

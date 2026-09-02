@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "sprache-zh-hans-tufs-core-2026-09",
-  "title": "중국어 생활 핵심 추가 어휘 370",
-  "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+  "title": "중국어 생활 핵심 어휘 469",
+  "description": "TUFS의 한국어 대응 생활 핵심 어휘 전체본입니다. 앱 기본 자료와 겹치면 중복 없이 합쳐집니다.",
   "language": "zh-Hans",
-  "version": "2026.09.1",
-  "revision": 1,
-  "publishedAt": "2026-09-02T00:00:00Z",
+  "version": "2026.09.2",
+  "revision": 2,
+  "publishedAt": "2026-09-03T00:00:00Z",
   "license": "CC-BY-4.0",
   "attribution": "TUFS Open Language Resources, adapted by Sprache",
   "items": [
@@ -22,10 +22,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fāngbiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-7449",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "的时候",
+      "meaning": "시간",
+      "accepted_answers": [
+        "시간"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "deshíhou"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-7603",
@@ -39,7 +56,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shénmeshíhou"
@@ -56,7 +73,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "měigexīngqī"
@@ -73,7 +90,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "měigeyuè"
@@ -90,7 +107,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "měinián"
@@ -107,7 +124,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chūntiān"
@@ -124,7 +141,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xiàtiān"
@@ -141,7 +158,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qiūtiān"
@@ -158,10 +175,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dōngtiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8510",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "五月",
+      "meaning": "오월",
+      "accepted_answers": [
+        "오월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "wǔyuè"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-8555",
@@ -175,7 +209,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīngqīyī"
@@ -192,7 +226,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīngqīèr"
@@ -209,7 +243,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīngqīsān"
@@ -226,7 +260,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīngqīsì"
@@ -243,7 +277,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīngqīwǔ"
@@ -260,7 +294,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīngqīliù"
@@ -269,7 +303,7 @@
       "id": "sprache-zh-hans-tufs-core-2026-09-word-8561",
       "type": "word",
       "language": "zh-Hans",
-      "term": "星期天",
+      "term": "星期日",
       "meaning": "일요일",
       "accepted_answers": [
         "일요일"
@@ -277,10 +311,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
-      "pinyin": "xīngqītiān"
+      "pinyin": "xīngqīrì"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-8822",
@@ -294,7 +328,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shàngwǔ"
@@ -311,10 +345,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xiàwǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8856",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "早上",
+      "meaning": "아침",
+      "accepted_answers": [
+        "아침"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "zǎoshang"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-8873",
@@ -328,7 +379,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "báitiān"
@@ -345,10 +396,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bàngwǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8908",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "晚上",
+      "meaning": "밤",
+      "accepted_answers": [
+        "밤"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "wǎnshang"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-9013",
@@ -362,7 +430,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jīnnián"
@@ -379,7 +447,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhèigeyuè"
@@ -396,10 +464,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhèigexīngqī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9026",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "今天",
+      "meaning": "오늘",
+      "accepted_answers": [
+        "오늘"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jīntiān"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-9103",
@@ -413,7 +498,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qùnián"
@@ -430,7 +515,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qiánnián"
@@ -447,7 +532,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shànggeyuè"
@@ -464,7 +549,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -480,7 +565,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zuótiān"
@@ -497,7 +582,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qiántiān"
@@ -514,7 +599,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zuóyè"
@@ -531,7 +616,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "míngnián"
@@ -548,7 +633,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hòunián"
@@ -565,7 +650,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xiàgeyuè"
@@ -582,10 +667,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xiàgexīngqī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9211",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "明天",
+      "meaning": "내일",
+      "accepted_answers": [
+        "내일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "míngtiān"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-9219",
@@ -599,7 +701,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hòutiān"
@@ -613,12 +715,15 @@
       "accepted_answers": [
         "거기, 그쪽",
         "거기",
-        "그쪽"
+        "그쪽",
+        "저기, 저쪽",
+        "저기",
+        "저쪽"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nàr"
@@ -637,10 +742,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nǎr"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10137",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "前面",
+      "meaning": "앞",
+      "accepted_answers": [
+        "앞"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qiánmian"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-10765",
@@ -656,7 +778,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhèr"
@@ -673,7 +795,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dōngbian"
@@ -690,7 +812,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xībian"
@@ -707,7 +829,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nánbian"
@@ -724,7 +846,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "běibian"
@@ -741,7 +863,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zuǒbian"
@@ -758,27 +880,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yòubian"
-    },
-    {
-      "id": "sprache-zh-hans-tufs-core-2026-09-word-10981",
-      "type": "word",
-      "language": "zh-Hans",
-      "term": "前面",
-      "meaning": "앞",
-      "accepted_answers": [
-        "앞"
-      ],
-      "tags": [
-        "TUFS",
-        "생활 핵심 어휘",
-        "GitHub 언어팩"
-      ],
-      "priority": 3,
-      "pinyin": "qiánmian"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-10983",
@@ -792,7 +897,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hòumian"
@@ -809,7 +914,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shù"
@@ -826,7 +931,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "héng"
@@ -843,7 +948,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shang"
@@ -860,7 +965,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xiàmian"
@@ -877,7 +982,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wàimian"
@@ -894,7 +999,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lǐbian"
@@ -906,12 +1011,13 @@
       "term": "旁边",
       "meaning": "근처",
       "accepted_answers": [
-        "근처"
+        "근처",
+        "옆"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "pángbiān"
@@ -928,7 +1034,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fùjìn"
@@ -945,7 +1051,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chūkǒu"
@@ -962,7 +1068,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "rùkǒu"
@@ -979,10 +1085,28 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhòngduō"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-13195",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "高",
+      "meaning": "높이",
+      "accepted_answers": [
+        "높이",
+        "비싸다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "gāo"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-14011",
@@ -996,7 +1120,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dàjiā"
@@ -1013,7 +1137,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yígeyuè"
@@ -1030,7 +1154,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jǐ"
@@ -1047,10 +1171,197 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "duōshao"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14674",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "一月",
+      "meaning": "일월",
+      "accepted_answers": [
+        "일월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yīyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14675",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "二月",
+      "meaning": "이월",
+      "accepted_answers": [
+        "이월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "èryuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14676",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "三月",
+      "meaning": "삼월",
+      "accepted_answers": [
+        "삼월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "sānyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14677",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "四月",
+      "meaning": "사월",
+      "accepted_answers": [
+        "사월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "sìyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14679",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "六月",
+      "meaning": "유월",
+      "accepted_answers": [
+        "유월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "liùyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14680",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "七月",
+      "meaning": "칠월",
+      "accepted_answers": [
+        "칠월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qīyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14681",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "八月",
+      "meaning": "팔월",
+      "accepted_answers": [
+        "팔월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "bāyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14682",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "九月",
+      "meaning": "구월",
+      "accepted_answers": [
+        "구월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jiǔyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14683",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "十月",
+      "meaning": "시월",
+      "accepted_answers": [
+        "시월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "shíyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14684",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "十一月",
+      "meaning": "십일월",
+      "accepted_answers": [
+        "십일월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "shíyīyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14685",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "十二月",
+      "meaning": "십이월",
+      "accepted_answers": [
+        "십이월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "shíèryuè"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-14871",
@@ -1064,10 +1375,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14890",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "一个星期",
+      "meaning": "주일",
+      "accepted_answers": [
+        "주일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yígexīngqī"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-14900",
@@ -1081,7 +1409,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "diǎn"
@@ -1098,7 +1426,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xiǎoshí"
@@ -1115,7 +1443,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dù"
@@ -1132,10 +1460,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lóu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15216",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "本",
+      "meaning": "권",
+      "accepted_answers": [
+        "권"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "běn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15353",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "人",
+      "meaning": "사람",
+      "accepted_answers": [
+        "사람"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "rén"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-15476",
@@ -1149,10 +1511,61 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wǒ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15479",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "我们",
+      "meaning": "저희",
+      "accepted_answers": [
+        "저희"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "wǒmen"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15527",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "你",
+      "meaning": "너",
+      "accepted_answers": [
+        "너"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "nǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15578",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "他",
+      "meaning": "그 사람들",
+      "accepted_answers": [
+        "그 사람들"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "tā"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-15603",
@@ -1166,27 +1579,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shéi"
-    },
-    {
-      "id": "sprache-zh-hans-tufs-core-2026-09-word-15605",
-      "type": "word",
-      "language": "zh-Hans",
-      "term": "哪位",
-      "meaning": "누구",
-      "accepted_answers": [
-        "누구"
-      ],
-      "tags": [
-        "TUFS",
-        "생활 핵심 어휘",
-        "GitHub 언어팩"
-      ],
-      "priority": 3,
-      "pinyin": "něiwèi"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-15612",
@@ -1200,7 +1596,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǒurén"
@@ -1217,7 +1613,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zìjǐ"
@@ -1234,7 +1630,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nánde"
@@ -1251,7 +1647,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nánháizi"
@@ -1268,10 +1664,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nǚde"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16081",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "女孩子",
+      "meaning": "여자 아이",
+      "accepted_answers": [
+        "여자 아이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "nǚháizi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16114",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "孩子",
+      "meaning": "아이",
+      "accepted_answers": [
+        "아이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "háizi"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-16184",
@@ -1285,7 +1715,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chéngniánrén"
@@ -1302,7 +1732,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yéye"
@@ -1311,7 +1741,7 @@
       "id": "sprache-zh-hans-tufs-core-2026-09-word-16229",
       "type": "word",
       "language": "zh-Hans",
-      "term": "姥姥",
+      "term": "奶奶",
       "meaning": "할머니",
       "accepted_answers": [
         "할머니"
@@ -1319,10 +1749,78 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
-      "pinyin": "lǎolao"
+      "pinyin": "nǎinai"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16247",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "家人",
+      "meaning": "가족",
+      "accepted_answers": [
+        "가족"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jiārén"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16331",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "夫妻",
+      "meaning": "부부",
+      "accepted_answers": [
+        "부부"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "fūqī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16343",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "丈夫",
+      "meaning": "남편",
+      "accepted_answers": [
+        "남편"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "zhàngfu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16364",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "妻子",
+      "meaning": "아내",
+      "accepted_answers": [
+        "아내"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qīzi"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-16402",
@@ -1336,7 +1834,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lǎopo"
@@ -1353,10 +1851,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fùmǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16495",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "父亲",
+      "meaning": "아버지",
+      "accepted_answers": [
+        "아버지"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "fùqin"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-16496",
@@ -1365,12 +1880,13 @@
       "term": "妈妈",
       "meaning": "어머니",
       "accepted_answers": [
-        "어머니"
+        "어머니",
+        "엄마"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "māma"
@@ -1387,7 +1903,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bàba"
@@ -1404,7 +1920,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xiōngdì"
@@ -1421,7 +1937,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gēge"
@@ -1431,14 +1947,14 @@
       "type": "word",
       "language": "zh-Hans",
       "term": "姐妹",
-      "meaning": "자매",
+      "meaning": "누나",
       "accepted_answers": [
-        "자매"
+        "누나"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiěmèi"
@@ -1455,10 +1971,78 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiějie"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16866",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "伯父",
+      "meaning": "삼촌",
+      "accepted_answers": [
+        "삼촌"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "bófù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16869",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "姨母",
+      "meaning": "고모",
+      "accepted_answers": [
+        "고모"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yímǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16892",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "表妹",
+      "meaning": "사촌",
+      "accepted_answers": [
+        "사촌"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "biǎomèi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-17007",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "朋友",
+      "meaning": "친구",
+      "accepted_answers": [
+        "친구"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "péngyou"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-17302",
@@ -1472,7 +2056,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wàiguórén"
@@ -1489,7 +2073,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lǎoshī"
@@ -1506,7 +2090,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dàifu"
@@ -1518,12 +2102,13 @@
       "term": "警察",
       "meaning": "경찰관",
       "accepted_answers": [
-        "경찰관"
+        "경찰관",
+        "경찰 아저씨"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jǐngchá"
@@ -1540,7 +2125,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xuésheng"
@@ -1557,7 +2142,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "liúxuéshēng"
@@ -1574,10 +2159,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiātíng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-21338",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "国家",
+      "meaning": "나라",
+      "accepted_answers": [
+        "나라"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "guójiā"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-21365",
@@ -1591,10 +2193,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wàiguó"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22471",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "学校",
+      "meaning": "학교",
+      "accepted_answers": [
+        "학교"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xuéxiào"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-22500",
@@ -1608,7 +2227,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiàoshì"
@@ -1625,7 +2244,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dàxué"
@@ -1642,7 +2261,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gōngsī"
@@ -1659,10 +2278,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yínháng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22785",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "车站",
+      "meaning": "역",
+      "accepted_answers": [
+        "역"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "chēzhàn"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-22810",
@@ -1676,10 +2312,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yóuyǒngchí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22828",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "商店",
+      "meaning": "가게",
+      "accepted_answers": [
+        "가게"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "shāngdiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22888",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "餐厅",
+      "meaning": "레스토랑",
+      "accepted_answers": [
+        "레스토랑"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "cāntīng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-22896",
@@ -1693,7 +2363,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shítáng"
@@ -1710,7 +2380,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "kāfēitīng"
@@ -1727,7 +2397,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "càipù"
@@ -1744,7 +2414,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bǎihuògōngsī"
@@ -1761,10 +2431,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fàndiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23103",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "医院",
+      "meaning": "병원",
+      "accepted_answers": [
+        "병원"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yīyuàn"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-23121",
@@ -1778,7 +2465,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "túshūguǎn"
@@ -1795,7 +2482,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gōngyuán"
@@ -1812,7 +2499,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "pàichūsuǒ"
@@ -1829,7 +2516,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dàshǐguǎn"
@@ -1846,7 +2533,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yóujú"
@@ -1863,7 +2550,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bān"
@@ -1880,7 +2567,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shēngyīn"
@@ -1892,15 +2579,33 @@
       "term": "练习",
       "meaning": "연습",
       "accepted_answers": [
-        "연습"
+        "연습",
+        "연습하다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "liànxí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-26775",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "学习",
+      "meaning": "공부",
+      "accepted_answers": [
+        "공부"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xuéxí"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-27779",
@@ -1914,7 +2619,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "kǎoshì"
@@ -1931,7 +2636,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yìsi"
@@ -1948,10 +2653,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zuòyè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-30264",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "语言",
+      "meaning": "말",
+      "accepted_answers": [
+        "말"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yǔyán"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-30521",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "词",
+      "meaning": "말",
+      "accepted_answers": [
+        "말"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "cí"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-30562",
@@ -1965,7 +2704,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "Rìyǔ"
@@ -1982,10 +2721,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yīngyǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-30586",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "汉语",
+      "meaning": "한국말",
+      "accepted_answers": [
+        "한국말"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "hànyǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-30813",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "作文",
+      "meaning": "작문",
+      "accepted_answers": [
+        "작문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "zuòwén"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-31526",
@@ -1999,7 +2772,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hànzì"
@@ -2016,7 +2789,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dìtú"
@@ -2033,7 +2806,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xìn"
@@ -2050,10 +2823,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "míngxìnpiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-32370",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "电话",
+      "meaning": "전화",
+      "accepted_answers": [
+        "전화"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "diànhuà"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-32575",
@@ -2067,7 +2857,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "huà"
@@ -2079,12 +2869,13 @@
       "term": "问题",
       "meaning": "질문",
       "accepted_answers": [
-        "질문"
+        "질문",
+        "문제"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wèntí"
@@ -2096,12 +2887,13 @@
       "term": "复印",
       "meaning": "복사",
       "accepted_answers": [
-        "복사"
+        "복사",
+        "복사하다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fùyìn"
@@ -2118,10 +2910,26 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wénzhāng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-34173",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "书",
+      "meaning": "책",
+      "accepted_answers": [
+        "책"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-34482",
@@ -2135,7 +2943,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zázhì"
@@ -2152,7 +2960,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bàozhǐ"
@@ -2169,7 +2977,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "cídiǎn"
@@ -2186,7 +2994,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gē"
@@ -2203,7 +3011,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "huà"
@@ -2220,7 +3028,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhàopiān"
@@ -2237,7 +3045,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yīnyuè"
@@ -2254,10 +3062,28 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "diànyǐng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-36429",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "工作",
+      "meaning": "일",
+      "accepted_answers": [
+        "일",
+        "일하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "gōngzuò"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-36595",
@@ -2271,7 +3097,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shǔjià"
@@ -2288,7 +3114,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jià"
@@ -2305,7 +3131,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fàn"
@@ -2322,7 +3148,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zǎofàn"
@@ -2339,7 +3165,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wǔfàn"
@@ -2356,7 +3182,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wǎnfàn"
@@ -2368,12 +3194,13 @@
       "term": "旅行",
       "meaning": "여행",
       "accepted_answers": [
-        "여행"
+        "여행",
+        "여행하다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lǚxíng"
@@ -2390,7 +3217,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "sànbù"
@@ -2407,7 +3234,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yùndòng"
@@ -2424,7 +3251,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "náshǒu"
@@ -2441,7 +3268,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wǎnhuì"
@@ -2458,7 +3285,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shàngkè"
@@ -2475,7 +3302,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "mǎidōngxi"
@@ -2487,12 +3314,13 @@
       "term": "洗衣服",
       "meaning": "빨래",
       "accepted_answers": [
-        "빨래"
+        "빨래",
+        "빨래하다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -2503,12 +3331,13 @@
       "term": "打扫",
       "meaning": "청소",
       "accepted_answers": [
-        "청소"
+        "청소",
+        "청소하다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dǎsǎo"
@@ -2525,10 +3354,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bāoguǒ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-48177",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "钱",
+      "meaning": "돈",
+      "accepted_answers": [
+        "돈"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qián"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-48231",
@@ -2542,7 +3388,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chēpiào"
@@ -2559,7 +3405,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yóupiào"
@@ -2576,10 +3422,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49629",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "衣服",
+      "meaning": "옷",
+      "accepted_answers": [
+        "옷"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yīfu"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-49632",
@@ -2593,7 +3456,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīfú"
@@ -2610,7 +3473,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wàiyī"
@@ -2627,7 +3490,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xīzhuāng"
@@ -2644,7 +3507,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "máoyī"
@@ -2661,7 +3524,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chènshān"
@@ -2678,7 +3541,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dàyī"
@@ -2695,7 +3558,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "kùzì"
@@ -2712,7 +3575,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qúnzi"
@@ -2729,7 +3592,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hànshān"
@@ -2746,7 +3609,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "kǒudài"
@@ -2763,7 +3626,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "màozi"
@@ -2780,7 +3643,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lǐngdài"
@@ -2797,7 +3660,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wàzi"
@@ -2814,7 +3677,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xié"
@@ -2831,7 +3694,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tuōxié"
@@ -2848,7 +3711,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǔsǎn"
@@ -2865,7 +3728,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chuáng"
@@ -2882,10 +3745,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chīde"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50577",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "菜",
+      "meaning": "요리",
+      "accepted_answers": [
+        "요리"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "cài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50788",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "面包",
+      "meaning": "빵",
+      "accepted_answers": [
+        "빵"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "miànbāo"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-51101",
@@ -2899,7 +3796,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shūcài"
@@ -2916,7 +3813,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "ròu"
@@ -2933,7 +3830,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jīròu"
@@ -2950,7 +3847,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "niúròu"
@@ -2967,7 +3864,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhūròu"
@@ -2979,12 +3876,13 @@
       "term": "糖",
       "meaning": "설탕",
       "accepted_answers": [
-        "설탕"
+        "설탕",
+        "사탕"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "táng"
@@ -3001,7 +3899,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yán"
@@ -3018,7 +3916,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiàngyóu"
@@ -3035,10 +3933,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "huángyóu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51478",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "干酪",
+      "meaning": "치즈",
+      "accepted_answers": [
+        "치즈"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "gānlào"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-51510",
@@ -3052,7 +3967,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gālífàn"
@@ -3069,7 +3984,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "diǎnxin"
@@ -3086,10 +4001,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǐnliào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51744",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "茶",
+      "meaning": "차",
+      "accepted_answers": [
+        "차"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "chá"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-51748",
@@ -3103,27 +4035,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hóngchá"
     },
     {
-      "id": "sprache-zh-hans-tufs-core-2026-09-word-51821",
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51777",
       "type": "word",
       "language": "zh-Hans",
-      "term": "葡萄酒",
-      "meaning": "와인",
+      "term": "咖啡",
+      "meaning": "커피",
       "accepted_answers": [
-        "와인"
+        "커피"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
-      "pinyin": "pútaojiǔ"
+      "pinyin": "kāfēi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51821",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "酒",
+      "meaning": "술",
+      "accepted_answers": [
+        "술"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jiǔ"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-51920",
@@ -3137,7 +4086,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yān"
@@ -3154,7 +4103,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yào"
@@ -3171,10 +4120,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fángzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-52392",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "家",
+      "meaning": "집",
+      "accepted_answers": [
+        "집"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jiā"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-52553",
@@ -3188,24 +4154,42 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiànzhùwù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-52812",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "门",
+      "meaning": "대문",
+      "accepted_answers": [
+        "대문",
+        "문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "mén"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-52878",
       "type": "word",
       "language": "zh-Hans",
       "term": "公寓",
-      "meaning": "아파트",
+      "meaning": "방",
       "accepted_answers": [
-        "아파트"
+        "방"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gōngyù"
@@ -3222,7 +4206,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhèngmén"
@@ -3239,7 +4223,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chúfáng"
@@ -3256,7 +4240,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "cèsuǒ"
@@ -3273,7 +4257,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xǐshǒujiān"
@@ -3290,7 +4274,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zǒuláng"
@@ -3307,10 +4291,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lóutī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53210",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "窗户",
+      "meaning": "창문",
+      "accepted_answers": [
+        "창문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "chuānghu"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-53263",
@@ -3324,7 +4325,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shūjià"
@@ -3336,12 +4337,13 @@
       "term": "桌子",
       "meaning": "책상",
       "accepted_answers": [
-        "책상"
+        "책상",
+        "테이블"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhuōzi"
@@ -3358,7 +4360,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǐzi"
@@ -3375,7 +4377,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lúzi"
@@ -3392,7 +4394,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -3408,7 +4410,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yānhuīgāng"
@@ -3425,7 +4427,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yóutǒng"
@@ -3442,7 +4444,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xìnfēng"
@@ -3459,7 +4461,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qiánbāo"
@@ -3476,7 +4478,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shūbāo"
@@ -3493,7 +4495,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "diézi"
@@ -3510,7 +4512,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fànwǎn"
@@ -3527,7 +4529,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bēizi"
@@ -3544,7 +4546,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "kuàizi"
@@ -3561,7 +4563,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chāzi"
@@ -3578,7 +4580,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "sháozi"
@@ -3595,7 +4597,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qiānbǐ"
@@ -3612,7 +4614,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gāngbǐ"
@@ -3629,7 +4631,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yuánzhūbǐ"
@@ -3646,7 +4648,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bǐ"
@@ -3663,7 +4665,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yàoshi"
@@ -3680,7 +4682,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shǒujuàn"
@@ -3697,7 +4699,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "línyù"
@@ -3714,7 +4716,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dāozi"
@@ -3731,7 +4733,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jítā"
@@ -3748,7 +4750,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chàngpiàn"
@@ -3765,7 +4767,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bǐjìběn"
@@ -3782,7 +4784,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǎnjìng"
@@ -3799,7 +4801,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhàoxiàngjī"
@@ -3816,7 +4818,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiāojuǎn"
@@ -3833,7 +4835,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bīngxiāng"
@@ -3850,7 +4852,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shōuyīnjī"
@@ -3867,7 +4869,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "diànshì"
@@ -3884,10 +4886,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lùyīnjī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56126",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "电脑",
+      "meaning": "컴퓨터",
+      "accepted_answers": [
+        "컴퓨터"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "diànnǎo"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-56144",
@@ -3901,7 +4920,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shōulùjī"
@@ -3918,7 +4937,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhōngbiǎo"
@@ -3935,10 +4954,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zìxíngchē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56506",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "汽车",
+      "meaning": "자동차",
+      "accepted_answers": [
+        "자동차"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qìchē"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-56572",
@@ -3952,7 +4988,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chūzūchē"
@@ -3969,10 +5005,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gōnggòngqìchē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56645",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "火车",
+      "meaning": "전철",
+      "accepted_answers": [
+        "전철"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "huǒchē"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-56688",
@@ -3986,7 +5039,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dìtiě"
@@ -4003,7 +5056,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "diàntī"
@@ -4020,7 +5073,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fēijī"
@@ -4037,7 +5090,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yuànzi"
@@ -4054,7 +5107,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lù"
@@ -4071,7 +5124,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shízìlùkǒu"
@@ -4088,7 +5141,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yánsè"
@@ -4107,7 +5160,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hēisè"
@@ -4126,7 +5179,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hóngsè"
@@ -4145,7 +5198,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "huángsè"
@@ -4162,7 +5215,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lǜsè"
@@ -4181,7 +5234,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "lánsè"
@@ -4198,10 +5251,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fēng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-59793",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "雨",
+      "meaning": "비",
+      "accepted_answers": [
+        "비"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yǔ"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-59878",
@@ -4215,10 +5285,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xuě"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-59928",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "天气",
+      "meaning": "날씨",
+      "accepted_answers": [
+        "날씨"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "tiānqì"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-59985",
@@ -4232,7 +5319,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yīntiān"
@@ -4249,7 +5336,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hé"
@@ -4266,10 +5353,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chízi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-61891",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "柠檬",
+      "meaning": "레몬",
+      "accepted_answers": [
+        "레몬"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "níngméng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-62825",
@@ -4283,7 +5387,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shuǐguǒ"
@@ -4300,7 +5404,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yú"
@@ -4317,7 +5421,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shēntǐ"
@@ -4334,7 +5438,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tóu"
@@ -4351,7 +5455,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "liǎn"
@@ -4368,10 +5472,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǎnjing"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64470",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "鼻子",
+      "meaning": "코",
+      "accepted_answers": [
+        "코"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "bízi"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-64491",
@@ -4385,7 +5506,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "ěrduo"
@@ -4402,7 +5523,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zuǐ"
@@ -4419,7 +5540,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dùzi"
@@ -4436,10 +5557,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64741",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "胳膊",
+      "meaning": "팔",
+      "accepted_answers": [
+        "팔"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "gēbo"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-64769",
@@ -4453,7 +5591,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tuǐ"
@@ -4470,7 +5608,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yáchǐ"
@@ -4487,7 +5625,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "niúnǎi"
@@ -4504,7 +5642,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jīdàn"
@@ -4521,10 +5659,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bìng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-66730",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "感冒",
+      "meaning": "감기",
+      "accepted_answers": [
+        "감기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "gǎnmào"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-67613",
@@ -4538,10 +5693,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-67762",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "起床",
+      "meaning": "일어나다",
+      "accepted_answers": [
+        "일어나다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qǐchuáng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-68092",
@@ -4555,10 +5727,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "cādiào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-68583",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "系",
+      "meaning": "조르다",
+      "accepted_answers": [
+        "조르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jì"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-68797",
@@ -4572,7 +5761,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tuī"
@@ -4589,7 +5778,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "guà"
@@ -4606,7 +5795,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chūqù"
@@ -4623,7 +5812,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dào"
@@ -4640,7 +5829,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zǒu"
@@ -4657,7 +5846,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "pǎo"
@@ -4674,7 +5863,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tiào"
@@ -4691,10 +5880,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "huí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-71127",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "去",
+      "meaning": "가다",
+      "accepted_answers": [
+        "가다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qù"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-71458",
@@ -4708,7 +5914,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "fàng"
@@ -4725,7 +5931,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dài"
@@ -4742,10 +5948,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xià"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-72062",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "下雨",
+      "meaning": "비가 내리다",
+      "accepted_answers": [
+        "비가 내리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xiàyǔ"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-72074",
@@ -4754,12 +5977,13 @@
       "term": "坐",
       "meaning": "타다",
       "accepted_answers": [
-        "타다"
+        "타다",
+        "앉다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zuò"
@@ -4776,7 +6000,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dǎkāi"
@@ -4793,10 +6017,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "guān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-72782",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "安",
+      "meaning": "붙이다",
+      "accepted_answers": [
+        "붙이다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "ān"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-72816",
@@ -4810,7 +6051,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tiē"
@@ -4827,7 +6068,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3
     },
@@ -4843,10 +6084,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-73997",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "加",
+      "meaning": "더하다",
+      "accepted_answers": [
+        "더하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jiā"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-74751",
@@ -4860,7 +6118,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "kāishǐ"
@@ -4877,10 +6135,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chànggē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-79279",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "说",
+      "meaning": "말하다",
+      "accepted_answers": [
+        "말하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "shuō"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-79593",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "姓",
+      "meaning": "~(이)라고 합니다",
+      "accepted_answers": [
+        "~(이)라고 합니다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xìng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-80000",
@@ -4894,10 +6186,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shuōhuà"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-80001",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "聊天",
+      "meaning": "말하다",
+      "accepted_answers": [
+        "말하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "liáotiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-80087",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "听",
+      "meaning": "듣다",
+      "accepted_answers": [
+        "듣다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "tīng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-80142",
@@ -4911,10 +6237,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "huídá"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-80639",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "看",
+      "meaning": "읽다",
+      "accepted_answers": [
+        "읽다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "kàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-80727",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "写",
+      "meaning": "쓰다",
+      "accepted_answers": [
+        "쓰다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xiě"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-81068",
@@ -4928,13 +6288,30 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tán"
     },
     {
-      "id": "sprache-zh-hans-tufs-core-2026-09-word-81858",
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-81700",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "吃",
+      "meaning": "먹다",
+      "accepted_answers": [
+        "먹다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "chī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-81835",
       "type": "word",
       "language": "zh-Hans",
       "term": "穿",
@@ -4945,7 +6322,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chuān"
@@ -4962,7 +6339,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tuō"
@@ -4979,7 +6356,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhù"
@@ -4996,7 +6373,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xǐzǎo"
@@ -5013,7 +6390,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wánr"
@@ -5030,7 +6407,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yóuyǒng"
@@ -5047,7 +6424,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhàn"
@@ -5064,10 +6441,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shuìjiào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-83154",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "喝",
+      "meaning": "마시다",
+      "accepted_answers": [
+        "마시다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "hē"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-83250",
@@ -5081,7 +6475,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chōu"
@@ -5098,7 +6492,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "gàn"
@@ -5115,7 +6509,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiàn miàn"
@@ -5132,10 +6526,29 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiāo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-85910",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "请",
+      "meaning": "~아/어 주세요",
+      "accepted_answers": [
+        "~아/어 주세요",
+        "~아",
+        "어 주세요"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "qǐng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-87238",
@@ -5149,7 +6562,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "mài"
@@ -5166,7 +6579,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "mǎi"
@@ -5183,7 +6596,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiāo"
@@ -5200,10 +6613,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jiègěi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-87585",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "借",
+      "meaning": "빌리다",
+      "accepted_answers": [
+        "빌리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jiè"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-87624",
@@ -5212,15 +6642,15 @@
       "term": "还",
       "meaning": "갚다",
       "accepted_answers": [
-        "갚다"
+        "갚다",
+        "아직"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
-      "priority": 3,
-      "pinyin": "huán"
+      "priority": 3
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-88468",
@@ -5234,7 +6664,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xǐ"
@@ -5251,7 +6681,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qíng"
@@ -5268,7 +6698,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "sǐ"
@@ -5285,7 +6715,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhèige"
@@ -5302,7 +6732,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhème"
@@ -5319,7 +6749,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhèiyang"
@@ -5336,7 +6766,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nèige"
@@ -5353,7 +6783,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "něige"
@@ -5370,10 +6800,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shénme"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90827",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "怎么",
+      "meaning": "어떻다",
+      "accepted_answers": [
+        "어떻다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "zěnme"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-91162",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "正好",
+      "meaning": "마침",
+      "accepted_answers": [
+        "마침"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "zhènghǎo"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-91248",
@@ -5387,10 +6851,61 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "méiyǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-91633",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "好",
+      "meaning": "좋다",
+      "accepted_answers": [
+        "좋다",
+        "네"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-91682",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "坏",
+      "meaning": "나쁘다",
+      "accepted_answers": [
+        "나쁘다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "huài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-91975",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "薄",
+      "meaning": "얇다",
+      "accepted_answers": [
+        "얇다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "báo"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-92053",
@@ -5404,7 +6919,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "piàoliang"
@@ -5421,7 +6936,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zāng"
@@ -5438,7 +6953,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nán"
@@ -5455,7 +6970,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "róngyì"
@@ -5472,7 +6987,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qiáng"
@@ -5489,7 +7004,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "ruǎnruò"
@@ -5506,7 +7021,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "chángcháng"
@@ -5523,10 +7038,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǒushí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93391",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "新",
+      "meaning": "새롭다",
+      "accepted_answers": [
+        "새롭다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xīn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93413",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "旧",
+      "meaning": "낡다",
+      "accepted_answers": [
+        "낡다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "jiù"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-93460",
@@ -5540,10 +7089,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "niánqīng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93490",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "慢",
+      "meaning": "늦다",
+      "accepted_answers": [
+        "늦다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "màn"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-93515",
@@ -5557,7 +7123,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǐjing"
@@ -5574,10 +7140,44 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "mǎshang"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93640",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "一边",
+      "meaning": "...면서",
+      "accepted_answers": [
+        "...면서"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yìbiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93723",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "一直",
+      "meaning": "쭉",
+      "accepted_answers": [
+        "쭉"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "yìzhí"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-93826",
@@ -5591,7 +7191,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "duō"
@@ -5608,7 +7208,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "shǎo"
@@ -5625,7 +7225,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "cháng"
@@ -5642,27 +7242,10 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "duǎn"
-    },
-    {
-      "id": "sprache-zh-hans-tufs-core-2026-09-word-94023",
-      "type": "word",
-      "language": "zh-Hans",
-      "term": "高",
-      "meaning": "비싸다",
-      "accepted_answers": [
-        "비싸다"
-      ],
-      "tags": [
-        "TUFS",
-        "생활 핵심 어휘",
-        "GitHub 언어팩"
-      ],
-      "priority": 3,
-      "pinyin": "gāo"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-94030",
@@ -5676,7 +7259,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "dī"
@@ -5693,7 +7276,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hòu"
@@ -5710,7 +7293,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yuǎn"
@@ -5727,7 +7310,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jìn"
@@ -5744,7 +7327,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "kuān"
@@ -5761,7 +7344,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhǎi"
@@ -5778,7 +7361,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "cū"
@@ -5795,10 +7378,61 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "xì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94142",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "大",
+      "meaning": "크다",
+      "accepted_answers": [
+        "크다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "dà"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94186",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "小",
+      "meaning": "작다",
+      "accepted_answers": [
+        "작다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xiǎo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94225",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "快",
+      "meaning": "빠르다",
+      "accepted_answers": [
+        "빠르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "kuài"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-94288",
@@ -5812,7 +7446,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "mànmānr"
@@ -5829,7 +7463,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhòng"
@@ -5846,10 +7480,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "qīng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94344",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "热",
+      "meaning": "덥다",
+      "accepted_answers": [
+        "덥다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "rè"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-94363",
@@ -5863,10 +7514,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "liángkuai"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94373",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "冷",
+      "meaning": "춥다",
+      "accepted_answers": [
+        "춥다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "lěng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-94851",
@@ -5880,7 +7548,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "zhěng"
@@ -5897,7 +7565,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "téng"
@@ -5914,7 +7582,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yúkuài"
@@ -5931,7 +7599,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǒuyìsi"
@@ -5948,10 +7616,27 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "wúliáo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-95586",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "喜欢",
+      "meaning": "좋아하다",
+      "accepted_answers": [
+        "좋아하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "xǐhuan"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-95610",
@@ -5965,7 +7650,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tǎoyàn"
@@ -5982,7 +7667,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yào"
@@ -5999,7 +7684,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "yǒumíng"
@@ -6016,7 +7701,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "máng"
@@ -6033,7 +7718,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "jīngshen"
@@ -6050,7 +7735,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "piányi"
@@ -6059,20 +7744,18 @@
       "id": "sprache-zh-hans-tufs-core-2026-09-word-98991",
       "type": "word",
       "language": "zh-Hans",
-      "term": "光亮",
-      "meaning": "밝다, 엷다",
+      "term": "明亮",
+      "meaning": "밝다",
       "accepted_answers": [
-        "밝다, 엷다",
-        "밝다",
-        "엷다"
+        "밝다"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
-      "pinyin": "guāngliàng"
+      "pinyin": "míngliàng"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-99001",
@@ -6086,7 +7769,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hēi"
@@ -6105,7 +7788,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "báisè"
@@ -6122,7 +7805,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "ānjìng"
@@ -6139,7 +7822,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "rènao"
@@ -6156,7 +7839,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "hǎochī"
@@ -6173,7 +7856,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nánchī"
@@ -6190,7 +7873,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "tián"
@@ -6207,10 +7890,29 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "là"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99575",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "深",
+      "meaning": "짙다, 어둡다",
+      "accepted_answers": [
+        "짙다, 어둡다",
+        "짙다",
+        "어둡다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "추천 자료"
+      ],
+      "priority": 3,
+      "pinyin": "shēn"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-99848",
@@ -6224,7 +7926,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bīng"
@@ -6241,7 +7943,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nuǎnhuo"
@@ -6258,7 +7960,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "nà"
@@ -6275,7 +7977,7 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bùhǎoyìsi"
@@ -6284,7 +7986,7 @@
       "id": "sprache-zh-hans-tufs-core-2026-09-word-100538",
       "type": "word",
       "language": "zh-Hans",
-      "term": "大概",
+      "term": "也许",
       "meaning": "아마",
       "accepted_answers": [
         "아마"
@@ -6292,24 +7994,24 @@
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
-      "pinyin": "dàgài"
+      "pinyin": "yěxǔ"
     },
     {
       "id": "sprache-zh-hans-tufs-core-2026-09-word-100827",
       "type": "word",
       "language": "zh-Hans",
       "term": "不",
-      "meaning": "아니에요",
+      "meaning": "아뇨",
       "accepted_answers": [
-        "아니에요"
+        "아뇨"
       ],
       "tags": [
         "TUFS",
         "생활 핵심 어휘",
-        "GitHub 언어팩"
+        "추천 자료"
       ],
       "priority": 3,
       "pinyin": "bù"

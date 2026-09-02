@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -100,7 +100,40 @@ test('repository publishes one curated download pack for every learning language
     const descriptor = catalog.packs.find((pack) => pack.id === id);
     assert.ok(descriptor, `${language} starter pack is missing`);
     assert.equal(descriptor.language, language);
-    assert.ok(descriptor.itemCount >= 350);
+    assert.ok(descriptor.itemCount >= 440);
     assert.match(descriptor.sha256, /^[a-f0-9]{64}$/);
   }
+});
+
+test('English pack keeps the reviewed beef pronunciation', async () => {
+  const pack = JSON.parse(await readFile(
+    join(repositoryRoot, 'language-packs', 'packs', 'sprache-en-tufs-core-2026-09.json'),
+    'utf8',
+  ));
+  const beef = pack.items.find((item) => item.term === 'beef');
+  assert.ok(beef);
+  assert.equal(beef.meaning, '쇠고기');
+  assert.equal(beef.korean_pronunciation, '비프');
+});
+
+test('same spelling keeps every aligned Korean meaning without duplicate cards', async () => {
+  const pack = JSON.parse(await readFile(
+    join(repositoryRoot, 'language-packs', 'packs', 'sprache-en-tufs-core-2026-09.json'),
+    'utf8',
+  ));
+  const mornings = pack.items.filter((item) => item.term === 'morning');
+  assert.equal(mornings.length, 1);
+  assert.ok(mornings[0].accepted_answers.includes('오전'));
+  assert.ok(mornings[0].accepted_answers.includes('아침'));
+});
+
+test('Japanese pack preserves safe kana readings from the source', async () => {
+  const pack = JSON.parse(await readFile(
+    join(repositoryRoot, 'language-packs', 'packs', 'sprache-ja-tufs-core-2026-09.json'),
+    'utf8',
+  ));
+  const beef = pack.items.find((item) => item.meaning === '쇠고기');
+  assert.ok(beef);
+  assert.equal(beef.term, '牛肉');
+  assert.equal(beef.kana, 'ぎゅうにく');
 });

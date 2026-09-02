@@ -828,18 +828,26 @@ class ContentImportParser {
               language != LanguageTag.korean
         ? genericReading
         : '';
-    final generatedHangul = explicitHangul.isNotEmpty
-        ? null
-        : language == LanguageTag.korean
+    // Do not present a spelling-based Latin transcription as an authoritative
+    // pronunciation for imported content. English and French spelling in
+    // particular cannot be transcribed reliably without a reviewed reading or
+    // a phonetic source. Japanese kana and Chinese pinyin are phonetic inputs,
+    // so those can still produce a safe offline Hangul aid.
+    final canDeriveFromPhoneticSource =
+        language == LanguageTag.japanese &&
+            (effectiveKana.isNotEmpty || romaji.isNotEmpty) ||
+        language == LanguageTag.simplifiedChinese && effectivePinyin.isNotEmpty;
+    final generatedHangul =
+        explicitHangul.isNotEmpty ||
+            language == LanguageTag.korean ||
+            !canDeriveFromPhoneticSource
         ? null
         : tryDeriveKoreanPronunciation(
             language: language,
             text: text,
             reading: language == LanguageTag.japanese
                 ? effectiveKana
-                : language == LanguageTag.simplifiedChinese
-                ? effectivePinyin
-                : null,
+                : effectivePinyin,
             romanization: romaji,
           );
     final effectiveHangul = explicitHangul.isNotEmpty

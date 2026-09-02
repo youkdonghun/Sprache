@@ -271,6 +271,12 @@ class _LanguagePackScreenState extends ConsumerState<LanguagePackScreen> {
     LanguagePackDescriptor pack,
     AppState state,
   ) {
+    final expectedFileName = '${pack.id}-${pack.version}.json';
+    for (final receipt in state.preferences.importReceipts) {
+      if (receipt.fileName == expectedFileName && receipt.undoneAt == null) {
+        return _PackInstallation.current(pack.itemCount);
+      }
+    }
     final installed = state.customItems
         .where((item) => item.source.sourceId == pack.sourceId)
         .toList(growable: false);
@@ -323,7 +329,12 @@ class _LanguagePackIntro extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  const Text('버튼을 누르고 추가될 자료 수만 확인하면 바로 학습할 수 있어요.'),
+                  const Text('전체 어휘를 한 번에 받고, 앱에 있던 단어는 중복 없이 합쳐져요.'),
+                  const SizedBox(height: 5),
+                  Text(
+                    '검수된 한글 읽기만 표시하고, 나머지는 ‘발음 듣기’로 확인해요.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                   const SizedBox(height: 8),
                   Text(
                     driveConnected
@@ -465,7 +476,7 @@ class _LanguagePackCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '${descriptor.language.koreanName} · ${descriptor.itemCount}개',
+                        '${descriptor.language.koreanName} · 전체 ${descriptor.itemCount}개',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                     ],
@@ -529,7 +540,7 @@ class _LanguagePackCard extends StatelessWidget {
                       ? '최신 자료 확인'
                       : installation.installedCount > 0
                       ? '업데이트 확인'
-                      : '${descriptor.itemCount}개 추가하기',
+                      : '전체 ${descriptor.itemCount}개 받기',
                 ),
               ),
             ),

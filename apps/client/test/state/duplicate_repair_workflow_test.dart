@@ -291,6 +291,50 @@ void main() {
     expect(controller.customItemById(otherSubject.id), isNotNull);
     controller.dispose();
   });
+
+  test(
+    'reuses duplicate analysis until custom content actually changes',
+    () async {
+      final store = MemoryStudyStore(
+        preferences: const StudyPreferences(activeSubjectId: 'language:en'),
+      );
+      await store.saveCustomItems(const [
+        LearningItem(
+          id: 'cache-a',
+          kind: LearningItemKind.word,
+          learningLanguage: LanguageTag.english,
+          text: 'cache',
+          translations: ['캐시'],
+          acceptedAnswers: ['캐시'],
+        ),
+        LearningItem(
+          id: 'cache-b',
+          kind: LearningItemKind.word,
+          learningLanguage: LanguageTag.english,
+          text: ' cache ',
+          translations: ['저장소'],
+          acceptedAnswers: ['저장소'],
+        ),
+      ]);
+      final controller = AppController(store);
+      await _waitForHydration(controller);
+
+      final first = controller.duplicateRepairCatalog(subjectId: 'language:en');
+      final second = controller.duplicateRepairCatalog(
+        subjectId: 'language:en',
+      );
+      expect(identical(first, second), isTrue);
+
+      await controller.upsertCustomItem(
+        controller.state.customItems.first.copyWith(tags: const ['changed']),
+      );
+      final afterEdit = controller.duplicateRepairCatalog(
+        subjectId: 'language:en',
+      );
+      expect(identical(first, afterEdit), isFalse);
+      controller.dispose();
+    },
+  );
 }
 
 Future<void> _waitForHydration(AppController controller) async {

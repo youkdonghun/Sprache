@@ -351,4 +351,39 @@ void main() {
       controller.dispose();
     },
   );
+
+  test(
+    'reuses an unchanged import review and invalidates it after data edits',
+    () async {
+      final controller = AppController(MemoryStudyStore());
+      await Future<void>.delayed(Duration.zero);
+      const preview = ImportPreview(
+        entries: [
+          ParsedImportEntry(
+            row: 1,
+            item: LearningItem(
+              id: 'cache-word',
+              kind: LearningItemKind.word,
+              learningLanguage: LanguageTag.english,
+              text: 'cache',
+              translations: ['캐시'],
+              acceptedAnswers: ['캐시'],
+            ),
+          ),
+        ],
+        issues: [],
+        duplicates: [],
+      );
+
+      final first = controller.reviewImport(preview);
+      final second = controller.reviewImport(preview);
+      expect(identical(first, second), isTrue);
+
+      await controller.upsertCustomItem(preview.items.single);
+      final afterEdit = controller.reviewImport(preview);
+      expect(identical(first, afterEdit), isFalse);
+      expect(afterEdit.unchangedCount, 1);
+      controller.dispose();
+    },
+  );
 }
