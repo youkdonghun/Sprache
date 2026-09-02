@@ -54,6 +54,11 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.ensureVisible(
+        find.byKey(const Key('home-simple-details-toggle')),
+      );
+      await tester.tap(find.byKey(const Key('home-simple-details-toggle')));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(
         find.byKey(const Key('two-minute-study-card')),
       );
       expect(find.byKey(const Key('two-minute-study-card')), findsOneWidget);

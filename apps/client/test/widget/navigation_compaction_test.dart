@@ -352,6 +352,12 @@ void main() {
       ),
     );
 
+    await tester.ensureVisible(
+      find.byKey(const Key('home-simple-details-toggle')),
+    );
+    await tester.tap(find.byKey(const Key('home-simple-details-toggle')));
+    await tester.pumpAndSettle();
+
     expect(find.byKey(const Key('home-pinned-collections')), findsOneWidget);
     expect(
       tester
