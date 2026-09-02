@@ -26,8 +26,10 @@ import '../domain/study_limits.dart';
 import '../domain/study_preferences.dart';
 import '../state/app_state.dart';
 import '../state/connection_state.dart';
+import '../state/device_preferences_state.dart';
 import '../services/platform_completion_service.dart';
 import '../services/recovery_checkpoint_service.dart';
+import '../services/tts_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/content_selection_action_bar.dart';
 import '../widgets/learning_data_flow_card.dart';
@@ -5707,14 +5709,68 @@ class _MobileItemDetailsSheetState extends State<_MobileItemDetailsSheet> {
   }
 }
 
-class _ItemDetails extends ConsumerWidget {
+class _ItemDetails extends ConsumerStatefulWidget {
   const _ItemDetails({required this.item, required this.progress});
 
   final LearningItem item;
   final ProgressRecord? progress;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ItemDetails> createState() => _ItemDetailsState();
+}
+
+class _ItemDetailsState extends ConsumerState<_ItemDetails> {
+  late final TtsService _tts;
+  var _speaking = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _tts = ref.read(deviceTtsServiceProvider);
+  }
+
+  @override
+  void dispose() {
+    if (_speaking) unawaited(_tts.stop());
+    super.dispose();
+  }
+
+  Future<void> _speak() async {
+    if (_speaking) return;
+    final item = widget.item;
+    final preferences = ref.read(appControllerProvider).preferences;
+    final voice = ref
+        .read(devicePreferencesControllerProvider)
+        .preferences
+        .voice;
+    setState(() => _speaking = true);
+    try {
+      await _tts.speak(
+        language: item.learningLanguage,
+        text: item.text,
+        rate: preferences.ttsRate,
+        preferOfflineVoice: preferences.interaction.preferOfflineVoice,
+        repeatCount: preferences.interaction.audioRepeatCount,
+        preferredVoiceId: voice.voiceIdByLanguage[item.learningLanguage.code],
+        pitch: voice.pitch,
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('발음을 재생하지 못했습니다. 설정의 읽기·음성에서 설치 음성을 확인해 주세요.'),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _speaking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = widget.item;
+    final progress = widget.progress;
     final status = _statusFor(progress);
     final interaction = ref.watch(
       appControllerProvider.select((state) => state.preferences.interaction),
@@ -5760,6 +5816,19 @@ class _ItemDetails extends ConsumerWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 12),
+                Center(
+                  child: FilledButton.tonalIcon(
+                    key: Key('library-item-pronunciation-${item.id}'),
+                    onPressed: _speaking ? null : _speak,
+                    icon: Icon(
+                      _speaking
+                          ? Icons.graphic_eq_rounded
+                          : Icons.volume_up_rounded,
+                    ),
+                    label: Text(_speaking ? '재생 중' : '발음 듣기'),
+                  ),
+                ),
                 const SizedBox(height: 14),
                 Text(
                   PrivacyModeScope.redact(
@@ -5883,21 +5952,21 @@ class _ItemDetails extends ConsumerWidget {
                       Expanded(
                         child: _DetailMetric(
                           label: '정확도',
-                          value: '${(progress!.accuracy * 100).round()}%',
+                          value: '${(progress.accuracy * 100).round()}%',
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: _DetailMetric(
                           label: '시도',
-                          value: '${progress!.attempts}회',
+                          value: '${progress.attempts}회',
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: _DetailMetric(
                           label: '복습 간격',
-                          value: '${progress!.currentIntervalDays}일',
+                          value: '${progress.currentIntervalDays}일',
                         ),
                       ),
                     ],

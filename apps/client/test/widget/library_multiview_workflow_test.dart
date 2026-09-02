@@ -10,7 +10,9 @@ import 'package:sprache/src/domain/learning_item.dart';
 import 'package:sprache/src/domain/search_preferences.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/screens/library_screen.dart';
+import 'package:sprache/src/services/tts_service.dart';
 import 'package:sprache/src/state/app_state.dart';
+import 'package:sprache/src/state/device_preferences_state.dart';
 
 void main() {
   LearningItem item(int index, String prefix) => LearningItem(
@@ -28,6 +30,7 @@ void main() {
     required MemoryStudyStore store,
     required Size size,
     required TargetPlatform platform,
+    TtsService? ttsService,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -38,7 +41,11 @@ void main() {
     });
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [studyStoreProvider.overrideWithValue(store)],
+        overrides: [
+          studyStoreProvider.overrideWithValue(store),
+          if (ttsService != null)
+            deviceTtsServiceProvider.overrideWithValue(ttsService),
+        ],
         child: const MaterialApp(home: Scaffold(body: LibraryScreen())),
       ),
     );
@@ -134,11 +141,13 @@ void main() {
       item(1, 'mobile sequence'),
       item(2, 'mobile sequence'),
     ]);
+    final ttsPlatform = _RecordingTtsPlatform();
     await pumpLibrary(
       tester,
       store: store,
       size: const Size(390, 844),
       platform: TargetPlatform.android,
+      ttsService: TtsService(platform: ttsPlatform),
     );
     await search(tester, 'mobile sequence');
 
@@ -158,6 +167,11 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('2 / 2'), findsOneWidget);
+    await tester.tap(
+      find.byKey(const Key('library-item-pronunciation-mobile-sequence-2')),
+    );
+    await tester.pumpAndSettle();
+    expect(ttsPlatform.spoken, ['mobile sequence 002']);
 
     await tester.tap(find.byKey(const Key('mobile-detail-previous')));
     await tester.pumpAndSettle();
@@ -313,4 +327,26 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     },
   );
+}
+
+class _RecordingTtsPlatform implements TtsPlatformAdapter {
+  final List<String> spoken = [];
+
+  @override
+  Future<List<Object?>> loadVoices() async => const [];
+
+  @override
+  Future<void> setLanguage(String locale) async {}
+
+  @override
+  Future<void> setSpeechRate(double rate) async {}
+
+  @override
+  Future<void> setVoice(Map<String, String> voice) async {}
+
+  @override
+  Future<void> speak(String text) async => spoken.add(text);
+
+  @override
+  Future<void> stop() async {}
 }

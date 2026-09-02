@@ -745,6 +745,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: 10),
                         ReleaseUpdateCard(
                           currentVersion: config.appVersion,
+                          currentBuildNumber: config.appBuildNumber,
                           manifestUrl: config.releaseManifestUrl,
                         ),
                       ],

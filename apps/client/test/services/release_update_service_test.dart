@@ -9,8 +9,9 @@ void main() {
   group('ReleaseVersion', () {
     test('compares semantic versions by numeric component', () {
       expect(
-        ReleaseVersion.tryParse('1.10.0')!
-            .compareTo(ReleaseVersion.tryParse('1.9.99')!),
+        ReleaseVersion.tryParse(
+          '1.10.0',
+        )!.compareTo(ReleaseVersion.tryParse('1.9.99')!),
         greaterThan(0),
       );
       expect(ReleaseVersion.tryParse('1.2'), isNull);
@@ -45,9 +46,7 @@ void main() {
     test('does not report the same semantic version as an update', () async {
       final service = ReleaseUpdateService(
         manifestUri: Uri.parse('https://sprache6.github.io/app/release.json'),
-        client: MockClient(
-          (_) async => _jsonResponse(_manifest()),
-        ),
+        client: MockClient((_) async => _jsonResponse(_manifest())),
       );
 
       final result = await service.check(
@@ -56,6 +55,25 @@ void main() {
       );
 
       expect(result.updateAvailable, isFalse);
+      expect(result.canRedownloadCurrentAndroidApk, isTrue);
+    });
+
+    test('detects a newer build within the same semantic version', () async {
+      final service = ReleaseUpdateService(
+        manifestUri: Uri.parse(
+          'https://github.com/youkdonghun/Sprache/releases/latest/download/release.json',
+        ),
+        client: MockClient((_) async => _jsonResponse(_manifest())),
+      );
+
+      final result = await service.check(
+        currentVersion: '1.38.0',
+        currentBuildNumber: 67,
+        platform: 'android',
+      );
+
+      expect(result.updateAvailable, isTrue);
+      expect(result.currentBuildNumber, 67);
     });
 
     test('rejects untrusted artifact hosts', () async {
@@ -65,9 +83,7 @@ void main() {
       windows['url'] = 'https://example.com/Sprache-Windows.exe';
       final service = ReleaseUpdateService(
         manifestUri: Uri.parse('https://sprache6.github.io/app/release.json'),
-        client: MockClient(
-          (_) async => _jsonResponse(payload),
-        ),
+        client: MockClient((_) async => _jsonResponse(payload)),
       );
 
       await expectLater(
@@ -86,7 +102,8 @@ void main() {
       expect(
         () => ReleaseArtifact.fromJson('android', {
           'kind': 'apk',
-          'url': 'https://github.com/youkdonghun/Sprache/releases/download/v1.38.0/app.apk',
+          'url':
+              'https://github.com/youkdonghun/Sprache/releases/download/v1.38.0/app.apk',
           'fileName': 'app.apk',
           'sizeBytes': 100,
         }),
