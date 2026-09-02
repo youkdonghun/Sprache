@@ -345,7 +345,8 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
     );
     final manuallyReportedError = ref.watch(globalAppErrorProvider);
     final storageIndicator = _StorageIndicator.from(localStorage, connection);
-    final sourceError = connection.errorMessage != null
+    final sourceError =
+        connection.userInitiatedOperation && connection.errorMessage != null
         ? GlobalAppErrorNotice(
             source: 'connection',
             message: connection.errorMessage!,
@@ -464,7 +465,9 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                         onSelected: _selectDestination,
                         showSearch: experience.showGlobalSearch,
                         showQuickAdd: experience.showQuickAdd,
-                        showStorageStatus: experience.showSyncStatus,
+                        showStorageStatus:
+                            experience.showSyncStatus &&
+                            connection.userInitiatedOperation,
                         navigationLabelMode: experience.navigationLabelMode,
                         navigationIconStyle: experience.navigationIconStyle,
                         decorationIntensity: experience.decorationIntensity,
@@ -494,7 +497,9 @@ class _ResponsiveShellState extends ConsumerState<ResponsiveShell> {
                         onQuickAddPressed: _openQuickAdd,
                         showSearch: experience.showGlobalSearch,
                         showQuickAdd: experience.showQuickAdd,
-                        showStorageStatus: experience.showSyncStatus,
+                        showStorageStatus:
+                            experience.showSyncStatus &&
+                            connection.userInitiatedOperation,
                         compactSubject:
                             experience.subjectSwitcherStyle ==
                             AppSubjectSwitcherStyle.compact,

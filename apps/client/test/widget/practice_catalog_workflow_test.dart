@@ -192,7 +192,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('recommended and surprise buttons open configurable practice', (
+  testWidgets('recommendation starts directly while settings stays available', (
     tester,
   ) async {
     await _pumpPracticeHub(
@@ -204,6 +204,18 @@ void main() {
     await _tapVisible(
       tester,
       find.byKey(const Key('start-recommended-practice')),
+    );
+    expect(find.byType(StudyScreen), findsOneWidget);
+    expect(find.byKey(const Key('start-practice-session')), findsNothing);
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(SpracheApp)),
+    );
+    container.read(appRouterProvider).go('/learn');
+    await tester.pumpAndSettle();
+    await _tapVisible(
+      tester,
+      find.byKey(const Key('configure-recommended-practice')),
     );
     expect(find.byKey(const Key('start-practice-session')), findsOneWidget);
     await tester.tap(find.byTooltip('닫기').last);
@@ -429,7 +441,6 @@ void main() {
       tester,
       find.byKey(const Key('start-recommended-practice')),
     );
-    await _tapVisible(tester, find.byKey(const Key('start-practice-session')));
     final recentId = harness.container
         .read(appControllerProvider)
         .preferences
@@ -781,7 +792,6 @@ void main() {
       tester,
       find.byKey(const Key('practice-recommendation-recent-wrong')),
     );
-    await _tapVisible(tester, find.byKey(const Key('start-practice-session')));
 
     final plan = controller.activeSessionPlan;
     expect(plan.deck, StudyDeckScope.selected);

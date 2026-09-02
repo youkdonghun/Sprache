@@ -29,6 +29,10 @@ void main() {
     await container.read(connectionControllerProvider.notifier).connect();
     expect(service.pullCount, 1);
     expect(service.pushCount, 1);
+    expect(
+      container.read(connectionControllerProvider).userInitiatedOperation,
+      isFalse,
+    );
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
@@ -36,6 +40,10 @@ void main() {
 
     expect(service.pullCount, 2);
     expect(service.pushCount, 2);
+    expect(
+      container.read(connectionControllerProvider).userInitiatedOperation,
+      isFalse,
+    );
 
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
@@ -87,6 +95,10 @@ void main() {
       ConnectionPhase.connected,
     );
     expect(container.read(connectionControllerProvider).runtimeReady, isTrue);
+    expect(
+      container.read(connectionControllerProvider).userInitiatedOperation,
+      isFalse,
+    );
   });
 }
 

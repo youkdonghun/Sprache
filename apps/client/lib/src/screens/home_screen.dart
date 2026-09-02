@@ -660,7 +660,7 @@ class HomeScreen extends ConsumerWidget {
                               streakDays: state.streakDays,
                               connected: state.driveConnected,
                               showStreak: experience.showStreak,
-                              showSyncStatus: experience.showSyncStatus,
+                              showSyncStatus: false,
                               onSettings: () => context.go('/settings'),
                             ),
                           if (!state.preferences.onboardingCompleted) ...[

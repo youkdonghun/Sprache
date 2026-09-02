@@ -315,7 +315,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         showAbout;
 
     ref.listen(connectionControllerProvider, (previous, next) {
-      if (next.phase == ConnectionPhase.failed &&
+      if (next.userInitiatedOperation &&
+          next.phase == ConnectionPhase.failed &&
           next.errorMessage != previous?.errorMessage) {
         _revealConnectionDiagnostic();
         SemanticsService.sendAnnouncement(

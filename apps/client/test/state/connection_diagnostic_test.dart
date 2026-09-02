@@ -193,6 +193,7 @@ void main() {
 
       expect(controller.state.phase, ConnectionPhase.failed);
       expect(controller.state.runtimeReady, isFalse);
+      expect(controller.state.userInitiatedOperation, isFalse);
       expect(controller.state.diagnostic?.message, contains('로컬 변경은 유지'));
       expect(controller.state.diagnostic?.retryable, isTrue);
       expect(service.pullCalls, 0);
@@ -353,6 +354,7 @@ void main() {
 
       await controller.connect();
       expect(controller.state.phase, ConnectionPhase.failed);
+      expect(controller.state.userInitiatedOperation, isTrue);
       expect(controller.state.diagnostic?.reconnectRequired, isTrue);
       expect(service.pullCalls, 1);
 

@@ -295,7 +295,7 @@ void main() {
           1,
         );
         expect(
-          find.descendant(of: switcher, matching: find.textContaining('영어 ·')),
+          find.descendant(of: switcher, matching: find.text('영어')),
           findsOneWidget,
         );
         expect(tester.takeException(), isNull);

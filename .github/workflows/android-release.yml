@@ -153,9 +153,9 @@ jobs:
               "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "title": f"Sprache {version}",
               "notes": [
-                  "첫 학습 설정을 6단계에서 2단계로 줄였습니다.",
-                  "홈에서 다음 학습과 핵심 바로가기를 먼저 보여 줍니다.",
-                  "통계·최근 자료·동기화·예약 학습은 필요할 때 펼쳐서 볼 수 있습니다.",
+                  "추천 학습은 복잡한 설정 없이 바로 시작하고, 필요할 때만 세부 조건을 바꿀 수 있습니다.",
+                  "자동 Google Drive 동기화는 조용히 처리하고, 사용자가 직접 동기화할 때만 진행 상태를 보여 줍니다.",
+                  "다른 언어에서 진행하던 퀴즈가 현재 언어의 새 퀴즈 시작을 막지 않도록 분리했습니다.",
               ],
               "releasePageUrl": release_page,
               "artifacts": {
@@ -200,4 +200,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --title "Sprache ${{ steps.version.outputs.version }}" \
-            --notes "첫 설정과 홈을 간결하게 정리하고, 자세한 학습 현황은 필요할 때만 펼쳐 볼 수 있게 개선했습니다."
+            --notes "추천 학습은 바로 시작하고 필요할 때만 설정하도록 단순화했습니다. 자동 Drive 동기화 알림은 숨기고, 언어가 다른 진행 중 퀴즈가 새 퀴즈를 막지 않도록 분리했습니다."

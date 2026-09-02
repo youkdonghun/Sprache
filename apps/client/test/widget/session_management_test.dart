@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sprache/src/app.dart';
 import 'package:sprache/src/data/study_store.dart';
 import 'package:sprache/src/domain/active_study_session.dart';
+import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/domain/study_preferences.dart';
 import 'package:sprache/src/routing/app_router.dart';
 import 'package:sprache/src/screens/study_screen.dart';
@@ -152,6 +153,45 @@ void main() {
         container.read(appControllerProvider).activeStudySession?.sessionId,
         original?.sessionId,
       );
+      expect(tester.takeException(), isNull);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('a quiz from another language does not block the new language', (
+    tester,
+  ) async {
+    final container = await _pumpHarness(tester);
+    try {
+      final controller = container.read(appControllerProvider.notifier);
+      final englishSession = container
+          .read(appControllerProvider)
+          .activeStudySession;
+      expect(englishSession, isNotNull);
+
+      container.read(appRouterProvider).go('/learn');
+      await tester.pumpAndSettle();
+      controller.selectLanguage(LanguageTag.japanese);
+      await tester.pumpAndSettle();
+      final japaneseCourseId = container
+          .read(appControllerProvider)
+          .activeCourseId;
+      expect(japaneseCourseId, isNot(englishSession?.courseId));
+
+      container.read(appRouterProvider).go('/study?mode=meaning');
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('active-session-conflict-dialog')),
+        findsNothing,
+      );
+      final japaneseSession = container
+          .read(appControllerProvider)
+          .activeStudySession;
+      expect(japaneseSession, isNotNull);
+      expect(japaneseSession?.courseId, japaneseCourseId);
+      expect(japaneseSession?.sessionId, isNot(englishSession?.sessionId));
       expect(tester.takeException(), isNull);
     } finally {
       await tester.pumpWidget(const SizedBox.shrink());

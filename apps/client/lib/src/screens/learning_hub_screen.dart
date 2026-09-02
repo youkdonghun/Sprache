@@ -1717,7 +1717,10 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
             basis: recommendationBasis,
             recommendationWeights: catalog.recommendationWeightByActivityId,
             availabilityFor: _availabilityFor,
-            onPressed: _openActivity,
+            onPressed: (activity) =>
+                _openActivity(activity, useSavedRules: true),
+            onConfigure: (activity) =>
+                _openActivity(activity, forceConfigure: true),
             onSeeMore: (activity) => _adjustRecommendationWeight(activity, 1),
             onSeeLess: (activity) => _adjustRecommendationWeight(activity, -1),
             onHideToday: (activity) =>
@@ -2045,6 +2048,7 @@ class _PersonalizedPracticeHub extends StatefulWidget {
     required this.recommendationWeights,
     required this.availabilityFor,
     required this.onPressed,
+    required this.onConfigure,
     required this.onSeeMore,
     required this.onSeeLess,
     required this.onHideToday,
@@ -2056,6 +2060,7 @@ class _PersonalizedPracticeHub extends StatefulWidget {
   final Map<String, int> recommendationWeights;
   final _ActivityAvailability Function(_Activity) availabilityFor;
   final Future<void> Function(_Activity) onPressed;
+  final Future<void> Function(_Activity) onConfigure;
   final ValueChanged<_Activity> onSeeMore;
   final ValueChanged<_Activity> onSeeLess;
   final ValueChanged<_Activity> onHideToday;
@@ -2215,16 +2220,25 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
                     ),
                   ),
                 ),
-                if (primary case final recommendation?)
+                if (primary case final recommendation?) ...[
+                  IconButton(
+                    key: const Key('configure-recommended-practice'),
+                    onPressed: () =>
+                        widget.onConfigure(recommendation.activity),
+                    tooltip: '추천 학습 설정',
+                    icon: const Icon(Icons.tune_rounded),
+                  ),
+                  const SizedBox(width: 2),
                   FilledButton.tonalIcon(
                     key: const Key('start-recommended-practice'),
                     onPressed: () => widget.onPressed(recommendation.activity),
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(0, 44),
                     ),
-                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
-                    label: const Text('추천대로 시작'),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                    label: const Text('바로 시작'),
                   ),
+                ],
               ],
             ),
             const SizedBox(height: 5),
@@ -2247,7 +2261,7 @@ class _PersonalizedPracticeHubState extends State<_PersonalizedPracticeHub> {
               children: [
                 Expanded(
                   child: Text(
-                    '추천 ${widget.recommendations.length}개 · 좌우로 넘겨 보세요',
+                    '추천 ${widget.recommendations.length}개 · 카드를 누르면 바로 시작해요',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(

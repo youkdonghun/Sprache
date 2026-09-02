@@ -181,6 +181,7 @@ class ConnectionState {
     this.pendingChanges = false,
     this.deviceSettingsLoaded = false,
     this.reconnectSummary,
+    this.userInitiatedOperation = false,
   });
 
   const ConnectionState.disconnected()
@@ -200,7 +201,8 @@ class ConnectionState {
       recoveryAvailable = false,
       pendingChanges = false,
       deviceSettingsLoaded = false,
-      reconnectSummary = null;
+      reconnectSummary = null,
+      userInitiatedOperation = false;
 
   final ConnectionPhase phase;
   final String? folderId;
@@ -219,6 +221,7 @@ class ConnectionState {
   final bool pendingChanges;
   final bool deviceSettingsLoaded;
   final ReconnectSyncSummary? reconnectSummary;
+  final bool userInitiatedOperation;
 
   String? get errorMessage => diagnostic?.message;
 
@@ -259,6 +262,7 @@ class ConnectionState {
     bool? pendingChanges,
     bool? deviceSettingsLoaded,
     Object? reconnectSummary = _keepConnectionValue,
+    bool? userInitiatedOperation,
   }) {
     return ConnectionState(
       phase: phase ?? this.phase,
@@ -292,6 +296,8 @@ class ConnectionState {
       reconnectSummary: identical(reconnectSummary, _keepConnectionValue)
           ? this.reconnectSummary
           : reconnectSummary as ReconnectSyncSummary?,
+      userInitiatedOperation:
+          userInitiatedOperation ?? this.userInitiatedOperation,
     );
   }
 }
@@ -773,7 +779,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
 
   Future<void> connect() {
     if (state.policy.offlineLock) return Future.value();
-    return _establishConnection();
+    return _establishConnection(userInitiated: true);
   }
 
   Future<void> changeDriveFolder() async {
@@ -788,10 +794,11 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       connectionOperation: reselectionService.reselectDriveFolder,
       preserveExistingUntilSelected: true,
       folderReselectionService: reselectionService,
+      userInitiated: true,
     );
   }
 
-  Future<void> restoreSavedConnection() async {
+  Future<void> restoreSavedConnection({bool userInitiated = false}) async {
     if (state.policy.offlineLock ||
         state.busy ||
         !_appController.state.isHydrated ||
@@ -802,6 +809,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     if (service is! RestorableGoogleConnectionService) return;
     await _establishConnection(
       restorableService: service as RestorableGoogleConnectionService,
+      userInitiated: userInitiated,
     );
   }
 
@@ -815,7 +823,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     }
     if (state.busy) return;
     if (!manual && !await _automaticSyncAllowed()) return;
-    return restoreSavedConnection();
+    return restoreSavedConnection(userInitiated: manual);
   }
 
   Future<void> _establishConnection({
@@ -826,6 +834,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     connectionOperation,
     bool preserveExistingUntilSelected = false,
     DriveFolderReselectionService? folderReselectionService,
+    bool userInitiated = false,
   }) async {
     if (state.busy || state.policy.offlineLock) return;
     final previousState = state;
@@ -840,6 +849,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       phase: ConnectionPhase.connecting,
       stage: GoogleConnectionStage.checkingConnection,
       diagnostic: null,
+      userInitiatedOperation: userInitiated,
     );
     GoogleConnectionResult? connectionResult;
     PendingSyncOperation? attemptedOperation;
@@ -912,6 +922,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         stage: null,
         diagnostic: null,
         pendingChanges: false,
+        userInitiatedOperation: false,
         reconnectSummary: hadQueuedLocalChanges
             ? ReconnectSyncSummary(
                 id: attemptedOperation.operationId,
@@ -984,6 +995,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         runtimeReady: connectionResult != null,
         stage: failedStage,
         pendingChanges: failedOperation != null,
+        userInitiatedOperation: userInitiated,
       );
       await _rememberFailedSync(startedAt: startedAt, diagnostic: diagnostic);
       if (_shouldRetry(error) &&
@@ -1004,7 +1016,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     if (state.busy || (state.phase != ConnectionPhase.connected && !canRetry)) {
       return;
     }
-    await _runSync(allowExplicitRetry: true);
+    await _runSync(allowExplicitRetry: true, userInitiated: true);
   }
 
   Future<void> syncAutomatically() async {
@@ -1031,7 +1043,10 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     }
   }
 
-  Future<void> _runSync({bool allowExplicitRetry = false}) async {
+  Future<void> _runSync({
+    bool allowExplicitRetry = false,
+    bool userInitiated = false,
+  }) async {
     final canRetry =
         state.phase == ConnectionPhase.failed &&
         state.runtimeReady &&
@@ -1054,6 +1069,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
       lastMergeReport: previous.lastMergeReport,
       stage: GoogleConnectionStage.pulling,
       diagnostic: null,
+      userInitiatedOperation: userInitiated,
     );
     PendingSyncOperation? attemptedOperation;
     try {
@@ -1098,6 +1114,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         stage: null,
         diagnostic: null,
         pendingChanges: false,
+        userInitiatedOperation: false,
         reconnectSummary: hadQueuedLocalChanges
             ? ReconnectSyncSummary(
                 id: attemptedOperation.operationId,
@@ -1135,6 +1152,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         lastMergeReport: previous.lastMergeReport,
         stage: failedStage,
         pendingChanges: failedOperation != null,
+        userInitiatedOperation: userInitiated,
       );
       await _rememberFailedSync(startedAt: startedAt, diagnostic: diagnostic);
       if (_shouldRetry(error) && failedOperation != null) {
@@ -1149,6 +1167,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     state = state.copyWith(
       phase: ConnectionPhase.disconnecting,
       diagnostic: null,
+      userInitiatedOperation: true,
     );
     try {
       await _service.disconnect();
@@ -1160,11 +1179,13 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         runtimeReady: false,
         stage: null,
         pendingChanges: false,
+        userInitiatedOperation: false,
       );
     } catch (error) {
       state = state.copyWith(
         phase: ConnectionPhase.failed,
         diagnostic: _diagnostic(error, operation: 'Google 연결 해제'),
+        userInitiatedOperation: true,
       );
     } finally {
       // A device-local disconnect must always resume the configured local
@@ -1185,6 +1206,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
     state = state.copyWith(
       phase: ConnectionPhase.disconnecting,
       diagnostic: null,
+      userInitiatedOperation: true,
     );
     try {
       await deletionService.deleteAccountBinding();
@@ -1197,11 +1219,13 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         runtimeReady: false,
         stage: null,
         pendingChanges: false,
+        userInitiatedOperation: false,
       );
     } catch (error) {
       state = state.copyWith(
         phase: ConnectionPhase.failed,
         diagnostic: _diagnostic(error, operation: '계정 연결 기록 삭제'),
+        userInitiatedOperation: true,
       );
       rethrow;
     }

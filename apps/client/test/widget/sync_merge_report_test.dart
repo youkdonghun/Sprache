@@ -30,7 +30,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.byKey(const Key('shell-storage-status')), findsOneWidget);
+      expect(find.byKey(const Key('shell-storage-status')), findsNothing);
       await tester.tap(find.byKey(const Key('home-settings')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('settings-category-storage')));
@@ -40,6 +40,7 @@ void main() {
       await tester.tap(find.byKey(const Key('connect-google')));
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const Key('shell-storage-status')), findsNothing);
       expect(find.byKey(const Key('sync-merge-report')), findsOneWidget);
       final review = tester.widget<ExpansionTile>(
         find.byKey(const Key('sync-conflict-review')),

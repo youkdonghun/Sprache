@@ -427,7 +427,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
     if (!widget.mode.allowsAnswerDirectionOverride) {
       _sessionAnswerDirection = widget.mode.effectiveFixedAnswerDirection;
     }
-    final persistedSession = ref.read(appControllerProvider).activeStudySession;
+    var persistedSession = ref.read(appControllerProvider).activeStudySession;
     if (widget.resume &&
         persistedSession != null &&
         persistedSession.courseId !=
@@ -443,21 +443,28 @@ class _StudyScreenState extends ConsumerState<StudyScreen>
         controller.selectSubject(sessionSubject.id);
       }
     }
+    if (!widget.resume &&
+        persistedSession != null &&
+        persistedSession.courseId !=
+            ref.read(appControllerProvider).activeCourseId) {
+      persistedSession = null;
+    }
     _subjectIdAtStart = ref.read(appControllerProvider).activeSubjectId;
-    if (!widget.resume && persistedSession != null) {
+    final existingSession = persistedSession;
+    if (!widget.resume && existingSession != null) {
       _queue = const [];
-      _plannedCount = persistedSession.itemIds.length;
-      _sessionStartedAt = persistedSession.startedAt;
-      _sessionId = persistedSession.sessionId;
-      _activeSession = persistedSession;
-      _sessionCorrect = persistedSession.correctCount;
-      _sessionWrong = persistedSession.wrongCount;
-      _sessionXp = persistedSession.earnedXp;
-      _wrongItemIds.addAll(persistedSession.wrongItemIds);
-      _finalCorrectItemIds.addAll(persistedSession.finalCorrectItemIds);
+      _plannedCount = existingSession.itemIds.length;
+      _sessionStartedAt = existingSession.startedAt;
+      _sessionId = existingSession.sessionId;
+      _activeSession = existingSession;
+      _sessionCorrect = existingSession.correctCount;
+      _sessionWrong = existingSession.wrongCount;
+      _sessionXp = existingSession.earnedXp;
+      _wrongItemIds.addAll(existingSession.wrongItemIds);
+      _finalCorrectItemIds.addAll(existingSession.finalCorrectItemIds);
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        _showExistingSessionChoice(persistedSession);
+        _showExistingSessionChoice(existingSession);
       });
       return;
     }
