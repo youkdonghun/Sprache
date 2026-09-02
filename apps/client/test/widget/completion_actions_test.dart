@@ -61,7 +61,8 @@ void main() {
         expect(back, findsOneWidget);
         expect(receipt, findsOneWidget);
         expect(find.text('기기 저장 내역'), findsOneWidget);
-        expect(find.textContaining('동기화 대기 1건'), findsOneWidget);
+        expect(find.text('기기에 저장 완료'), findsOneWidget);
+        expect(find.textContaining('동기화'), findsNothing);
         expect(
           tester.getTopLeft(next).dy,
           lessThan(tester.getTopLeft(back).dy),

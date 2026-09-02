@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 
 import {
   buildLanguagePackCatalog,
   serializeLanguagePackCatalog,
   validatePack,
 } from '../build-language-pack-catalog.mjs';
+
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 const validPack = {
   schemaVersion: 1,
@@ -80,4 +83,24 @@ test('rejects duplicate stable item ids', () => {
     }),
     /duplicate item id/,
   );
+});
+
+test('repository publishes one curated download pack for every learning language', async () => {
+  const catalog = await buildLanguagePackCatalog(repositoryRoot);
+  const expected = new Map([
+    ['de', 'sprache-de-tufs-core-2026-09'],
+    ['en', 'sprache-en-tufs-core-2026-09'],
+    ['es', 'sprache-es-tufs-core-2026-09'],
+    ['fr', 'sprache-fr-tufs-core-2026-09'],
+    ['ja', 'sprache-ja-tufs-core-2026-09'],
+    ['zh-Hans', 'sprache-zh-hans-tufs-core-2026-09'],
+  ]);
+
+  for (const [language, id] of expected) {
+    const descriptor = catalog.packs.find((pack) => pack.id === id);
+    assert.ok(descriptor, `${language} starter pack is missing`);
+    assert.equal(descriptor.language, language);
+    assert.ok(descriptor.itemCount >= 350);
+    assert.match(descriptor.sha256, /^[a-f0-9]{64}$/);
+  }
 });

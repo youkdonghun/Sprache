@@ -257,6 +257,33 @@ void main() {
       app.dispose();
     },
   );
+
+  test('background sync stays silent after queued local work', () async {
+    final store = MemoryStudyStore();
+    final app = AppController(store);
+    await Future<void>.delayed(Duration.zero);
+    final service = _TestDriveService();
+    final controller = ConnectionController(service, app, store: store);
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.connect();
+    final initialSummary = controller.state.reconnectSummary;
+    if (initialSummary != null) {
+      controller.dismissReconnectSummary(initialSummary.id);
+    }
+    await app.queueSyncSnapshot();
+    controller.observeAppState(app.state);
+
+    await controller.syncAutomatically();
+
+    expect(service.pushCount, greaterThan(0));
+    expect(controller.state.pendingChanges, isFalse);
+    expect(controller.state.reconnectSummary, isNull);
+    expect(controller.state.userInitiatedOperation, isFalse);
+
+    controller.dispose();
+    app.dispose();
+  });
 }
 
 class _NetworkInspector implements SyncNetworkInspector {

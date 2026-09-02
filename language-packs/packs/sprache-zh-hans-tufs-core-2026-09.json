@@ -1,0 +1,6318 @@
+{
+  "schemaVersion": 1,
+  "id": "sprache-zh-hans-tufs-core-2026-09",
+  "title": "중국어 생활 핵심 추가 어휘 370",
+  "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+  "language": "zh-Hans",
+  "version": "2026.09.1",
+  "revision": 1,
+  "publishedAt": "2026-09-02T00:00:00Z",
+  "license": "CC-BY-4.0",
+  "attribution": "TUFS Open Language Resources, adapted by Sprache",
+  "items": [
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-3472",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "方便",
+      "meaning": "편리하다",
+      "accepted_answers": [
+        "편리하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fāngbiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-7603",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "什么时候",
+      "meaning": "언제",
+      "accepted_answers": [
+        "언제"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shénmeshíhou"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-7864",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "每个星期",
+      "meaning": "매주",
+      "accepted_answers": [
+        "매주"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "měigexīngqī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-7865",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "每个月",
+      "meaning": "매월",
+      "accepted_answers": [
+        "매월"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "měigeyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-7870",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "每年",
+      "meaning": "매년",
+      "accepted_answers": [
+        "매년"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "měinián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8361",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "春天",
+      "meaning": "봄",
+      "accepted_answers": [
+        "봄"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chūntiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8375",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "夏天",
+      "meaning": "여름",
+      "accepted_answers": [
+        "여름"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xiàtiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8389",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "秋天",
+      "meaning": "가을",
+      "accepted_answers": [
+        "가을"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qiūtiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8403",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "冬天",
+      "meaning": "겨울",
+      "accepted_answers": [
+        "겨울"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dōngtiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8555",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "星期一",
+      "meaning": "월요일",
+      "accepted_answers": [
+        "월요일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīngqīyī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8556",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "星期二",
+      "meaning": "화요일",
+      "accepted_answers": [
+        "화요일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīngqīèr"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8557",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "星期三",
+      "meaning": "수요일",
+      "accepted_answers": [
+        "수요일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīngqīsān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8558",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "星期四",
+      "meaning": "목요일",
+      "accepted_answers": [
+        "목요일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīngqīsì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8559",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "星期五",
+      "meaning": "금요일",
+      "accepted_answers": [
+        "금요일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīngqīwǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8560",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "星期六",
+      "meaning": "토요일",
+      "accepted_answers": [
+        "토요일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīngqīliù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8561",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "星期天",
+      "meaning": "일요일",
+      "accepted_answers": [
+        "일요일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīngqītiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8822",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "上午",
+      "meaning": "오전",
+      "accepted_answers": [
+        "오전"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shàngwǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8824",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "下午",
+      "meaning": "오후",
+      "accepted_answers": [
+        "오후"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xiàwǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8873",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "白天",
+      "meaning": "낮",
+      "accepted_answers": [
+        "낮"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "báitiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-8891",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "傍晚",
+      "meaning": "저녁",
+      "accepted_answers": [
+        "저녁"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bàngwǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9013",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "今年",
+      "meaning": "올해",
+      "accepted_answers": [
+        "올해"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jīnnián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9022",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "这个月",
+      "meaning": "이번 달",
+      "accepted_answers": [
+        "이번 달"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhèigeyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9025",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "这个星期",
+      "meaning": "이번 주",
+      "accepted_answers": [
+        "이번 주"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhèigexīngqī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9103",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "去年",
+      "meaning": "작년",
+      "accepted_answers": [
+        "작년"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qùnián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9108",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "前年",
+      "meaning": "재작년",
+      "accepted_answers": [
+        "재작년"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qiánnián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9112",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "上个月",
+      "meaning": "지난달",
+      "accepted_answers": [
+        "지난달"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shànggeyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9116",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "上星期",
+      "meaning": "지난주",
+      "accepted_answers": [
+        "지난주"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9118",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "昨天",
+      "meaning": "어제",
+      "accepted_answers": [
+        "어제"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zuótiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9122",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "前天",
+      "meaning": "그저께",
+      "accepted_answers": [
+        "그저께"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qiántiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9127",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "昨夜",
+      "meaning": "어젯밤",
+      "accepted_answers": [
+        "어젯밤"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zuóyè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9196",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "明年",
+      "meaning": "내년",
+      "accepted_answers": [
+        "내년"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "míngnián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9201",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "后年",
+      "meaning": "다음다음 해",
+      "accepted_answers": [
+        "다음다음 해"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hòunián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9206",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "下个月",
+      "meaning": "다음 달",
+      "accepted_answers": [
+        "다음 달"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xiàgeyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9208",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "下个星期",
+      "meaning": "다음 주",
+      "accepted_answers": [
+        "다음 주"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xiàgexīngqī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9219",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "后天",
+      "meaning": "모레",
+      "accepted_answers": [
+        "모레"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hòutiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-9986",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "那儿",
+      "meaning": "거기, 그쪽",
+      "accepted_answers": [
+        "거기, 그쪽",
+        "거기",
+        "그쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nàr"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10006",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "哪儿",
+      "meaning": "어디, 어느 쪽",
+      "accepted_answers": [
+        "어디, 어느 쪽",
+        "어디",
+        "어느 쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nǎr"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10765",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "这儿",
+      "meaning": "여기, 이쪽",
+      "accepted_answers": [
+        "여기, 이쪽",
+        "여기",
+        "이쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhèr"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10903",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "东边",
+      "meaning": "동쪽",
+      "accepted_answers": [
+        "동쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dōngbian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10905",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "西边",
+      "meaning": "서쪽",
+      "accepted_answers": [
+        "서쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xībian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10910",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "南边",
+      "meaning": "남쪽",
+      "accepted_answers": [
+        "남쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nánbian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10912",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "北边",
+      "meaning": "북쪽",
+      "accepted_answers": [
+        "북쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "běibian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10954",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "左边",
+      "meaning": "왼쪽",
+      "accepted_answers": [
+        "왼쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zuǒbian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10956",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "右边",
+      "meaning": "오른쪽",
+      "accepted_answers": [
+        "오른쪽"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yòubian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10981",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "前面",
+      "meaning": "앞",
+      "accepted_answers": [
+        "앞"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qiánmian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-10983",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "后面",
+      "meaning": "뒤",
+      "accepted_answers": [
+        "뒤"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hòumian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11034",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "竖",
+      "meaning": "세로",
+      "accepted_answers": [
+        "세로"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11035",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "横",
+      "meaning": "옆",
+      "accepted_answers": [
+        "옆"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "héng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11063",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "上",
+      "meaning": "위",
+      "accepted_answers": [
+        "위"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shang"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11065",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "下面",
+      "meaning": "아래",
+      "accepted_answers": [
+        "아래"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xiàmian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11437",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "外面",
+      "meaning": "밖",
+      "accepted_answers": [
+        "밖"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wàimian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11443",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "里边",
+      "meaning": "안",
+      "accepted_answers": [
+        "안"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lǐbian"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11633",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "旁边",
+      "meaning": "근처",
+      "accepted_answers": [
+        "근처"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "pángbiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-11706",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "附近",
+      "meaning": "근처",
+      "accepted_answers": [
+        "근처"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fùjìn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-12247",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "出口",
+      "meaning": "출구",
+      "accepted_answers": [
+        "출구"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chūkǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-12249",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "入口",
+      "meaning": "입구",
+      "accepted_answers": [
+        "입구"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "rùkǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-13006",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "众多",
+      "meaning": "여러 사람",
+      "accepted_answers": [
+        "여러 사람"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhòngduō"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14011",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "大家",
+      "meaning": "모두",
+      "accepted_answers": [
+        "모두"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dàjiā"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14623",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "一个月",
+      "meaning": "한 달",
+      "accepted_answers": [
+        "한 달"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yígeyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14656",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "几",
+      "meaning": "몇 개",
+      "accepted_answers": [
+        "몇 개"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14658",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "多少",
+      "meaning": "얼마",
+      "accepted_answers": [
+        "얼마"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "duōshao"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14871",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "年",
+      "meaning": "년",
+      "accepted_answers": [
+        "년"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14900",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "点",
+      "meaning": "시",
+      "accepted_answers": [
+        "시"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "diǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-14901",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "小时",
+      "meaning": "시간",
+      "accepted_answers": [
+        "시간"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xiǎoshí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15048",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "度",
+      "meaning": "도",
+      "accepted_answers": [
+        "도"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15092",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "楼",
+      "meaning": "층",
+      "accepted_answers": [
+        "층"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lóu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15476",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "我",
+      "meaning": "저",
+      "accepted_answers": [
+        "저"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wǒ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15603",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "谁",
+      "meaning": "누구",
+      "accepted_answers": [
+        "누구"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shéi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15605",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "哪位",
+      "meaning": "누구",
+      "accepted_answers": [
+        "누구"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "něiwèi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15612",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "有人",
+      "meaning": "누군가",
+      "accepted_answers": [
+        "누군가"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǒurén"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15636",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "自己",
+      "meaning": "자기",
+      "accepted_answers": [
+        "자기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zìjǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15939",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "男的",
+      "meaning": "남자",
+      "accepted_answers": [
+        "남자"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nánde"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15944",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "男孩子",
+      "meaning": "남자 아이",
+      "accepted_answers": [
+        "남자 아이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nánháizi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-15965",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "女的",
+      "meaning": "여자",
+      "accepted_answers": [
+        "여자"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nǚde"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16184",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "成年人",
+      "meaning": "어른",
+      "accepted_answers": [
+        "어른"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chéngniánrén"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16223",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "爷爷",
+      "meaning": "할아버지",
+      "accepted_answers": [
+        "할아버지"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yéye"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16229",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "姥姥",
+      "meaning": "할머니",
+      "accepted_answers": [
+        "할머니"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lǎolao"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16402",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "老婆",
+      "meaning": "부인",
+      "accepted_answers": [
+        "부인"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lǎopo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16488",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "父母",
+      "meaning": "부모",
+      "accepted_answers": [
+        "부모"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fùmǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16496",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "妈妈",
+      "meaning": "어머니",
+      "accepted_answers": [
+        "어머니"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "māma"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16500",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "爸爸",
+      "meaning": "아빠",
+      "accepted_answers": [
+        "아빠"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bàba"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16780",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "兄弟",
+      "meaning": "형제",
+      "accepted_answers": [
+        "형제"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xiōngdì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16785",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "哥哥",
+      "meaning": "형",
+      "accepted_answers": [
+        "형"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gēge"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16799",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "姐妹",
+      "meaning": "자매",
+      "accepted_answers": [
+        "자매"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiěmèi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-16806",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "姐姐",
+      "meaning": "누나",
+      "accepted_answers": [
+        "누나"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiějie"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-17302",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "外国人",
+      "meaning": "외국인",
+      "accepted_answers": [
+        "외국인"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wàiguórén"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-19186",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "老师",
+      "meaning": "선생님",
+      "accepted_answers": [
+        "선생님"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lǎoshī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-19217",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "大夫",
+      "meaning": "의사",
+      "accepted_answers": [
+        "의사"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dàifu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-20056",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "警察",
+      "meaning": "경찰관",
+      "accepted_answers": [
+        "경찰관"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jǐngchá"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-20240",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "学生",
+      "meaning": "학생",
+      "accepted_answers": [
+        "학생"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xuésheng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-20281",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "留学生",
+      "meaning": "유학생",
+      "accepted_answers": [
+        "유학생"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "liúxuéshēng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-21220",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "家庭",
+      "meaning": "가정",
+      "accepted_answers": [
+        "가정"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiātíng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-21365",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "外国",
+      "meaning": "외국",
+      "accepted_answers": [
+        "외국"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wàiguó"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22500",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "教室",
+      "meaning": "교실",
+      "accepted_answers": [
+        "교실"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiàoshì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22517",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "大学",
+      "meaning": "대학교",
+      "accepted_answers": [
+        "대학교"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dàxué"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22666",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "公司",
+      "meaning": "회사",
+      "accepted_answers": [
+        "회사"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gōngsī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22692",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "银行",
+      "meaning": "은행",
+      "accepted_answers": [
+        "은행"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yínháng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22810",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "游泳池",
+      "meaning": "수영장",
+      "accepted_answers": [
+        "수영장"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yóuyǒngchí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22896",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "食堂",
+      "meaning": "식당",
+      "accepted_answers": [
+        "식당"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shítáng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22917",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "咖啡厅",
+      "meaning": "카페",
+      "accepted_answers": [
+        "카페"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "kāfēitīng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-22952",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "菜铺",
+      "meaning": "야채 가게",
+      "accepted_answers": [
+        "야채 가게"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "càipù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23049",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "百货公司",
+      "meaning": "백화점",
+      "accepted_answers": [
+        "백화점"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bǎihuògōngsī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23065",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "饭店",
+      "meaning": "호텔",
+      "accepted_answers": [
+        "호텔"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fàndiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23121",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "图书馆",
+      "meaning": "도서관",
+      "accepted_answers": [
+        "도서관"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "túshūguǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23140",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "公园",
+      "meaning": "공원",
+      "accepted_answers": [
+        "공원"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gōngyuán"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23216",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "派出所",
+      "meaning": "파출소",
+      "accepted_answers": [
+        "파출소"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "pàichūsuǒ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23402",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "大使馆",
+      "meaning": "대사관",
+      "accepted_answers": [
+        "대사관"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dàshǐguǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23439",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "邮局",
+      "meaning": "우체국",
+      "accepted_answers": [
+        "우체국"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yóujú"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-23913",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "班",
+      "meaning": "반",
+      "accepted_answers": [
+        "반"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-25605",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "声音",
+      "meaning": "목소리",
+      "accepted_answers": [
+        "목소리"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shēngyīn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-26691",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "练习",
+      "meaning": "연습",
+      "accepted_answers": [
+        "연습"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "liànxí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-27779",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "考试",
+      "meaning": "시험",
+      "accepted_answers": [
+        "시험"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "kǎoshì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-28234",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "意思",
+      "meaning": "뜻",
+      "accepted_answers": [
+        "뜻"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yìsi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-28288",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "作业",
+      "meaning": "숙제",
+      "accepted_answers": [
+        "숙제"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zuòyè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-30562",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "日语",
+      "meaning": "일본어",
+      "accepted_answers": [
+        "일본어"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "Rìyǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-30580",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "英语",
+      "meaning": "영어",
+      "accepted_answers": [
+        "영어"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yīngyǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-31526",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "汉字",
+      "meaning": "한자",
+      "accepted_answers": [
+        "한자"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hànzì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-32060",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "地图",
+      "meaning": "지도",
+      "accepted_answers": [
+        "지도"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dìtú"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-32261",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "信",
+      "meaning": "편지",
+      "accepted_answers": [
+        "편지"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xìn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-32265",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "明信片",
+      "meaning": "엽서",
+      "accepted_answers": [
+        "엽서"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "míngxìnpiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-32575",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "话",
+      "meaning": "이야기",
+      "accepted_answers": [
+        "이야기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "huà"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-32755",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "问题",
+      "meaning": "질문",
+      "accepted_answers": [
+        "질문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wèntí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-33488",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "复印",
+      "meaning": "복사",
+      "accepted_answers": [
+        "복사"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fùyìn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-33734",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "文章",
+      "meaning": "글",
+      "accepted_answers": [
+        "글"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wénzhāng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-34482",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "杂志",
+      "meaning": "잡지",
+      "accepted_answers": [
+        "잡지"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zázhì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-34508",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "报纸",
+      "meaning": "신문",
+      "accepted_answers": [
+        "신문"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bàozhǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-34541",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "词典",
+      "meaning": "사전",
+      "accepted_answers": [
+        "사전"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "cídiǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-34792",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "歌",
+      "meaning": "노래",
+      "accepted_answers": [
+        "노래"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-35036",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "画",
+      "meaning": "그림",
+      "accepted_answers": [
+        "그림"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "huà"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-35159",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "照片",
+      "meaning": "사진",
+      "accepted_answers": [
+        "사진"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhàopiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-35232",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "音乐",
+      "meaning": "음악",
+      "accepted_answers": [
+        "음악"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yīnyuè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-35701",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "电影",
+      "meaning": "영화",
+      "accepted_answers": [
+        "영화"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "diànyǐng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-36595",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "暑假",
+      "meaning": "여름 방학",
+      "accepted_answers": [
+        "여름 방학"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shǔjià"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-36602",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "假",
+      "meaning": "휴일",
+      "accepted_answers": [
+        "휴일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jià"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-36910",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "饭",
+      "meaning": "밥",
+      "accepted_answers": [
+        "밥"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-36929",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "早饭",
+      "meaning": "아침",
+      "accepted_answers": [
+        "아침"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zǎofàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-36936",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "午饭",
+      "meaning": "점심",
+      "accepted_answers": [
+        "점심"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wǔfàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-36950",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "晚饭",
+      "meaning": "저녁",
+      "accepted_answers": [
+        "저녁"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wǎnfàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-38057",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "旅行",
+      "meaning": "여행",
+      "accepted_answers": [
+        "여행"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lǚxíng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-38140",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "散步",
+      "meaning": "산책",
+      "accepted_answers": [
+        "산책"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "sànbù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-38202",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "运动",
+      "meaning": "스포츠",
+      "accepted_answers": [
+        "스포츠"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yùndòng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-39927",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "拿手",
+      "meaning": "잘하다",
+      "accepted_answers": [
+        "잘하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "náshǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-40795",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "晚会",
+      "meaning": "파티",
+      "accepted_answers": [
+        "파티"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wǎnhuì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-42954",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "上课",
+      "meaning": "수업",
+      "accepted_answers": [
+        "수업"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shàngkè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-45301",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "买东西",
+      "meaning": "쇼핑",
+      "accepted_answers": [
+        "쇼핑"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "mǎidōngxi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-47235",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "洗衣服",
+      "meaning": "빨래",
+      "accepted_answers": [
+        "빨래"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-47401",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "打扫",
+      "meaning": "청소",
+      "accepted_answers": [
+        "청소"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dǎsǎo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-48148",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "包裹",
+      "meaning": "짐",
+      "accepted_answers": [
+        "짐"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bāoguǒ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-48231",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "车票",
+      "meaning": "표",
+      "accepted_answers": [
+        "표"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chēpiào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-48275",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "邮票",
+      "meaning": "우표",
+      "accepted_answers": [
+        "우표"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yóupiào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-48362",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "纸",
+      "meaning": "종이",
+      "accepted_answers": [
+        "종이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49632",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "西服",
+      "meaning": "옷",
+      "accepted_answers": [
+        "옷"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīfú"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49803",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "外衣",
+      "meaning": "자켓",
+      "accepted_answers": [
+        "자켓"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wàiyī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49814",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "西装",
+      "meaning": "양복",
+      "accepted_answers": [
+        "양복"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xīzhuāng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49843",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "毛衣",
+      "meaning": "스웨터",
+      "accepted_answers": [
+        "스웨터"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "máoyī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49847",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "衬衫",
+      "meaning": "셔츠",
+      "accepted_answers": [
+        "셔츠"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chènshān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49881",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "大衣",
+      "meaning": "외투",
+      "accepted_answers": [
+        "외투"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dàyī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49909",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "裤子",
+      "meaning": "바지",
+      "accepted_answers": [
+        "바지"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "kùzì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49927",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "裙子",
+      "meaning": "치마",
+      "accepted_answers": [
+        "치마"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qúnzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-49945",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "汗衫",
+      "meaning": "셔츠",
+      "accepted_answers": [
+        "셔츠"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hànshān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50065",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "口袋",
+      "meaning": "주머니",
+      "accepted_answers": [
+        "주머니"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "kǒudài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50073",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "帽子",
+      "meaning": "모자",
+      "accepted_answers": [
+        "모자"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "màozi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50149",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "领带",
+      "meaning": "넥타이",
+      "accepted_answers": [
+        "넥타이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lǐngdài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50205",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "袜子",
+      "meaning": "양말",
+      "accepted_answers": [
+        "양말"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wàzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50246",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "鞋",
+      "meaning": "구두",
+      "accepted_answers": [
+        "구두"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xié"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50294",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "拖鞋",
+      "meaning": "슬리퍼",
+      "accepted_answers": [
+        "슬리퍼"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tuōxié"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50300",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "雨伞",
+      "meaning": "우산",
+      "accepted_answers": [
+        "우산"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǔsǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50330",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "床",
+      "meaning": "침대",
+      "accepted_answers": [
+        "침대"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chuáng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-50441",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "吃的",
+      "meaning": "음식",
+      "accepted_answers": [
+        "음식"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chīde"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51101",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "蔬菜",
+      "meaning": "야채",
+      "accepted_answers": [
+        "야채"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shūcài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51286",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "肉",
+      "meaning": "고기",
+      "accepted_answers": [
+        "고기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "ròu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51294",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "鸡肉",
+      "meaning": "닭고기",
+      "accepted_answers": [
+        "닭고기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jīròu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51299",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "牛肉",
+      "meaning": "쇠고기",
+      "accepted_answers": [
+        "쇠고기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "niúròu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51303",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "猪肉",
+      "meaning": "돼지고기",
+      "accepted_answers": [
+        "돼지고기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhūròu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51376",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "糖",
+      "meaning": "설탕",
+      "accepted_answers": [
+        "설탕"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "táng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51398",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "盐",
+      "meaning": "소금",
+      "accepted_answers": [
+        "소금"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yán"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51442",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "酱油",
+      "meaning": "간장",
+      "accepted_answers": [
+        "간장"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiàngyóu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51476",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "黄油",
+      "meaning": "버터",
+      "accepted_answers": [
+        "버터"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "huángyóu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51510",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "咖喱饭",
+      "meaning": "카레라이스",
+      "accepted_answers": [
+        "카레라이스"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gālífàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51546",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "点心",
+      "meaning": "과자",
+      "accepted_answers": [
+        "과자"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "diǎnxin"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51732",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "饮料",
+      "meaning": "음료수",
+      "accepted_answers": [
+        "음료수"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǐnliào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51748",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "红茶",
+      "meaning": "홍차",
+      "accepted_answers": [
+        "홍차"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hóngchá"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51821",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "葡萄酒",
+      "meaning": "와인",
+      "accepted_answers": [
+        "와인"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "pútaojiǔ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51920",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "烟",
+      "meaning": "담배",
+      "accepted_answers": [
+        "담배"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-51929",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "药",
+      "meaning": "약",
+      "accepted_answers": [
+        "약"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-52391",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "房子",
+      "meaning": "집",
+      "accepted_answers": [
+        "집"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fángzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-52553",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "建筑物",
+      "meaning": "건물",
+      "accepted_answers": [
+        "건물"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiànzhùwù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-52878",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "公寓",
+      "meaning": "아파트",
+      "accepted_answers": [
+        "아파트"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gōngyù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53018",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "正门",
+      "meaning": "현관",
+      "accepted_answers": [
+        "현관"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhèngmén"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53027",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "厨房",
+      "meaning": "부엌",
+      "accepted_answers": [
+        "부엌"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chúfáng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53060",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "厕所",
+      "meaning": "화장실",
+      "accepted_answers": [
+        "화장실"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "cèsuǒ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53064",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "洗手间",
+      "meaning": "화장실",
+      "accepted_answers": [
+        "화장실"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xǐshǒujiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53080",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "走廊",
+      "meaning": "복도",
+      "accepted_answers": [
+        "복도"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zǒuláng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53094",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "楼梯",
+      "meaning": "계단",
+      "accepted_answers": [
+        "계단"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lóutī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53263",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "书架",
+      "meaning": "책장",
+      "accepted_answers": [
+        "책장"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shūjià"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53456",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "桌子",
+      "meaning": "책상",
+      "accepted_answers": [
+        "책상"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhuōzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53482",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "椅子",
+      "meaning": "의자",
+      "accepted_answers": [
+        "의자"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǐzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53573",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "炉子",
+      "meaning": "난로",
+      "accepted_answers": [
+        "난로"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lúzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53579",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "浴缸",
+      "meaning": "욕실",
+      "accepted_answers": [
+        "욕실"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53826",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "烟灰缸",
+      "meaning": "재떨이",
+      "accepted_answers": [
+        "재떨이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yānhuīgāng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53950",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "邮筒",
+      "meaning": "우체통",
+      "accepted_answers": [
+        "우체통"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yóutǒng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-53969",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "信封",
+      "meaning": "봉투",
+      "accepted_answers": [
+        "봉투"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xìnfēng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54008",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "钱包",
+      "meaning": "지갑",
+      "accepted_answers": [
+        "지갑"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qiánbāo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54021",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "书包",
+      "meaning": "가방",
+      "accepted_answers": [
+        "가방"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shūbāo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54077",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "碟子",
+      "meaning": "접시",
+      "accepted_answers": [
+        "접시"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "diézi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54092",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "饭碗",
+      "meaning": "그릇",
+      "accepted_answers": [
+        "그릇"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fànwǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54101",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "杯子",
+      "meaning": "컵",
+      "accepted_answers": [
+        "컵"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bēizi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54175",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "筷子",
+      "meaning": "젓가락",
+      "accepted_answers": [
+        "젓가락"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "kuàizi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54190",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "叉子",
+      "meaning": "포크",
+      "accepted_answers": [
+        "포크"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chāzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54192",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "勺子",
+      "meaning": "숟가락",
+      "accepted_answers": [
+        "숟가락"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "sháozi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54236",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "铅笔",
+      "meaning": "연필",
+      "accepted_answers": [
+        "연필"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qiānbǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54238",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "钢笔",
+      "meaning": "만년필",
+      "accepted_answers": [
+        "만년필"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gāngbǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54239",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "圆珠笔",
+      "meaning": "볼펜",
+      "accepted_answers": [
+        "볼펜"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yuánzhūbǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54250",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "笔",
+      "meaning": "펜",
+      "accepted_answers": [
+        "펜"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54498",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "钥匙",
+      "meaning": "열쇄",
+      "accepted_answers": [
+        "열쇄"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yàoshi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54580",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "手绢",
+      "meaning": "손수건",
+      "accepted_answers": [
+        "손수건"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shǒujuàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54653",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "淋浴",
+      "meaning": "샤워",
+      "accepted_answers": [
+        "샤워"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "línyù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-54781",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "刀子",
+      "meaning": "나이프",
+      "accepted_answers": [
+        "나이프"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dāozi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55090",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "吉他",
+      "meaning": "기타",
+      "accepted_answers": [
+        "기타"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jítā"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55164",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "唱片",
+      "meaning": "음반",
+      "accepted_answers": [
+        "음반"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chàngpiàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55740",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "笔记本",
+      "meaning": "노트",
+      "accepted_answers": [
+        "노트"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bǐjìběn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55889",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "眼镜",
+      "meaning": "안경",
+      "accepted_answers": [
+        "안경"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǎnjìng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55928",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "照相机",
+      "meaning": "카메라",
+      "accepted_answers": [
+        "카메라"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhàoxiàngjī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55946",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "胶卷",
+      "meaning": "필름",
+      "accepted_answers": [
+        "필름"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiāojuǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55970",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "冰箱",
+      "meaning": "냉장고",
+      "accepted_answers": [
+        "냉장고"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bīngxiāng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55992",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "收音机",
+      "meaning": "라디오",
+      "accepted_answers": [
+        "라디오"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shōuyīnjī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-55994",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "电视",
+      "meaning": "텔레비젼",
+      "accepted_answers": [
+        "텔레비젼"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "diànshì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56004",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "录音机",
+      "meaning": "녹음기",
+      "accepted_answers": [
+        "녹음기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lùyīnjī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56144",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "收录机",
+      "meaning": "라디오카세트",
+      "accepted_answers": [
+        "라디오카세트"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shōulùjī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56398",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "钟表",
+      "meaning": "시계",
+      "accepted_answers": [
+        "시계"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhōngbiǎo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56482",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "自行车",
+      "meaning": "자전거",
+      "accepted_answers": [
+        "자전거"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zìxíngchē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56572",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "出租车",
+      "meaning": "택시",
+      "accepted_answers": [
+        "택시"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chūzūchē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56602",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "公共汽车",
+      "meaning": "버스",
+      "accepted_answers": [
+        "버스"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gōnggòngqìchē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56688",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "地铁",
+      "meaning": "지하철",
+      "accepted_answers": [
+        "지하철"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dìtiě"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56712",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "电梯",
+      "meaning": "엘리베이터",
+      "accepted_answers": [
+        "엘리베이터"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "diàntī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-56868",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "飞机",
+      "meaning": "비행기",
+      "accepted_answers": [
+        "비행기"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fēijī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-57040",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "院子",
+      "meaning": "마당",
+      "accepted_answers": [
+        "마당"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yuànzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-57152",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "路",
+      "meaning": "길",
+      "accepted_answers": [
+        "길"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-57316",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "十字路口",
+      "meaning": "사거리",
+      "accepted_answers": [
+        "사거리"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shízìlùkǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-57861",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "颜色",
+      "meaning": "색깔",
+      "accepted_answers": [
+        "색깔"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yánsè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-57943",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "黑色",
+      "meaning": "검정, 검다",
+      "accepted_answers": [
+        "검정, 검다",
+        "검정",
+        "검다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hēisè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-57967",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "红色",
+      "meaning": "빨강, 붉다",
+      "accepted_answers": [
+        "빨강, 붉다",
+        "빨강",
+        "붉다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hóngsè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-58033",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "黄色",
+      "meaning": "노랑, 노랗다",
+      "accepted_answers": [
+        "노랑, 노랗다",
+        "노랑",
+        "노랗다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "huángsè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-58041",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "绿色",
+      "meaning": "녹색",
+      "accepted_answers": [
+        "녹색"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lǜsè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-58059",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "蓝色",
+      "meaning": "파랑, 파랗다",
+      "accepted_answers": [
+        "파랑, 파랗다",
+        "파랑",
+        "파랗다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "lánsè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-59611",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "风",
+      "meaning": "바람",
+      "accepted_answers": [
+        "바람"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fēng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-59878",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "雪",
+      "meaning": "눈",
+      "accepted_answers": [
+        "눈"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xuě"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-59985",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "阴天",
+      "meaning": "흐림",
+      "accepted_answers": [
+        "흐림"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yīntiān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-60947",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "河",
+      "meaning": "강",
+      "accepted_answers": [
+        "강"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hé"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-61030",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "池子",
+      "meaning": "못",
+      "accepted_answers": [
+        "못"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chízi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-62825",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "水果",
+      "meaning": "과일",
+      "accepted_answers": [
+        "과일"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shuǐguǒ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-63577",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "鱼",
+      "meaning": "생선",
+      "accepted_answers": [
+        "생선"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yú"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64143",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "身体",
+      "meaning": "몸",
+      "accepted_answers": [
+        "몸"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shēntǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64318",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "头",
+      "meaning": "머리",
+      "accepted_answers": [
+        "머리"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tóu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64388",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "脸",
+      "meaning": "얼굴",
+      "accepted_answers": [
+        "얼굴"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "liǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64415",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "眼睛",
+      "meaning": "눈",
+      "accepted_answers": [
+        "눈"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǎnjing"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64491",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "耳朵",
+      "meaning": "귀",
+      "accepted_answers": [
+        "귀"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "ěrduo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64505",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "嘴",
+      "meaning": "입",
+      "accepted_answers": [
+        "입"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zuǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64638",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "肚子",
+      "meaning": "배",
+      "accepted_answers": [
+        "배"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dùzi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64713",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "手",
+      "meaning": "손",
+      "accepted_answers": [
+        "손"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-64769",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "腿",
+      "meaning": "발",
+      "accepted_answers": [
+        "발"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tuǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-65338",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "牙齿",
+      "meaning": "이",
+      "accepted_answers": [
+        "이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yáchǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-65461",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "牛奶",
+      "meaning": "우유",
+      "accepted_answers": [
+        "우유"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "niúnǎi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-65581",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "鸡蛋",
+      "meaning": "계란",
+      "accepted_answers": [
+        "계란"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jīdàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-66408",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "病",
+      "meaning": "병",
+      "accepted_answers": [
+        "병"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bìng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-67613",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "寄",
+      "meaning": "내다",
+      "accepted_answers": [
+        "내다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-68092",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "擦掉",
+      "meaning": "지우다",
+      "accepted_answers": [
+        "지우다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "cādiào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-68797",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "推",
+      "meaning": "누르다",
+      "accepted_answers": [
+        "누르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tuī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-69867",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "挂",
+      "meaning": "걸다",
+      "accepted_answers": [
+        "걸다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "guà"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-70119",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "出去",
+      "meaning": "나가다",
+      "accepted_answers": [
+        "나가다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chūqù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-70181",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "到",
+      "meaning": "도착하다",
+      "accepted_answers": [
+        "도착하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-70238",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "走",
+      "meaning": "걷다",
+      "accepted_answers": [
+        "걷다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-70265",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "跑",
+      "meaning": "달리다",
+      "accepted_answers": [
+        "달리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "pǎo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-70316",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "跳",
+      "meaning": "날다",
+      "accepted_answers": [
+        "날다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tiào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-70931",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "回",
+      "meaning": "돌아가다",
+      "accepted_answers": [
+        "돌아가다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "huí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-71458",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "放",
+      "meaning": "넣다",
+      "accepted_answers": [
+        "넣다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "fàng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-71811",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "戴",
+      "meaning": "쓰다",
+      "accepted_answers": [
+        "쓰다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-71949",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "下",
+      "meaning": "내리다",
+      "accepted_answers": [
+        "내리다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xià"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-72074",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "坐",
+      "meaning": "타다",
+      "accepted_answers": [
+        "타다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zuò"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-72635",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "打开",
+      "meaning": "열다",
+      "accepted_answers": [
+        "열다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dǎkāi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-72672",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "关",
+      "meaning": "닫다",
+      "accepted_answers": [
+        "닫다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "guān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-72816",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "贴",
+      "meaning": "붙이다",
+      "accepted_answers": [
+        "붙이다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tiē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-73436",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "歪着",
+      "meaning": "구부러지다",
+      "accepted_answers": [
+        "구부러지다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-73645",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "剪",
+      "meaning": "자르다",
+      "accepted_answers": [
+        "자르다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-74751",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "开始",
+      "meaning": "시작되다",
+      "accepted_answers": [
+        "시작되다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "kāishǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-76527",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "唱歌",
+      "meaning": "노래하다",
+      "accepted_answers": [
+        "노래하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chànggē"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-80000",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "说话",
+      "meaning": "이야기하다",
+      "accepted_answers": [
+        "이야기하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shuōhuà"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-80142",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "回答",
+      "meaning": "대답하다",
+      "accepted_answers": [
+        "대답하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "huídá"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-81068",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "弹",
+      "meaning": "치다",
+      "accepted_answers": [
+        "치다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tán"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-81858",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "穿",
+      "meaning": "입다",
+      "accepted_answers": [
+        "입다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chuān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-81872",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "脱",
+      "meaning": "벗다",
+      "accepted_answers": [
+        "벗다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tuō"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-81948",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "住",
+      "meaning": "살다",
+      "accepted_answers": [
+        "살다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhù"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-82121",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "洗澡",
+      "meaning": "샤워(를) 하다",
+      "accepted_answers": [
+        "샤워(를) 하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xǐzǎo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-82317",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "玩儿",
+      "meaning": "놀다",
+      "accepted_answers": [
+        "놀다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wánr"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-82483",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "游泳",
+      "meaning": "헤엄치다",
+      "accepted_answers": [
+        "헤엄치다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yóuyǒng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-82608",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "站",
+      "meaning": "서다",
+      "accepted_answers": [
+        "서다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-82694",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "睡觉",
+      "meaning": "자다",
+      "accepted_answers": [
+        "자다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shuìjiào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-83250",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "抽",
+      "meaning": "빨다",
+      "accepted_answers": [
+        "빨다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chōu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-83509",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "干",
+      "meaning": "하다",
+      "accepted_answers": [
+        "하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-84044",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "见面",
+      "meaning": "만나다",
+      "accepted_answers": [
+        "만나다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiàn miàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-85608",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "教",
+      "meaning": "가르치다",
+      "accepted_answers": [
+        "가르치다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiāo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-87238",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "卖",
+      "meaning": "팔다",
+      "accepted_answers": [
+        "팔다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "mài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-87307",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "买",
+      "meaning": "사다",
+      "accepted_answers": [
+        "사다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "mǎi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-87493",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "交",
+      "meaning": "건네다",
+      "accepted_answers": [
+        "건네다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiāo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-87572",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "借给",
+      "meaning": "빌려주다",
+      "accepted_answers": [
+        "빌려주다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jiègěi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-87624",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "还",
+      "meaning": "갚다",
+      "accepted_answers": [
+        "갚다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "huán"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-88468",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "洗",
+      "meaning": "씻다",
+      "accepted_answers": [
+        "씻다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-89542",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "晴",
+      "meaning": "개다",
+      "accepted_answers": [
+        "개다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qíng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90096",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "死",
+      "meaning": "죽다",
+      "accepted_answers": [
+        "죽다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "sǐ"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90777",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "这个",
+      "meaning": "이",
+      "accepted_answers": [
+        "이"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhèige"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90778",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "这么",
+      "meaning": "이런",
+      "accepted_answers": [
+        "이런"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhème"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90799",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "这样",
+      "meaning": "그렇다",
+      "accepted_answers": [
+        "그렇다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhèiyang"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90814",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "那个",
+      "meaning": "그",
+      "accepted_answers": [
+        "그"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nèige"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90820",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "哪个",
+      "meaning": "어느",
+      "accepted_answers": [
+        "어느"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "něige"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-90821",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "什么",
+      "meaning": "어떤",
+      "accepted_answers": [
+        "어떤"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shénme"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-91248",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "没有",
+      "meaning": "없다",
+      "accepted_answers": [
+        "없다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "méiyǒu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-92053",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "漂亮",
+      "meaning": "예쁘다",
+      "accepted_answers": [
+        "예쁘다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "piàoliang"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-92133",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "脏",
+      "meaning": "더럽다",
+      "accepted_answers": [
+        "더럽다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zāng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-92156",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "难",
+      "meaning": "어렵다",
+      "accepted_answers": [
+        "어렵다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nán"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-92207",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "容易",
+      "meaning": "쉽다",
+      "accepted_answers": [
+        "쉽다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "róngyì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-92331",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "强",
+      "meaning": "세다",
+      "accepted_answers": [
+        "세다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qiáng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-92363",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "软弱",
+      "meaning": "약하다",
+      "accepted_answers": [
+        "약하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "ruǎnruò"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93175",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "常常",
+      "meaning": "자주",
+      "accepted_answers": [
+        "자주"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "chángcháng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93190",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "有时",
+      "meaning": "가끔",
+      "accepted_answers": [
+        "가끔"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǒushí"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93460",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "年轻",
+      "meaning": "젊다",
+      "accepted_answers": [
+        "젊다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "niánqīng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93515",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "已经",
+      "meaning": "벌써",
+      "accepted_answers": [
+        "벌써"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǐjing"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93581",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "马上",
+      "meaning": "금방",
+      "accepted_answers": [
+        "금방"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "mǎshang"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93826",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "多",
+      "meaning": "많다",
+      "accepted_answers": [
+        "많다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "duō"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-93928",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "少",
+      "meaning": "적다",
+      "accepted_answers": [
+        "적다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "shǎo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94000",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "长",
+      "meaning": "길다",
+      "accepted_answers": [
+        "길다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "cháng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94005",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "短",
+      "meaning": "짧다",
+      "accepted_answers": [
+        "짧다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "duǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94023",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "高",
+      "meaning": "비싸다",
+      "accepted_answers": [
+        "비싸다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "gāo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94030",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "低",
+      "meaning": "낮다",
+      "accepted_answers": [
+        "낮다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94048",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "厚",
+      "meaning": "두껍다",
+      "accepted_answers": [
+        "두껍다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hòu"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94059",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "远",
+      "meaning": "멀다",
+      "accepted_answers": [
+        "멀다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yuǎn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94068",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "近",
+      "meaning": "가깝다",
+      "accepted_answers": [
+        "가깝다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jìn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94080",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "宽",
+      "meaning": "넓다",
+      "accepted_answers": [
+        "넓다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "kuān"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94110",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "窄",
+      "meaning": "좁다",
+      "accepted_answers": [
+        "좁다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhǎi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94124",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "粗",
+      "meaning": "굵다",
+      "accepted_answers": [
+        "굵다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "cū"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94125",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "细",
+      "meaning": "가늘다",
+      "accepted_answers": [
+        "가늘다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "xì"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94288",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "慢慢儿",
+      "meaning": "천천히",
+      "accepted_answers": [
+        "천천히"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "mànmānr"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94318",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "重",
+      "meaning": "무겁다",
+      "accepted_answers": [
+        "무겁다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhòng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94320",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "轻",
+      "meaning": "가볍다",
+      "accepted_answers": [
+        "가볍다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "qīng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94363",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "凉快",
+      "meaning": "선선하다",
+      "accepted_answers": [
+        "선선하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "liángkuai"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-94851",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "整",
+      "meaning": "온 ...",
+      "accepted_answers": [
+        "온 ..."
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "zhěng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-95091",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "疼",
+      "meaning": "아프다",
+      "accepted_answers": [
+        "아프다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "téng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-95240",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "愉快",
+      "meaning": "즐겁다",
+      "accepted_answers": [
+        "즐겁다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yúkuài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-95258",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "有意思",
+      "meaning": "재미있다",
+      "accepted_answers": [
+        "재미있다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǒuyìsi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-95270",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "无聊",
+      "meaning": "재미없다",
+      "accepted_answers": [
+        "재미없다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "wúliáo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-95610",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "讨厌",
+      "meaning": "싫어하다",
+      "accepted_answers": [
+        "싫어하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tǎoyàn"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-96159",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "要",
+      "meaning": "가지고 싶다",
+      "accepted_answers": [
+        "가지고 싶다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yào"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-97137",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "有名",
+      "meaning": "유명하다",
+      "accepted_answers": [
+        "유명하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "yǒumíng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-97485",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "忙",
+      "meaning": "바쁘다",
+      "accepted_answers": [
+        "바쁘다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "máng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-98390",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "精神",
+      "meaning": "건강하다",
+      "accepted_answers": [
+        "건강하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "jīngshen"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-98904",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "便宜",
+      "meaning": "싸다",
+      "accepted_answers": [
+        "싸다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "piányi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-98991",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "光亮",
+      "meaning": "밝다, 엷다",
+      "accepted_answers": [
+        "밝다, 엷다",
+        "밝다",
+        "엷다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "guāngliàng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99001",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "黑",
+      "meaning": "어둡다",
+      "accepted_answers": [
+        "어둡다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hēi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99105",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "白色",
+      "meaning": "하양, 하얗다",
+      "accepted_answers": [
+        "하양, 하얗다",
+        "하양",
+        "하얗다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "báisè"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99157",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "安静",
+      "meaning": "조용하다",
+      "accepted_answers": [
+        "조용하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "ānjìng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99217",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "热闹",
+      "meaning": "떠들썩하다",
+      "accepted_answers": [
+        "떠들썩하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "rènao"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99489",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "好吃",
+      "meaning": "맛(이)있다",
+      "accepted_answers": [
+        "맛(이)있다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "hǎochī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99491",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "难吃",
+      "meaning": "맛(이)없다",
+      "accepted_answers": [
+        "맛(이)없다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nánchī"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99501",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "甜",
+      "meaning": "달다",
+      "accepted_answers": [
+        "달다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "tián"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99511",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "辣",
+      "meaning": "맵다",
+      "accepted_answers": [
+        "맵다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "là"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99848",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "冰",
+      "meaning": "차다",
+      "accepted_answers": [
+        "차다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bīng"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-99853",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "暖和",
+      "meaning": "따뜻하다",
+      "accepted_answers": [
+        "따뜻하다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nuǎnhuo"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-100235",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "那",
+      "meaning": "그럼",
+      "accepted_answers": [
+        "그럼"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "nà"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-100468",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "不好意思",
+      "meaning": "미안합니다",
+      "accepted_answers": [
+        "미안합니다"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bùhǎoyìsi"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-100538",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "大概",
+      "meaning": "아마",
+      "accepted_answers": [
+        "아마"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "dàgài"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09-word-100827",
+      "type": "word",
+      "language": "zh-Hans",
+      "term": "不",
+      "meaning": "아니에요",
+      "accepted_answers": [
+        "아니에요"
+      ],
+      "tags": [
+        "TUFS",
+        "생활 핵심 어휘",
+        "GitHub 언어팩"
+      ],
+      "priority": 3,
+      "pinyin": "bù"
+    }
+  ]
+}

@@ -5,7 +5,11 @@ on:
     branches: [main]
     paths:
       - "language-packs/packs/*.json"
+      - "language-packs/sources/**"
+      - "apps/client/tool/export_bundled_word_index.dart"
+      - "tool/refresh-language-packs.mjs"
       - "tool/build-language-pack-catalog.mjs"
+      - "tool/test/language-pack-catalog.test.mjs"
   workflow_dispatch:
 
 permissions:
@@ -28,11 +32,22 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.44.8"
+          channel: stable
       - name: Validate packs and rebuild the catalog
         run: |
           set -euo pipefail
-          node --test ./tool/test/language-pack-catalog.test.mjs
+          dart --version
+          cd apps/client
+          flutter pub get
+          dart run tool/export_bundled_word_index.dart --check
+          cd ../..
+          node ./tool/refresh-language-packs.mjs --check
           node ./tool/build-language-pack-catalog.mjs
+          node --test ./tool/test/language-pack-catalog.test.mjs
       - name: Commit a changed catalog
         shell: bash
         run: |

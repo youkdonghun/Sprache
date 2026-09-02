@@ -34,8 +34,10 @@ void main() {
     expect(locked.syncStatus, StudyCompletionSyncStatus.offlineLocked);
     expect(locked.syncLabel, contains('3건'));
     expect(locked.syncLabel, contains('동기화 일시 중지'));
+    expect(pending.localSaveLabel, '기기에 저장 완료');
     expect(local.semanticsLabel, contains('획득 15 XP'));
     expect(local.semanticsLabel, contains('연속 학습 4일'));
+    expect(pending.semanticsLabel, isNot(contains('Drive')));
   });
 
   test('receipt clamps counters and exposes saving state', () {
@@ -50,6 +52,7 @@ void main() {
 
     expect(receipt.saved, isFalse);
     expect(receipt.savedTimeLabel, '저장 중');
+    expect(receipt.localSaveLabel, '기기에 저장 중');
     expect(receipt.earnedXp, 0);
     expect(receipt.streakDays, 0);
     expect(receipt.syncStatus, StudyCompletionSyncStatus.synced);

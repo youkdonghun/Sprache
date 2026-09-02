@@ -1,0 +1,4450 @@
+{
+  "schemaVersion": 1,
+  "source": "TUFS Open Language Resources - Basic vocabularies and example sentences in 24 languages",
+  "sourceUrl": "https://www.coelang.tufs.ac.jp/mt/vmod/",
+  "license": "CC-BY-4.0",
+  "citation": "Kawaguchi, Yuji. 2007. Foundations of Center of Usage-Based Linguistic Informatics (UBLI).",
+  "extraction": "Non-empty classified_id intersection across ko, en, de, fr, es, ja, zh modules.",
+  "items": [
+    {
+      "conceptId": "3472",
+      "ko": "편리하다",
+      "en": "convenient",
+      "de": "praktisch",
+      "fr": "commode",
+      "es": "útil",
+      "ja": "便利",
+      "zh": "方便 fāngbiàn"
+    },
+    {
+      "conceptId": "7603",
+      "ko": "언제",
+      "en": "when",
+      "de": "wann",
+      "fr": "quand",
+      "es": "cuándo",
+      "ja": "いつ",
+      "zh": "什么时候 shénmeshíhou"
+    },
+    {
+      "conceptId": "7864",
+      "ko": "매주",
+      "en": "every week",
+      "de": "jede Woche",
+      "fr": "chaque semaine",
+      "es": "todas las semanas",
+      "ja": "毎週",
+      "zh": "每个星期 měigexīngqī"
+    },
+    {
+      "conceptId": "7865",
+      "ko": "매월",
+      "en": "every month",
+      "de": "jeden Monat",
+      "fr": "chaque mois",
+      "es": "todos los meses",
+      "ja": "毎月",
+      "zh": "每个月 měigeyuè"
+    },
+    {
+      "conceptId": "7870",
+      "ko": "매년",
+      "en": "every year",
+      "de": "jedes Jahr",
+      "fr": "chaque année",
+      "es": "todos los años",
+      "ja": "毎年",
+      "zh": "每年 měinián"
+    },
+    {
+      "conceptId": "8361",
+      "ko": "봄",
+      "en": "spring",
+      "de": "Frühling",
+      "fr": "printemps",
+      "es": "primavera",
+      "ja": "春",
+      "zh": "春天 chūntiān"
+    },
+    {
+      "conceptId": "8375",
+      "ko": "여름",
+      "en": "summer",
+      "de": "Sommer",
+      "fr": "été",
+      "es": "verano",
+      "ja": "夏",
+      "zh": "夏天 xiàtiān"
+    },
+    {
+      "conceptId": "8389",
+      "ko": "가을",
+      "en": "fall",
+      "de": "Herbst",
+      "fr": "automne",
+      "es": "otoño",
+      "ja": "秋",
+      "zh": "秋天 qiūtiān"
+    },
+    {
+      "conceptId": "8403",
+      "ko": "겨울",
+      "en": "winter",
+      "de": "Winter",
+      "fr": "hiver",
+      "es": "invierno",
+      "ja": "冬",
+      "zh": "冬天 dōngtiān"
+    },
+    {
+      "conceptId": "8555",
+      "ko": "월요일",
+      "en": "Monday",
+      "de": "Montag",
+      "fr": "lundi",
+      "es": "lunes",
+      "ja": "月曜日",
+      "zh": "星期一 xīngqīyī"
+    },
+    {
+      "conceptId": "8556",
+      "ko": "화요일",
+      "en": "Tuesday",
+      "de": "Dienstag",
+      "fr": "mardi",
+      "es": "martes",
+      "ja": "火曜日",
+      "zh": "星期二 xīngqīèr"
+    },
+    {
+      "conceptId": "8557",
+      "ko": "수요일",
+      "en": "Wednesday",
+      "de": "Mittwoch",
+      "fr": "mercredi",
+      "es": "miércoles",
+      "ja": "水曜日",
+      "zh": "星期三 xīngqīsān"
+    },
+    {
+      "conceptId": "8558",
+      "ko": "목요일",
+      "en": "Thursday",
+      "de": "Donnerstag",
+      "fr": "jeudi",
+      "es": "jueves",
+      "ja": "木曜日",
+      "zh": "星期四 xīngqīsì"
+    },
+    {
+      "conceptId": "8559",
+      "ko": "금요일",
+      "en": "Friday",
+      "de": "Freitag",
+      "fr": "vendredi",
+      "es": "viernes",
+      "ja": "金曜日",
+      "zh": "星期五 xīngqīwǔ"
+    },
+    {
+      "conceptId": "8560",
+      "ko": "토요일",
+      "en": "Saturday",
+      "de": "Samstag",
+      "fr": "samedi",
+      "es": "sábado",
+      "ja": "土曜日",
+      "zh": "星期六 xīngqīliù"
+    },
+    {
+      "conceptId": "8561",
+      "ko": "일요일",
+      "en": "Sunday",
+      "de": "Sonntag",
+      "fr": "dimanche",
+      "es": "domingo",
+      "ja": "日曜日",
+      "zh": "星期天 xīngqītiān"
+    },
+    {
+      "conceptId": "8822",
+      "ko": "오전",
+      "en": "morning",
+      "de": "Vormittag",
+      "fr": "matinée",
+      "es": "mañana",
+      "ja": "午前",
+      "zh": "上午 shàngwǔ"
+    },
+    {
+      "conceptId": "8824",
+      "ko": "오후",
+      "en": "afternoon",
+      "de": "Nachmittag",
+      "fr": "après-midi",
+      "es": "tarde",
+      "ja": "午後",
+      "zh": "下午 xiàwǔ"
+    },
+    {
+      "conceptId": "8856",
+      "ko": "아침",
+      "en": "morning",
+      "de": "Morgen",
+      "fr": "matin",
+      "es": "mañana",
+      "ja": "朝",
+      "zh": "早上 zǎoshang"
+    },
+    {
+      "conceptId": "8873",
+      "ko": "낮",
+      "en": "noon",
+      "de": "Mittag",
+      "fr": "midi",
+      "es": "mediodía",
+      "ja": "昼",
+      "zh": "白天 báitiān"
+    },
+    {
+      "conceptId": "8891",
+      "ko": "저녁",
+      "en": "evening",
+      "de": "Abend",
+      "fr": "soirée",
+      "es": "atardecer",
+      "ja": "夕方",
+      "zh": "傍晚 bàngwǎn"
+    },
+    {
+      "conceptId": "8908",
+      "ko": "밤",
+      "en": "night",
+      "de": "Nacht",
+      "fr": "nuit",
+      "es": "noche",
+      "ja": "夜",
+      "zh": "晚上 wǎnshang"
+    },
+    {
+      "conceptId": "9013",
+      "ko": "올해",
+      "en": "this year",
+      "de": "dieses Jahr",
+      "fr": "cette année",
+      "es": "este año",
+      "ja": "今年",
+      "zh": "今年 jīnnián"
+    },
+    {
+      "conceptId": "9022",
+      "ko": "이번 달",
+      "en": "this month",
+      "de": "diesen Monat",
+      "fr": "ce mois",
+      "es": "este mes",
+      "ja": "今月",
+      "zh": "这个月 zhèigeyuè"
+    },
+    {
+      "conceptId": "9025",
+      "ko": "이번 주",
+      "en": "this week",
+      "de": "diese Woche",
+      "fr": "cette semaine",
+      "es": "esta semana",
+      "ja": "今週",
+      "zh": "这个星期 zhèigexīngqī"
+    },
+    {
+      "conceptId": "9026",
+      "ko": "오늘",
+      "en": "today",
+      "de": "heute",
+      "fr": "aujourd'hui",
+      "es": "hoy",
+      "ja": "きょう",
+      "zh": "今天 jīntiān"
+    },
+    {
+      "conceptId": "9103",
+      "ko": "작년",
+      "en": "last year",
+      "de": "letztes Jahr",
+      "fr": "l'année dernière",
+      "es": "el año pasado",
+      "ja": "去年",
+      "zh": "去年 qùnián"
+    },
+    {
+      "conceptId": "9108",
+      "ko": "재작년",
+      "en": "the year before last",
+      "de": "vorletztes Jahr",
+      "fr": "il y a deux ans",
+      "es": "hace dos años",
+      "ja": "おととし",
+      "zh": "前年 qiánnián"
+    },
+    {
+      "conceptId": "9112",
+      "ko": "지난달",
+      "en": "last month",
+      "de": "letzten Monat",
+      "fr": "le mois dernier",
+      "es": "el mes pasado",
+      "ja": "先月",
+      "zh": "上个月 shànggeyuè"
+    },
+    {
+      "conceptId": "9116",
+      "ko": "지난주",
+      "en": "last week",
+      "de": "letzte Woche",
+      "fr": "la semaine dernière",
+      "es": "la semana pasada",
+      "ja": "先週",
+      "zh": "上星期"
+    },
+    {
+      "conceptId": "9118",
+      "ko": "어제",
+      "en": "yesterday",
+      "de": "gestern",
+      "fr": "hier",
+      "es": "ayer",
+      "ja": "きのう",
+      "zh": "昨天 zuótiān"
+    },
+    {
+      "conceptId": "9122",
+      "ko": "그저께",
+      "en": "the day before yesterday",
+      "de": "vorgestern",
+      "fr": "avant-hier",
+      "es": "anteayer",
+      "ja": "おととい",
+      "zh": "前天 qiántiān"
+    },
+    {
+      "conceptId": "9127",
+      "ko": "어젯밤",
+      "en": "evening",
+      "de": "gestern Abend",
+      "fr": "hier soir",
+      "es": "anoche",
+      "ja": "ゆうべ",
+      "zh": "昨夜 zuóyè"
+    },
+    {
+      "conceptId": "9196",
+      "ko": "내년",
+      "en": "next year",
+      "de": "nächstes Jahr",
+      "fr": "l'année prochaine",
+      "es": "el año que viene",
+      "ja": "来年",
+      "zh": "明年 míngnián"
+    },
+    {
+      "conceptId": "9201",
+      "ko": "다음다음 해",
+      "en": "the year after next",
+      "de": "übernächstes Jahr",
+      "fr": "dans deux ans",
+      "es": "dentro de dos años",
+      "ja": "さ来年",
+      "zh": "后年 hòunián"
+    },
+    {
+      "conceptId": "9206",
+      "ko": "다음 달",
+      "en": "next month",
+      "de": "nächsten Monat",
+      "fr": "le mois prochain",
+      "es": "el mes que viene",
+      "ja": "来月",
+      "zh": "下个月 xiàgeyuè"
+    },
+    {
+      "conceptId": "9208",
+      "ko": "다음 주",
+      "en": "next week",
+      "de": "nächste Woche",
+      "fr": "la semaine prochaine",
+      "es": "la semana que viene",
+      "ja": "来週",
+      "zh": "下个星期 xiàgexīngqī"
+    },
+    {
+      "conceptId": "9211",
+      "ko": "내일",
+      "en": "tomorrow",
+      "de": "morgen",
+      "fr": "demain",
+      "es": "mañana",
+      "ja": "あした",
+      "zh": "明天 míngtiān"
+    },
+    {
+      "conceptId": "9219",
+      "ko": "모레",
+      "en": "the day after tomorrow",
+      "de": "übermorgen",
+      "fr": "après-demain",
+      "es": "pasado mañana",
+      "ja": "あさって",
+      "zh": "后天 hòutiān"
+    },
+    {
+      "conceptId": "9986",
+      "ko": "거기, 그쪽",
+      "en": "there",
+      "de": "da",
+      "fr": "là",
+      "es": "ahí",
+      "ja": "そちら",
+      "zh": "那儿 nàr"
+    },
+    {
+      "conceptId": "9997",
+      "ko": "저기, 저쪽",
+      "en": "there",
+      "de": "dort",
+      "fr": "là-bas",
+      "es": "allí",
+      "ja": "あっち",
+      "zh": "那儿 nàr"
+    },
+    {
+      "conceptId": "10006",
+      "ko": "어디, 어느 쪽",
+      "en": "where",
+      "de": "wo",
+      "fr": "où",
+      "es": "dónde",
+      "ja": "どちら",
+      "zh": "哪儿 nǎr"
+    },
+    {
+      "conceptId": "10765",
+      "ko": "여기, 이쪽",
+      "en": "here",
+      "de": "hier",
+      "fr": "ici",
+      "es": "aquí",
+      "ja": "こちら",
+      "zh": "这儿 zhèr"
+    },
+    {
+      "conceptId": "10903",
+      "ko": "동쪽",
+      "en": "east",
+      "de": "Osten",
+      "fr": "est",
+      "es": "este",
+      "ja": "東",
+      "zh": "东边 dōngbian"
+    },
+    {
+      "conceptId": "10905",
+      "ko": "서쪽",
+      "en": "west",
+      "de": "Westen",
+      "fr": "ouest",
+      "es": "oeste",
+      "ja": "西",
+      "zh": "西边 xībian"
+    },
+    {
+      "conceptId": "10910",
+      "ko": "남쪽",
+      "en": "south",
+      "de": "Süden",
+      "fr": "sud",
+      "es": "sur",
+      "ja": "南",
+      "zh": "南边 nánbian"
+    },
+    {
+      "conceptId": "10912",
+      "ko": "북쪽",
+      "en": "north",
+      "de": "Norden",
+      "fr": "nord",
+      "es": "norte",
+      "ja": "北",
+      "zh": "北边 běibian"
+    },
+    {
+      "conceptId": "10954",
+      "ko": "왼쪽",
+      "en": "left",
+      "de": "links",
+      "fr": "gauche",
+      "es": "izquierda",
+      "ja": "左",
+      "zh": "左边 zuǒbian"
+    },
+    {
+      "conceptId": "10956",
+      "ko": "오른쪽",
+      "en": "right",
+      "de": "rechts",
+      "fr": "droit",
+      "es": "derecha",
+      "ja": "右",
+      "zh": "右边 yòubian"
+    },
+    {
+      "conceptId": "10981",
+      "ko": "앞",
+      "en": "front",
+      "de": "vor",
+      "fr": "devant",
+      "es": "delante",
+      "ja": "前",
+      "zh": "前面 qiánmian"
+    },
+    {
+      "conceptId": "10983",
+      "ko": "뒤",
+      "en": "back",
+      "de": "hinter",
+      "fr": "derrière",
+      "es": "atrás",
+      "ja": "うしろ",
+      "zh": "后面 hòumian"
+    },
+    {
+      "conceptId": "11034",
+      "ko": "세로",
+      "en": "vertical",
+      "de": "Länge",
+      "fr": "longueur",
+      "es": "largo",
+      "ja": "縦",
+      "zh": "竖 shù"
+    },
+    {
+      "conceptId": "11035",
+      "ko": "옆",
+      "en": "side",
+      "de": "Seite",
+      "fr": "largeur",
+      "es": "lado",
+      "ja": "横",
+      "zh": "横 héng"
+    },
+    {
+      "conceptId": "11063",
+      "ko": "위",
+      "en": "up",
+      "de": "über",
+      "fr": "au-dessus",
+      "es": "arriba",
+      "ja": "上",
+      "zh": "上 shang"
+    },
+    {
+      "conceptId": "11065",
+      "ko": "아래",
+      "en": "down",
+      "de": "unter",
+      "fr": "au-dessous",
+      "es": "abajo",
+      "ja": "下",
+      "zh": "下面 xiàmian"
+    },
+    {
+      "conceptId": "11437",
+      "ko": "밖",
+      "en": "outside",
+      "de": "draußen",
+      "fr": "dehors",
+      "es": "fuera",
+      "ja": "外",
+      "zh": "外面 wàimian"
+    },
+    {
+      "conceptId": "11443",
+      "ko": "안",
+      "en": "in",
+      "de": "Mitte",
+      "fr": "dedans",
+      "es": "dentro",
+      "ja": "中",
+      "zh": "里边 lǐbian"
+    },
+    {
+      "conceptId": "11633",
+      "ko": "근처",
+      "en": "by",
+      "de": "neben",
+      "fr": "près de",
+      "es": "lado",
+      "ja": "そば",
+      "zh": "旁边 pángbiān"
+    },
+    {
+      "conceptId": "11678",
+      "ko": "옆",
+      "en": "next",
+      "de": "neben",
+      "fr": "côté",
+      "es": "al lado de",
+      "ja": "隣",
+      "zh": "旁边 pángbiān"
+    },
+    {
+      "conceptId": "11706",
+      "ko": "근처",
+      "en": "near",
+      "de": "Nähe",
+      "fr": "près de",
+      "es": "cerca",
+      "ja": "近く",
+      "zh": "附近 fùjìn"
+    },
+    {
+      "conceptId": "12247",
+      "ko": "출구",
+      "en": "exit",
+      "de": "Ausgang",
+      "fr": "sortie",
+      "es": "salida",
+      "ja": "出口",
+      "zh": "出口 chūkǒu"
+    },
+    {
+      "conceptId": "12249",
+      "ko": "입구",
+      "en": "entrance",
+      "de": "Eingang",
+      "fr": "entrée",
+      "es": "entrada",
+      "ja": "入口",
+      "zh": "入口 rùkǒu"
+    },
+    {
+      "conceptId": "13006",
+      "ko": "여러 사람",
+      "en": "many people",
+      "de": "viele Leute",
+      "fr": "un grand nombre de",
+      "es": "muchos",
+      "ja": "大勢",
+      "zh": "众多 zhòngduō"
+    },
+    {
+      "conceptId": "14011",
+      "ko": "모두",
+      "en": "everyone",
+      "de": "alle",
+      "fr": "tout le monde",
+      "es": "todo el mundo",
+      "ja": "みんな",
+      "zh": "大家 dàjiā"
+    },
+    {
+      "conceptId": "14623",
+      "ko": "한 달",
+      "en": "month",
+      "de": "Monat",
+      "fr": "un mois",
+      "es": "un mes",
+      "ja": "ひとつき",
+      "zh": "一个月 yígeyuè"
+    },
+    {
+      "conceptId": "14656",
+      "ko": "몇 개",
+      "en": "How many",
+      "de": "wie viel",
+      "fr": "combien",
+      "es": "cuántos",
+      "ja": "いくつ",
+      "zh": "几 jǐ"
+    },
+    {
+      "conceptId": "14658",
+      "ko": "얼마",
+      "en": "How much",
+      "de": "was",
+      "fr": "combien",
+      "es": "cuánto",
+      "ja": "いくら",
+      "zh": "多少 duōshao"
+    },
+    {
+      "conceptId": "14871",
+      "ko": "년",
+      "en": "year",
+      "de": "Jahr",
+      "fr": "année",
+      "es": "año",
+      "ja": "~年",
+      "zh": "年 nián"
+    },
+    {
+      "conceptId": "14900",
+      "ko": "시",
+      "en": "time",
+      "de": "Uhr",
+      "fr": "heure",
+      "es": "hora",
+      "ja": "~時",
+      "zh": "点 diǎn"
+    },
+    {
+      "conceptId": "14901",
+      "ko": "시간",
+      "en": "time",
+      "de": "Zeit",
+      "fr": "heure",
+      "es": "hora",
+      "ja": "~時間",
+      "zh": "小时 xiǎoshí"
+    },
+    {
+      "conceptId": "15048",
+      "ko": "도",
+      "en": "degree",
+      "de": "Grad",
+      "fr": "degré",
+      "es": "grado",
+      "ja": "~度",
+      "zh": "度 dù"
+    },
+    {
+      "conceptId": "15092",
+      "ko": "층",
+      "en": "floor",
+      "de": "Stock",
+      "fr": "étage",
+      "es": "piso",
+      "ja": "~階",
+      "zh": "楼 lóu"
+    },
+    {
+      "conceptId": "15353",
+      "ko": "사람",
+      "en": "person",
+      "de": "Mensch",
+      "fr": "on",
+      "es": "hombre",
+      "ja": "人",
+      "zh": "人 rén"
+    },
+    {
+      "conceptId": "15476",
+      "ko": "저",
+      "en": "I",
+      "de": "ich",
+      "fr": "moi",
+      "es": "yo",
+      "ja": "わたし",
+      "zh": "我 wǒ"
+    },
+    {
+      "conceptId": "15603",
+      "ko": "누구",
+      "en": "who",
+      "de": "wer",
+      "fr": "personne",
+      "es": "quién",
+      "ja": "だれ",
+      "zh": "谁 shéi"
+    },
+    {
+      "conceptId": "15605",
+      "ko": "누구",
+      "en": "who",
+      "de": "wer",
+      "fr": "qui",
+      "es": "quién",
+      "ja": "どなた",
+      "zh": "哪位 něiwèi"
+    },
+    {
+      "conceptId": "15612",
+      "ko": "누군가",
+      "en": "someone",
+      "de": "jemand",
+      "fr": "quelqu'un",
+      "es": "alguien",
+      "ja": "だれか",
+      "zh": "有人 yǒurén"
+    },
+    {
+      "conceptId": "15636",
+      "ko": "자기",
+      "en": "oneself",
+      "de": "selber",
+      "fr": "soi",
+      "es": "sí mismo",
+      "ja": "自分",
+      "zh": "自己 zìjǐ"
+    },
+    {
+      "conceptId": "15939",
+      "ko": "남자",
+      "en": "man",
+      "de": "Mann",
+      "fr": "homme",
+      "es": "hombre",
+      "ja": "男",
+      "zh": "男的 nánde"
+    },
+    {
+      "conceptId": "15944",
+      "ko": "남자 아이",
+      "en": "boy",
+      "de": "Junge",
+      "fr": "garçon",
+      "es": "chico",
+      "ja": "男の子",
+      "zh": "男孩子 nánháizi"
+    },
+    {
+      "conceptId": "15965",
+      "ko": "여자",
+      "en": "woman",
+      "de": "Frau",
+      "fr": "femme",
+      "es": "mujer",
+      "ja": "女",
+      "zh": "女的 nǚde"
+    },
+    {
+      "conceptId": "16114",
+      "ko": "아이",
+      "en": "child",
+      "de": "Kind",
+      "fr": "enfant",
+      "es": "niño",
+      "ja": "子ども",
+      "zh": "孩子 háizi"
+    },
+    {
+      "conceptId": "16184",
+      "ko": "어른",
+      "en": "adult",
+      "de": "Erwachsene",
+      "fr": "adulte",
+      "es": "adulto",
+      "ja": "大人",
+      "zh": "成年人 chéngniánrén"
+    },
+    {
+      "conceptId": "16223",
+      "ko": "할아버지",
+      "en": "grandfather",
+      "de": "Großvater",
+      "fr": "grand-père",
+      "es": "abuelo",
+      "ja": "おじいさん",
+      "zh": "爷爷 yéye"
+    },
+    {
+      "conceptId": "16229",
+      "ko": "할머니",
+      "en": "grandmother",
+      "de": "Großmutter",
+      "fr": "grand-mère",
+      "es": "abuela",
+      "ja": "おばあさん",
+      "zh": "姥姥 lǎolao"
+    },
+    {
+      "conceptId": "16247",
+      "ko": "가족",
+      "en": "family",
+      "de": "Familie",
+      "fr": "famille",
+      "es": "familia",
+      "ja": "家族",
+      "zh": "家人 jiārén"
+    },
+    {
+      "conceptId": "16402",
+      "ko": "부인",
+      "en": "wife",
+      "de": "Frau",
+      "fr": "madame",
+      "es": "mujer",
+      "ja": "奥さん",
+      "zh": "老婆 lǎopo"
+    },
+    {
+      "conceptId": "16488",
+      "ko": "부모",
+      "en": "parents",
+      "de": "Eltern",
+      "fr": "parents",
+      "es": "padres",
+      "ja": "両親",
+      "zh": "父母 fùmǔ"
+    },
+    {
+      "conceptId": "16495",
+      "ko": "아버지",
+      "en": "father",
+      "de": "Vater",
+      "fr": "père",
+      "es": "padre",
+      "ja": "父",
+      "zh": "父亲 fùqin"
+    },
+    {
+      "conceptId": "16496",
+      "ko": "어머니",
+      "en": "mother",
+      "de": "Mutter",
+      "fr": "mère",
+      "es": "madre",
+      "ja": "母",
+      "zh": "妈妈 māma"
+    },
+    {
+      "conceptId": "16500",
+      "ko": "아빠",
+      "en": "dad",
+      "de": "Vater",
+      "fr": "père",
+      "es": "padre",
+      "ja": "お父さん",
+      "zh": "爸爸 bàba"
+    },
+    {
+      "conceptId": "16507",
+      "ko": "엄마",
+      "en": "mom",
+      "de": "Mutter",
+      "fr": "mère",
+      "es": "madre",
+      "ja": "お母さん",
+      "zh": "妈妈 māma"
+    },
+    {
+      "conceptId": "16780",
+      "ko": "형제",
+      "en": "brother",
+      "de": "Geschwister",
+      "fr": "frère",
+      "es": "hermano",
+      "ja": "兄弟",
+      "zh": "兄弟 xiōngdì"
+    },
+    {
+      "conceptId": "16785",
+      "ko": "형",
+      "en": "brother",
+      "de": "Bruder",
+      "fr": "frère",
+      "es": "hermano",
+      "ja": "兄",
+      "zh": "哥哥 gēge"
+    },
+    {
+      "conceptId": "16797",
+      "ko": "형",
+      "en": "brother",
+      "de": "Bruder",
+      "fr": "frère",
+      "es": "hermano",
+      "ja": "お兄さん",
+      "zh": "哥哥 gēge"
+    },
+    {
+      "conceptId": "16799",
+      "ko": "자매",
+      "en": "sister",
+      "de": "Schwester",
+      "fr": "sœur",
+      "es": "hermana",
+      "ja": "姉",
+      "zh": "姐妹 jiěmèi"
+    },
+    {
+      "conceptId": "16806",
+      "ko": "누나",
+      "en": "sister",
+      "de": "Schwester",
+      "fr": "sœur",
+      "es": "hermana",
+      "ja": "お姉さん",
+      "zh": "姐姐 jiějie"
+    },
+    {
+      "conceptId": "17007",
+      "ko": "친구",
+      "en": "friend",
+      "de": "Freund",
+      "fr": "copain",
+      "es": "amigo",
+      "ja": "友達",
+      "zh": "朋友 péngyou"
+    },
+    {
+      "conceptId": "17302",
+      "ko": "외국인",
+      "en": "foreigner",
+      "de": "Ausländer",
+      "fr": "étranger",
+      "es": "extranjero",
+      "ja": "外国人",
+      "zh": "外国人 wàiguórén"
+    },
+    {
+      "conceptId": "19186",
+      "ko": "선생님",
+      "en": "teacher",
+      "de": "Lehrer",
+      "fr": "enseignant",
+      "es": "profesor",
+      "ja": "先生",
+      "zh": "老师 lǎoshī"
+    },
+    {
+      "conceptId": "19217",
+      "ko": "의사",
+      "en": "doctor",
+      "de": "Arzt",
+      "fr": "docteur",
+      "es": "médico",
+      "ja": "医者",
+      "zh": "大夫 dàifu"
+    },
+    {
+      "conceptId": "20056",
+      "ko": "경찰관",
+      "en": "police officer",
+      "de": "Polizist",
+      "fr": "policier",
+      "es": "policía",
+      "ja": "警官",
+      "zh": "警察 jǐngchá"
+    },
+    {
+      "conceptId": "20065",
+      "ko": "경찰 아저씨",
+      "en": "officer",
+      "de": "Polizist",
+      "fr": "agent",
+      "es": "policía",
+      "ja": "おまわりさん",
+      "zh": "警察 jǐngchá"
+    },
+    {
+      "conceptId": "20240",
+      "ko": "학생",
+      "en": "student",
+      "de": "Student",
+      "fr": "étudiant",
+      "es": "estudiante",
+      "ja": "学生",
+      "zh": "学生 xuésheng"
+    },
+    {
+      "conceptId": "20241",
+      "ko": "학생",
+      "en": "student",
+      "de": "Schüler",
+      "fr": "étudiant",
+      "es": "alumno",
+      "ja": "生徒",
+      "zh": "学生 xuésheng"
+    },
+    {
+      "conceptId": "20281",
+      "ko": "유학생",
+      "en": "foreign student",
+      "de": "ausländischer Student",
+      "fr": "étudiant étranger",
+      "es": "estudiante extranjero",
+      "ja": "留学生",
+      "zh": "留学生 liúxuéshēng"
+    },
+    {
+      "conceptId": "21220",
+      "ko": "가정",
+      "en": "home",
+      "de": "Familie",
+      "fr": "famille",
+      "es": "hogar",
+      "ja": "家庭",
+      "zh": "家庭 jiātíng"
+    },
+    {
+      "conceptId": "21338",
+      "ko": "나라",
+      "en": "country",
+      "de": "Land",
+      "fr": "pays",
+      "es": "país",
+      "ja": "国 (1)",
+      "zh": "国家 guójiā"
+    },
+    {
+      "conceptId": "21365",
+      "ko": "외국",
+      "en": "foreign country",
+      "de": "Ausland",
+      "fr": "étranger",
+      "es": "extranjero",
+      "ja": "外国",
+      "zh": "外国 wàiguó"
+    },
+    {
+      "conceptId": "22471",
+      "ko": "학교",
+      "en": "school",
+      "de": "Schule",
+      "fr": "école",
+      "es": "colegio",
+      "ja": "学校",
+      "zh": "学校 xuéxiào"
+    },
+    {
+      "conceptId": "22500",
+      "ko": "교실",
+      "en": "classroom",
+      "de": "Klassenzimmer",
+      "fr": "classe",
+      "es": "aula",
+      "ja": "教室",
+      "zh": "教室 jiàoshì"
+    },
+    {
+      "conceptId": "22517",
+      "ko": "대학교",
+      "en": "university",
+      "de": "Universität",
+      "fr": "université",
+      "es": "universidad",
+      "ja": "大学",
+      "zh": "大学 dàxué"
+    },
+    {
+      "conceptId": "22666",
+      "ko": "회사",
+      "en": "company",
+      "de": "Firma",
+      "fr": "firme",
+      "es": "empresa",
+      "ja": "会社",
+      "zh": "公司 gōngsī"
+    },
+    {
+      "conceptId": "22692",
+      "ko": "은행",
+      "en": "bank",
+      "de": "Bank",
+      "fr": "banque",
+      "es": "banco",
+      "ja": "銀行",
+      "zh": "银行 yínháng"
+    },
+    {
+      "conceptId": "22785",
+      "ko": "역",
+      "en": "station",
+      "de": "Bahnhof",
+      "fr": "station",
+      "es": "estación",
+      "ja": "駅",
+      "zh": "车站 chēzhàn"
+    },
+    {
+      "conceptId": "22810",
+      "ko": "수영장",
+      "en": "pool",
+      "de": "Schwimmbad",
+      "fr": "piscine",
+      "es": "piscina",
+      "ja": "プール",
+      "zh": "游泳池 yóuyǒngchí"
+    },
+    {
+      "conceptId": "22828",
+      "ko": "가게",
+      "en": "store",
+      "de": "Laden",
+      "fr": "boutique",
+      "es": "tienda",
+      "ja": "店",
+      "zh": "商店 shāngdiàn"
+    },
+    {
+      "conceptId": "22888",
+      "ko": "레스토랑",
+      "en": "restaurant",
+      "de": "Restaurant",
+      "fr": "restaurant",
+      "es": "restaurante",
+      "ja": "レストラン",
+      "zh": "餐厅 cāntīng"
+    },
+    {
+      "conceptId": "22896",
+      "ko": "식당",
+      "en": "dining room",
+      "de": "Mensa",
+      "fr": "salle à manger",
+      "es": "comedor",
+      "ja": "食堂",
+      "zh": "食堂 shítáng"
+    },
+    {
+      "conceptId": "22917",
+      "ko": "카페",
+      "en": "coffee shop",
+      "de": "Café",
+      "fr": "café",
+      "es": "cafetería",
+      "ja": "喫茶店",
+      "zh": "咖啡厅 kāfēitīng"
+    },
+    {
+      "conceptId": "22952",
+      "ko": "야채 가게",
+      "en": "vegetable shop",
+      "de": "Gemüsehändler",
+      "fr": "marchand de légumes",
+      "es": "frutería",
+      "ja": "八百屋",
+      "zh": "菜铺 càipù"
+    },
+    {
+      "conceptId": "23049",
+      "ko": "백화점",
+      "en": "department store",
+      "de": "Kaufhaus",
+      "fr": "grand magasin",
+      "es": "grandes almacenes",
+      "ja": "デパート",
+      "zh": "百货公司 bǎihuògōngsī"
+    },
+    {
+      "conceptId": "23065",
+      "ko": "호텔",
+      "en": "hotel",
+      "de": "Hotel",
+      "fr": "hôtel",
+      "es": "hotel",
+      "ja": "ホテル",
+      "zh": "饭店 fàndiàn"
+    },
+    {
+      "conceptId": "23103",
+      "ko": "병원",
+      "en": "hospital",
+      "de": "Krankenhaus",
+      "fr": "hôpital",
+      "es": "hospital",
+      "ja": "病院",
+      "zh": "医院 yīyuàn"
+    },
+    {
+      "conceptId": "23121",
+      "ko": "도서관",
+      "en": "library",
+      "de": "Bibliothek",
+      "fr": "bibliothèque",
+      "es": "biblioteca",
+      "ja": "図書館",
+      "zh": "图书馆 túshūguǎn"
+    },
+    {
+      "conceptId": "23140",
+      "ko": "공원",
+      "en": "park",
+      "de": "Park",
+      "fr": "jardin",
+      "es": "parque",
+      "ja": "公園",
+      "zh": "公园 gōngyuán"
+    },
+    {
+      "conceptId": "23216",
+      "ko": "파출소",
+      "en": "police box",
+      "de": "Polizeiwache",
+      "fr": "poste de police",
+      "es": "comisaría",
+      "ja": "交番",
+      "zh": "派出所 pàichūsuǒ"
+    },
+    {
+      "conceptId": "23402",
+      "ko": "대사관",
+      "en": "embassy",
+      "de": "Botschaft",
+      "fr": "ambassade",
+      "es": "embajada",
+      "ja": "大使館",
+      "zh": "大使馆 dàshǐguǎn"
+    },
+    {
+      "conceptId": "23439",
+      "ko": "우체국",
+      "en": "post office",
+      "de": "Post",
+      "fr": "poste",
+      "es": "correo",
+      "ja": "郵便局",
+      "zh": "邮局 yóujú"
+    },
+    {
+      "conceptId": "23913",
+      "ko": "반",
+      "en": "class",
+      "de": "Klasse",
+      "fr": "classe",
+      "es": "clase",
+      "ja": "クラス",
+      "zh": "班 bān"
+    },
+    {
+      "conceptId": "25605",
+      "ko": "목소리",
+      "en": "voice",
+      "de": "Stimme",
+      "fr": "voix",
+      "es": "voz",
+      "ja": "声",
+      "zh": "声音 shēngyīn"
+    },
+    {
+      "conceptId": "26691",
+      "ko": "연습",
+      "en": "practice",
+      "de": "Übung",
+      "fr": "exercice",
+      "es": "ejercicio",
+      "ja": "練習",
+      "zh": "练习 liànxí"
+    },
+    {
+      "conceptId": "26775",
+      "ko": "공부",
+      "en": "study",
+      "de": "Studium",
+      "fr": "étude",
+      "es": "estudio",
+      "ja": "勉強",
+      "zh": "学习 xuéxí"
+    },
+    {
+      "conceptId": "27779",
+      "ko": "시험",
+      "en": "exam",
+      "de": "Prüfung",
+      "fr": "examen",
+      "es": "examen",
+      "ja": "テスト",
+      "zh": "考试 kǎoshì"
+    },
+    {
+      "conceptId": "28234",
+      "ko": "뜻",
+      "en": "meaning",
+      "de": "Bedeutung",
+      "fr": "signification",
+      "es": "significado",
+      "ja": "意味",
+      "zh": "意思 yìsi"
+    },
+    {
+      "conceptId": "28288",
+      "ko": "숙제",
+      "en": "homework",
+      "de": "Hausaufgabe",
+      "fr": "devoirs",
+      "es": "deber",
+      "ja": "宿題",
+      "zh": "作业 zuòyè"
+    },
+    {
+      "conceptId": "30264",
+      "ko": "말",
+      "en": "language",
+      "de": "Sprache",
+      "fr": "parole",
+      "es": "idioma",
+      "ja": "ことば",
+      "zh": "语言 yǔyán"
+    },
+    {
+      "conceptId": "30521",
+      "ko": "단어",
+      "en": "word",
+      "de": "Wort",
+      "fr": "langue",
+      "es": "palabra",
+      "ja": "~語",
+      "zh": "词 cí"
+    },
+    {
+      "conceptId": "30562",
+      "ko": "일본어",
+      "en": "Japanese",
+      "de": "Japanisch",
+      "fr": "japonais",
+      "es": "japonés",
+      "ja": "日本語",
+      "zh": "日语 Rìyǔ"
+    },
+    {
+      "conceptId": "30580",
+      "ko": "영어",
+      "en": "English",
+      "de": "Englisch",
+      "fr": "anglais",
+      "es": "inglés",
+      "ja": "英語",
+      "zh": "英语 yīngyǔ"
+    },
+    {
+      "conceptId": "31526",
+      "ko": "한자",
+      "en": "kanji",
+      "de": "chinesisches Zeichen",
+      "fr": "charactère chinois",
+      "es": "kanji",
+      "ja": "漢字",
+      "zh": "汉字 hànzì"
+    },
+    {
+      "conceptId": "32060",
+      "ko": "지도",
+      "en": "map",
+      "de": "Landkarte",
+      "fr": "plan",
+      "es": "mapa",
+      "ja": "地図",
+      "zh": "地图 dìtú"
+    },
+    {
+      "conceptId": "32261",
+      "ko": "편지",
+      "en": "letter",
+      "de": "Brief",
+      "fr": "lettre",
+      "es": "carta",
+      "ja": "手紙",
+      "zh": "信 xìn"
+    },
+    {
+      "conceptId": "32265",
+      "ko": "엽서",
+      "en": "postcard",
+      "de": "Postkarte",
+      "fr": "carte postale",
+      "es": "postal",
+      "ja": "はがき",
+      "zh": "明信片 míngxìnpiàn"
+    },
+    {
+      "conceptId": "32370",
+      "ko": "전화",
+      "en": "phone",
+      "de": "Telefon",
+      "fr": "téléphone",
+      "es": "teléfono",
+      "ja": "電話",
+      "zh": "电话 diànhuà"
+    },
+    {
+      "conceptId": "32575",
+      "ko": "이야기",
+      "en": "talk",
+      "de": "Gespräch",
+      "fr": "histoire",
+      "es": "historia",
+      "ja": "話",
+      "zh": "话 huà"
+    },
+    {
+      "conceptId": "32755",
+      "ko": "질문",
+      "en": "question",
+      "de": "Frage",
+      "fr": "question",
+      "es": "pregunta",
+      "ja": "質問",
+      "zh": "问题 wèntí"
+    },
+    {
+      "conceptId": "32796",
+      "ko": "문제",
+      "en": "problem",
+      "de": "Problem",
+      "fr": "question",
+      "es": "pregunta",
+      "ja": "問題",
+      "zh": "问题 wèntí"
+    },
+    {
+      "conceptId": "33488",
+      "ko": "복사",
+      "en": "copy",
+      "de": "Kopie",
+      "fr": "polycopie",
+      "es": "fotocopiar",
+      "ja": "コピー",
+      "zh": "复印 fùyìn"
+    },
+    {
+      "conceptId": "33734",
+      "ko": "글",
+      "en": "writing",
+      "de": "Satz",
+      "fr": "phrase",
+      "es": "frase",
+      "ja": "文章",
+      "zh": "文章 wénzhāng"
+    },
+    {
+      "conceptId": "34173",
+      "ko": "책",
+      "en": "book",
+      "de": "Buch",
+      "fr": "livre",
+      "es": "libro",
+      "ja": "本",
+      "zh": "书"
+    },
+    {
+      "conceptId": "34482",
+      "ko": "잡지",
+      "en": "magazine",
+      "de": "Zeitschrift",
+      "fr": "revue",
+      "es": "revista",
+      "ja": "雑誌",
+      "zh": "杂志 zázhì"
+    },
+    {
+      "conceptId": "34508",
+      "ko": "신문",
+      "en": "newspaper",
+      "de": "Zeitung",
+      "fr": "journal",
+      "es": "periódico",
+      "ja": "新聞",
+      "zh": "报纸 bàozhǐ"
+    },
+    {
+      "conceptId": "34541",
+      "ko": "사전",
+      "en": "dictionary",
+      "de": "Wörterbuch",
+      "fr": "dictionnaire",
+      "es": "diccionario",
+      "ja": "辞書",
+      "zh": "词典 cídiǎn"
+    },
+    {
+      "conceptId": "34792",
+      "ko": "노래",
+      "en": "song",
+      "de": "Lied",
+      "fr": "chanson",
+      "es": "canción",
+      "ja": "歌",
+      "zh": "歌 gē"
+    },
+    {
+      "conceptId": "35036",
+      "ko": "그림",
+      "en": "picture",
+      "de": "Bild",
+      "fr": "tableau",
+      "es": "pintura",
+      "ja": "絵",
+      "zh": "画 huà"
+    },
+    {
+      "conceptId": "35159",
+      "ko": "사진",
+      "en": "picture",
+      "de": "Foto",
+      "fr": "photo",
+      "es": "foto",
+      "ja": "写真",
+      "zh": "照片 zhàopiān"
+    },
+    {
+      "conceptId": "35232",
+      "ko": "음악",
+      "en": "music",
+      "de": "Musik",
+      "fr": "musique",
+      "es": "música",
+      "ja": "音楽",
+      "zh": "音乐 yīnyuè"
+    },
+    {
+      "conceptId": "35701",
+      "ko": "영화",
+      "en": "movie",
+      "de": "Film",
+      "fr": "film",
+      "es": "cine",
+      "ja": "映画",
+      "zh": "电影 diànyǐng"
+    },
+    {
+      "conceptId": "36429",
+      "ko": "일",
+      "en": "work",
+      "de": "Arbeit",
+      "fr": "travail",
+      "es": "trabajo",
+      "ja": "仕事",
+      "zh": "工作 gōngzuò"
+    },
+    {
+      "conceptId": "36595",
+      "ko": "여름 방학",
+      "en": "summer holiday",
+      "de": "Sommerferien",
+      "fr": "grandes vacances",
+      "es": "vacaciones de verano",
+      "ja": "夏休み",
+      "zh": "暑假 shǔjià"
+    },
+    {
+      "conceptId": "36602",
+      "ko": "휴일",
+      "en": "rest",
+      "de": "Ferien",
+      "fr": "repos",
+      "es": "vacación",
+      "ja": "休み",
+      "zh": "假 jià"
+    },
+    {
+      "conceptId": "36910",
+      "ko": "밥",
+      "en": "rice",
+      "de": "Reis",
+      "fr": "repas",
+      "es": "comida",
+      "ja": "ごはん",
+      "zh": "饭 fàn"
+    },
+    {
+      "conceptId": "36929",
+      "ko": "아침",
+      "en": "breakfast",
+      "de": "Frühstück",
+      "fr": "petit-déjeuner",
+      "es": "desayuno",
+      "ja": "朝ごはん",
+      "zh": "早饭 zǎofàn"
+    },
+    {
+      "conceptId": "36936",
+      "ko": "점심",
+      "en": "lunch",
+      "de": "Mittagessen",
+      "fr": "déjeuner",
+      "es": "comida",
+      "ja": "昼ごはん",
+      "zh": "午饭 wǔfàn"
+    },
+    {
+      "conceptId": "36950",
+      "ko": "저녁",
+      "en": "dinner",
+      "de": "Abendessen",
+      "fr": "dîner",
+      "es": "cena",
+      "ja": "夕飯",
+      "zh": "晚饭 wǎnfàn"
+    },
+    {
+      "conceptId": "36954",
+      "ko": "저녁",
+      "en": "dinner",
+      "de": "Abendessen",
+      "fr": "dîner",
+      "es": "cena",
+      "ja": "晩ごはん",
+      "zh": "晚饭 wǎnfàn"
+    },
+    {
+      "conceptId": "38057",
+      "ko": "여행",
+      "en": "travel",
+      "de": "Reise",
+      "fr": "voyage",
+      "es": "viaje",
+      "ja": "旅行",
+      "zh": "旅行 lǚxíng"
+    },
+    {
+      "conceptId": "38140",
+      "ko": "산책",
+      "en": "walk",
+      "de": "Spaziergang",
+      "fr": "se promener",
+      "es": "paseo",
+      "ja": "散歩",
+      "zh": "散步 sànbù"
+    },
+    {
+      "conceptId": "38202",
+      "ko": "스포츠",
+      "en": "sport",
+      "de": "Sport",
+      "fr": "sport",
+      "es": "deporte",
+      "ja": "スポーツ",
+      "zh": "运动 yùndòng"
+    },
+    {
+      "conceptId": "39927",
+      "ko": "잘하다",
+      "en": "good",
+      "de": "gut",
+      "fr": "bien",
+      "es": "bien",
+      "ja": "上手",
+      "zh": "拿手 náshǒu"
+    },
+    {
+      "conceptId": "40795",
+      "ko": "파티",
+      "en": "party",
+      "de": "Party",
+      "fr": "soirée",
+      "es": "fiesta",
+      "ja": "パーティー",
+      "zh": "晚会 wǎnhuì"
+    },
+    {
+      "conceptId": "42954",
+      "ko": "수업",
+      "en": "class",
+      "de": "Unterricht",
+      "fr": "classe",
+      "es": "clase",
+      "ja": "授業",
+      "zh": "上课 shàngkè"
+    },
+    {
+      "conceptId": "45301",
+      "ko": "쇼핑",
+      "en": "shopping",
+      "de": "Einkauf",
+      "fr": "courses",
+      "es": "compra",
+      "ja": "買い物",
+      "zh": "买东西 mǎidōngxi"
+    },
+    {
+      "conceptId": "47235",
+      "ko": "빨래",
+      "en": "washing",
+      "de": "Wäsche",
+      "fr": "lessive",
+      "es": "lavado",
+      "ja": "洗濯",
+      "zh": "洗衣服"
+    },
+    {
+      "conceptId": "47401",
+      "ko": "청소",
+      "en": "cleaning",
+      "de": "Reinigung",
+      "fr": "ménage",
+      "es": "limpieza",
+      "ja": "掃除",
+      "zh": "打扫 dǎsǎo"
+    },
+    {
+      "conceptId": "48148",
+      "ko": "짐",
+      "en": "baggage",
+      "de": "Paket",
+      "fr": "bagage",
+      "es": "paquete",
+      "ja": "荷物",
+      "zh": "包裹 bāoguǒ"
+    },
+    {
+      "conceptId": "48177",
+      "ko": "돈",
+      "en": "money",
+      "de": "Geld",
+      "fr": "argent",
+      "es": "dinero",
+      "ja": "お金",
+      "zh": "钱 qián"
+    },
+    {
+      "conceptId": "48231",
+      "ko": "표",
+      "en": "ticket",
+      "de": "Fahrkarte",
+      "fr": "billet",
+      "es": "billete",
+      "ja": "切符",
+      "zh": "车票 chēpiào"
+    },
+    {
+      "conceptId": "48275",
+      "ko": "우표",
+      "en": "stamp",
+      "de": "Briefmarke",
+      "fr": "timbre",
+      "es": "sello",
+      "ja": "切手",
+      "zh": "邮票 yóupiào"
+    },
+    {
+      "conceptId": "48362",
+      "ko": "종이",
+      "en": "paper",
+      "de": "Papier",
+      "fr": "papier",
+      "es": "papel",
+      "ja": "紙",
+      "zh": "纸 zhǐ"
+    },
+    {
+      "conceptId": "49632",
+      "ko": "옷",
+      "en": "dress",
+      "de": "Kleidung",
+      "fr": "vêtement",
+      "es": "ropa",
+      "ja": "洋服",
+      "zh": "西服 xīfú"
+    },
+    {
+      "conceptId": "49803",
+      "ko": "자켓",
+      "en": "jacket",
+      "de": "Jacke",
+      "fr": "veste",
+      "es": "chaqueta",
+      "ja": "上着",
+      "zh": "外衣 wàiyī"
+    },
+    {
+      "conceptId": "49814",
+      "ko": "양복",
+      "en": "suit",
+      "de": "Anzug",
+      "fr": "complet",
+      "es": "traje",
+      "ja": "背広",
+      "zh": "西装 xīzhuāng"
+    },
+    {
+      "conceptId": "49843",
+      "ko": "스웨터",
+      "en": "sweater",
+      "de": "Pullover",
+      "fr": "pull-over",
+      "es": "jersey",
+      "ja": "セーター",
+      "zh": "毛衣 máoyī"
+    },
+    {
+      "conceptId": "49847",
+      "ko": "셔츠",
+      "en": "dress shirt",
+      "de": "Hemd",
+      "fr": "chemise",
+      "es": "camisa",
+      "ja": "ワイシャツ",
+      "zh": "衬衫 chènshān"
+    },
+    {
+      "conceptId": "49881",
+      "ko": "외투",
+      "en": "coat",
+      "de": "Mantel",
+      "fr": "manteau",
+      "es": "abrigo",
+      "ja": "コート",
+      "zh": "大衣 dàyī"
+    },
+    {
+      "conceptId": "49909",
+      "ko": "바지",
+      "en": "pants",
+      "de": "Hose",
+      "fr": "pantalon",
+      "es": "pantalón",
+      "ja": "ズボン",
+      "zh": "裤子 kùzì"
+    },
+    {
+      "conceptId": "49927",
+      "ko": "치마",
+      "en": "skirt",
+      "de": "Rock",
+      "fr": "jupe",
+      "es": "falda",
+      "ja": "スカート",
+      "zh": "裙子 qúnzi"
+    },
+    {
+      "conceptId": "49945",
+      "ko": "셔츠",
+      "en": "shirt",
+      "de": "Hemd",
+      "fr": "chemise",
+      "es": "camiseta",
+      "ja": "シャツ",
+      "zh": "汗衫 hànshān"
+    },
+    {
+      "conceptId": "50065",
+      "ko": "주머니",
+      "en": "pocket",
+      "de": "Tasche",
+      "fr": "poche",
+      "es": "bolsillo",
+      "ja": "ポケット",
+      "zh": "口袋 kǒudài"
+    },
+    {
+      "conceptId": "50073",
+      "ko": "모자",
+      "en": "cap",
+      "de": "Hut",
+      "fr": "chapeau",
+      "es": "sombrero",
+      "ja": "帽子",
+      "zh": "帽子 màozi"
+    },
+    {
+      "conceptId": "50149",
+      "ko": "넥타이",
+      "en": "tie",
+      "de": "Krawatte",
+      "fr": "cravate",
+      "es": "corbata",
+      "ja": "ネクタイ",
+      "zh": "领带 lǐngdài"
+    },
+    {
+      "conceptId": "50205",
+      "ko": "양말",
+      "en": "sock",
+      "de": "Strumpf",
+      "fr": "chaussette",
+      "es": "calcetín",
+      "ja": "靴下",
+      "zh": "袜子 wàzi"
+    },
+    {
+      "conceptId": "50246",
+      "ko": "구두",
+      "en": "shoe",
+      "de": "Schuh",
+      "fr": "chaussure",
+      "es": "zapato",
+      "ja": "靴",
+      "zh": "鞋 xié"
+    },
+    {
+      "conceptId": "50294",
+      "ko": "슬리퍼",
+      "en": "slipper",
+      "de": "Pantoffel",
+      "fr": "pantoufle",
+      "es": "zapatilla",
+      "ja": "スリッパ",
+      "zh": "拖鞋 tuōxié"
+    },
+    {
+      "conceptId": "50300",
+      "ko": "우산",
+      "en": "umbrella",
+      "de": "Regenschirm",
+      "fr": "parapluie",
+      "es": "paraguas",
+      "ja": "傘",
+      "zh": "雨伞 yǔsǎn"
+    },
+    {
+      "conceptId": "50330",
+      "ko": "침대",
+      "en": "bed",
+      "de": "Bett",
+      "fr": "lit",
+      "es": "cama",
+      "ja": "ベッド",
+      "zh": "床 chuáng"
+    },
+    {
+      "conceptId": "50441",
+      "ko": "음식",
+      "en": "food",
+      "de": "Essen",
+      "fr": "aliment",
+      "es": "comida",
+      "ja": "食べ物",
+      "zh": "吃的 chīde"
+    },
+    {
+      "conceptId": "50788",
+      "ko": "빵",
+      "en": "bread",
+      "de": "Brot",
+      "fr": "pain",
+      "es": "pan",
+      "ja": "パン",
+      "zh": "面包 miànbāo"
+    },
+    {
+      "conceptId": "51101",
+      "ko": "야채",
+      "en": "vegetable",
+      "de": "Gemüse",
+      "fr": "légume",
+      "es": "verdura",
+      "ja": "野菜",
+      "zh": "蔬菜 shūcài"
+    },
+    {
+      "conceptId": "51286",
+      "ko": "고기",
+      "en": "meat",
+      "de": "Fleisch",
+      "fr": "viande",
+      "es": "carne",
+      "ja": "肉",
+      "zh": "肉 ròu"
+    },
+    {
+      "conceptId": "51294",
+      "ko": "닭고기",
+      "en": "chicken",
+      "de": "Huhn",
+      "fr": "poulet",
+      "es": "pollo",
+      "ja": "とり肉",
+      "zh": "鸡肉 jīròu"
+    },
+    {
+      "conceptId": "51299",
+      "ko": "쇠고기",
+      "en": "beef",
+      "de": "Rindfleisch",
+      "fr": "bœuf",
+      "es": "ternera",
+      "ja": "牛肉",
+      "zh": "牛肉 niúròu"
+    },
+    {
+      "conceptId": "51303",
+      "ko": "돼지고기",
+      "en": "pork",
+      "de": "Schweinefleisch",
+      "fr": "porc",
+      "es": "carne de cerdo",
+      "ja": "ぶた肉",
+      "zh": "猪肉 zhūròu"
+    },
+    {
+      "conceptId": "51376",
+      "ko": "설탕",
+      "en": "sugar",
+      "de": "Zucker",
+      "fr": "sucre",
+      "es": "azúcar",
+      "ja": "砂糖",
+      "zh": "糖 táng"
+    },
+    {
+      "conceptId": "51398",
+      "ko": "소금",
+      "en": "salt",
+      "de": "Salz",
+      "fr": "sel",
+      "es": "sal",
+      "ja": "塩",
+      "zh": "盐 yán"
+    },
+    {
+      "conceptId": "51442",
+      "ko": "간장",
+      "en": "soy sauce",
+      "de": "Sojasoße",
+      "fr": "sauce de soja",
+      "es": "salsa de soja",
+      "ja": "しょうゆ",
+      "zh": "酱油 jiàngyóu"
+    },
+    {
+      "conceptId": "51476",
+      "ko": "버터",
+      "en": "butter",
+      "de": "Butter",
+      "fr": "beurre",
+      "es": "mantequilla",
+      "ja": "バター",
+      "zh": "黄油 huángyóu"
+    },
+    {
+      "conceptId": "51510",
+      "ko": "카레라이스",
+      "en": "curry",
+      "de": "Curry",
+      "fr": "curry",
+      "es": "curry",
+      "ja": "カレー",
+      "zh": "咖喱饭 gālífàn"
+    },
+    {
+      "conceptId": "51546",
+      "ko": "과자",
+      "en": "sweet",
+      "de": "Kuchen",
+      "fr": "gâteau",
+      "es": "dulce",
+      "ja": "お菓子",
+      "zh": "点心 diǎnxin"
+    },
+    {
+      "conceptId": "51586",
+      "ko": "사탕",
+      "en": "candy",
+      "de": "Bonbon",
+      "fr": "bonbon",
+      "es": "caramelo",
+      "ja": "飴",
+      "zh": "糖 táng"
+    },
+    {
+      "conceptId": "51732",
+      "ko": "음료수",
+      "en": "drink",
+      "de": "Getränk",
+      "fr": "boisson",
+      "es": "bebida",
+      "ja": "飲み物",
+      "zh": "饮料 yǐnliào"
+    },
+    {
+      "conceptId": "51744",
+      "ko": "차",
+      "en": "green tea",
+      "de": "Tee",
+      "fr": "thé",
+      "es": "té",
+      "ja": "お茶",
+      "zh": "茶 chá"
+    },
+    {
+      "conceptId": "51748",
+      "ko": "홍차",
+      "en": "tea",
+      "de": "Tee",
+      "fr": "thé",
+      "es": "té",
+      "ja": "紅茶",
+      "zh": "红茶 hóngchá"
+    },
+    {
+      "conceptId": "51777",
+      "ko": "커피",
+      "en": "coffee",
+      "de": "Kaffee",
+      "fr": "café",
+      "es": "café",
+      "ja": "コーヒー",
+      "zh": "咖啡 kāfēi"
+    },
+    {
+      "conceptId": "51821",
+      "ko": "와인",
+      "en": "wine",
+      "de": "Wein",
+      "fr": "boisson",
+      "es": "vino",
+      "ja": "お酒",
+      "zh": "葡萄酒 pútaojiǔ"
+    },
+    {
+      "conceptId": "51920",
+      "ko": "담배",
+      "en": "cigarette",
+      "de": "Zigarette",
+      "fr": "cigarette",
+      "es": "cigarrillo",
+      "ja": "たばこ",
+      "zh": "烟 yān"
+    },
+    {
+      "conceptId": "51929",
+      "ko": "약",
+      "en": "medicine",
+      "de": "Medikament",
+      "fr": "médicament",
+      "es": "medicina",
+      "ja": "薬",
+      "zh": "药 yào"
+    },
+    {
+      "conceptId": "52391",
+      "ko": "집",
+      "en": "house",
+      "de": "Haus",
+      "fr": "maison",
+      "es": "casa",
+      "ja": "家",
+      "zh": "房子 fángzi"
+    },
+    {
+      "conceptId": "52392",
+      "ko": "집",
+      "en": "home",
+      "de": "Wohnung",
+      "fr": "maison",
+      "es": "casa",
+      "ja": "うち",
+      "zh": "家 jiā"
+    },
+    {
+      "conceptId": "52553",
+      "ko": "건물",
+      "en": "building",
+      "de": "Gebäude",
+      "fr": "bâtiment",
+      "es": "edificio",
+      "ja": "建物",
+      "zh": "建筑物 jiànzhùwù"
+    },
+    {
+      "conceptId": "52812",
+      "ko": "대문",
+      "en": "gate",
+      "de": "Tor",
+      "fr": "porte",
+      "es": "puerta",
+      "ja": "門",
+      "zh": "门 mén"
+    },
+    {
+      "conceptId": "52878",
+      "ko": "아파트",
+      "en": "apartment",
+      "de": "Apartment",
+      "fr": "salle",
+      "es": "piso",
+      "ja": "部屋",
+      "zh": "公寓 gōngyù"
+    },
+    {
+      "conceptId": "53018",
+      "ko": "현관",
+      "en": "hall",
+      "de": "Eingang",
+      "fr": "entrée",
+      "es": "entrada",
+      "ja": "玄関",
+      "zh": "正门 zhèngmén"
+    },
+    {
+      "conceptId": "53027",
+      "ko": "부엌",
+      "en": "kitchen",
+      "de": "Küche",
+      "fr": "cuisine",
+      "es": "cocina",
+      "ja": "台所",
+      "zh": "厨房 chúfáng"
+    },
+    {
+      "conceptId": "53060",
+      "ko": "화장실",
+      "en": "toilet",
+      "de": "Toilette",
+      "fr": "toilettes",
+      "es": "servicio",
+      "ja": "トイレ",
+      "zh": "厕所 cèsuǒ"
+    },
+    {
+      "conceptId": "53064",
+      "ko": "화장실",
+      "en": "restroom",
+      "de": "Toilette",
+      "fr": "toilettes",
+      "es": "baño",
+      "ja": "お手洗い",
+      "zh": "洗手间 xǐshǒujiān"
+    },
+    {
+      "conceptId": "53080",
+      "ko": "복도",
+      "en": "corridor",
+      "de": "Flur",
+      "fr": "couloir",
+      "es": "pasillo",
+      "ja": "廊下",
+      "zh": "走廊 zǒuláng"
+    },
+    {
+      "conceptId": "53094",
+      "ko": "계단",
+      "en": "stair",
+      "de": "Treppe",
+      "fr": "escalier",
+      "es": "escalera",
+      "ja": "階段",
+      "zh": "楼梯 lóutī"
+    },
+    {
+      "conceptId": "53210",
+      "ko": "창문",
+      "en": "window",
+      "de": "Fenster",
+      "fr": "fenêtre",
+      "es": "ventana",
+      "ja": "窓",
+      "zh": "窗户 chuānghu"
+    },
+    {
+      "conceptId": "53263",
+      "ko": "책장",
+      "en": "bookshelf",
+      "de": "Regal",
+      "fr": "bibliothèque",
+      "es": "estante",
+      "ja": "本棚",
+      "zh": "书架 shūjià"
+    },
+    {
+      "conceptId": "53346",
+      "ko": "문",
+      "en": "door",
+      "de": "Tür",
+      "fr": "porte",
+      "es": "puerta",
+      "ja": "戸",
+      "zh": "门 mén"
+    },
+    {
+      "conceptId": "53347",
+      "ko": "문",
+      "en": "door",
+      "de": "Tür",
+      "fr": "porte",
+      "es": "puerta",
+      "ja": "ドア",
+      "zh": "门 mén"
+    },
+    {
+      "conceptId": "53456",
+      "ko": "책상",
+      "en": "desk",
+      "de": "Tisch",
+      "fr": "bureau",
+      "es": "escritorio",
+      "ja": "机",
+      "zh": "桌子 zhuōzi"
+    },
+    {
+      "conceptId": "53468",
+      "ko": "테이블",
+      "en": "table",
+      "de": "Tisch",
+      "fr": "table",
+      "es": "mesa",
+      "ja": "テーブル",
+      "zh": "桌子 zhuōzi"
+    },
+    {
+      "conceptId": "53482",
+      "ko": "의자",
+      "en": "chair",
+      "de": "Stuhl",
+      "fr": "fauteuil",
+      "es": "silla",
+      "ja": "いす",
+      "zh": "椅子 yǐzi"
+    },
+    {
+      "conceptId": "53573",
+      "ko": "난로",
+      "en": "heater",
+      "de": "Ofen",
+      "fr": "chauffage",
+      "es": "estufa",
+      "ja": "ストーブ",
+      "zh": "炉子 lúzi"
+    },
+    {
+      "conceptId": "53579",
+      "ko": "욕실",
+      "en": "bath",
+      "de": "Bad",
+      "fr": "bain",
+      "es": "baño",
+      "ja": "ふろ",
+      "zh": "浴缸"
+    },
+    {
+      "conceptId": "53826",
+      "ko": "재떨이",
+      "en": "ashtray",
+      "de": "Aschenbecher",
+      "fr": "cendrier",
+      "es": "cenicero",
+      "ja": "灰皿",
+      "zh": "烟灰缸 yānhuīgāng"
+    },
+    {
+      "conceptId": "53950",
+      "ko": "우체통",
+      "en": "mailbox",
+      "de": "Briefkasten",
+      "fr": "boîte à lettre",
+      "es": "buzón",
+      "ja": "ポスト",
+      "zh": "邮筒 yóutǒng"
+    },
+    {
+      "conceptId": "53969",
+      "ko": "봉투",
+      "en": "envelope",
+      "de": "Briefumschlag",
+      "fr": "enveloppe",
+      "es": "sobre",
+      "ja": "封筒",
+      "zh": "信封 xìnfēng"
+    },
+    {
+      "conceptId": "54008",
+      "ko": "지갑",
+      "en": "wallet",
+      "de": "Portemonnaie",
+      "fr": "portefeuille",
+      "es": "cartera",
+      "ja": "財布",
+      "zh": "钱包 qiánbāo"
+    },
+    {
+      "conceptId": "54021",
+      "ko": "가방",
+      "en": "bag",
+      "de": "Tasche",
+      "fr": "valise",
+      "es": "bolso",
+      "ja": "かばん",
+      "zh": "书包 shūbāo"
+    },
+    {
+      "conceptId": "54077",
+      "ko": "접시",
+      "en": "dish",
+      "de": "Teller",
+      "fr": "plat",
+      "es": "plato",
+      "ja": "お皿",
+      "zh": "碟子 diézi"
+    },
+    {
+      "conceptId": "54092",
+      "ko": "그릇",
+      "en": "teacup",
+      "de": "Tasse",
+      "fr": "bol",
+      "es": "cuenco",
+      "ja": "ちゃわん",
+      "zh": "饭碗 fànwǎn"
+    },
+    {
+      "conceptId": "54101",
+      "ko": "컵",
+      "en": "glass",
+      "de": "Glas",
+      "fr": "verre",
+      "es": "copa",
+      "ja": "コップ",
+      "zh": "杯子 bēizi"
+    },
+    {
+      "conceptId": "54102",
+      "ko": "컵",
+      "en": "cup",
+      "de": "Tasse",
+      "fr": "coupe",
+      "es": "taza",
+      "ja": "カップ",
+      "zh": "杯子 bēizi"
+    },
+    {
+      "conceptId": "54175",
+      "ko": "젓가락",
+      "en": "chopsticks",
+      "de": "Stäbchen",
+      "fr": "baguettes",
+      "es": "palillo",
+      "ja": "おはし",
+      "zh": "筷子 kuàizi"
+    },
+    {
+      "conceptId": "54190",
+      "ko": "포크",
+      "en": "fork",
+      "de": "Gabel",
+      "fr": "fourchette",
+      "es": "tenedor",
+      "ja": "フォーク",
+      "zh": "叉子 chāzi"
+    },
+    {
+      "conceptId": "54192",
+      "ko": "숟가락",
+      "en": "spoon",
+      "de": "Löffel",
+      "fr": "cuillère",
+      "es": "cuchara",
+      "ja": "スプーン",
+      "zh": "勺子 sháozi"
+    },
+    {
+      "conceptId": "54236",
+      "ko": "연필",
+      "en": "pencil",
+      "de": "Bleistift",
+      "fr": "crayon",
+      "es": "lápiz",
+      "ja": "鉛筆",
+      "zh": "铅笔 qiānbǐ"
+    },
+    {
+      "conceptId": "54238",
+      "ko": "만년필",
+      "en": "fountain pen",
+      "de": "Füllfederhalter",
+      "fr": "stylo",
+      "es": "pluma estilográfica",
+      "ja": "万年筆",
+      "zh": "钢笔 gāngbǐ"
+    },
+    {
+      "conceptId": "54239",
+      "ko": "볼펜",
+      "en": "ballpoint pen",
+      "de": "Kugelschreiber",
+      "fr": "stylo à bille",
+      "es": "bolígrafo",
+      "ja": "ボールペン",
+      "zh": "圆珠笔 yuánzhūbǐ"
+    },
+    {
+      "conceptId": "54250",
+      "ko": "펜",
+      "en": "pen",
+      "de": "Feder",
+      "fr": "stylo",
+      "es": "bolígrafo",
+      "ja": "ペン",
+      "zh": "笔 bǐ"
+    },
+    {
+      "conceptId": "54498",
+      "ko": "열쇄",
+      "en": "key",
+      "de": "Schlüssel",
+      "fr": "clef",
+      "es": "llave",
+      "ja": "かぎ",
+      "zh": "钥匙 yàoshi"
+    },
+    {
+      "conceptId": "54580",
+      "ko": "손수건",
+      "en": "handkerchief",
+      "de": "Taschentuch",
+      "fr": "mouchoir",
+      "es": "pañuelo",
+      "ja": "ハンカチ",
+      "zh": "手绢 shǒujuàn"
+    },
+    {
+      "conceptId": "54653",
+      "ko": "샤워",
+      "en": "shower",
+      "de": "Dusche",
+      "fr": "douche",
+      "es": "ducha",
+      "ja": "シャワー",
+      "zh": "淋浴 línyù"
+    },
+    {
+      "conceptId": "54781",
+      "ko": "나이프",
+      "en": "knife",
+      "de": "Messer",
+      "fr": "couteau",
+      "es": "cuchillo",
+      "ja": "ナイフ",
+      "zh": "刀子 dāozi"
+    },
+    {
+      "conceptId": "55090",
+      "ko": "기타",
+      "en": "guitar",
+      "de": "Gitarre",
+      "fr": "guitare",
+      "es": "guitarra",
+      "ja": "ギター",
+      "zh": "吉他 jítā"
+    },
+    {
+      "conceptId": "55164",
+      "ko": "음반",
+      "en": "record",
+      "de": "Schallplatte",
+      "fr": "disque",
+      "es": "disco de vinilo",
+      "ja": "レコード",
+      "zh": "唱片 chàngpiàn"
+    },
+    {
+      "conceptId": "55740",
+      "ko": "노트",
+      "en": "notebook",
+      "de": "Heft",
+      "fr": "cahier",
+      "es": "cuaderno",
+      "ja": "ノート",
+      "zh": "笔记本 bǐjìběn"
+    },
+    {
+      "conceptId": "55889",
+      "ko": "안경",
+      "en": "glasses",
+      "de": "Brille",
+      "fr": "lunettes",
+      "es": "gafa",
+      "ja": "眼鏡",
+      "zh": "眼镜 yǎnjìng"
+    },
+    {
+      "conceptId": "55928",
+      "ko": "카메라",
+      "en": "camera",
+      "de": "Kamera",
+      "fr": "appareil",
+      "es": "cámara",
+      "ja": "カメラ",
+      "zh": "照相机 zhàoxiàngjī"
+    },
+    {
+      "conceptId": "55946",
+      "ko": "필름",
+      "en": "film",
+      "de": "Film",
+      "fr": "pellicule",
+      "es": "carrete",
+      "ja": "フィルム",
+      "zh": "胶卷 jiāojuǎn"
+    },
+    {
+      "conceptId": "55970",
+      "ko": "냉장고",
+      "en": "fridge",
+      "de": "Kühlschrank",
+      "fr": "frigo",
+      "es": "nevera",
+      "ja": "冷蔵庫",
+      "zh": "冰箱 bīngxiāng"
+    },
+    {
+      "conceptId": "55992",
+      "ko": "라디오",
+      "en": "radio",
+      "de": "Radio",
+      "fr": "radio",
+      "es": "radio",
+      "ja": "ラジオ",
+      "zh": "收音机 shōuyīnjī"
+    },
+    {
+      "conceptId": "55994",
+      "ko": "텔레비젼",
+      "en": "TV",
+      "de": "Fernsehen",
+      "fr": "télévision",
+      "es": "televisión",
+      "ja": "テレビ",
+      "zh": "电视 diànshì"
+    },
+    {
+      "conceptId": "56004",
+      "ko": "녹음기",
+      "en": "tape recorder",
+      "de": "Kassettenrekorder",
+      "fr": "magnétophone",
+      "es": "grabadora",
+      "ja": "テープレコーダー",
+      "zh": "录音机 lùyīnjī"
+    },
+    {
+      "conceptId": "56126",
+      "ko": "컴퓨터",
+      "en": "computer",
+      "de": "Computer",
+      "fr": "ordinateur",
+      "es": "ordenador",
+      "ja": "コンピューター",
+      "zh": "电脑 diànnǎo"
+    },
+    {
+      "conceptId": "56144",
+      "ko": "라디오카세트",
+      "en": "radio-cassette player",
+      "de": "Radiorekorder",
+      "fr": "radiocassette",
+      "es": "cadena de música",
+      "ja": "ラジカセ",
+      "zh": "收录机 shōulùjī"
+    },
+    {
+      "conceptId": "56398",
+      "ko": "시계",
+      "en": "clock",
+      "de": "Uhr",
+      "fr": "horloge",
+      "es": "reloj",
+      "ja": "時計",
+      "zh": "钟表 zhōngbiǎo"
+    },
+    {
+      "conceptId": "56482",
+      "ko": "자전거",
+      "en": "bicycle",
+      "de": "Fahrrad",
+      "fr": "bicyclette",
+      "es": "bicicleta",
+      "ja": "自転車",
+      "zh": "自行车 zìxíngchē"
+    },
+    {
+      "conceptId": "56506",
+      "ko": "자동차",
+      "en": "car",
+      "de": "Auto",
+      "fr": "voiture",
+      "es": "coche",
+      "ja": "自動車",
+      "zh": "汽车 qìchē"
+    },
+    {
+      "conceptId": "56572",
+      "ko": "택시",
+      "en": "taxi",
+      "de": "Taxi",
+      "fr": "taxi",
+      "es": "taxi",
+      "ja": "タクシー",
+      "zh": "出租车 chūzūchē"
+    },
+    {
+      "conceptId": "56602",
+      "ko": "버스",
+      "en": "bus",
+      "de": "Bus",
+      "fr": "autobus",
+      "es": "autobús",
+      "ja": "バス",
+      "zh": "公共汽车 gōnggòngqìchē"
+    },
+    {
+      "conceptId": "56645",
+      "ko": "전철",
+      "en": "train",
+      "de": "Zug",
+      "fr": "train",
+      "es": "tren",
+      "ja": "電車",
+      "zh": "火车 huǒchē"
+    },
+    {
+      "conceptId": "56688",
+      "ko": "지하철",
+      "en": "subway",
+      "de": "U-Bahn",
+      "fr": "métro",
+      "es": "metro",
+      "ja": "地下鉄",
+      "zh": "地铁 dìtiě"
+    },
+    {
+      "conceptId": "56712",
+      "ko": "엘리베이터",
+      "en": "elevator",
+      "de": "Aufzug",
+      "fr": "ascenseur",
+      "es": "ascensor",
+      "ja": "エレベーター",
+      "zh": "电梯 diàntī"
+    },
+    {
+      "conceptId": "56868",
+      "ko": "비행기",
+      "en": "plane",
+      "de": "Flugzeug",
+      "fr": "avion",
+      "es": "avión",
+      "ja": "飛行機",
+      "zh": "飞机 fēijī"
+    },
+    {
+      "conceptId": "57040",
+      "ko": "마당",
+      "en": "garden",
+      "de": "Garten",
+      "fr": "jardin",
+      "es": "jardín",
+      "ja": "庭",
+      "zh": "院子 yuànzi"
+    },
+    {
+      "conceptId": "57152",
+      "ko": "길",
+      "en": "road",
+      "de": "Straße",
+      "fr": "chemin",
+      "es": "calle",
+      "ja": "道",
+      "zh": "路 lù"
+    },
+    {
+      "conceptId": "57316",
+      "ko": "사거리",
+      "en": "crossroad",
+      "de": "Kreuzung",
+      "fr": "carrefour",
+      "es": "cruce",
+      "ja": "交差点",
+      "zh": "十字路口 shízìlùkǒu"
+    },
+    {
+      "conceptId": "57861",
+      "ko": "색깔",
+      "en": "color",
+      "de": "Farbe",
+      "fr": "couleur",
+      "es": "color",
+      "ja": "色",
+      "zh": "颜色 yánsè"
+    },
+    {
+      "conceptId": "57943",
+      "ko": "검정, 검다",
+      "en": "black",
+      "de": "schwarz",
+      "fr": "noir",
+      "es": "negro",
+      "ja": "黒",
+      "zh": "黑色 hēisè"
+    },
+    {
+      "conceptId": "57967",
+      "ko": "빨강, 붉다",
+      "en": "red",
+      "de": "rot",
+      "fr": "rouge",
+      "es": "rojo",
+      "ja": "赤",
+      "zh": "红色 hóngsè"
+    },
+    {
+      "conceptId": "58033",
+      "ko": "노랑, 노랗다",
+      "en": "yellow",
+      "de": "gelb",
+      "fr": "jaune",
+      "es": "amarillo",
+      "ja": "黄色",
+      "zh": "黄色 huángsè"
+    },
+    {
+      "conceptId": "58041",
+      "ko": "녹색",
+      "en": "green",
+      "de": "grün",
+      "fr": "vert",
+      "es": "verde",
+      "ja": "緑",
+      "zh": "绿色 lǜsè"
+    },
+    {
+      "conceptId": "58059",
+      "ko": "파랑, 파랗다",
+      "en": "blue",
+      "de": "blau",
+      "fr": "bleu",
+      "es": "azul",
+      "ja": "青",
+      "zh": "蓝色 lánsè"
+    },
+    {
+      "conceptId": "59611",
+      "ko": "바람",
+      "en": "wind",
+      "de": "Wind",
+      "fr": "vent",
+      "es": "viento",
+      "ja": "風",
+      "zh": "风 fēng"
+    },
+    {
+      "conceptId": "59793",
+      "ko": "비",
+      "en": "rain",
+      "de": "Regen",
+      "fr": "pluie",
+      "es": "lluvia",
+      "ja": "雨",
+      "zh": "雨 yǔ"
+    },
+    {
+      "conceptId": "59878",
+      "ko": "눈",
+      "en": "snow",
+      "de": "Schnee",
+      "fr": "neige",
+      "es": "nieve",
+      "ja": "雪",
+      "zh": "雪 xuě"
+    },
+    {
+      "conceptId": "59928",
+      "ko": "날씨",
+      "en": "weather",
+      "de": "Wetter",
+      "fr": "faire",
+      "es": "tiempo",
+      "ja": "天気",
+      "zh": "天气 tiānqì"
+    },
+    {
+      "conceptId": "59985",
+      "ko": "흐림",
+      "en": "cloudy",
+      "de": "wolkig",
+      "fr": "être couvert",
+      "es": "nublado",
+      "ja": "曇り",
+      "zh": "阴天 yīntiān"
+    },
+    {
+      "conceptId": "60947",
+      "ko": "강",
+      "en": "river",
+      "de": "Fluss",
+      "fr": "fleuve",
+      "es": "río",
+      "ja": "川",
+      "zh": "河 hé"
+    },
+    {
+      "conceptId": "61030",
+      "ko": "못",
+      "en": "pond",
+      "de": "Teich",
+      "fr": "étang",
+      "es": "estanque",
+      "ja": "池",
+      "zh": "池子 chízi"
+    },
+    {
+      "conceptId": "62825",
+      "ko": "과일",
+      "en": "fruit",
+      "de": "Obst",
+      "fr": "fruit",
+      "es": "fruta",
+      "ja": "果物",
+      "zh": "水果 shuǐguǒ"
+    },
+    {
+      "conceptId": "63577",
+      "ko": "생선",
+      "en": "fish",
+      "de": "Fisch",
+      "fr": "poisson",
+      "es": "pescado",
+      "ja": "魚",
+      "zh": "鱼 yú"
+    },
+    {
+      "conceptId": "64143",
+      "ko": "몸",
+      "en": "body",
+      "de": "Körper",
+      "fr": "corps",
+      "es": "cuerpo",
+      "ja": "体",
+      "zh": "身体 shēntǐ"
+    },
+    {
+      "conceptId": "64318",
+      "ko": "머리",
+      "en": "head",
+      "de": "Kopf",
+      "fr": "tête",
+      "es": "cabeza",
+      "ja": "頭",
+      "zh": "头 tóu"
+    },
+    {
+      "conceptId": "64388",
+      "ko": "얼굴",
+      "en": "face",
+      "de": "Gesicht",
+      "fr": "figure",
+      "es": "cara",
+      "ja": "顔",
+      "zh": "脸 liǎn"
+    },
+    {
+      "conceptId": "64415",
+      "ko": "눈",
+      "en": "eye",
+      "de": "Auge",
+      "fr": "œil",
+      "es": "ojo",
+      "ja": "目",
+      "zh": "眼睛 yǎnjing"
+    },
+    {
+      "conceptId": "64491",
+      "ko": "귀",
+      "en": "ear",
+      "de": "Ohr",
+      "fr": "oreille",
+      "es": "oreja",
+      "ja": "耳",
+      "zh": "耳朵 ěrduo"
+    },
+    {
+      "conceptId": "64505",
+      "ko": "입",
+      "en": "mouth",
+      "de": "Mund",
+      "fr": "bouche",
+      "es": "boca",
+      "ja": "口",
+      "zh": "嘴 zuǐ"
+    },
+    {
+      "conceptId": "64638",
+      "ko": "배",
+      "en": "stomach",
+      "de": "Bauch",
+      "fr": "ventre",
+      "es": "tripa",
+      "ja": "おなか",
+      "zh": "肚子 dùzi"
+    },
+    {
+      "conceptId": "64713",
+      "ko": "손",
+      "en": "hand",
+      "de": "Hand",
+      "fr": "main",
+      "es": "mano",
+      "ja": "手",
+      "zh": "手 shǒu"
+    },
+    {
+      "conceptId": "64769",
+      "ko": "발",
+      "en": "foot",
+      "de": "Fuß",
+      "fr": "jambe",
+      "es": "pie",
+      "ja": "足",
+      "zh": "腿 tuǐ"
+    },
+    {
+      "conceptId": "65338",
+      "ko": "이",
+      "en": "tooth",
+      "de": "Zahn",
+      "fr": "dent",
+      "es": "diente",
+      "ja": "歯",
+      "zh": "牙齿 yáchǐ"
+    },
+    {
+      "conceptId": "65461",
+      "ko": "우유",
+      "en": "milk",
+      "de": "Milch",
+      "fr": "lait",
+      "es": "leche",
+      "ja": "牛乳",
+      "zh": "牛奶 niúnǎi"
+    },
+    {
+      "conceptId": "65581",
+      "ko": "계란",
+      "en": "egg",
+      "de": "Ei",
+      "fr": "œuf",
+      "es": "huevo",
+      "ja": "卵",
+      "zh": "鸡蛋 jīdàn"
+    },
+    {
+      "conceptId": "66408",
+      "ko": "병",
+      "en": "illness",
+      "de": "Krankheit",
+      "fr": "maladie",
+      "es": "enfermo",
+      "ja": "病気",
+      "zh": "病 bìng"
+    },
+    {
+      "conceptId": "67613",
+      "ko": "내다",
+      "en": "send",
+      "de": "senden",
+      "fr": "sortir",
+      "es": "enviar",
+      "ja": "出します",
+      "zh": "寄 jì"
+    },
+    {
+      "conceptId": "68092",
+      "ko": "지우다",
+      "en": "erase",
+      "de": "löschen",
+      "fr": "effacer",
+      "es": "borrar",
+      "ja": "消します",
+      "zh": "擦掉 cādiào"
+    },
+    {
+      "conceptId": "68797",
+      "ko": "누르다",
+      "en": "push",
+      "de": "drücken",
+      "fr": "pousser",
+      "es": "empujar",
+      "ja": "押します",
+      "zh": "推 tuī"
+    },
+    {
+      "conceptId": "69867",
+      "ko": "걸다",
+      "en": "hang",
+      "de": "hängen",
+      "fr": "mettre",
+      "es": "ponerse",
+      "ja": "かけます (1)",
+      "zh": "挂 guà"
+    },
+    {
+      "conceptId": "70119",
+      "ko": "나가다",
+      "en": "go out",
+      "de": "ausgehen",
+      "fr": "partir",
+      "es": "salir",
+      "ja": "出かけます",
+      "zh": "出去 chūqù"
+    },
+    {
+      "conceptId": "70181",
+      "ko": "도착하다",
+      "en": "arrive",
+      "de": "ankommen",
+      "fr": "arriver",
+      "es": "llegar",
+      "ja": "着きます",
+      "zh": "到 dào"
+    },
+    {
+      "conceptId": "70238",
+      "ko": "걷다",
+      "en": "walk",
+      "de": "laufen",
+      "fr": "marcher",
+      "es": "caminar",
+      "ja": "歩きます",
+      "zh": "走 zǒu"
+    },
+    {
+      "conceptId": "70265",
+      "ko": "달리다",
+      "en": "run",
+      "de": "rennen",
+      "fr": "courir",
+      "es": "correr",
+      "ja": "走ります",
+      "zh": "跑 pǎo"
+    },
+    {
+      "conceptId": "70316",
+      "ko": "날다",
+      "en": "jump",
+      "de": "fliegen",
+      "fr": "voler",
+      "es": "volar",
+      "ja": "飛びます",
+      "zh": "跳 tiào"
+    },
+    {
+      "conceptId": "70931",
+      "ko": "돌아가다",
+      "en": "go home",
+      "de": "zurückkehren",
+      "fr": "rentrer",
+      "es": "volver",
+      "ja": "帰ります",
+      "zh": "回 huí"
+    },
+    {
+      "conceptId": "71127",
+      "ko": "가다",
+      "en": "go",
+      "de": "gehen",
+      "fr": "aller",
+      "es": "ir",
+      "ja": "行きます",
+      "zh": "去 qù"
+    },
+    {
+      "conceptId": "71458",
+      "ko": "넣다",
+      "en": "put",
+      "de": "einlegen",
+      "fr": "introduire",
+      "es": "servir",
+      "ja": "入れます(2)",
+      "zh": "放 fàng"
+    },
+    {
+      "conceptId": "71811",
+      "ko": "쓰다",
+      "en": "put on",
+      "de": "aufsetzen",
+      "fr": "mettre",
+      "es": "ponerse",
+      "ja": "かぶります",
+      "zh": "戴 dài"
+    },
+    {
+      "conceptId": "71949",
+      "ko": "내리다",
+      "en": "get off",
+      "de": "aussteigen",
+      "fr": "descendre",
+      "es": "bajar",
+      "ja": "降ります",
+      "zh": "下 xià"
+    },
+    {
+      "conceptId": "72074",
+      "ko": "타다",
+      "en": "get on",
+      "de": "einsteigen",
+      "fr": "prendre",
+      "es": "subir",
+      "ja": "乗ります",
+      "zh": "坐 zuò"
+    },
+    {
+      "conceptId": "72635",
+      "ko": "열다",
+      "en": "open",
+      "de": "öffnen",
+      "fr": "tirer",
+      "es": "abrir",
+      "ja": "開けます",
+      "zh": "打开 dǎkāi"
+    },
+    {
+      "conceptId": "72672",
+      "ko": "닫다",
+      "en": "close",
+      "de": "schließen",
+      "fr": "fermer",
+      "es": "cerrar",
+      "ja": "閉めます",
+      "zh": "关 guān"
+    },
+    {
+      "conceptId": "72816",
+      "ko": "붙이다",
+      "en": "stick",
+      "de": "kleben",
+      "fr": "coller",
+      "es": "pegar",
+      "ja": "はります",
+      "zh": "贴 tiē"
+    },
+    {
+      "conceptId": "73436",
+      "ko": "구부러지다",
+      "en": "turn",
+      "de": "biegen",
+      "fr": "tourner",
+      "es": "girar",
+      "ja": "曲がります",
+      "zh": "歪着"
+    },
+    {
+      "conceptId": "73645",
+      "ko": "자르다",
+      "en": "cut",
+      "de": "schneiden",
+      "fr": "couper",
+      "es": "cortar",
+      "ja": "切ります(2)",
+      "zh": "剪 jiǎn"
+    },
+    {
+      "conceptId": "74751",
+      "ko": "시작되다",
+      "en": "begin",
+      "de": "beginnen",
+      "fr": "commencer",
+      "es": "empezar",
+      "ja": "始まります",
+      "zh": "开始 kāishǐ"
+    },
+    {
+      "conceptId": "76527",
+      "ko": "노래하다",
+      "en": "sing",
+      "de": "singen",
+      "fr": "chanter",
+      "es": "cantar",
+      "ja": "歌います",
+      "zh": "唱歌 chànggē"
+    },
+    {
+      "conceptId": "77118",
+      "ko": "연습하다",
+      "en": "practice",
+      "de": "üben",
+      "fr": "faire des exercices",
+      "es": "hacer ejercicio",
+      "ja": "練習します",
+      "zh": "练习 liànxí"
+    },
+    {
+      "conceptId": "79279",
+      "ko": "말하다",
+      "en": "say",
+      "de": "sagen",
+      "fr": "entendre",
+      "es": "decir",
+      "ja": "言います",
+      "zh": "说 shuō"
+    },
+    {
+      "conceptId": "80000",
+      "ko": "이야기하다",
+      "en": "speak",
+      "de": "sprechen",
+      "fr": "parler",
+      "es": "hablar",
+      "ja": "話します",
+      "zh": "说话 shuōhuà"
+    },
+    {
+      "conceptId": "80142",
+      "ko": "대답하다",
+      "en": "answer",
+      "de": "antworten",
+      "fr": "répondre",
+      "es": "contestar",
+      "ja": "答えます",
+      "zh": "回答 huídá"
+    },
+    {
+      "conceptId": "80639",
+      "ko": "읽다",
+      "en": "read",
+      "de": "lesen",
+      "fr": "lire",
+      "es": "leer",
+      "ja": "読みます",
+      "zh": "看 kàn"
+    },
+    {
+      "conceptId": "80727",
+      "ko": "쓰다",
+      "en": "write",
+      "de": "schreiben",
+      "fr": "écrire",
+      "es": "escribir",
+      "ja": "書きます",
+      "zh": "写 xiě"
+    },
+    {
+      "conceptId": "80748",
+      "ko": "복사하다",
+      "en": "copy",
+      "de": "kopieren",
+      "fr": "polycopier",
+      "es": "fotocopiar",
+      "ja": "コピーします",
+      "zh": "复印 fùyìn"
+    },
+    {
+      "conceptId": "81068",
+      "ko": "치다",
+      "en": "play",
+      "de": "spielen",
+      "fr": "jouer",
+      "es": "tocar",
+      "ja": "弾きます",
+      "zh": "弹 tán"
+    },
+    {
+      "conceptId": "81700",
+      "ko": "먹다",
+      "en": "eat",
+      "de": "essen",
+      "fr": "manger",
+      "es": "comer",
+      "ja": "食べます",
+      "zh": "吃 chī"
+    },
+    {
+      "conceptId": "81858",
+      "ko": "입다",
+      "en": "put on",
+      "de": "anziehen",
+      "fr": "mettre",
+      "es": "ponerse",
+      "ja": "はきます",
+      "zh": "穿 chuān"
+    },
+    {
+      "conceptId": "81872",
+      "ko": "벗다",
+      "en": "take off",
+      "de": "ausziehen",
+      "fr": "enlever",
+      "es": "quitarse",
+      "ja": "脱ぎます",
+      "zh": "脱 tuō"
+    },
+    {
+      "conceptId": "81948",
+      "ko": "살다",
+      "en": "live",
+      "de": "wohnen",
+      "fr": "habiter",
+      "es": "vivir",
+      "ja": "住みます",
+      "zh": "住 zhù"
+    },
+    {
+      "conceptId": "82121",
+      "ko": "샤워(를) 하다",
+      "en": "take a bath",
+      "de": "duschen",
+      "fr": "prendre",
+      "es": "ducharse",
+      "ja": "浴びます",
+      "zh": "洗澡 xǐzǎo"
+    },
+    {
+      "conceptId": "82317",
+      "ko": "놀다",
+      "en": "play",
+      "de": "spielen",
+      "fr": "jouer",
+      "es": "jugar",
+      "ja": "遊びます",
+      "zh": "玩儿 wánr"
+    },
+    {
+      "conceptId": "82358",
+      "ko": "여행하다",
+      "en": "travel",
+      "de": "reisen",
+      "fr": "voyager",
+      "es": "viajar",
+      "ja": "旅行します",
+      "zh": "旅行 lǚxíng"
+    },
+    {
+      "conceptId": "82483",
+      "ko": "헤엄치다",
+      "en": "swim",
+      "de": "schwimmen",
+      "fr": "nager",
+      "es": "nadar",
+      "ja": "泳ぎます",
+      "zh": "游泳 yóuyǒng"
+    },
+    {
+      "conceptId": "82608",
+      "ko": "서다",
+      "en": "stand",
+      "de": "aufstehen",
+      "fr": "être debout",
+      "es": "levantarse",
+      "ja": "立ちます",
+      "zh": "站 zhàn"
+    },
+    {
+      "conceptId": "82694",
+      "ko": "자다",
+      "en": "go to bed",
+      "de": "schlafen",
+      "fr": "se coucher",
+      "es": "acostarse",
+      "ja": "寝ます",
+      "zh": "睡觉 shuìjiào"
+    },
+    {
+      "conceptId": "82724",
+      "ko": "앉다",
+      "en": "sit",
+      "de": "sich setzen",
+      "fr": "s'asseoir",
+      "es": "sentarse",
+      "ja": "座ります",
+      "zh": "坐 zuò"
+    },
+    {
+      "conceptId": "83154",
+      "ko": "마시다",
+      "en": "drink",
+      "de": "trinken",
+      "fr": "boire",
+      "es": "beber",
+      "ja": "飲みます",
+      "zh": "喝 hē"
+    },
+    {
+      "conceptId": "83250",
+      "ko": "빨다",
+      "en": "smoke",
+      "de": "rauchen",
+      "fr": "respirer",
+      "es": "respirar",
+      "ja": "吸います",
+      "zh": "抽 chōu"
+    },
+    {
+      "conceptId": "83509",
+      "ko": "하다",
+      "en": "do",
+      "de": "tun",
+      "fr": "faire",
+      "es": "hacer",
+      "ja": "やります",
+      "zh": "干 gàn"
+    },
+    {
+      "conceptId": "83625",
+      "ko": "일하다",
+      "en": "work",
+      "de": "arbeiten",
+      "fr": "travailler",
+      "es": "trabajar",
+      "ja": "働きます",
+      "zh": "工作"
+    },
+    {
+      "conceptId": "84044",
+      "ko": "만나다",
+      "en": "meet",
+      "de": "treffen",
+      "fr": "rencontrer",
+      "es": "ver",
+      "ja": "会います",
+      "zh": "见面 jiàn miàn"
+    },
+    {
+      "conceptId": "85608",
+      "ko": "가르치다",
+      "en": "teach",
+      "de": "lehren",
+      "fr": "enseigner",
+      "es": "enseñar",
+      "ja": "教えます",
+      "zh": "教 jiāo"
+    },
+    {
+      "conceptId": "85910",
+      "ko": "~아/어 주세요",
+      "en": "please",
+      "de": "bitte",
+      "fr": "s'il vous plaît",
+      "es": "por favor",
+      "ja": "...てください",
+      "zh": "请 qǐng"
+    },
+    {
+      "conceptId": "87238",
+      "ko": "팔다",
+      "en": "sell",
+      "de": "verkaufen",
+      "fr": "vendre",
+      "es": "vender",
+      "ja": "売ります",
+      "zh": "卖 mài"
+    },
+    {
+      "conceptId": "87307",
+      "ko": "사다",
+      "en": "buy",
+      "de": "kaufen",
+      "fr": "faire des courses",
+      "es": "comprar",
+      "ja": "買います",
+      "zh": "买 mǎi"
+    },
+    {
+      "conceptId": "87493",
+      "ko": "건네다",
+      "en": "hand",
+      "de": "geben",
+      "fr": "passer",
+      "es": "pasar",
+      "ja": "渡します",
+      "zh": "交 jiāo"
+    },
+    {
+      "conceptId": "87572",
+      "ko": "빌려주다",
+      "en": "lend",
+      "de": "leihen",
+      "fr": "louer",
+      "es": "dejar",
+      "ja": "貸します",
+      "zh": "借给 jiègěi"
+    },
+    {
+      "conceptId": "87624",
+      "ko": "갚다",
+      "en": "return",
+      "de": "zurückgeben",
+      "fr": "rendre",
+      "es": "devolver",
+      "ja": "返します",
+      "zh": "还 huán"
+    },
+    {
+      "conceptId": "88468",
+      "ko": "씻다",
+      "en": "wash",
+      "de": "waschen",
+      "fr": "laver",
+      "es": "lavar",
+      "ja": "洗います",
+      "zh": "洗 xǐ"
+    },
+    {
+      "conceptId": "88469",
+      "ko": "빨래하다",
+      "en": "wash",
+      "de": "waschen",
+      "fr": "faire la lessive",
+      "es": "lavar",
+      "ja": "洗濯します",
+      "zh": "洗衣服 xǐyīfu"
+    },
+    {
+      "conceptId": "88631",
+      "ko": "청소하다",
+      "en": "clean",
+      "de": "putzen",
+      "fr": "nettoyer",
+      "es": "limpiar",
+      "ja": "掃除します",
+      "zh": "打扫 dǎsǎo"
+    },
+    {
+      "conceptId": "89542",
+      "ko": "개다",
+      "en": "clear",
+      "de": "sich aufklären",
+      "fr": "il fait beau",
+      "es": "hacer buen tiempo",
+      "ja": "晴れます",
+      "zh": "晴 qíng"
+    },
+    {
+      "conceptId": "90096",
+      "ko": "죽다",
+      "en": "die",
+      "de": "sterben",
+      "fr": "mourir",
+      "es": "morir",
+      "ja": "死にます",
+      "zh": "死 sǐ"
+    },
+    {
+      "conceptId": "90777",
+      "ko": "이",
+      "en": "this",
+      "de": "dieser",
+      "fr": "ce ...-ci",
+      "es": "este",
+      "ja": "この",
+      "zh": "这个 zhèige"
+    },
+    {
+      "conceptId": "90778",
+      "ko": "이런",
+      "en": "such",
+      "de": "solch",
+      "fr": "tel",
+      "es": "tal",
+      "ja": "こんな",
+      "zh": "这么 zhème"
+    },
+    {
+      "conceptId": "90799",
+      "ko": "그렇다",
+      "en": "so",
+      "de": "so",
+      "fr": "oui",
+      "es": "así",
+      "ja": "そう",
+      "zh": "这样 zhèiyang"
+    },
+    {
+      "conceptId": "90814",
+      "ko": "그",
+      "en": "that",
+      "de": "der",
+      "fr": "ce ...-là",
+      "es": "ese, esa, esos, esas",
+      "ja": "あの(1)",
+      "zh": "那个 nèige"
+    },
+    {
+      "conceptId": "90820",
+      "ko": "어느",
+      "en": "which",
+      "de": "welch",
+      "fr": "lequel",
+      "es": "cuál",
+      "ja": "どの",
+      "zh": "哪个 něige"
+    },
+    {
+      "conceptId": "90821",
+      "ko": "어떤",
+      "en": "what",
+      "de": "welch",
+      "fr": "quel",
+      "es": "cómo",
+      "ja": "どんな",
+      "zh": "什么 shénme"
+    },
+    {
+      "conceptId": "91248",
+      "ko": "없다",
+      "en": "no",
+      "de": "kein",
+      "fr": "il n'y a pas",
+      "es": "no hay",
+      "ja": "ない",
+      "zh": "没有 méiyǒu"
+    },
+    {
+      "conceptId": "91633",
+      "ko": "좋다",
+      "en": "good",
+      "de": "gut",
+      "fr": "bon",
+      "es": "bien",
+      "ja": "いい",
+      "zh": "好"
+    },
+    {
+      "conceptId": "91682",
+      "ko": "나쁘다",
+      "en": "bad",
+      "de": "schlecht",
+      "fr": "sac",
+      "es": "malo",
+      "ja": "悪い",
+      "zh": "坏 huài"
+    },
+    {
+      "conceptId": "92053",
+      "ko": "예쁘다",
+      "en": "clean",
+      "de": "schön",
+      "fr": "joli",
+      "es": "bonito",
+      "ja": "きれい",
+      "zh": "漂亮 piàoliang"
+    },
+    {
+      "conceptId": "92133",
+      "ko": "더럽다",
+      "en": "dirty",
+      "de": "schmutzig",
+      "fr": "sale",
+      "es": "sucio",
+      "ja": "汚い",
+      "zh": "脏 zāng"
+    },
+    {
+      "conceptId": "92156",
+      "ko": "어렵다",
+      "en": "difficult",
+      "de": "schwierig",
+      "fr": "difficile",
+      "es": "difícil",
+      "ja": "難しい",
+      "zh": "难 nán"
+    },
+    {
+      "conceptId": "92207",
+      "ko": "쉽다",
+      "en": "easy",
+      "de": "leicht",
+      "fr": "facile",
+      "es": "fácil",
+      "ja": "易しい",
+      "zh": "容易 róngyì"
+    },
+    {
+      "conceptId": "92331",
+      "ko": "세다",
+      "en": "strong",
+      "de": "stark",
+      "fr": "fort",
+      "es": "fuerte",
+      "ja": "強い",
+      "zh": "强 qiáng"
+    },
+    {
+      "conceptId": "92363",
+      "ko": "약하다",
+      "en": "weak",
+      "de": "schwach",
+      "fr": "faible",
+      "es": "débil",
+      "ja": "弱い",
+      "zh": "软弱 ruǎnruò"
+    },
+    {
+      "conceptId": "93175",
+      "ko": "자주",
+      "en": "often",
+      "de": "oft",
+      "fr": "souvent",
+      "es": "frecuente",
+      "ja": "よく(1)",
+      "zh": "常常 chángcháng"
+    },
+    {
+      "conceptId": "93190",
+      "ko": "가끔",
+      "en": "sometimes",
+      "de": "manchmal",
+      "fr": "quelquefois",
+      "es": "a veces",
+      "ja": "時々",
+      "zh": "有时 yǒushí"
+    },
+    {
+      "conceptId": "93391",
+      "ko": "새롭다",
+      "en": "new",
+      "de": "neu",
+      "fr": "neuf",
+      "es": "nuevo",
+      "ja": "新しい",
+      "zh": "新 xīn"
+    },
+    {
+      "conceptId": "93413",
+      "ko": "낡다",
+      "en": "old",
+      "de": "alt",
+      "fr": "ancien",
+      "es": "viejo",
+      "ja": "古い",
+      "zh": "旧 jiù"
+    },
+    {
+      "conceptId": "93460",
+      "ko": "젊다",
+      "en": "young",
+      "de": "jung",
+      "fr": "jeune",
+      "es": "joven",
+      "ja": "若い",
+      "zh": "年轻 niánqīng"
+    },
+    {
+      "conceptId": "93490",
+      "ko": "늦다",
+      "en": "late",
+      "de": "spät",
+      "fr": "lent",
+      "es": "tarde",
+      "ja": "遅い (2)",
+      "zh": "慢 màn"
+    },
+    {
+      "conceptId": "93503",
+      "ko": "아직",
+      "en": "yet",
+      "de": "noch",
+      "fr": "encore",
+      "es": "todavía",
+      "ja": "まだ",
+      "zh": "还 hái"
+    },
+    {
+      "conceptId": "93515",
+      "ko": "벌써",
+      "en": "already",
+      "de": "schon",
+      "fr": "déjà",
+      "es": "ya",
+      "ja": "もう(1)",
+      "zh": "已经 yǐjing"
+    },
+    {
+      "conceptId": "93581",
+      "ko": "금방",
+      "en": "soon",
+      "de": "gleich",
+      "fr": "tout de suite",
+      "es": "enseguida",
+      "ja": "すぐ/すぐに",
+      "zh": "马上 mǎshang"
+    },
+    {
+      "conceptId": "93826",
+      "ko": "많다",
+      "en": "many",
+      "de": "viel",
+      "fr": "un grand nombre de",
+      "es": "mucho",
+      "ja": "多い",
+      "zh": "多 duō"
+    },
+    {
+      "conceptId": "93928",
+      "ko": "적다",
+      "en": "few",
+      "de": "wenig",
+      "fr": "peu nombreux",
+      "es": "un poco",
+      "ja": "少ない",
+      "zh": "少 shǎo"
+    },
+    {
+      "conceptId": "94000",
+      "ko": "길다",
+      "en": "long",
+      "de": "lang",
+      "fr": "long",
+      "es": "largo",
+      "ja": "長い (1)",
+      "zh": "长 cháng"
+    },
+    {
+      "conceptId": "94005",
+      "ko": "짧다",
+      "en": "short",
+      "de": "kurz",
+      "fr": "court",
+      "es": "corto",
+      "ja": "短い (2)",
+      "zh": "短 duǎn"
+    },
+    {
+      "conceptId": "94023",
+      "ko": "비싸다",
+      "en": "expensive",
+      "de": "hoch",
+      "fr": "haut",
+      "es": "caro",
+      "ja": "高い (2)",
+      "zh": "高 gāo"
+    },
+    {
+      "conceptId": "94030",
+      "ko": "낮다",
+      "en": "low",
+      "de": "niedrig",
+      "fr": "bas",
+      "es": "bajo",
+      "ja": "低い",
+      "zh": "低 dī"
+    },
+    {
+      "conceptId": "94048",
+      "ko": "두껍다",
+      "en": "thick",
+      "de": "dick",
+      "fr": "épais",
+      "es": "grueso",
+      "ja": "厚い",
+      "zh": "厚 hòu"
+    },
+    {
+      "conceptId": "94059",
+      "ko": "멀다",
+      "en": "far",
+      "de": "fern",
+      "fr": "loin",
+      "es": "lejos",
+      "ja": "遠い",
+      "zh": "远 yuǎn"
+    },
+    {
+      "conceptId": "94068",
+      "ko": "가깝다",
+      "en": "near",
+      "de": "nah",
+      "fr": "proche",
+      "es": "cerca",
+      "ja": "近い",
+      "zh": "近 jìn"
+    },
+    {
+      "conceptId": "94080",
+      "ko": "넓다",
+      "en": "large",
+      "de": "weit",
+      "fr": "large",
+      "es": "amplio",
+      "ja": "広い",
+      "zh": "宽 kuān"
+    },
+    {
+      "conceptId": "94110",
+      "ko": "좁다",
+      "en": "narrow",
+      "de": "eng",
+      "fr": "étroit",
+      "es": "estrecho",
+      "ja": "狭い",
+      "zh": "窄 zhǎi"
+    },
+    {
+      "conceptId": "94124",
+      "ko": "굵다",
+      "en": "thick",
+      "de": "dick",
+      "fr": "gros",
+      "es": "gordo",
+      "ja": "太い",
+      "zh": "粗 cū"
+    },
+    {
+      "conceptId": "94125",
+      "ko": "가늘다",
+      "en": "thin",
+      "de": "dünn",
+      "fr": "mince",
+      "es": "fino",
+      "ja": "細い",
+      "zh": "细 xì"
+    },
+    {
+      "conceptId": "94142",
+      "ko": "크다",
+      "en": "big",
+      "de": "groß",
+      "fr": "grand",
+      "es": "grande",
+      "ja": "大きい",
+      "zh": "大 dà"
+    },
+    {
+      "conceptId": "94186",
+      "ko": "작다",
+      "en": "small",
+      "de": "klein",
+      "fr": "petit",
+      "es": "pequeño",
+      "ja": "小さい",
+      "zh": "小 xiǎo"
+    },
+    {
+      "conceptId": "94225",
+      "ko": "빠르다",
+      "en": "fast",
+      "de": "schnell",
+      "fr": "rapide",
+      "es": "rápido",
+      "ja": "速い",
+      "zh": "快 kuài"
+    },
+    {
+      "conceptId": "94288",
+      "ko": "천천히",
+      "en": "slowly",
+      "de": "langsam",
+      "fr": "lentement",
+      "es": "despacio",
+      "ja": "ゆっくり",
+      "zh": "慢慢儿 mànmānr"
+    },
+    {
+      "conceptId": "94318",
+      "ko": "무겁다",
+      "en": "heavy",
+      "de": "schwer",
+      "fr": "lourd",
+      "es": "pesado",
+      "ja": "重い",
+      "zh": "重 zhòng"
+    },
+    {
+      "conceptId": "94320",
+      "ko": "가볍다",
+      "en": "light",
+      "de": "leicht",
+      "fr": "léger",
+      "es": "ligero",
+      "ja": "軽い",
+      "zh": "轻 qīng"
+    },
+    {
+      "conceptId": "94344",
+      "ko": "덥다",
+      "en": "hot",
+      "de": "heiß",
+      "fr": "chaud",
+      "es": "calor",
+      "ja": "暑い",
+      "zh": "热 rè"
+    },
+    {
+      "conceptId": "94363",
+      "ko": "선선하다",
+      "en": "cool",
+      "de": "kühl",
+      "fr": "frais",
+      "es": "fresco",
+      "ja": "涼しい",
+      "zh": "凉快 liángkuai"
+    },
+    {
+      "conceptId": "94373",
+      "ko": "춥다",
+      "en": "cold",
+      "de": "kalt",
+      "fr": "froid",
+      "es": "hacer frío",
+      "ja": "寒い",
+      "zh": "冷 lěng"
+    },
+    {
+      "conceptId": "94851",
+      "ko": "온 ...",
+      "en": "whole",
+      "de": "ganz",
+      "fr": "tout",
+      "es": "todo el ...",
+      "ja": "~中",
+      "zh": "整 zhěng"
+    },
+    {
+      "conceptId": "95091",
+      "ko": "아프다",
+      "en": "hurt",
+      "de": "weh tun",
+      "fr": "avoir mal",
+      "es": "doler",
+      "ja": "痛い",
+      "zh": "疼 téng"
+    },
+    {
+      "conceptId": "95240",
+      "ko": "즐겁다",
+      "en": "happy",
+      "de": "lustig",
+      "fr": "joyeux",
+      "es": "divertido",
+      "ja": "楽しい",
+      "zh": "愉快 yúkuài"
+    },
+    {
+      "conceptId": "95258",
+      "ko": "재미있다",
+      "en": "interesting",
+      "de": "interessant",
+      "fr": "drôle",
+      "es": "interesante",
+      "ja": "おもしろい",
+      "zh": "有意思 yǒuyìsi"
+    },
+    {
+      "conceptId": "95270",
+      "ko": "재미없다",
+      "en": "boring",
+      "de": "langweilig",
+      "fr": "ennuyeux",
+      "es": "aburrido",
+      "ja": "つまらない",
+      "zh": "无聊 wúliáo"
+    },
+    {
+      "conceptId": "95586",
+      "ko": "좋아하다",
+      "en": "like",
+      "de": "gefallen",
+      "fr": "plaire",
+      "es": "gustar",
+      "ja": "好き",
+      "zh": "喜欢 xǐhuan"
+    },
+    {
+      "conceptId": "95610",
+      "ko": "싫어하다",
+      "en": "hate",
+      "de": "hassen",
+      "fr": "détester",
+      "es": "no gustar",
+      "ja": "嫌い",
+      "zh": "讨厌 tǎoyàn"
+    },
+    {
+      "conceptId": "96159",
+      "ko": "가지고 싶다",
+      "en": "want",
+      "de": "mögen",
+      "fr": "vouloir",
+      "es": "querer",
+      "ja": "欲しい",
+      "zh": "要 yào"
+    },
+    {
+      "conceptId": "97137",
+      "ko": "유명하다",
+      "en": "famous",
+      "de": "berühmt",
+      "fr": "connu",
+      "es": "famoso",
+      "ja": "有名",
+      "zh": "有名 yǒumíng"
+    },
+    {
+      "conceptId": "97485",
+      "ko": "바쁘다",
+      "en": "busy",
+      "de": "beschäftigt",
+      "fr": "occupé",
+      "es": "ocupado",
+      "ja": "忙しい",
+      "zh": "忙 máng"
+    },
+    {
+      "conceptId": "98390",
+      "ko": "건강하다",
+      "en": "fine",
+      "de": "munter",
+      "fr": "aller bien",
+      "es": "bien",
+      "ja": "元気",
+      "zh": "精神 jīngshen"
+    },
+    {
+      "conceptId": "98904",
+      "ko": "싸다",
+      "en": "cheap",
+      "de": "billig",
+      "fr": "bon marché",
+      "es": "barato",
+      "ja": "安い",
+      "zh": "便宜 piányi"
+    },
+    {
+      "conceptId": "98991",
+      "ko": "밝다, 엷다",
+      "en": "light",
+      "de": "hell",
+      "fr": "clair",
+      "es": "claro",
+      "ja": "明るい",
+      "zh": "光亮 guāngliàng"
+    },
+    {
+      "conceptId": "99001",
+      "ko": "어둡다",
+      "en": "dark",
+      "de": "dunkel",
+      "fr": "obscur",
+      "es": "oscuro",
+      "ja": "暗い",
+      "zh": "黑 hēi"
+    },
+    {
+      "conceptId": "99105",
+      "ko": "하양, 하얗다",
+      "en": "white",
+      "de": "weiß",
+      "fr": "blanc",
+      "es": "blanco",
+      "ja": "白い",
+      "zh": "白色 báisè"
+    },
+    {
+      "conceptId": "99157",
+      "ko": "조용하다",
+      "en": "quiet",
+      "de": "ruhig",
+      "fr": "tranquille",
+      "es": "tranquilo",
+      "ja": "静か",
+      "zh": "安静 ānjìng"
+    },
+    {
+      "conceptId": "99217",
+      "ko": "떠들썩하다",
+      "en": "busy",
+      "de": "gesellig",
+      "fr": "animé",
+      "es": "alegre",
+      "ja": "にぎやか",
+      "zh": "热闹 rènao"
+    },
+    {
+      "conceptId": "99489",
+      "ko": "맛(이)있다",
+      "en": "delicious",
+      "de": "lecker",
+      "fr": "excellent",
+      "es": "bueno",
+      "ja": "おいしい",
+      "zh": "好吃 hǎochī"
+    },
+    {
+      "conceptId": "99491",
+      "ko": "맛(이)없다",
+      "en": "terrible",
+      "de": "schlecht schmecken",
+      "fr": "mauvais",
+      "es": "no estar rico",
+      "ja": "まずい",
+      "zh": "难吃 nánchī"
+    },
+    {
+      "conceptId": "99501",
+      "ko": "달다",
+      "en": "sweet",
+      "de": "süß",
+      "fr": "doux",
+      "es": "dulce",
+      "ja": "甘い",
+      "zh": "甜 tián"
+    },
+    {
+      "conceptId": "99511",
+      "ko": "맵다",
+      "en": "hot",
+      "de": "scharf",
+      "fr": "épicé",
+      "es": "picante",
+      "ja": "辛い",
+      "zh": "辣 là"
+    },
+    {
+      "conceptId": "99848",
+      "ko": "차다",
+      "en": "cold",
+      "de": "kalt",
+      "fr": "froid",
+      "es": "frío",
+      "ja": "冷たい",
+      "zh": "冰 bīng"
+    },
+    {
+      "conceptId": "99853",
+      "ko": "따뜻하다",
+      "en": "warm",
+      "de": "warm",
+      "fr": "tiède",
+      "es": "hacer calor",
+      "ja": "暖かい",
+      "zh": "暖和 nuǎnhuo"
+    },
+    {
+      "conceptId": "100235",
+      "ko": "그럼",
+      "en": "then",
+      "de": "also",
+      "fr": "alors",
+      "es": "entonces",
+      "ja": "じゃあ",
+      "zh": "那 nà"
+    },
+    {
+      "conceptId": "100468",
+      "ko": "미안합니다",
+      "en": "Excuse me.",
+      "de": "Entschuldigung",
+      "fr": "euh",
+      "es": "perdón",
+      "ja": "あの(2)",
+      "zh": "不好意思 bùhǎoyìsi"
+    },
+    {
+      "conceptId": "100538",
+      "ko": "아마",
+      "en": "probably",
+      "de": "wahrscheinlich",
+      "fr": "peut-être",
+      "es": "quizá",
+      "ja": "たぶん",
+      "zh": "大概 dàgài"
+    },
+    {
+      "conceptId": "100800",
+      "ko": "네",
+      "en": "yes",
+      "de": "ja",
+      "fr": "oui",
+      "es": "sí",
+      "ja": "ええ",
+      "zh": "好 hǎo"
+    },
+    {
+      "conceptId": "100827",
+      "ko": "아니에요",
+      "en": "no",
+      "de": "nein",
+      "fr": "non",
+      "es": "no",
+      "ja": "いいえ",
+      "zh": "不 bù"
+    },
+    {
+      "conceptId": "100928",
+      "ko": "그럼",
+      "en": "so",
+      "de": "dann",
+      "fr": "alors",
+      "es": "hasta luego",
+      "ja": "では",
+      "zh": "那 nà"
+    }
+  ]
+}

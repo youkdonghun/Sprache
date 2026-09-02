@@ -59,7 +59,9 @@ class StudyCompletionReceipt {
           : 'Drive 동기화 일시 중지 · 대기 $pendingSyncCount건',
   };
 
+  String get localSaveLabel => saved ? '기기에 저장 완료' : '기기에 저장 중';
+
   String get semanticsLabel =>
       '로컬 저장 영수증. ${saved ? '$savedTimeLabel 저장 완료' : '저장 중'}. '
-      '획득 $earnedXp XP. 연속 학습 $streakDays일. $syncLabel.';
+      '획득 $earnedXp XP. 연속 학습 $streakDays일. $localSaveLabel.';
 }

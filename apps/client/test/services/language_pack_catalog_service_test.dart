@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -149,5 +150,62 @@ void main() {
       service.fetchCatalog(),
       throwsA(isA<LanguagePackCatalogException>()),
     );
+  });
+
+  test('repository catalog downloads and parses all six real packs', () async {
+    final repositoryRoot = Directory.current.parent.parent;
+    final catalogUri = Uri.parse(
+      'https://raw.githubusercontent.com/youkdonghun/Sprache/main/'
+      'language-packs/catalog.json',
+    );
+    final service = LanguagePackCatalogService(
+      catalogUri: catalogUri,
+      client: MockClient((request) async {
+        const marker = '/language-packs/';
+        final markerIndex = request.url.path.indexOf(marker);
+        if (markerIndex < 0) return http.Response('not found', 404);
+        final relativePath = request.url.path.substring(
+          markerIndex + marker.length,
+        );
+        final file = File(
+          '${repositoryRoot.path}${Platform.pathSeparator}language-packs'
+          '${Platform.pathSeparator}'
+          '${relativePath.replaceAll('/', Platform.pathSeparator)}',
+        );
+        if (!file.existsSync()) return http.Response('not found', 404);
+        return http.Response.bytes(await file.readAsBytes(), 200);
+      }),
+    );
+
+    final catalog = await service.fetchCatalog();
+    expect(catalog.packs, hasLength(6));
+    expect(catalog.packs.map((pack) => pack.language).toSet(), {
+      LanguageTag.english,
+      LanguageTag.japanese,
+      LanguageTag.german,
+      LanguageTag.french,
+      LanguageTag.spanish,
+        LanguageTag.simplifiedChinese,
+    });
+
+    for (final descriptor in catalog.packs) {
+      final downloaded = await service.downloadPack(descriptor);
+      final preview = const ContentImportParser().parseJson(
+        utf8.decode(downloaded.bytes),
+        defaultLanguage: descriptor.language,
+      );
+      expect(preview.issues, isEmpty, reason: descriptor.id);
+      expect(preview.items, hasLength(descriptor.itemCount));
+      expect(
+        preview.items.every(
+          (item) =>
+              item.learningLanguage == descriptor.language &&
+              item.translations.isNotEmpty &&
+              item.source.sourceId == descriptor.sourceId,
+        ),
+        isTrue,
+        reason: descriptor.id,
+      );
+    }
   });
 }

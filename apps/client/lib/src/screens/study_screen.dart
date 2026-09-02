@@ -5361,12 +5361,6 @@ class _CompletionReceiptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final syncIcon = switch (receipt.syncStatus) {
-      StudyCompletionSyncStatus.localOnly => Icons.phone_android_rounded,
-      StudyCompletionSyncStatus.pending => Icons.cloud_upload_outlined,
-      StudyCompletionSyncStatus.synced => Icons.cloud_done_outlined,
-      StudyCompletionSyncStatus.offlineLocked => Icons.cloud_off_outlined,
-    };
     return Semantics(
       key: const Key('completion-local-receipt'),
       container: true,
@@ -5418,8 +5412,8 @@ class _CompletionReceiptCard extends StatelessWidget {
                       label: Text('연속 ${receipt.streakDays}일'),
                     ),
                     Chip(
-                      avatar: Icon(syncIcon, size: 18),
-                      label: Text(receipt.syncLabel),
+                      avatar: const Icon(Icons.save_outlined, size: 18),
+                      label: Text(receipt.localSaveLabel),
                     ),
                   ],
                 ),

@@ -1,5 +1,96 @@
 {
   "schemaVersion": 1,
-  "updatedAt": null,
-  "packs": []
+  "updatedAt": "2026-09-02T00:00:00.000Z",
+  "packs": [
+    {
+      "id": "sprache-de-tufs-core-2026-09",
+      "title": "독일어 생활 핵심 추가 어휘 361",
+      "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+      "language": "de",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-02T00:00:00.000Z",
+      "license": "CC-BY-4.0",
+      "attribution": "TUFS Open Language Resources, adapted by Sprache",
+      "path": "packs/sprache-de-tufs-core-2026-09.json",
+      "itemCount": 361,
+      "sizeBytes": 124584,
+      "sha256": "51b49d88f5815de0b7d0f85a10c1d710a5859bc11b6ab7ae2801b35e843a840a"
+    },
+    {
+      "id": "sprache-en-tufs-core-2026-09",
+      "title": "영어 생활 핵심 추가 어휘 352",
+      "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+      "language": "en",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-02T00:00:00.000Z",
+      "license": "CC-BY-4.0",
+      "attribution": "TUFS Open Language Resources, adapted by Sprache",
+      "path": "packs/sprache-en-tufs-core-2026-09.json",
+      "itemCount": 352,
+      "sizeBytes": 121010,
+      "sha256": "13687bac1080c38b6c2220f96217dc62b4a03d362b96448956a96862f6f63e74"
+    },
+    {
+      "id": "sprache-es-tufs-core-2026-09",
+      "title": "스페인어 생활 핵심 추가 어휘 354",
+      "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+      "language": "es",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-02T00:00:00.000Z",
+      "license": "CC-BY-4.0",
+      "attribution": "TUFS Open Language Resources, adapted by Sprache",
+      "path": "packs/sprache-es-tufs-core-2026-09.json",
+      "itemCount": 354,
+      "sizeBytes": 122184,
+      "sha256": "9b8bff385266b50a59c5ccbef8a50fb819727e780c2d13df99ab8594a75e84ca"
+    },
+    {
+      "id": "sprache-fr-tufs-core-2026-09",
+      "title": "프랑스어 생활 핵심 추가 어휘 360",
+      "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+      "language": "fr",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-02T00:00:00.000Z",
+      "license": "CC-BY-4.0",
+      "attribution": "TUFS Open Language Resources, adapted by Sprache",
+      "path": "packs/sprache-fr-tufs-core-2026-09.json",
+      "itemCount": 360,
+      "sizeBytes": 124369,
+      "sha256": "229a4d36e9ec7ea4078720fdf37f98b065cd2e6c08e6d9c7f8d50c2d8470aea0"
+    },
+    {
+      "id": "sprache-ja-tufs-core-2026-09",
+      "title": "일본어 생활 핵심 추가 어휘 402",
+      "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+      "language": "ja",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-02T00:00:00.000Z",
+      "license": "CC-BY-4.0",
+      "attribution": "TUFS Open Language Resources, adapted by Sprache",
+      "path": "packs/sprache-ja-tufs-core-2026-09.json",
+      "itemCount": 402,
+      "sizeBytes": 139026,
+      "sha256": "eda224fc5b7963d8ada68f61dc8dd9b08dbf7076be1320ca445a0c29ed7f4b15"
+    },
+    {
+      "id": "sprache-zh-hans-tufs-core-2026-09",
+      "title": "중국어 생활 핵심 추가 어휘 370",
+      "description": "앱 내장 어휘와 겹치지 않게 선별한 TUFS 다국어 생활 핵심 어휘입니다.",
+      "language": "zh-Hans",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-02T00:00:00.000Z",
+      "license": "CC-BY-4.0",
+      "attribution": "TUFS Open Language Resources, adapted by Sprache",
+      "path": "packs/sprache-zh-hans-tufs-core-2026-09.json",
+      "itemCount": 370,
+      "sizeBytes": 140826,
+      "sha256": "1fc674d1e16fed69957ba758595b580bd64c9dc5fb40116bfca9f1115afde08e"
+    }
+  ]
 }

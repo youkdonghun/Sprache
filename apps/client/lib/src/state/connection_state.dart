@@ -923,7 +923,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         diagnostic: null,
         pendingChanges: false,
         userInitiatedOperation: false,
-        reconnectSummary: hadQueuedLocalChanges
+        reconnectSummary: userInitiated && hadQueuedLocalChanges
             ? ReconnectSyncSummary(
                 id: attemptedOperation.operationId,
                 completedAt: completedAt.toUtc(),
@@ -1115,7 +1115,7 @@ class ConnectionController extends StateNotifier<ConnectionState> {
         diagnostic: null,
         pendingChanges: false,
         userInitiatedOperation: false,
-        reconnectSummary: hadQueuedLocalChanges
+        reconnectSummary: userInitiated && hadQueuedLocalChanges
             ? ReconnectSyncSummary(
                 id: attemptedOperation.operationId,
                 completedAt: completedAt.toUtc(),
