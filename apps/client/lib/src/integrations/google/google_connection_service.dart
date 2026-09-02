@@ -263,7 +263,6 @@ class DesktopGoogleConnectionService
              tokenBroker ??
              DirectDesktopGoogleTokenBroker(
                clientId: config.googleDesktopClientId,
-               clientSecret: config.googleDesktopClientSecret,
              ),
          urlLauncher: urlLauncher,
        ),

@@ -42,6 +42,7 @@ import '../sync/sync_policy.dart';
 import '../theme/app_theme.dart';
 import '../widgets/advanced_preferences_panel.dart';
 import '../widgets/accessibility_input_profile_card.dart';
+import '../widgets/release_update_card.dart';
 import 'storage_maintenance_dialog.dart';
 
 enum _SettingsCategory {
@@ -304,7 +305,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _matches('데이터 개인정보 백업 복원 excel 엑셀 csv 내보내기 삭제 보안 보관 정리 콘텐츠 품질 점검 교정');
     final showAbout =
         _showsCategory(_SettingsCategory.about) &&
-        _matches('앱 정보 sprache 버전 플랫폼 환경');
+        _matches('앱 정보 sprache 버전 플랫폼 환경 업데이트 다운로드 설치 github');
     final hasSearchResult =
         showStorage ||
         showDisplay ||
@@ -740,6 +741,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ),
                             ],
                           ),
+                        ),
+                        const SizedBox(height: 10),
+                        ReleaseUpdateCard(
+                          currentVersion: config.appVersion,
+                          manifestUrl: config.releaseManifestUrl,
                         ),
                       ],
                     ],

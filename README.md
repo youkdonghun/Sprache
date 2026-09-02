@@ -531,26 +531,30 @@ Sprache는 한국어 사용자를 위한 Android·Windows 공용 반복학습 �
 - 설정·진도·사용자 표현·최근 세션을 포함한 Google Drive 교차 동기화
 - 텍스트 PDF의 단어·뜻·페이지·문맥을 검토해 가져오는 공통 워크플로
 - iPhone 홈 화면 설치와 오프라인 학습을 지원하는 GitHub Pages PWA
+- 설정에서 최신 버전을 확인하고 검증된 GitHub Release 설치본을 받는 앱 업데이트
+
+Windows와 Android 업데이트 파일은 다운로드가 끝난 뒤 매니페스트의 파일 크기와
+SHA-256이 모두 일치할 때만 설치 화면을 연다. PWA는 같은 화면에서 새 서비스
+워커를 적용하며, 업데이트 확인은 사용자가 버튼을 누를 때만 네트워크를 사용한다.
 
 ## 바로 실행하기
 
-Windows 빌드 전 `SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET`을 현재 프로세스 환경에
-설정한 뒤 `npm run build:real`을 실행하면 `pubspec.yaml` 버전에 맞춘 실제
-Google 직접 연결 산출물을 로컬 `artifacts` 폴더에 만든다. 이 PC의 DPAPI
-보관값을 사용할 때는 다음 명령으로 평문을 남기지 않고 빌드한다.
+`npm run build:real`을 실행하면 공개 Desktop Client ID와 PKCE를 사용하는 실제
+Google 직접 연결 산출물을 `pubspec.yaml` 버전에 맞춰 로컬 `artifacts` 폴더에
+만든다. 별도 Google client secret은 필요하지 않다.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tool\build-real-windows-local.ps1
 ```
 
-1.35.0의 표준 파일명은 다음과 같다.
+1.38.0의 표준 파일명은 다음과 같다.
 
-- Windows 설치본: `Sprache-Windows-Setup-1.35.0-google-x64.exe`
-- Windows 포터블: `Sprache-Windows-1.35.0-google-x64.zip`
-- Android: `Sprache-Android-1.35.0-google-debug-signed.apk`
-- Apple: `Sprache-iOS-Simulator-1.35.0-google-configured.zip`, `Sprache-macOS-1.35.0-google-configured.zip`
+- Windows 설치본: `Sprache-Windows-Setup-1.38.0-google-x64.exe`
+- Windows 포터블: `Sprache-Windows-1.38.0-google-x64.zip`
+- Android: `Sprache-Android-1.38.0-google-debug-signed.apk`
+- Apple: `Sprache-iOS-Simulator-1.38.0-google-configured.zip`, `Sprache-macOS-1.38.0-google-configured.zip`
 - PWA: `https://sprache6.github.io/app/`
-- 무결성: `SHA256SUMS-1.35.0-google.txt`
+- 무결성: `SHA256SUMS-1.38.0-google.txt`
 
 Windows 포터블은 ZIP을 푼 뒤 폴더 안의 `sprache.exe`를 실행하며 DLL과 `data`
 폴더를 함께 유지한다. Android APK는 테스트 기기 또는 에뮬레이터에 직접

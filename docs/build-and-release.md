@@ -34,17 +34,12 @@ Mock 빌드는 CI 회귀 검증용이며 최종 사용자 전달 폴더에서는
 ## Google 실제 연결 릴리스
 
 플랫폼별 Google OAuth client ID와 공개 개인정보처리방침 URL을 적용하고 Mock
-Mode를 끈다. Windows는 Railway 중계 없이 PKCE와 Google이 발급한 Desktop
-credential로 Google 토큰 엔드포인트에 직접 연결한다. 실제 값은 저장소나 명령
-인수에 넣지 않고 현재 프로세스 환경에만 설정한다.
+Mode를 끈다. Windows는 Railway 중계 없이 공개 Desktop Client ID와 PKCE로
+Google 토큰 엔드포인트에 직접 연결한다.
 
 ```powershell
-$env:SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET = '<local-secret>'
 npm run build:real
 ```
-
-변수가 없으면 Windows 컴파일 전에 명확히 중단한다. 스크립트는 값 자체를
-출력하거나 파일·manifest에 복사하지 않는다.
 
 플랫폼 하나만 다시 만들 때는 `npm run build:real:android` 또는 `npm run build:real:windows`를 사용한다.
 
@@ -132,7 +127,6 @@ SPRACHE_WINDOWS_SIGNING_THUMBPRINT=<코드서명 인증서 SHA-1 thumbprint>
 
 ```powershell
 $env:SPRACHE_PRIVACY_POLICY_URL = 'https://소유도메인/privacy'
-$env:SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET = '<local-secret>'
 npm run build:release-gated
 ```
 
@@ -156,8 +150,8 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - Android 패키지·버전 코드·v2 서명·Debug/Release 파일명 일치
 - Android 3개 ABI, 등록된 Android·Web audience ID와 Google Cloud에 등록한
   서명 SHA-1 일치
-- Windows `app.so`의 앱 버전, 새 Desktop Client ID와 현재 프로세스에서 받은
-  OAuth credential 포함 여부. 값 자체는 출력하지 않음
+- Windows `app.so`의 앱 버전과 공개 Desktop Client ID 포함 여부, Google
+  OAuth client secret 미포함 여부
 - 구형 API 주소와 `API_BASE_URL` 부재
 - Windows ZIP의 EXE·Flutter data·Excel 템플릿
 - 설치 EXE 제품 버전과 선택적 Authenticode 강제

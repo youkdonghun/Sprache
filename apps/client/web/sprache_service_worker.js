@@ -1,7 +1,7 @@
 'use strict';
 
 const CACHE_PREFIX = 'sprache-pwa-';
-const CACHE_NAME = `${CACHE_PREFIX}1.37.1-67-r1`;
+const CACHE_NAME = `${CACHE_PREFIX}1.38.0-68-r1`;
 const PRECACHE = [
   './',
   './index.html',
@@ -58,7 +58,7 @@ self.addEventListener('activate', (event) => {
         for (const client of clients) {
           client.postMessage({
             type: 'SPRACHE_UPDATE_READY',
-            version: '1.37.1',
+            version: '1.38.0',
           });
         }
       }
@@ -71,6 +71,14 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return;
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
+
+  // The update manifest must never be served from an old app cache. The app
+  // adds its own cache-busting query parameter and reports an offline error if
+  // the network is unavailable.
+  if (url.pathname.endsWith('/release.json')) {
+    event.respondWith(fetch(request, { cache: 'no-store' }));
+    return;
+  }
 
   if (request.mode === 'navigate') {
     event.respondWith(

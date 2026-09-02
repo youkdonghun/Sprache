@@ -39,7 +39,6 @@ void main() {
       tokenVault: vault,
       tokenBroker: DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client-id',
-        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((_) async => http.Response('{}', 500)),
       ),
     );
@@ -116,10 +115,9 @@ void main() {
       var tokenRequests = 0;
       final tokenBroker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client-id',
-        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((request) async {
           tokenRequests++;
-          expect(request.bodyFields['client_secret'], 'desktop-client-secret');
+          expect(request.bodyFields, isNot(contains('client_secret')));
           final expectedCode = tokenRequests == 1
               ? 'picker-authorization-code'
               : 'drive-authorization-code';
@@ -212,14 +210,13 @@ void main() {
       Future<_LoopbackResponse>? callbackResponse;
       final tokenBroker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client-id',
-        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((request) async {
           expect(request.url.toString(), 'https://oauth2.googleapis.com/token');
           expect(request, isA<http.Request>());
           final fields = request.bodyFields;
           expect(fields['grant_type'], 'authorization_code');
           expect(fields['client_id'], 'desktop-client-id');
-          expect(fields['client_secret'], 'desktop-client-secret');
+          expect(fields, isNot(contains('client_secret')));
           expect(fields['code'], 'test-authorization-code');
           expect(fields['code_verifier'], isNotEmpty);
           expect(
@@ -297,7 +294,6 @@ void main() {
       var tokenExchangeCalled = false;
       final tokenBroker = DirectDesktopGoogleTokenBroker(
         clientId: 'desktop-client-id',
-        clientSecret: 'desktop-client-secret',
         httpClient: MockClient((request) async {
           tokenExchangeCalled = true;
           return http.Response('{}', 500);

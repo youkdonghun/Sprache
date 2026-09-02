@@ -24,23 +24,16 @@ $desktopReady = Test-GoogleClientId -Value $DesktopClientId
 $androidReady = Test-GoogleClientId -Value $AndroidClientId
 $serverReady = Test-GoogleClientId -Value $ServerClientId
 $appleReady = Test-GoogleClientId -Value $AppleClientId
-$desktopClientSecretReady = -not [string]::IsNullOrWhiteSpace(
-    [Environment]::GetEnvironmentVariable(
-        'SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET',
-        'Process'
-    )
-)
 $privacyReady = -not [string]::IsNullOrWhiteSpace($PrivacyPolicyUrl) -and
     $PrivacyPolicyUrl.StartsWith('https://', [StringComparison]::OrdinalIgnoreCase)
-$windowsReady = $desktopReady -and $desktopClientSecretReady
+$windowsReady = $desktopReady
 $configurationReady = $windowsReady -and $androidReady -and $serverReady -and
     $appleReady -and $privacyReady
 
 [pscustomobject]@{
-    DesktopOAuthMode = 'direct-pkce-with-client-credential'
+    DesktopOAuthMode = 'direct-pkce-public-client'
     DriveBindingStore = 'google-drive-appdata-pointer'
     DesktopClientIdConfigured = $desktopReady
-    DesktopClientSecretConfigured = $desktopClientSecretReady
     AndroidClientIdConfigured = $androidReady
     ServerClientIdConfigured = $serverReady
     AppleClientIdConfigured = $appleReady
@@ -55,7 +48,7 @@ $configurationReady = $windowsReady -and $androidReady -and $serverReady -and
 }
 
 if (-not $configurationReady) {
-    $message = 'Google 빌드 구성에 필요한 플랫폼 Client ID, Windows 빌드 시크릿 환경 변수, HTTPS 개인정보처리방침 URL을 확인해 주세요.'
+    $message = 'Google 빌드 구성에 필요한 플랫폼 Client ID와 HTTPS 개인정보처리방침 URL을 확인해 주세요.'
     if ($RequireReady) {
         throw $message
     }

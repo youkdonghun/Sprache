@@ -4,10 +4,13 @@ import android.accounts.Account
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.provider.OpenableColumns
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.documentfile.provider.DocumentFile
+import androidx.core.content.FileProvider
 import com.google.android.gms.auth.api.identity.AuthorizationRequest
 import com.google.android.gms.auth.api.identity.AuthorizationResult
 import com.google.android.gms.auth.api.identity.Identity
@@ -22,6 +25,7 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.FileNotFoundException
 import java.io.InputStream
+import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -114,6 +118,16 @@ class MainActivity : FlutterFragmentActivity() {
 
         MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
+            UPDATE_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "openPackageInstaller" -> openPackageInstaller(call, result)
+                else -> result.notImplemented()
+            }
+        }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
             LOCAL_STORAGE_CHANNEL,
         ).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -165,6 +179,63 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+    }
+
+    private fun openPackageInstaller(
+        call: MethodCall,
+        result: MethodChannel.Result,
+    ) {
+        val rawPath = call.argument<String>("path")
+        if (rawPath.isNullOrBlank()) {
+            result.error("missing_update", "An update package path is required", null)
+            return
+        }
+        val updateRoot = File(cacheDir, UPDATE_DIRECTORY_NAME).canonicalFile
+        val packageFile = runCatching { File(rawPath).canonicalFile }.getOrNull()
+        val allowedPrefix = updateRoot.path + File.separator
+        if (packageFile == null ||
+            !packageFile.path.startsWith(allowedPrefix) ||
+            packageFile.extension.lowercase() != "apk" ||
+            !packageFile.isFile ||
+            packageFile.length() <= 0L ||
+            packageFile.length() > MAX_UPDATE_FILE_BYTES
+        ) {
+            result.error("unsafe_update", "The update package path is not accepted", null)
+            return
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            !packageManager.canRequestPackageInstalls()
+        ) {
+            startActivity(
+                Intent(
+                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:$packageName"),
+                ),
+            )
+            result.error(
+                "install_permission_required",
+                "Allow this source, then retry the install action",
+                null,
+            )
+            return
+        }
+        val uri =
+            FileProvider.getUriForFile(
+                this,
+                "$packageName.update.files",
+                packageFile,
+            )
+        val intent =
+            Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (intent.resolveActivity(packageManager) == null) {
+            result.error("installer_missing", "No Android package installer is available", null)
+            return
+        }
+        startActivity(intent)
+        result.success(true)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -1347,10 +1418,12 @@ class MainActivity : FlutterFragmentActivity() {
         private const val GOOGLE_CHANNEL = "com.youkdonghun.sprache/google"
         private const val LOCAL_STORAGE_CHANNEL = "com.youkdonghun.sprache/local_storage"
         private const val INBOUND_INTENT_CHANNEL = "com.youkdonghun.sprache/inbound_intent"
+        private const val UPDATE_CHANNEL = "com.youkdonghun.sprache/update"
         private const val GOOGLE_ACCOUNT_TYPE = "com.google"
         private const val PICKED_FILE_IDS = "picked_file_ids"
         private const val STORAGE_DIRECTORY_NAME = "Sprache"
         private const val IMPORTS_DIRECTORY_NAME = "imports"
+        private const val UPDATE_DIRECTORY_NAME = "sprache-updates"
         private const val MANIFEST_FILE_NAME = "manifest.json"
         private const val NEXT_MANIFEST_FILE_NAME = "manifest.next.json"
         private const val PREVIOUS_MANIFEST_FILE_NAME = "manifest.previous.json"
@@ -1360,6 +1433,7 @@ class MainActivity : FlutterFragmentActivity() {
         private const val MAX_INBOUND_FILE_BYTES = 32 * 1024 * 1024
         private const val MAX_LOCAL_ARCHIVE_BYTES = 10 * 1024 * 1024
         private const val MAX_LOCAL_MANIFEST_BYTES = 1024 * 1024
+        private const val MAX_UPDATE_FILE_BYTES = 512L * 1024L * 1024L
         private const val IMPORT_FILE_UNSAFE_CHARACTERS = "<>:\"/\\|?*"
         private val SHA256_PATTERN = Regex("^[0-9a-f]{64}$")
         private val WINDOWS_ABSOLUTE_PATH_PATTERN = Regex("^[A-Za-z]:")

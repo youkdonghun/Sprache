@@ -51,13 +51,6 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 if ($Version -ne $currentVersion) {
     throw "Release verifier only checks the current pubspec version $currentVersion, not $Version."
 }
-$desktopClientSecret = [Environment]::GetEnvironmentVariable(
-    'SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET',
-    'Process'
-)
-if ([string]::IsNullOrWhiteSpace($desktopClientSecret)) {
-    throw 'SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET is required to verify the Windows REAL OAuth configuration. The value is read only from the process environment and is never printed.'
-}
 foreach ($clientIdEntry in @{
     GOOGLE_DESKTOP_CLIENT_ID = $ExpectedDesktopClientId
     GOOGLE_ANDROID_CLIENT_ID = $ExpectedAndroidClientId
@@ -278,8 +271,8 @@ try {
                 throw "Android binary $($entry.FullName) is missing required value: $requiredText"
             }
         }
-        if ($binaryText.IndexOf($desktopClientSecret, [StringComparison]::Ordinal) -ge 0) {
-            throw "Android binary $($entry.FullName) unexpectedly contains the Windows desktop OAuth credential."
+        if ($binaryText -match 'GOCSPX-[A-Za-z0-9_-]+') {
+            throw "Android binary $($entry.FullName) unexpectedly contains a Google OAuth client secret."
         }
         foreach ($forbiddenText in $forbiddenBinaryTexts) {
             if ($binaryText.IndexOf($forbiddenText, [StringComparison]::Ordinal) -ge 0) {
@@ -320,8 +313,8 @@ try {
             throw "Windows app.so is missing required value: $requiredText"
         }
     }
-    if ($windowsAppText.IndexOf($desktopClientSecret, [StringComparison]::Ordinal) -lt 0) {
-        throw 'Windows app.so is missing the configured desktop OAuth credential.'
+    if ($windowsAppText -match 'GOCSPX-[A-Za-z0-9_-]+') {
+        throw 'Windows app.so unexpectedly contains a Google OAuth client secret.'
     }
     foreach ($forbiddenText in $forbiddenBinaryTexts) {
         if ($windowsAppText.IndexOf($forbiddenText, [StringComparison]::Ordinal) -ge 0) {

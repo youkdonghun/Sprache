@@ -14,7 +14,6 @@ void main() {
           config: const AppConfig(
             googleAndroidClientId: 'android-client-id',
             googleDesktopClientId: 'desktop-client-id',
-            googleDesktopClientSecret: 'desktop-client-secret',
             googleAppleClientId: 'apple-client-id',
             googleServerClientId: 'server-client-id',
             appEnvironment: 'test',
@@ -41,7 +40,6 @@ void main() {
         config: const AppConfig(
           googleAndroidClientId: 'android-client-id',
           googleDesktopClientId: 'desktop-client-id',
-          googleDesktopClientSecret: 'desktop-client-secret',
           googleAppleClientId: '',
           googleServerClientId: 'server-client-id',
           appEnvironment: 'test',
