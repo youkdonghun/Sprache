@@ -529,6 +529,11 @@ jobs:
       - uses: nuget/setup-nuget@v2
       - working-directory: apps/client
         run: flutter pub get
+      - name: Verify native PDF extraction on Windows
+        working-directory: apps/client
+        run: >-
+          flutter test --concurrency=1
+          test/import/pdf_extraction_service_test.dart
       - working-directory: apps/client
         run: >-
           flutter test

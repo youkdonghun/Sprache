@@ -8,6 +8,10 @@ import 'package:sprache/src/domain/language.dart';
 import 'package:sprache/src/import/pdf_extraction_service.dart';
 
 void main() {
+  final nativePdfTestSkip = Platform.isLinux
+      ? 'The Flutter Linux test shell does not bundle the PDFium runtime; '
+            'this native integration is verified by the Windows CI job.'
+      : false;
   setUpAll(() {
     Pdfrx.cacheDirectoryPath = Directory.systemTemp.path;
   });
@@ -134,7 +138,7 @@ void main() {
       ),
       isNotEmpty,
     );
-  });
+  }, skip: nativePdfTestSkip);
 
   test('reports a text-free PDF as OCR unsupported', () async {
     expect(
@@ -153,7 +157,7 @@ void main() {
         ),
       ),
     );
-  });
+  }, skip: nativePdfTestSkip);
 
   test('rejects damaged and oversized PDF input before import', () async {
     const service = PdfrxPdfExtractionService();
