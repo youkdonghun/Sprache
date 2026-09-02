@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -116,11 +117,24 @@ jobs:
           apk_name="Sprache-Android-$version-google-debug-signed.apk"
           apk="$release_dir/$apk_name"
           mkdir -p "$release_dir"
+          test -s "$source_apk"
           cp "$source_apk" "$apk"
           apksigner="$(find "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/build-tools" -type f -name apksigner -print | sort -V | tail -n 1)"
-          test -x "$apksigner"
-          certificate_sha256="$($apksigner verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')"
-          test "$certificate_sha256" = "$EXPECTED_CERTIFICATE_SHA256"
+          if [[ -z "$apksigner" || ! -x "$apksigner" ]]; then
+            echo "::error::Android apksigner was not found on the runner."
+            exit 1
+          fi
+          signing_output="$($apksigner verify --verbose --print-certs "$apk")"
+          certificate_sha256="$(printf '%s\n' "$signing_output" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | tr -d '\r')"
+          if [[ -z "$certificate_sha256" ]]; then
+            echo "::error::The APK signing certificate fingerprint could not be read."
+            printf '%s\n' "$signing_output"
+            exit 1
+          fi
+          if [[ "$certificate_sha256" != "$EXPECTED_CERTIFICATE_SHA256" ]]; then
+            echo "::error::The APK was signed by an unexpected certificate: $certificate_sha256"
+            exit 1
+          fi
           sha256="$(sha256sum "$apk" | cut -d' ' -f1)"
           size_bytes="$(stat -c '%s' "$apk")"
           printf '%s  %s\n' "$sha256" "$apk_name" > "$release_dir/$apk_name.sha256"
