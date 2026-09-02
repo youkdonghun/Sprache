@@ -1,3 +1,5 @@
+import '../services/release_update_service.dart';
+
 class AppConfig {
   const AppConfig({
     required this.googleAndroidClientId,
@@ -5,20 +7,17 @@ class AppConfig {
     required this.googleServerClientId,
     required this.appEnvironment,
     required this.mockMode,
-    this.googleDesktopClientSecret = '',
     this.googleAppleClientId = '',
     this.googleWebClientId = '',
     this.googlePickerApiKey = '',
     this.appVersion = '개발 빌드',
     this.privacyPolicyUrl = '',
+    this.releaseManifestUrl = defaultReleaseManifestUrl,
   });
 
   factory AppConfig.fromEnvironment() => const AppConfig(
     googleAndroidClientId: String.fromEnvironment('GOOGLE_ANDROID_CLIENT_ID'),
     googleDesktopClientId: String.fromEnvironment('GOOGLE_DESKTOP_CLIENT_ID'),
-    googleDesktopClientSecret: String.fromEnvironment(
-      'GOOGLE_DESKTOP_CLIENT_SECRET',
-    ),
     googleAppleClientId: String.fromEnvironment('GOOGLE_APPLE_CLIENT_ID'),
     googleWebClientId: String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
     googlePickerApiKey: String.fromEnvironment('GOOGLE_PICKER_API_KEY'),
@@ -33,11 +32,14 @@ class AppConfig {
       'PRIVACY_POLICY_URL',
       defaultValue: 'https://sprache6.github.io/privacy/',
     ),
+    releaseManifestUrl: String.fromEnvironment(
+      'RELEASE_MANIFEST_URL',
+      defaultValue: defaultReleaseManifestUrl,
+    ),
   );
 
   final String googleAndroidClientId;
   final String googleDesktopClientId;
-  final String googleDesktopClientSecret;
   final String googleAppleClientId;
   final String googleWebClientId;
   final String googlePickerApiKey;
@@ -46,9 +48,9 @@ class AppConfig {
   final bool mockMode;
   final String appVersion;
   final String privacyPolicyUrl;
+  final String releaseManifestUrl;
 
-  bool get hasDesktopGoogleCredentials =>
-      googleDesktopClientId.isNotEmpty && googleDesktopClientSecret.isNotEmpty;
+  bool get hasDesktopGoogleCredentials => googleDesktopClientId.isNotEmpty;
   bool get hasAndroidGoogleCredentials =>
       googleAndroidClientId.isNotEmpty && googleServerClientId.isNotEmpty;
   bool get hasAppleGoogleCredentials => googleAppleClientId.isNotEmpty;

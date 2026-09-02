@@ -2,11 +2,10 @@
 
 최종 수정: 2026-08-03
 
-Sprache의 현재 연결에는 별도 API나 데이터베이스가 필요하지 않다. Windows
-Desktop credential은 client secret을 요구하므로 값은 로컬 또는 CI의
-`SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET` 프로세스 환경에서만 읽는다. 이 문서는
-공개 식별자와 Google Cloud 등록 상태만 기록하며 실제 secret, 토큰, 인증 코드,
-PKCE verifier, 서명 키와 비밀번호는 저장소·채팅·로그에 남기지 않는다.
+Sprache의 현재 연결에는 별도 API나 데이터베이스가 필요하지 않다. Windows는
+공개 Desktop Client ID와 PKCE를 사용한다. 이 문서는 공개 식별자와 Google
+Cloud 등록 상태만 기록하며 토큰, 인증 코드, PKCE verifier, 서명 키와
+비밀번호는 저장소·채팅·로그에 남기지 않는다.
 
 ## 공개 Google Cloud 설정
 
@@ -47,14 +46,10 @@ GOOGLE_DESKTOP_CLIENT_ID=<desktop-client-id>
 GOOGLE_APPLE_CLIENT_ID=<ios-client-id>
 GOOGLE_SERVER_CLIENT_ID=<android-web-audience-id>
 PRIVACY_POLICY_URL=https://sprache6.github.io/privacy/
-SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET=<local-or-ci-secret>
 ```
 
 두 플랫폼을 한 번에 만들 때는 저장소 루트에서 `npm run build:real`을 실행한다.
-`SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET` 값은 저장소 파일이나 명령 인수에 쓰지
-않고 현재 프로세스 환경에만 둔다. 빌드 스크립트는 값을 출력하지 않은 채
-`GOOGLE_DESKTOP_CLIENT_SECRET` Dart define으로 전달한다. `API_BASE_URL`,
-`DATABASE_URL`, HMAC secret과 Railway 변수는 사용하지 않는다.
+`API_BASE_URL`, `DATABASE_URL`, HMAC secret과 Railway 변수는 사용하지 않는다.
 
 ## 연결 검증 순서
 

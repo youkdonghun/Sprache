@@ -78,19 +78,16 @@ Android, Windows와 Apple 클라이언트를 **같은 Google Cloud 프로젝트*
 ### Windows
 
 - 애플리케이션 유형은 **Desktop app**으로 만든다.
-- `1.34.1`에서 사용하는 Client ID는
+- `1.38.0`에서 사용하는 Client ID는
   `1054343487948-o7nkfj4qmiilacvbln7alfgqrced6ior.apps.googleusercontent.com`이다.
-- 이 credential이 발급한 client secret은
-  `SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET` 프로세스 환경변수로만 빌드와 실계정
-  E2E에 전달한다. Flutter에는 현재 사용자만 읽을 수 있는 임시
-  `--dart-define-from-file`로 넘기고 즉시 0으로 덮어쓴 뒤 삭제한다. 값을
-  매개변수, 저장소, 문서, 채팅 또는 로그에 쓰지 않는다.
+- Desktop 앱은 공개 클라이언트이므로 Client ID와 PKCE만 사용하며 client
+  secret은 빌드나 앱에 포함하지 않는다.
 - callback은 `http://127.0.0.1:<동적 포트>`의 경로 없는 loopback을 사용한다.
 - 매 로그인마다 43~128자의 고엔트로피 verifier, `S256` challenge와 무작위
   `state`를 새로 만든다.
 
-이 PC처럼 PowerShell 실행 정책이 제한된 Windows에서 DPAPI 보관값으로 실계정
-E2E를 다시 실행할 때는 다음 명령을 사용한다.
+PowerShell 실행 정책이 제한된 Windows에서 실계정 E2E를 다시 실행할 때는 다음
+명령을 사용한다.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tool\run-live-google-e2e-local.ps1
@@ -203,12 +200,9 @@ GOOGLE_DESKTOP_CLIENT_ID=<desktop-client-id>
 GOOGLE_APPLE_CLIENT_ID=<ios-client-id>
 GOOGLE_SERVER_CLIENT_ID=<android-google-sign-in-audience>
 PRIVACY_POLICY_URL=https://sprache6.github.io/privacy/
-SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET=<local-or-ci-secret>
 ```
 
-`SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET`은 스크립트가 읽는 환경변수이고 앱에는
-`GOOGLE_DESKTOP_CLIENT_SECRET` Dart define으로 전달된다. 실제 값은 설정 파일이나
-manifest에 복사하지 않는다. `API_BASE_URL`과 Railway 변수는 사용하지 않는다.
+`API_BASE_URL`과 Railway 변수는 사용하지 않는다.
 `GOOGLE_SERVER_CLIENT_ID`는 Android Google Sign-In 초기화에 쓰는 공개 audience
 ID이며 서버 배포를 뜻하지 않는다. 토큰, 인증 코드, verifier, client secret과
 사용자의 계정 정보는 빌드·진단 로그에 출력하지 않는다.
@@ -218,9 +212,8 @@ ID이며 서버 배포를 뜻하지 않는다. 토큰, 인증 코드, verifier, 
 1. Google 미연결 상태에서 샘플 학습, 사용자 자료 등록과 재시작 복원이 된다.
 2. 설정에서 로컬 백업 폴더 주소가 보이고 `변경`으로 다른 경로를 고를 수 있다.
 3. Windows 로그인 시 시스템 브라우저와 동적 loopback이 열리고 callback의
-   `state`가 일치한다. token 요청에는 필요한 Desktop credential이 포함되지만
-   그 값이나 OAuth 토큰이 네트워크·앱 진단 로그에 노출되지 않고 Railway 요청도
-   발생하지 않는다.
+   `state`가 일치한다. token 요청에는 Client ID와 PKCE verifier만 포함되고 OAuth
+   토큰이 앱 진단 로그에 노출되지 않으며 Railway 요청도 발생하지 않는다.
 4. Android에서 등록된 패키지·SHA의 계정 선택과 `drive.file`·`drive.appdata`
    동의가 된다.
 5. 연결 후 선택한 위치의 `WordStudyData`에 manifest와 snapshot이 생성되고,

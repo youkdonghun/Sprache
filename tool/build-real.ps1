@@ -23,7 +23,6 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
-. (Join-Path $PSScriptRoot 'secure-dart-define-file.ps1')
 
 function Test-PathInside {
     param(
@@ -418,16 +417,6 @@ $releaseBuildNumber = [int]$versionMatch.Matches[0].Groups['build'].Value
 $isWindowsHost = [Environment]::OSVersion.Platform -eq [PlatformID]::Win32NT
 $androidRequested = $Target -in @('all', 'android')
 $windowsRequested = $Target -in @('all', 'windows')
-$desktopClientSecret = ''
-if ($windowsRequested) {
-    $desktopClientSecret = [Environment]::GetEnvironmentVariable(
-        'SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET',
-        'Process'
-    )
-    if ([string]::IsNullOrWhiteSpace($desktopClientSecret)) {
-        throw 'SPRACHE_GOOGLE_DESKTOP_CLIENT_SECRET is required for a Windows REAL build. Configure it in the process environment; do not pass it as a script argument or commit it.'
-    }
-}
 $androidStagingMarkerName = 'SPRACHE_ANDROID_ASCII_STAGING_ROOT'
 $androidStagingMarker = [Environment]::GetEnvironmentVariable($androidStagingMarkerName, 'Process')
 $windowsStagingMarkerName = 'SPRACHE_WINDOWS_ASCII_STAGING_ROOT'
@@ -848,48 +837,39 @@ if ($runDirectAndroid -or $runDirectWindows) {
         }
 
         if ($runDirectWindows) {
-            $secretDefineFile = New-SpracheSecureDartDefineFile -Values @{
-                GOOGLE_DESKTOP_CLIENT_SECRET = $desktopClientSecret
+            & $FlutterPath build windows --release `
+                --dart-define=APP_ENV=production `
+                --dart-define=ENABLE_MOCK_MODE=false `
+                --dart-define=RELEASE_PROBE_MODE=REAL `
+                --dart-define="APP_VERSION=$releaseVersion" `
+                --dart-define="RELEASE_BUILD_NUMBER=$releaseBuildNumber" `
+                --dart-define=RELEASE_PROBE_KIND=native-runtime `
+                --dart-define="PRIVACY_POLICY_URL=$PrivacyPolicyUrl" `
+                --dart-define="GOOGLE_DESKTOP_CLIENT_ID=$DesktopClientId"
+            if ($LASTEXITCODE -ne 0) {
+                throw "Windows release build failed with exit code $LASTEXITCODE"
             }
-            try {
-                & $FlutterPath build windows --release `
-                    --dart-define=APP_ENV=production `
-                    --dart-define=ENABLE_MOCK_MODE=false `
-                    --dart-define=RELEASE_PROBE_MODE=REAL `
-                    --dart-define="APP_VERSION=$releaseVersion" `
-                    --dart-define="RELEASE_BUILD_NUMBER=$releaseBuildNumber" `
-                    --dart-define=RELEASE_PROBE_KIND=native-runtime `
-                    --dart-define="PRIVACY_POLICY_URL=$PrivacyPolicyUrl" `
-                    --dart-define="GOOGLE_DESKTOP_CLIENT_ID=$DesktopClientId" `
-                    --dart-define-from-file="$secretDefineFile"
-                if ($LASTEXITCODE -ne 0) {
-                    throw "Windows release build failed with exit code $LASTEXITCODE"
-                }
 
-                $windowsRelease = Join-Path $clientRoot 'build\windows\x64\runner\Release'
-                & (Join-Path $PSScriptRoot 'sign-windows-file.ps1') `
-                    -Path (Join-Path $windowsRelease 'sprache.exe') `
-                    -CertificateThumbprint $WindowsSigningThumbprint `
-                    -TimestampUrl $WindowsTimestampUrl `
-                    -SignToolPath $SignToolPath `
-                    -RequireSignature:$RequireWindowsCodeSigning
+            $windowsRelease = Join-Path $clientRoot 'build\windows\x64\runner\Release'
+            & (Join-Path $PSScriptRoot 'sign-windows-file.ps1') `
+                -Path (Join-Path $windowsRelease 'sprache.exe') `
+                -CertificateThumbprint $WindowsSigningThumbprint `
+                -TimestampUrl $WindowsTimestampUrl `
+                -SignToolPath $SignToolPath `
+                -RequireSignature:$RequireWindowsCodeSigning
 
-                $windowsTarget = Join-Path $artifactsRoot "Sprache-Windows-$releaseVersion-google-x64.zip"
-                Compress-Archive -Path (Join-Path $windowsRelease '*') -DestinationPath $windowsTarget -CompressionLevel Optimal -Force
+            $windowsTarget = Join-Path $artifactsRoot "Sprache-Windows-$releaseVersion-google-x64.zip"
+            Compress-Archive -Path (Join-Path $windowsRelease '*') -DestinationPath $windowsTarget -CompressionLevel Optimal -Force
 
-                & (Join-Path $PSScriptRoot 'build-windows-installer.ps1') `
-                    -Version $releaseVersion `
-                    -ReleaseDir $windowsRelease `
-                    -ArtifactsDir $artifactsRoot `
-                    -InnoSetupPath $InnoSetupPath `
-                    -WindowsSigningThumbprint $WindowsSigningThumbprint `
-                    -TimestampUrl $WindowsTimestampUrl `
-                    -SignToolPath $SignToolPath `
-                    -RequireWindowsCodeSigning:$RequireWindowsCodeSigning
-            }
-            finally {
-                Remove-SpracheSecureDartDefineFile -Path $secretDefineFile
-            }
+            & (Join-Path $PSScriptRoot 'build-windows-installer.ps1') `
+                -Version $releaseVersion `
+                -ReleaseDir $windowsRelease `
+                -ArtifactsDir $artifactsRoot `
+                -InnoSetupPath $InnoSetupPath `
+                -WindowsSigningThumbprint $WindowsSigningThumbprint `
+                -TimestampUrl $WindowsTimestampUrl `
+                -SignToolPath $SignToolPath `
+                -RequireWindowsCodeSigning:$RequireWindowsCodeSigning
         }
     }
     finally {

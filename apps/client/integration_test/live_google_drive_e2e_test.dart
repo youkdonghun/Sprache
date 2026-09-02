@@ -187,7 +187,7 @@ void _expectLiveWindowsConfig(AppConfig config) {
   expect(config.mockMode, isFalse);
   expect(config.appEnvironment, 'production');
   expect(config.googleDesktopClientId, isNotEmpty);
-  expect(config.googleDesktopClientSecret, isNotEmpty);
+  expect(config.hasDesktopGoogleCredentials, isTrue);
   expect(config.privacyPolicyUrl, startsWith('https://'));
 }
 
