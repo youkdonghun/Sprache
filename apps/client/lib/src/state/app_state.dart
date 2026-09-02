@@ -284,6 +284,10 @@ class AppController extends StateNotifier<AppState> {
   int _syncSequence = 0;
   final Set<String> _undoneDuplicateRepairIds = <String>{};
   final Set<String> _undoneQuickContentSaveIds = <String>{};
+  List<LearningItem>? _cachedCustomItems;
+  List<LearningItem> _cachedAllContentItems = const [];
+  final Map<String, List<LearningItem>> _cachedItemsBySubject = {};
+  final Map<String, Map<String, LearningItem>> _cachedItemsByIdentity = {};
   SyncMergeReport? lastMergeReport;
 
   Future<void> _hydrate() async {
@@ -590,18 +594,33 @@ class AppController extends StateNotifier<AppState> {
   }
 
   List<LearningItem> get allContentItems {
-    final customIds = state.customItems.map((item) => item.id).toSet();
-    return [
-      ...state.customItems,
-      ...sampleContent.where((item) => !customIds.contains(item.id)),
-    ];
+    _refreshContentCache();
+    return _cachedAllContentItems;
   }
 
   List<LearningItem> itemsForSubject(String subjectId) {
     final normalized = normalizeStudySubjectId(subjectId);
-    return allContentItems
-        .where((item) => item.effectiveSubjectId == normalized)
-        .toList(growable: false);
+    _refreshContentCache();
+    return _cachedItemsBySubject.putIfAbsent(
+      normalized,
+      () => List.unmodifiable(
+        _cachedAllContentItems.where(
+          (item) => item.effectiveSubjectId == normalized,
+        ),
+      ),
+    );
+  }
+
+  void _refreshContentCache() {
+    if (identical(_cachedCustomItems, state.customItems)) return;
+    final customIds = state.customItems.map((item) => item.id).toSet();
+    _cachedCustomItems = state.customItems;
+    _cachedAllContentItems = List.unmodifiable([
+      ...state.customItems,
+      ...sampleContent.where((item) => !customIds.contains(item.id)),
+    ]);
+    _cachedItemsBySubject.clear();
+    _cachedItemsByIdentity.clear();
   }
 
   List<StudySubject> get allSubjects {
@@ -3281,10 +3300,21 @@ class AppController extends StateNotifier<AppState> {
 
   LearningItem? findContentIdentityMatch(LearningItem candidate) {
     final identityKey = _contentValidator.identityKey(candidate);
-    for (final item in [...state.customItems, ...sampleContent]) {
-      if (_contentValidator.identityKey(item) == identityKey) return item;
+    _refreshContentCache();
+    final subjectId = candidate.effectiveSubjectId;
+    final identityIndex = _cachedItemsByIdentity.putIfAbsent(
+      subjectId,
+      () => _buildContentIdentityIndex(subjectId),
+    );
+    return identityIndex[identityKey];
+  }
+
+  Map<String, LearningItem> _buildContentIdentityIndex(String subjectId) {
+    final index = <String, LearningItem>{};
+    for (final item in itemsForSubject(subjectId)) {
+      index.putIfAbsent(_contentValidator.identityKey(item), () => item);
     }
-    return null;
+    return index;
   }
 
   List<({LearningItem item, double score})> similarItemsForText({

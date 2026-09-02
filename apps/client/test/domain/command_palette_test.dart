@@ -12,6 +12,15 @@ void main() {
     expect(searchCommandPalette('학습 허브').first.id, 'learning-hub');
   });
 
+  test('exposes the GitHub language pack download route', () {
+    final korean = searchCommandPalette('언어팩').first;
+    final english = searchCommandPalette('language pack').first;
+
+    expect(korean.id, 'language-packs');
+    expect(english.id, 'language-packs');
+    expect(korean.route, '/library/language-packs');
+  });
+
   test('supports compact fuzzy queries for major games', () {
     expect(searchCommandPalette('mtch').first.id, 'match-sprint');
     expect(searchCommandPalette('문장 순서').first.id, 'sentence-order');

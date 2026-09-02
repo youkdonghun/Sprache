@@ -175,7 +175,7 @@ void main() {
       find.byKey(const Key('quick-content-meaning')),
       '새 뜻',
     );
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(
       find.byKey(const Key('quick-content-duplicate-notice')),

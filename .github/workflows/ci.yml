@@ -51,10 +51,10 @@ jobs:
       - working-directory: apps/client
         run: >-
           flutter build apk --release
-          --build-name=1.38.8
-          --build-number=76
+          --build-name=1.38.9
+          --build-number=77
           --dart-define=ENABLE_MOCK_MODE=true
-          --dart-define=APP_VERSION=1.38.8
+          --dart-define=APP_VERSION=1.38.9
       - name: Verify Android release output
         working-directory: apps/client
         run: test -s build/app/outputs/flutter-apk/app-release.apk
@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           artifact_dir="$RUNNER_TEMP/sprache-ci-artifacts"
-          artifact_name="Sprache-1.38.8-ci-android-mock.apk"
+          artifact_name="Sprache-1.38.9-ci-android-mock.apk"
           mkdir -p "$artifact_dir"
           cp build/app/outputs/flutter-apk/app-release.apk "$artifact_dir/$artifact_name"
           (
@@ -73,10 +73,10 @@ jobs:
       - name: Upload Android CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Sprache-1.38.8-ci-android-mock
+          name: Sprache-1.38.9-ci-android-mock
           path: |
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.8-ci-android-mock.apk
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.8-ci-android-mock.apk.sha256
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.9-ci-android-mock.apk
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.9-ci-android-mock.apk.sha256
           if-no-files-found: error
           retention-days: 14
   android-real-runtime:
@@ -86,8 +86,8 @@ jobs:
     env:
       ANDROID_BUILD_TOOLS: "36.0.0"
       ANDROID_SYSTEM_IMAGE: "system-images;android-35;google_apis;x86_64"
-      SPRACHE_VERSION: "1.38.8"
-      SPRACHE_BUILD_NUMBER: "76"
+      SPRACHE_VERSION: "1.38.9"
+      SPRACHE_BUILD_NUMBER: "77"
       SPRACHE_PACKAGE: com.youkdonghun.sprache
       SPRACHE_PRIVACY_POLICY_URL: https://sprache6.github.io/privacy/
       SPRACHE_GOOGLE_ANDROID_CLIENT_ID: 1054343487948-v3u90fo5nmbrk4hn7ss2gnrg601phkuv.apps.googleusercontent.com
@@ -453,8 +453,8 @@ jobs:
               "format": "sprache-runtime-evidence-v1",
               "platform": "android",
               "mode": "REAL",
-              "version": "1.38.8",
-              "buildNumber": 76,
+              "version": "1.38.9",
+              "buildNumber": 77,
               "launched": True,
               "firstFrameRendered": True,
               "firstFrameMillis": first_frame_ms,
@@ -476,8 +476,8 @@ jobs:
           assert value["format"] == "sprache-runtime-evidence-v1"
           assert value["platform"] == "android"
           assert value["mode"] == "REAL"
-          assert value["version"] == "1.38.8"
-          assert value["buildNumber"] == 76
+          assert value["version"] == "1.38.9"
+          assert value["buildNumber"] == 77
           assert value["launched"] is True
           assert value["firstFrameRendered"] is True
           assert 0 <= value["firstFrameMillis"] <= 60000
@@ -492,10 +492,10 @@ jobs:
       - name: Upload exact Android REAL runtime artifact set
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Sprache-Android-1.38.8-real-runtime
+          name: Sprache-Android-1.38.9-real-runtime
           path: |
-            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.38.8-google-debug-signed.apk
-            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.38.8-google-debug-signed.apk.sha256
+            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.38.9-google-debug-signed.apk
+            ${{ runner.temp }}/sprache-android-real-runtime/Sprache-Android-1.38.9-google-debug-signed.apk.sha256
             ${{ runner.temp }}/sprache-android-real-runtime/runtime-android.json
             ${{ runner.temp }}/sprache-android-real-runtime/runtime-android-first-frame.png
             ${{ runner.temp }}/sprache-android-real-runtime/android-signing-certificate.txt
@@ -507,7 +507,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Sprache-Android-1.38.8-real-runtime-diagnostics
+          name: Sprache-Android-1.38.9-real-runtime-diagnostics
           path: |
             ${{ runner.temp }}/sprache-android-real-runtime/android-emulator.log
             ${{ runner.temp }}/sprache-android-real-runtime/android-logcat.txt
@@ -542,10 +542,10 @@ jobs:
       - working-directory: apps/client
         run: >-
           flutter build windows --release
-          --build-name=1.38.8
-          --build-number=76
+          --build-name=1.38.9
+          --build-number=77
           --dart-define=ENABLE_MOCK_MODE=true
-          --dart-define=APP_VERSION=1.38.8
+          --dart-define=APP_VERSION=1.38.9
       - name: Verify Windows release output
         working-directory: apps/client
         shell: pwsh
@@ -565,7 +565,7 @@ jobs:
         shell: pwsh
         run: |
           $artifactDirectory = Join-Path $env:RUNNER_TEMP 'sprache-ci-artifacts'
-          $artifactName = 'Sprache-1.38.8-ci-windows-x64-mock.zip'
+          $artifactName = 'Sprache-1.38.9-ci-windows-x64-mock.zip'
           $artifactPath = Join-Path $artifactDirectory $artifactName
           New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
           Compress-Archive `
@@ -578,9 +578,9 @@ jobs:
       - name: Upload Windows CI artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Sprache-1.38.8-ci-windows-x64-mock
+          name: Sprache-1.38.9-ci-windows-x64-mock
           path: |
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.8-ci-windows-x64-mock.zip
-            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.8-ci-windows-x64-mock.zip.sha256
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.9-ci-windows-x64-mock.zip
+            ${{ runner.temp }}/sprache-ci-artifacts/Sprache-1.38.9-ci-windows-x64-mock.zip.sha256
           if-no-files-found: error
           retention-days: 14

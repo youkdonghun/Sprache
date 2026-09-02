@@ -110,6 +110,7 @@ Future<void> _enterRequired(
   // Let duplicate detection and the local draft debounce finish before callers
   // assert against the derived preview. A single frame can observe the preview
   // between controller updates when the wider widget suite is under load.
+  await tester.pump(const Duration(milliseconds: 250));
   await tester.pumpAndSettle();
 }
 

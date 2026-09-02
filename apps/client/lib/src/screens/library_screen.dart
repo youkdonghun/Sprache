@@ -3201,9 +3201,21 @@ class _AddContentMenu extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                '무엇을 추가할까요?',
-                style: Theme.of(context).textTheme.headlineSmall,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '무엇을 추가할까요?',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  TextButton(
+                    key: const Key('add-full-editor'),
+                    onPressed: () =>
+                        Navigator.pop(context, _AddContentAction.fullEditor),
+                    child: const Text('상세 입력'),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -3230,38 +3242,21 @@ class _AddContentMenu extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               _AddContentChoice(
+                key: const Key('add-language-pack'),
+                icon: Icons.cloud_download_outlined,
+                title: 'GitHub 언어팩 받기',
+                description: '6개 언어의 검증된 추가 어휘를 골라 다운로드',
+                onTap: () =>
+                    Navigator.pop(context, _AddContentAction.languagePack),
+              ),
+              const SizedBox(height: 8),
+              _AddContentChoice(
                 key: const Key('add-import-file'),
                 icon: Icons.upload_file_rounded,
                 title: 'Excel·CSV 파일 가져오기',
                 description: '단어·문장·그룹을 한 번에 가져오기',
                 onTap: () =>
                     Navigator.pop(context, _AddContentAction.importFile),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton.icon(
-                      key: const Key('add-language-pack'),
-                      onPressed: () => Navigator.pop(
-                        context,
-                        _AddContentAction.languagePack,
-                      ),
-                      icon: const Icon(Icons.translate_rounded),
-                      label: const Text('언어팩 받기'),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextButton.icon(
-                      key: const Key('add-full-editor'),
-                      onPressed: () =>
-                          Navigator.pop(context, _AddContentAction.fullEditor),
-                      icon: const Icon(Icons.tune_rounded),
-                      label: const Text('상세 입력'),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),

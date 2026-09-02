@@ -238,7 +238,7 @@ void main() {
       find.byKey(const Key('quick-content-meaning')),
       '복제본',
     );
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
 
     expect(
       find.byKey(const Key('quick-content-merge-existing')),
@@ -283,7 +283,7 @@ void main() {
       find.byKey(const Key('quick-content-meaning')),
       '중복',
     );
-    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
     await tester.ensureVisible(
       find.byKey(const Key('quick-content-view-existing')),
     );
@@ -313,7 +313,7 @@ void main() {
         find.byKey(const Key('quick-content-meaning')),
         bundled.translations.first,
       );
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
       await tester.ensureVisible(
         find.byKey(const Key('quick-content-view-existing')),
       );

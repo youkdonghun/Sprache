@@ -52,6 +52,8 @@ void main() {
             findsOneWidget,
           );
           expect(find.byKey(const Key('add-language-pack')), findsOneWidget);
+          expect(find.text('GitHub 언어팩 받기'), findsOneWidget);
+          expect(find.textContaining('6개 언어'), findsOneWidget);
           await tester.tap(find.byKey(const Key('add-quick-word')));
           await tester.pumpAndSettle();
 
@@ -139,7 +141,7 @@ void main() {
         find.byKey(const Key('quick-content-meaning')),
         '임시 해결책',
       );
-      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
       expect(
         find.byKey(const Key('quick-content-duplicate-notice')),
         findsOneWidget,

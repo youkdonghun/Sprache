@@ -117,6 +117,10 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   var _basket = <_QuickBasketEntry>[];
   var _sessionUndo = <QuickContentSaveResult>[];
   Timer? _draftTimer;
+  Timer? _suggestionTimer;
+  var _pendingSuggestionText = '';
+  var _settledSuggestionText = '';
+  late String _lastObservedDraftFingerprint;
   late final StudyStore _studyStore;
   late String _draftSubjectId;
   QuickContentDraft? _pendingDraftSnapshot;
@@ -160,6 +164,14 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
       _exampleController.text = prefill.example;
       _exampleMeaningController.text = prefill.exampleMeaning;
     }
+    _lastObservedDraftFingerprint = _draftFingerprint();
+    _pendingSuggestionText = _textController.text.trim();
+    if (_pendingSuggestionText.runes.length >= 2) {
+      _suggestionTimer = Timer(
+        const Duration(milliseconds: 220),
+        _commitPendingSuggestionText,
+      );
+    }
     for (final controller in _draftControllers) {
       controller.addListener(_refreshDraftState);
     }
@@ -172,6 +184,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   void dispose() {
     _navigationGuard.unregister(this);
     _draftTimer?.cancel();
+    _suggestionTimer?.cancel();
     final pendingDraft =
         _pendingDraftSnapshot ??
         (_draftFingerprint() == _cleanDraftFingerprint
@@ -205,22 +218,45 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   }
 
   void _refreshDraftState() {
-    if (mounted && !_suspendDraftRefresh) {
-      // Text controllers also notify when focus only changes their selection.
-      // Treat only a real content change as an early edit so an autofocus event
-      // cannot suppress last-used-kind and draft recovery preferences.
-      if (!_draftReady && _draftFingerprint() != _cleanDraftFingerprint) {
-        _editedBeforeDraftLoad = true;
-      }
-      setState(() {});
-      _scheduleDraftSave();
+    if (!mounted || _suspendDraftRefresh) return;
+    final fingerprint = _draftFingerprint();
+    // Text controllers also notify when only their selection changes. Those
+    // events do not need to rebuild this large sheet or rescan the catalog.
+    if (fingerprint == _lastObservedDraftFingerprint) return;
+    _lastObservedDraftFingerprint = fingerprint;
+    if (!_draftReady && fingerprint != _cleanDraftFingerprint) {
+      _editedBeforeDraftLoad = true;
     }
+    _scheduleSuggestionRefresh();
+    setState(() {});
+    _scheduleDraftSave();
+  }
+
+  void _scheduleSuggestionRefresh() {
+    final next = _textController.text.trim();
+    if (next == _pendingSuggestionText) return;
+    _pendingSuggestionText = next;
+    _suggestionTimer?.cancel();
+    if (next.runes.length < 2) {
+      _settledSuggestionText = '';
+      return;
+    }
+    _suggestionTimer = Timer(
+      const Duration(milliseconds: 220),
+      _commitPendingSuggestionText,
+    );
+  }
+
+  void _commitPendingSuggestionText() {
+    if (!mounted || _settledSuggestionText == _pendingSuggestionText) return;
+    setState(() => _settledSuggestionText = _pendingSuggestionText);
   }
 
   @override
   Widget build(BuildContext context) {
-    final appState = ref.watch(appControllerProvider);
-    final experience = appState.preferences.experience;
+    final experience = ref.watch(
+      appControllerProvider.select((state) => state.preferences.experience),
+    );
     final controller = ref.read(appControllerProvider.notifier);
     final subject = controller.activeSubject;
     final groupQuery = _groupSearchController.text.trim().toLowerCase();
@@ -247,11 +283,17 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
                 ? byRank
                 : right.updatedAt.compareTo(left.updatedAt);
           });
+    final availableGroupNames = {
+      for (final group in groupDefinitions) group.name,
+    };
     final recentGroupAvailable =
-        recentGroup != null &&
-        controller.availableLearningGroups.contains(recentGroup);
+        recentGroup != null && availableGroupNames.contains(recentGroup);
     final duplicateCandidate = _candidate(subject);
-    final duplicate = _textController.text.trim().isEmpty
+    final currentText = _textController.text.trim();
+    final settledText = _settledSuggestionText;
+    final suggestionsCurrent =
+        settledText.runes.length >= 2 && settledText == currentText;
+    final duplicate = !suggestionsCurrent
         ? null
         : controller.findContentIdentityMatch(duplicateCandidate);
     final duplicateKey = duplicate == null
@@ -276,9 +318,9 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
     ].where((value) => value.isNotEmpty).length;
     final recentTags =
         _quickPreferences.recentTagsBySubject[subject.id] ?? const <String>[];
-    final suggestionText = _textController.text.trim();
+    final suggestionText = settledText;
     final suggestionsEnabled =
-        _kind == LearningItemKind.word && suggestionText.runes.length >= 2;
+        _kind == LearningItemKind.word && suggestionsCurrent;
     final similarItems = suggestionsEnabled
         ? controller.similarItemsForText(
             subjectId: subject.id,

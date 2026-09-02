@@ -281,11 +281,18 @@ class _GlobalSearchDialog extends ConsumerStatefulWidget {
 }
 
 class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
+  static const _searchDelay = Duration(milliseconds: 180);
+
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  Timer? _searchDebounce;
   var _query = '';
   var _selectedCommandIndex = 0;
   var _searchPreferences = const SearchLocalPreferences();
+  var _results = const <GlobalSearchResult>[];
+  var _similar = const <String>[];
+  var _searching = false;
+  var _searchRequest = 0;
 
   @override
   void initState() {
@@ -295,6 +302,8 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
+    _searchRequest += 1;
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -341,11 +350,64 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
   void _applyQuery(String query) {
     _controller.text = query;
     _controller.selection = TextSelection.collapsed(offset: query.length);
-    setState(() {
-      _query = query;
-      _selectedCommandIndex = 0;
-    });
+    _onQueryChanged(query, immediately: true);
     _focusNode.requestFocus();
+  }
+
+  void _onQueryChanged(String value, {bool immediately = false}) {
+    _searchDebounce?.cancel();
+    final request = ++_searchRequest;
+    final normalized = value.trim();
+    setState(() {
+      _query = value;
+      _selectedCommandIndex = 0;
+      _searching = normalized.isNotEmpty;
+      if (normalized.isEmpty) {
+        _results = const [];
+        _similar = const [];
+      }
+    });
+    if (normalized.isEmpty) return;
+    _searchDebounce = Timer(
+      immediately ? Duration.zero : _searchDelay,
+      () => unawaited(_runSearch(request, normalized)),
+    );
+  }
+
+  Future<void> _runSearch(int request, String query) async {
+    await Future<void>.delayed(Duration.zero);
+    if (!mounted || request != _searchRequest) return;
+    final controller = ref.read(appControllerProvider.notifier);
+    final subjects = controller.availableSubjects;
+    final visibleSubjectIds = subjects.map((subject) => subject.id).toSet();
+    final visibleItems = controller.allContentItems.where(
+      (item) => visibleSubjectIds.contains(item.effectiveSubjectId),
+    );
+    final state = ref.read(appControllerProvider);
+    final results = await searchAcrossSubjectsCooperatively(
+      query: query,
+      subjects: subjects,
+      items: visibleItems,
+      progressById: state.progress,
+      favoriteItemIds: state.preferences.favoriteItemIds,
+      excludedItemIds: state.preferences.excludedItemIds,
+      isCancelled: () => !mounted || request != _searchRequest,
+    );
+    if (!mounted || request != _searchRequest) return;
+    final similar = results.isEmpty
+        ? suggestSimilarSearches(
+            query: query,
+            candidates: controller.allContentItems
+                .take(2500)
+                .expand((item) => [item.text, ...item.translations]),
+          )
+        : const <String>[];
+    if (!mounted || request != _searchRequest) return;
+    setState(() {
+      _results = results;
+      _similar = similar;
+      _searching = false;
+    });
   }
 
   void _moveCommandSelection(int delta, int commandCount) {
@@ -358,21 +420,7 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(appControllerProvider);
-    final controller = ref.read(appControllerProvider.notifier);
-    final subjects = controller.availableSubjects;
-    final visibleSubjectIds = subjects.map((subject) => subject.id).toSet();
-    final visibleItems = controller.allContentItems
-        .where((item) => visibleSubjectIds.contains(item.effectiveSubjectId))
-        .toList(growable: false);
-    final results = searchAcrossSubjects(
-      query: _query,
-      subjects: subjects,
-      items: visibleItems,
-      progressById: state.progress,
-      favoriteItemIds: state.preferences.favoriteItemIds,
-      excludedItemIds: state.preferences.excludedItemIds,
-    );
+    final results = _results;
     final commandResults = searchCommandPalette(
       _query,
       limit: _query.trim().isEmpty ? 4 : 5,
@@ -380,14 +428,7 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
     final selectedCommandIndex = commandResults.isEmpty
         ? 0
         : _selectedCommandIndex.clamp(0, commandResults.length - 1);
-    final similar = results.isEmpty && _query.trim().isNotEmpty
-        ? suggestSimilarSearches(
-            query: _query,
-            candidates: visibleItems.expand(
-              (item) => [item.text, ...item.translations],
-            ),
-          )
-        : const <String>[];
+    final similar = _similar;
     final desktopPlatform =
         defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.macOS ||
@@ -430,10 +471,7 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
                                   icon: const Icon(Icons.close_rounded),
                                 ),
                         ),
-                        onChanged: (value) => setState(() {
-                          _query = value;
-                          _selectedCommandIndex = 0;
-                        }),
+                        onChanged: _onQueryChanged,
                         onSubmitted: (value) {
                           if (commandResults.isNotEmpty) {
                             _returnCommand(
@@ -468,6 +506,8 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
                       child: Text(
                         _query.trim().isEmpty
                             ? '기능을 바로 실행하거나 모든 주제의 자료를 찾아보세요'
+                            : _searching
+                            ? '바로가기 ${commandResults.length}개 · 자료 검색 중…'
                             : '바로가기 ${commandResults.length}개 · 자료 ${results.length}개 · ↑↓ 이동 · Enter 실행',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
@@ -483,6 +523,11 @@ class _GlobalSearchDialogState extends ConsumerState<_GlobalSearchDialog> {
                 ),
               ),
               const Divider(height: 12),
+              if (_searching)
+                const LinearProgressIndicator(
+                  key: Key('global-search-progress'),
+                  minHeight: 2,
+                ),
               if (commandResults.isNotEmpty)
                 _CommandPaletteResults(
                   commands: commandResults,

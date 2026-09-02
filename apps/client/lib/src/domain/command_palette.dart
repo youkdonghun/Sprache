@@ -67,6 +67,21 @@ const appCommandPaletteCommands = <CommandPaletteCommand>[
     route: '/import',
   ),
   CommandPaletteCommand(
+    id: 'language-packs',
+    title: 'GitHub 언어팩 받기',
+    description: '공개 언어팩을 확인하고 내 자료에 추가',
+    keywords: [
+      '언어팩',
+      '어휘팩',
+      '단어팩',
+      '다운로드',
+      'github',
+      'language pack',
+      'vocabulary pack',
+    ],
+    route: '/library/language-packs',
+  ),
+  CommandPaletteCommand(
     id: 'new-item',
     title: '상세 편집기로 등록',
     description: '뜻·예문·태그까지 새 자료 작성',

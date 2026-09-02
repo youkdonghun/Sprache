@@ -114,7 +114,7 @@ jobs:
           build_number="${{ steps.version.outputs.build_number }}"
           source_apk="apps/client/build/app/outputs/flutter-apk/app-release.apk"
           release_dir="$RUNNER_TEMP/sprache-release"
-          apk_name="Sprache-Android-$version-google-debug-signed.apk"
+          apk_name="Sprache-Android-$version.apk"
           apk="$release_dir/$apk_name"
           mkdir -p "$release_dir"
           test -s "$source_apk"
@@ -153,10 +153,10 @@ jobs:
               "publishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "title": f"Sprache {version}",
               "notes": [
-                  "GitHub 카탈로그에 영어·일본어·독일어·프랑스어·스페인어·중국어 TUFS 생활 핵심 언어팩 6개를 실제로 등록했습니다.",
-                  "언어팩은 앱 내장 어휘와 중복을 제외했으며 크기·SHA-256·형식·라이선스를 확인한 뒤 가져오기 검토 화면으로 연결됩니다.",
-                  "백그라운드·앱 복귀·자동 재시도 Drive 동기화는 조용히 처리하고, 로그인이나 사용자가 누른 동기화만 화면에 표시합니다.",
-                  "학습 완료 화면은 Drive 대기 메시지 대신 기기 저장 완료만 간단히 보여 줍니다.",
+                  "자료 합성 결과를 캐시해 추가 메뉴와 주요 화면의 반복 계산을 줄였습니다.",
+                  "전체 검색은 입력을 잠시 기다린 뒤 나누어 처리해 타이핑과 화면 조작이 멈추지 않습니다.",
+                  "GitHub 언어팩 받기를 추가 메뉴와 전체 검색에서 바로 찾을 수 있습니다.",
+                  "언어팩은 크기와 SHA-256을 검증한 뒤 가져오기 검토 화면으로 연결됩니다.",
               ],
               "releasePageUrl": release_page,
               "artifacts": {
@@ -169,8 +169,8 @@ jobs:
                   },
                   "windows": {"kind": "releasePage", "url": release_page},
                   "pwa": {"kind": "web", "url": "https://sprache6.github.io/app/"},
-                  "macos": {"kind": "releasePage", "url": release_page},
-                  "ios": {"kind": "releasePage", "url": release_page},
+                  "macos": {"kind": "web", "url": "https://sprache6.github.io/app/"},
+                  "ios": {"kind": "web", "url": "https://sprache6.github.io/app/"},
               },
           }
           pathlib.Path(output).write_text(
@@ -201,4 +201,4 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --title "Sprache ${{ steps.version.outputs.version }}" \
-            --notes "GitHub 공개 카탈로그에 영어·일본어·독일어·프랑스어·스페인어·중국어 TUFS 생활 핵심 언어팩 6개를 실제 등록했습니다. 앱 내장 어휘와 중복을 제외하고 크기·SHA-256·형식·라이선스를 검증한 뒤 가져오기 검토 화면으로 연결합니다. 백그라운드 Drive 동기화는 조용히 처리하고 로그인 또는 사용자가 누른 동기화만 화면에 표시합니다."
+            --notes "자료 합성 결과를 캐시하고 전체 검색을 디바운스·분할 처리해 추가와 검색 반응성을 개선했습니다. GitHub 언어팩 받기는 추가 메뉴와 전체 검색에서 바로 열 수 있으며, 다운로드 파일은 크기와 SHA-256을 검증한 뒤 가져오기 검토 화면으로 연결합니다."

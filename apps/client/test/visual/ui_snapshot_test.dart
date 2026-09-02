@@ -229,6 +229,7 @@ void main() {
           find.byKey(const Key('quick-content-meaning')),
           '우회 방법',
         );
+        await tester.pump(const Duration(milliseconds: 250));
         await tester.pumpAndSettle();
 
         await expectLater(
