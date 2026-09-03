@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "version": "1.40.1",
   "buildNumber": 82,
-  "publishedAt": "2026-09-03T04:47:26.9341490Z",
+  "publishedAt": "2026-09-03T04:51:44.5181945Z",
   "title": "Sprache 1.40.1",
   "notes": [
     "예전 영어 언어팩에서 자동 생성된 잘못된 한글 발음 표기를 제거했습니다.",
@@ -23,8 +23,8 @@
       "kind": "apk",
       "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.40.1/Sprache-Android-1.40.1-google-debug-signed.apk",
       "fileName": "Sprache-Android-1.40.1-google-debug-signed.apk",
-      "sha256": "4c1018679242b2e8b8f73d2ac2a87d91986e4e1a97315fbb0bf6e601e361a1ac",
-      "sizeBytes": 197706807
+      "sha256": "38123dc30631326087ff1fa3856fbd5b3ce27c52fdcd54c0ea48f5a2e2e20335",
+      "sizeBytes": 108453305
     },
     "pwa": {
       "kind": "web",
