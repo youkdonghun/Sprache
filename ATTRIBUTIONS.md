@@ -80,6 +80,25 @@ Korea.net 참고 항목에는 `reference-only; paraphrased fact`를, 문화체�
 
 직접 입력하거나 Excel·CSV·JSON·JSONL로 가져온 콘텐츠의 기본 라이선스 값은 `private`다. Sprache는 사용자 콘텐츠에 새로운 라이선스를 부여하지 않는다. 외부 사전·교재·데이터셋을 사용했다면 편집 화면 또는 가져오기 파일에 실제 `source`, `license`, `source_version`, `source_id`, `source_url`, `author`, `attribution`을 기록해야 한다.
 
+## 영어 TOSS·TOEIC 선택형 언어팩
+
+| 항목 | 값 |
+| --- | --- |
+| 범위 | TOSS 기본 어휘·숙어 5,000개, TOEIC 기본 어휘·숙어 5,000개 |
+| 빈도 목록 | NGSL-Spoken 1.2, NGSL 1.2, NGSL-GR, TOEIC Service List 1.2, Business Service List 1.2 |
+| 목록 원본 | https://www.newgeneralservicelist.com/word-lists |
+| 한국어 뜻 | TUFS, 한국어 위키낱말사전, Open English-Korean Dictionary 부분본, Sprache 교정 |
+| 사전 원본 | https://kaikki.org/kowiktionary/영어/ · https://github.com/jhseo1211/open-english-korean-dict |
+| 라이선스 | CC BY-SA 4.0(팩 전체), TUFS 부분은 CC BY 4.0 |
+| 개정판 | `2026.09.2`, revision `2` |
+| 포함 파일 | `language-packs/packs/sprache-en-toss-speaking-core-2026-09.json`, `language-packs/packs/sprache-en-toeic-service-core-2026-09.json` |
+
+두 팩은 ETS 공식 문제나 공식 단어장이 아니다. TOSS 팩은 말하기 고빈도
+단어 4,750개와 직접 정리한 회화·숙어 250개, TOEIC 팩은 시험·업무
+고빈도 단어 4,750개와 실무 결합표현 250개로 구성한다. 기존 revision 1의
+첫 721개·1,250개 ID는 그대로 보존해 재설치가 아닌 업데이트로 처리한다.
+영어 철자를 한글 발음으로 추측한 값은 넣지 않고 기기의 영어 TTS를 사용한다.
+
 ## 추가 콘텐츠 등록 템플릿
 
 새 외부 데이터셋을 포함하기 전 다음 정보를 이 문서에 추가한다.

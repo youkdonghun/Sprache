@@ -37,14 +37,42 @@ node tool/build-language-pack-catalog.mjs
 - `toeic-service-list-1.2.txt`: TOEIC Service List 1.2의 1,250개 표제어.
   원본은 https://charliebrownecompany.squarespace.com/toeic-service-list 이며
   CC BY-SA 4.0이다.
+- `ngsl-1.2-teaching.csv`: NGSL 1.2의 2,809개 교육용 표제어.
+  원본은 https://www.newgeneralservicelist.com/new-general-service-list 이며
+  CC BY-SA 4.0이다.
+- `ngsl-gr-rank.csv`: NGSL-GR의 빈도 순위 표제어. TOSS 확장 단어의
+  우선순위를 정하는 데 사용한다. 원본은
+  https://www.newgeneralservicelist.com/ngsl-graded-reader 이며 CC BY-SA 4.0이다.
+- `bsl-1.2-teaching.csv`: Business Service List 1.2의 1,744개 교육용
+  표제어. TOEIC 확장 단어의 업무 우선순위를 정하는 데 사용한다. 원본은
+  https://www.newgeneralservicelist.com/business-service-list 이며 CC BY-SA 4.0이다.
 - 한국어 뜻은 TUFS 대응어와 한국어 위키낱말사전의 영어 표제어를 우선
-  참고하고, 시험 문맥과 맞지 않거나 빠진 뜻은 별도 검수 파일로 교정한다.
+  참고하고, 빠진 뜻은 CC BY-SA 4.0인 Open English-Korean Dictionary의
+  부분 추출본으로 보완한다. 시험 문맥과 맞지 않거나 낡은 뜻은
+  `english-exam-expanded-overrides.json`에서 직접 교정한다.
+  `english-exam-phrases.json`의 회화·업무 표현은 Sprache가 직접 정리했다.
   한글 발음은 영어 철자만 보고 추측하지 않으며 앱의 `en-US` 음성으로
   원문을 듣는다.
+
+`english-korean-wiktionary-subset.json`은 Kaikki.org가 추출한 한국어
+위키낱말사전 영어 항목의 부분본이다. CC BY-SA 4.0·GFDL 조건과 원 저작자
+표시는 https://kaikki.org/kowiktionary/영어/ 와
+https://ko.wiktionary.org/ 에서 확인할 수 있다.
+`english-korean-open-dictionary-subset.json`은
+https://github.com/jhseo1211/open-english-korean-dict 의 2026-09-03
+스냅샷(`92cbfe63deee1ccead2c42677027d8b4a305b2c7`)에서 이번 목록에 필요한
+표제어만 추출했으며 CC BY-SA 4.0이다.
 
 두 팩을 다시 만들 때는 아래 명령을 추가로 실행한다.
 
 ```powershell
 node tool/refresh-english-exam-packs.mjs --refresh
 node tool/build-language-pack-catalog.mjs
+```
+
+원본 사전이 갱신되었을 때 부분 추출본을 재생성하려면 다음 명령을 사용한다.
+
+```powershell
+node tool/refresh-english-korean-wiktionary-source.mjs --input <Kaikki JSONL>
+node tool/refresh-open-english-korean-source.mjs --input <words.json>
 ```

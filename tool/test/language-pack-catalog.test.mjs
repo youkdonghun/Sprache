@@ -119,8 +119,8 @@ test('English pack keeps the reviewed beef pronunciation', async () => {
 test('publishes complete and separate TOSS and TOEIC vocabulary packs', async () => {
   const catalog = await buildLanguagePackCatalog(repositoryRoot);
   const expected = new Map([
-    ['sprache-en-toss-speaking-core-2026-09', 721],
-    ['sprache-en-toeic-service-core-2026-09', 1250],
+    ['sprache-en-toss-speaking-core-2026-09', 5000],
+    ['sprache-en-toeic-service-core-2026-09', 5000],
   ]);
   for (const [id, count] of expected) {
     const descriptor = catalog.packs.find((pack) => pack.id === id);
@@ -128,6 +128,9 @@ test('publishes complete and separate TOSS and TOEIC vocabulary packs', async ()
     assert.equal(descriptor.language, 'en');
     assert.equal(descriptor.itemCount, count);
     assert.equal(descriptor.license, 'CC-BY-SA-4.0');
+    assert.equal(descriptor.version, '2026.09.2');
+    assert.equal(descriptor.revision, 2);
+    assert.ok(descriptor.sizeBytes < 3 * 1024 * 1024);
   }
 });
 
@@ -137,12 +140,22 @@ test('English exam packs keep reviewed meanings and never guess Hangul pronuncia
       account: '계정, 계좌, 설명',
       board: '판, 이사회',
       train: '기차, 훈련하다',
+      career: '직업, 경력',
+      competition: '경쟁, 대회',
+      component: '구성 요소, 부품',
+      clothing: '의류, 옷',
+      'look forward to': '~을 기대하다',
+      'in my opinion': '내 생각에는',
     },
     'sprache-en-toeic-service-core-2026-09': {
       occupation: '직업',
       receipt: '영수증',
       subscription: '구독, 구독료',
       terminal: '터미널, 종착역',
+      installment: '할부금, 분할 납부',
+      matrix: '행렬, 기반 구조',
+      'meet a deadline': '마감 기한을 지키다',
+      'place an order': '주문하다',
     },
   };
   for (const [id, meanings] of Object.entries(expectations)) {
@@ -155,9 +168,34 @@ test('English exam packs keep reviewed meanings and never guess Hangul pronuncia
       assert.match(item.meaning, /[가-힣]/u, item.term);
       assert.doesNotMatch(item.meaning, /[A-Za-z〔〕]/u, item.term);
     }
+    assert.equal(new Set(pack.items.map((item) => item.id)).size, 5000);
+    assert.equal(
+      new Set(pack.items.map((item) =>
+        item.term.normalize('NFKC').toLocaleLowerCase('en').replace(/\s+/gu, ''))).size,
+      5000,
+    );
+    assert.equal(pack.items.filter((item) => item.id.includes('-phrase-')).length, 250);
     for (const [term, meaning] of Object.entries(meanings)) {
       assert.equal(pack.items.find((item) => item.term === term)?.meaning, meaning);
     }
+  }
+});
+
+test('English exam pack revisions preserve the original item ids', async () => {
+  const expectations = {
+    'sprache-en-toss-speaking-core-2026-09': ['a', 'able', 'about'],
+    'sprache-en-toeic-service-core-2026-09': ['mister', 'vacation', 'client'],
+  };
+  for (const [id, terms] of Object.entries(expectations)) {
+    const pack = JSON.parse(await readFile(
+      join(repositoryRoot, 'language-packs', 'packs', `${id}.json`),
+      'utf8',
+    ));
+    assert.deepEqual(pack.items.slice(0, terms.length).map((item) => item.term), terms);
+    assert.deepEqual(
+      pack.items.slice(0, terms.length).map((item) => item.id),
+      terms.map((_, index) => `${id}-word-${index + 1}`),
+    );
   }
 });
 
