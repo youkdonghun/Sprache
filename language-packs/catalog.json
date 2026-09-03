@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "updatedAt": "2026-09-03T01:37:00.000Z",
+  "updatedAt": "2026-09-03T05:10:00.000Z",
   "packs": [
     {
       "id": "sprache-de-tufs-core-2026-09",
@@ -22,15 +22,15 @@
       "title": "영어 생활 핵심 어휘 459",
       "description": "TUFS의 한국어 대응 생활 핵심 어휘 전체본입니다. 앱 기본 자료와 겹치면 중복 없이 합쳐집니다.",
       "language": "en",
-      "version": "2026.09.2",
-      "revision": 2,
-      "publishedAt": "2026-09-03T00:00:00.000Z",
+      "version": "2026.09.3",
+      "revision": 3,
+      "publishedAt": "2026-09-03T05:10:00.000Z",
       "license": "CC-BY-4.0",
       "attribution": "TUFS Open Language Resources, adapted by Sprache",
       "path": "packs/sprache-en-tufs-core-2026-09.json",
       "itemCount": 459,
-      "sizeBytes": 156920,
-      "sha256": "c5b9313c85459027c367aed1c54a914b1cec698db34f6cebda62e939194de7d4"
+      "sizeBytes": 156880,
+      "sha256": "85fa88904398edf8b7f90f0617c68fd6f86cd594e2514a47f9dadaa6575cd80f"
     },
     {
       "id": "sprache-en-toeic-service-core-2026-09",

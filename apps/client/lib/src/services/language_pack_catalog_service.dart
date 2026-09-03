@@ -310,6 +310,22 @@ class LanguagePackCatalogService {
       if (rowLanguage != null && rowLanguage != descriptor.language.code) {
         throw LanguagePackCatalogException('${index + 1}번째 항목 언어가 팩 언어와 다릅니다.');
       }
+      if (descriptor.language == LanguageTag.english) {
+        // A spelling-derived Hangul value is not a pronunciation standard.
+        // Managed English packs always defer to device TTS, even if an old or
+        // third-party pack still contains one of the legacy reading columns.
+        for (final key in const {
+          'reading',
+          'korean_pronunciation',
+          'korean_reading',
+          'hangul',
+          'ko_pronunciation',
+          '한국어_발음',
+          '한글_발음',
+        }) {
+          item.remove(key);
+        }
+      }
       normalizedItems.add(item);
     }
     return {

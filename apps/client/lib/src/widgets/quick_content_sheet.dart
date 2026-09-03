@@ -2337,7 +2337,7 @@ class _QuickContentSheetState extends ConsumerState<_QuickContentSheet> {
   }
 
   String _koreanPronunciationHint(LanguageTag language) => switch (language) {
-    LanguageTag.english => '예: 헬로우',
+    LanguageTag.english => '선택 입력 · 직접 확인한 표기만 사용',
     LanguageTag.japanese => '예: 미즈',
     LanguageTag.german => '예: 구텐 탁',
     LanguageTag.french => '예: 봉주르',

@@ -202,7 +202,7 @@ ContentValidationIssue? inspectReadingFormat(
       if (!valid || !hasHangul) {
         return error(
           'hangul_reading_format',
-          '한국어 발음에는 한글과 문장부호만 입력하세요. 예: 헬로우, 니 하오',
+          '한국어 발음에는 한글과 문장부호만 입력하세요. 예: 니 하오',
         );
       }
   }

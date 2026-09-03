@@ -137,6 +137,10 @@ String? _safeBundledHangulReading(LanguageTag language, Object seed) {
     ),
     _ => throw ArgumentError.value(seed, 'seed'),
   };
+  // English spelling and a Korean approximation cannot preserve vowel,
+  // stress, or consonant distinctions reliably. Bundled English content uses
+  // device TTS as its pronunciation source instead of showing Hangul.
+  if (language == LanguageTag.english) return null;
   if (reviewed != null && reviewed.trim().isNotEmpty) return reviewed.trim();
 
   // Latin spelling is not a pronunciation alphabet. Guessing from the written
@@ -320,12 +324,12 @@ int _sentenceUnit(String korean) => switch (korean) {
 };
 
 const _englishWords = <_WordSeed>[
-  _WordSeed('hello', '안녕하세요', koreanPronunciation: '헬로'),
-  _WordSeed('goodbye', '안녕히 가세요', koreanPronunciation: '굿바이'),
-  _WordSeed('please', '부탁합니다', koreanPronunciation: '플리즈'),
-  _WordSeed('thank you', '감사합니다', koreanPronunciation: '땡큐'),
-  _WordSeed('yes', '네', koreanPronunciation: '예스'),
-  _WordSeed('no', '아니요', koreanPronunciation: '노우'),
+  _WordSeed('hello', '안녕하세요'),
+  _WordSeed('goodbye', '안녕히 가세요'),
+  _WordSeed('please', '부탁합니다'),
+  _WordSeed('thank you', '감사합니다'),
+  _WordSeed('yes', '네'),
+  _WordSeed('no', '아니요'),
   _WordSeed('person', '사람'),
   _WordSeed('name', '이름'),
   _WordSeed('friend', '친구'),
@@ -403,23 +407,19 @@ const _englishWords = <_WordSeed>[
 ];
 
 const _englishSentences = <_SentenceSeed>[
-  _SentenceSeed('How are you?', '어떻게 지내세요?', [
-    'How',
-    'are',
-    'you?',
-  ], koreanPronunciation: '하우 아 유?'),
+  _SentenceSeed('How are you?', '어떻게 지내세요?', ['How', 'are', 'you?']),
   _SentenceSeed('My name is Mina.', '제 이름은 미나예요.', [
     'My',
     'name',
     'is',
     'Mina.',
-  ], koreanPronunciation: '마이 네임 이즈 미나.'),
+  ]),
   _SentenceSeed('Nice to meet you.', '만나서 반가워요.', [
     'Nice',
     'to',
     'meet',
     'you.',
-  ], koreanPronunciation: '나이스 투 미트 유.'),
+  ]),
   _SentenceSeed('Where is the station?', '역이 어디에 있나요?', [
     'Where',
     'is',

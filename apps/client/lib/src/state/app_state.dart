@@ -4468,6 +4468,9 @@ class AppController extends StateNotifier<AppState> {
       remoteTombstones: remoteItemTombstones,
       itemCodec: _itemCodec,
     );
+    final sanitizedMergedItems = migrateLegacyEnglishPronunciations(
+      mergedContent.items,
+    ).items;
     mergedProgress = _remapProgressItemIds(
       mergedProgress,
       mergedContent.itemIdAliases,
@@ -4877,7 +4880,7 @@ class AppController extends StateNotifier<AppState> {
       dailyXpByCourseAndReplica: mergedDailyXpLedger,
       badges: {...state.badges, ...remoteBadges},
       driveConnected: mergedDriveConnected,
-      customItems: mergedContent.items,
+      customItems: sanitizedMergedItems,
       customItemTombstones: mergedContent.tombstones,
       recentSessions: mergedRecentSessions,
       preferences: mergedPreferences,

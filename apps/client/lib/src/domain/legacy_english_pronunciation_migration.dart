@@ -1,8 +1,7 @@
 import 'language.dart';
 import 'learning_item.dart';
 
-/// Result of removing Hangul readings generated from English spelling by the
-/// legacy 2026.09.1 language-pack importer.
+/// Result of removing untrusted Hangul readings from managed English packs.
 class LegacyEnglishPronunciationMigration {
   const LegacyEnglishPronunciationMigration({
     required this.items,
@@ -15,18 +14,13 @@ class LegacyEnglishPronunciationMigration {
   bool get changed => changedItems.isNotEmpty;
 }
 
-const _affectedEnglishPackSourceIds = <String>{
-  'language-pack:sprache-en-tufs-core-2026-09',
-  'language-pack:sprache-en-toeic-service-core-2026-09',
-  'language-pack:sprache-en-toss-speaking-core-2026-09',
-};
+const _languagePackSourcePrefix = 'language-pack:';
 
-/// Removes only unedited readings from the affected first-generation packs.
+/// Removes every Hangul reading supplied by a managed English language pack.
 ///
-/// Version 1 generated Hangul directly from English spelling. A user edit
-/// increments [ContentSource.contentVersion], so version 2 or newer is left
-/// untouched. The current 2026.09.2 packs are also left intact, including the
-/// explicitly reviewed `beef → 비프` aid.
+/// English spelling is not phonetic, so a pack version or sync timestamp is
+/// not enough evidence that a Korean transcription is correct. Direct user
+/// entries are outside this rule and remain untouched.
 LegacyEnglishPronunciationMigration migrateLegacyEnglishPronunciations(
   Iterable<LearningItem> source,
 ) {
@@ -44,12 +38,14 @@ LegacyEnglishPronunciationMigration migrateLegacyEnglishPronunciations(
 }
 
 LearningItem _migrateItem(LearningItem item) {
-  final isAffected =
+  final sourceId = item.source.sourceId?.trim().toLowerCase() ?? '';
+  final taggedAsLanguagePack = item.tags.any(
+    (tag) => tag.trim().toLowerCase().startsWith(_languagePackSourcePrefix),
+  );
+  final isManagedEnglishPack =
       item.learningLanguage == LanguageTag.english &&
-      _affectedEnglishPackSourceIds.contains(item.source.sourceId) &&
-      item.source.sourceVersion == '2026.09.1' &&
-      item.source.contentVersion <= 1;
-  if (!isAffected ||
+      (sourceId.startsWith(_languagePackSourcePrefix) || taggedAsLanguagePack);
+  if (!isManagedEnglishPack ||
       !item.readings.any((reading) => reading.scheme == ReadingScheme.hangul)) {
     return item;
   }
@@ -57,6 +53,8 @@ LearningItem _migrateItem(LearningItem item) {
     readings: List.unmodifiable(
       item.readings.where((reading) => reading.scheme != ReadingScheme.hangul),
     ),
-    source: item.source.copyWith(contentVersion: 2),
+    source: item.source.copyWith(
+      contentVersion: item.source.contentVersion + 1,
+    ),
   );
 }

@@ -63,8 +63,13 @@ void main() {
   });
 
   test('starter catalog never guesses Hangul from Latin spelling', () {
+    final englishPronunciations = sampleContent
+        .where((item) => item.learningLanguage == LanguageTag.english)
+        .map((item) => item.reading(ReadingScheme.hangul))
+        .whereType<String>();
+    expect(englishPronunciations, isEmpty);
+
     for (final language in const [
-      LanguageTag.english,
       LanguageTag.german,
       LanguageTag.french,
       LanguageTag.spanish,
@@ -120,7 +125,7 @@ void main() {
       sampleContent
           .singleWhere((item) => item.id == 'en-starter-word-1')
           .reading(ReadingScheme.hangul),
-      '헬로',
+      isNull,
     );
     expect(
       sampleContent

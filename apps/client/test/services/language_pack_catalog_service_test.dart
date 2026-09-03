@@ -32,6 +32,8 @@ void main() {
         'term': term,
         'meaning': '안녕하세요',
         'part_of_speech': 'interjection',
+        'reading': '헤로',
+        'korean_pronunciation': '헬로',
       },
     ],
   };
@@ -89,7 +91,10 @@ void main() {
       expect(downloaded.fileName, 'en-core-test-1.2.0.json');
       final wrapper = jsonDecode(utf8.decode(downloaded.bytes)) as Map;
       expect((wrapper['defaults'] as Map)['source_id'], descriptor.sourceId);
-      expect((wrapper['items'] as List).single, isNot(contains('source_id')));
+      final wrappedItem = (wrapper['items'] as List).single as Map;
+      expect(wrappedItem, isNot(contains('source_id')));
+      expect(wrappedItem, isNot(contains('reading')));
+      expect(wrappedItem, isNot(contains('korean_pronunciation')));
       final preview = const ContentImportParser().parseJson(
         utf8.decode(downloaded.bytes),
         defaultLanguage: LanguageTag.english,
@@ -102,6 +107,7 @@ void main() {
       expect(item.source.sourceVersion, '1.2.0');
       expect(item.source.contentVersion, 2);
       expect(item.source.license, 'CC0-1.0');
+      expect(item.reading(ReadingScheme.hangul), isNull);
     },
   );
 
