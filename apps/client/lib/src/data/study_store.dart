@@ -5,6 +5,7 @@ import 'package:drift/drift.dart';
 
 import '../domain/content_validation.dart';
 import '../domain/device_preferences.dart';
+import '../domain/exam_library.dart';
 import '../domain/item_editor_draft.dart';
 import '../domain/language.dart';
 import '../domain/learning_item.dart';
@@ -157,6 +158,10 @@ abstract interface class StudyStore {
 
   Future<void> saveDevicePreferences(DevicePreferences preferences);
 
+  Future<ExamLibrary> loadExamLibrary();
+
+  Future<void> saveExamLibrary(ExamLibrary library);
+
   Future<ImportReviewDraft?> loadImportReviewDraft();
 
   Future<void> saveImportReviewDraft(ImportReviewDraft draft);
@@ -227,6 +232,7 @@ class MemoryStudyStore implements StudyStore {
     QuickContentLocalPreferences? quickContentLocalPreferences,
     SearchLocalPreferences? searchLocalPreferences,
     DevicePreferences? devicePreferences,
+    ExamLibrary? examLibrary,
     ImportReviewDraft? importReviewDraft,
     String? replicaId,
   }) : _profile = _profileWithReplicaId(profile, replicaId),
@@ -255,6 +261,7 @@ class MemoryStudyStore implements StudyStore {
        _searchLocalPreferences =
            searchLocalPreferences ?? const SearchLocalPreferences(),
        _devicePreferences = devicePreferences ?? const DevicePreferences(),
+       _examLibrary = examLibrary ?? const ExamLibrary(),
        // The public constructor name is intentionally clearer for tests/callers.
        // ignore: prefer_initializing_formals
        _importReviewDraft = importReviewDraft;
@@ -277,6 +284,7 @@ class MemoryStudyStore implements StudyStore {
   QuickContentLocalPreferences _quickContentLocalPreferences;
   SearchLocalPreferences _searchLocalPreferences;
   DevicePreferences _devicePreferences;
+  ExamLibrary _examLibrary;
   ImportReviewDraft? _importReviewDraft;
 
   List<StudyEventEntry> get savedEvents => List.unmodifiable(_events.values);
@@ -439,6 +447,14 @@ class MemoryStudyStore implements StudyStore {
   @override
   Future<void> saveDevicePreferences(DevicePreferences preferences) async {
     _devicePreferences = preferences;
+  }
+
+  @override
+  Future<ExamLibrary> loadExamLibrary() async => _examLibrary;
+
+  @override
+  Future<void> saveExamLibrary(ExamLibrary library) async {
+    _examLibrary = library;
   }
 
   @override
@@ -1150,6 +1166,36 @@ class DriftStudyStore implements StudyStore {
           AppSettingsCompanion.insert(
             key: 'device_preferences',
             valueJson: jsonEncode(preferences.toJson()),
+            updatedAt: DateTime.now().toUtc(),
+          ),
+        );
+  }
+
+  @override
+  Future<ExamLibrary> loadExamLibrary() async {
+    final setting = await (database.select(
+      database.appSettings,
+    )..where((table) => table.key.equals('exam_library_v1'))).getSingleOrNull();
+    if (setting == null) return const ExamLibrary();
+    try {
+      return ExamLibrary.fromJson(
+        Map<String, Object?>.from(
+          jsonDecode(setting.valueJson) as Map<Object?, Object?>,
+        ),
+      );
+    } catch (_) {
+      return const ExamLibrary();
+    }
+  }
+
+  @override
+  Future<void> saveExamLibrary(ExamLibrary library) async {
+    await database
+        .into(database.appSettings)
+        .insertOnConflictUpdate(
+          AppSettingsCompanion.insert(
+            key: 'exam_library_v1',
+            valueJson: jsonEncode(library.toJson()),
             updatedAt: DateTime.now().toUtc(),
           ),
         );

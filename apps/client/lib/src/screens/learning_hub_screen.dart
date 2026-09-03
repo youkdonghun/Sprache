@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../domain/learning_item.dart';
+import '../domain/language.dart';
 import '../domain/quiz_session_support.dart';
 import '../domain/session_enhancements.dart';
 import '../domain/smart_collection.dart';
@@ -625,6 +626,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       if ({
         'mixed-quiz',
         'exam-simulator',
+        'business-english-exam',
         'meaning-choice',
         'reverse-meaning-choice',
         'match-sprint',
@@ -639,6 +641,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       if ({
         'mixed-quiz',
         'exam-simulator',
+        'business-english-exam',
         'production-writing',
         'sentence-cloze',
         'sentence-order',
@@ -650,6 +653,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
       if ({
         'listening-dictation',
         'listening-discrimination',
+        'business-english-exam',
         'pronunciation',
         'situation-missions',
       }.contains(id))
@@ -660,6 +664,7 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         'sentence-cloze',
         'sentence-order',
         'sentence-cards',
+        'business-english-exam',
         'situation-missions',
       }.contains(id))
         PracticeSkillFilter.sentence,
@@ -992,6 +997,15 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
   }
 
   _ActivityAvailability _availabilityFor(_Activity activity) {
+    if (activity.route == '/exam') {
+      return ref.read(appControllerProvider).selectedLanguage ==
+              LanguageTag.english
+          ? const _ActivityAvailability(availableCount: 200)
+          : const _ActivityAvailability(
+              availableCount: 0,
+              disabledReason: '영어 코스에서 사용할 수 있어요.',
+            );
+    }
     final items = widget.items;
     if (activity.id == 'listening-discrimination') {
       final readiness = ListeningDiscriminationReadiness.evaluate(items);
@@ -1387,6 +1401,14 @@ class _PracticeCatalogState extends ConsumerState<_PracticeCatalog> {
         ),
       ],
       _PracticeCategory.apply => const [
+        _Activity(
+          id: 'business-english-exam',
+          icon: Icons.assignment_turned_in_rounded,
+          title: '비즈니스 영어 실전',
+          description: 'Part 1~7 문제와 풀이를 한곳에서 풀어요',
+          route: '/exam',
+          badge: '200문제',
+        ),
         _Activity(
           id: 'pronunciation',
           icon: Icons.mic_rounded,

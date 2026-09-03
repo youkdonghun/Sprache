@@ -5,7 +5,7 @@ param(
     [string]$ExpectedServerClientId = '1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com',
     [string]$ExpectedAndroidCertificateSha1 = 'EF:1E:2A:C5:22:FC:BF:65:53:DC:35:35:0E:36:04:4F:F3:BC:F3:E2',
     [string]$ExpectedPrivacyPolicyUrl = $(if ([string]::IsNullOrWhiteSpace($env:SPRACHE_PRIVACY_POLICY_URL)) {
-        'https://youkdonghun.github.io/Sprache/privacy/'
+        'https://sprache6.github.io/privacy/'
     } else {
         $env:SPRACHE_PRIVACY_POLICY_URL
     }),

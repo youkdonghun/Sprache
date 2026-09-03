@@ -6,7 +6,7 @@ param(
     [string]$ServerClientId = '1054343487948-g6b3fp20ooq86agro7nsb129oqr9df82.apps.googleusercontent.com',
     [string]$DesktopClientId = '1054343487948-o7nkfj4qmiilacvbln7alfgqrced6ior.apps.googleusercontent.com',
     [string]$PrivacyPolicyUrl = $(if ([string]::IsNullOrWhiteSpace($env:SPRACHE_PRIVACY_POLICY_URL)) {
-        'https://youkdonghun.github.io/Sprache/privacy/'
+        'https://sprache6.github.io/privacy/'
     } else {
         $env:SPRACHE_PRIVACY_POLICY_URL
     }),

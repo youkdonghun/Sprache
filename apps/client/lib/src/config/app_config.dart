@@ -1,4 +1,5 @@
 import '../services/language_pack_catalog_service.dart';
+import '../services/exam_pack_catalog_service.dart';
 import '../services/release_update_service.dart';
 
 class AppConfig {
@@ -16,6 +17,7 @@ class AppConfig {
     this.privacyPolicyUrl = '',
     this.releaseManifestUrl = defaultReleaseManifestUrl,
     this.languagePackCatalogUrl = defaultLanguagePackCatalogUrl,
+    this.examPackCatalogUrl = defaultExamPackCatalogUrl,
   });
 
   factory AppConfig.fromEnvironment() => const AppConfig(
@@ -47,6 +49,10 @@ class AppConfig {
       'LANGUAGE_PACK_CATALOG_URL',
       defaultValue: defaultLanguagePackCatalogUrl,
     ),
+    examPackCatalogUrl: String.fromEnvironment(
+      'EXAM_PACK_CATALOG_URL',
+      defaultValue: defaultExamPackCatalogUrl,
+    ),
   );
 
   final String googleAndroidClientId;
@@ -62,6 +68,7 @@ class AppConfig {
   final String privacyPolicyUrl;
   final String releaseManifestUrl;
   final String languagePackCatalogUrl;
+  final String examPackCatalogUrl;
 
   bool get hasDesktopGoogleCredentials => googleDesktopClientId.isNotEmpty;
   bool get hasAndroidGoogleCredentials =>

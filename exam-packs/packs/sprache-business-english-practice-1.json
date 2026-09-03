@@ -1,0 +1,4775 @@
+{
+  "schemaVersion": 1,
+  "id": "sprache-business-english-practice-1",
+  "title": "비즈니스 영어 실전 문제팩 1",
+  "description": "Part 1~7 구성의 독자 제작 200문제와 정답 근거·선택지 풀이를 제공합니다.",
+  "language": "en",
+  "version": "1.0.0",
+  "revision": 1,
+  "publishedAt": "2026-09-03T03:00:00.000Z",
+  "license": "Sprache-original-practice-content",
+  "attribution": "Original questions authored for the Sprache project; format references ETS public test descriptions only.",
+  "disclaimer": "TOEIC® is a registered trademark of ETS. This product is not endorsed or approved by ETS. 공식 또는 기출문제를 포함하지 않습니다.",
+  "stimuli": [
+    {
+      "id": "p1-scene-1",
+      "kind": "photo",
+      "title": "회의실",
+      "visualDescription": "두 직원이 회의실 탁자 위의 서류를 함께 살펴보고 있다."
+    },
+    {
+      "id": "p1-scene-2",
+      "kind": "photo",
+      "title": "기차역",
+      "visualDescription": "여행객 한 명이 전광판을 확인하며 여행 가방 손잡이를 잡고 있다."
+    },
+    {
+      "id": "p1-scene-3",
+      "kind": "photo",
+      "title": "식당",
+      "visualDescription": "종업원이 야외 테이블에 접시를 놓고 있다."
+    },
+    {
+      "id": "p1-scene-4",
+      "kind": "photo",
+      "title": "창고",
+      "visualDescription": "작업자가 선반에 상자를 정리하고 있다."
+    },
+    {
+      "id": "p1-scene-5",
+      "kind": "photo",
+      "title": "사무실",
+      "visualDescription": "한 여성이 책상에서 헤드셋을 끼고 전화 통화를 하고 있다."
+    },
+    {
+      "id": "p1-scene-6",
+      "kind": "photo",
+      "title": "공원",
+      "visualDescription": "관리인이 산책로 옆 화단에 물을 주고 있다."
+    },
+    {
+      "id": "p2-audio-1",
+      "kind": "questionResponse",
+      "title": "Question 1",
+      "audioScript": "Where should I leave these packages? A. On the counter by the door. B. They arrived yesterday. C. No, I did not order lunch."
+    },
+    {
+      "id": "p2-audio-2",
+      "kind": "questionResponse",
+      "title": "Question 2",
+      "audioScript": "When will the budget meeting begin? A. In the main conference room. B. At ten thirty. C. The budget was approved."
+    },
+    {
+      "id": "p2-audio-3",
+      "kind": "questionResponse",
+      "title": "Question 3",
+      "audioScript": "Who is leading the orientation today? A. It lasts about an hour. B. In the training room. C. Ms. Patel from Human Resources."
+    },
+    {
+      "id": "p2-audio-4",
+      "kind": "questionResponse",
+      "title": "Question 4",
+      "audioScript": "Why was the shipment delayed? A. There was a problem at the port. B. By express delivery. C. About twenty boxes."
+    },
+    {
+      "id": "p2-audio-5",
+      "kind": "questionResponse",
+      "title": "Question 5",
+      "audioScript": "How often is the safety equipment inspected? A. The inspector is downstairs. B. Once every three months. C. It is very reliable."
+    },
+    {
+      "id": "p2-audio-6",
+      "kind": "questionResponse",
+      "title": "Question 6",
+      "audioScript": "Could you send me the revised schedule? A. The train was on time. B. I revised the price. C. Sure, I will e-mail it now."
+    },
+    {
+      "id": "p2-audio-7",
+      "kind": "questionResponse",
+      "title": "Question 7",
+      "audioScript": "Haven’t we met at a trade show before? A. Yes, in Singapore last year. B. The show starts at noon. C. I will introduce the speaker."
+    },
+    {
+      "id": "p2-audio-8",
+      "kind": "questionResponse",
+      "title": "Question 8",
+      "audioScript": "Which printer should I use? A. I printed fifty copies. B. The one next to the supply cabinet. C. The paper is recyclable."
+    },
+    {
+      "id": "p2-audio-9",
+      "kind": "questionResponse",
+      "title": "Question 9",
+      "audioScript": "Would you like tea or coffee? A. Yes, I liked the café. B. The cups are in the cabinet. C. Coffee, please."
+    },
+    {
+      "id": "p2-audio-10",
+      "kind": "questionResponse",
+      "title": "Question 10",
+      "audioScript": "The lobby renovation looks nearly finished. A. Yes, only the lighting remains. B. I finished the report yesterday. C. The lobby is on the first floor."
+    },
+    {
+      "id": "p2-audio-11",
+      "kind": "questionResponse",
+      "title": "Question 11",
+      "audioScript": "Do you know whether the client confirmed the order? A. The order form is blue. B. I’ll check the latest message. C. We met the client downstairs."
+    },
+    {
+      "id": "p2-audio-12",
+      "kind": "questionResponse",
+      "title": "Question 12",
+      "audioScript": "Why don’t we move the display closer to the entrance? A. The entrance fee is ten dollars. B. I moved here last month. C. That should attract more visitors."
+    },
+    {
+      "id": "p2-audio-13",
+      "kind": "questionResponse",
+      "title": "Question 13",
+      "audioScript": "How many applicants did you interview? A. Six in total. B. For the accounting position. C. At the downtown office."
+    },
+    {
+      "id": "p2-audio-14",
+      "kind": "questionResponse",
+      "title": "Question 14",
+      "audioScript": "Is the cafeteria still serving lunch? A. The soup was delicious. B. No, it closed at two. C. I served on the committee."
+    },
+    {
+      "id": "p2-audio-15",
+      "kind": "questionResponse",
+      "title": "Question 15",
+      "audioScript": "Where did you put the signed contract? A. The director signed it. B. We renewed it for a year. C. It’s in the top drawer."
+    },
+    {
+      "id": "p2-audio-16",
+      "kind": "questionResponse",
+      "title": "Question 16",
+      "audioScript": "Should I reserve a small room or the auditorium? A. The auditorium would be safer. B. The reservation is under Lee. C. The speech was interesting."
+    },
+    {
+      "id": "p2-audio-17",
+      "kind": "questionResponse",
+      "title": "Question 17",
+      "audioScript": "Can the maintenance team fix this today? A. The fee is included. B. They are already on their way. C. I fixed the date on the form."
+    },
+    {
+      "id": "p2-audio-18",
+      "kind": "questionResponse",
+      "title": "Question 18",
+      "audioScript": "What did the survey participants receive? A. Nearly two hundred people. B. They completed it online. C. A discount coupon."
+    },
+    {
+      "id": "p2-audio-19",
+      "kind": "questionResponse",
+      "title": "Question 19",
+      "audioScript": "Didn’t Maria submit the proposal? A. She asked for one more day. B. The proposal has three sections. C. Yes, Maria designed the logo."
+    },
+    {
+      "id": "p2-audio-20",
+      "kind": "questionResponse",
+      "title": "Question 20",
+      "audioScript": "How do I connect to the guest network? A. The guests arrived early. B. Use the password on your badge. C. The network meeting was canceled."
+    },
+    {
+      "id": "p2-audio-21",
+      "kind": "questionResponse",
+      "title": "Question 21",
+      "audioScript": "When are the replacement parts expected? A. The machine needs three parts. B. I replaced the batteries. C. Sometime on Thursday afternoon."
+    },
+    {
+      "id": "p2-audio-22",
+      "kind": "questionResponse",
+      "title": "Question 22",
+      "audioScript": "Who approved the new travel policy? A. I believe the finance director did. B. Travel takes about two hours. C. The policy starts next month."
+    },
+    {
+      "id": "p2-audio-23",
+      "kind": "questionResponse",
+      "title": "Question 23",
+      "audioScript": "Would you mind lowering the volume? A. The volume is on the shelf. B. Not at all—I’ll turn it down. C. I lowered the price yesterday."
+    },
+    {
+      "id": "p2-audio-24",
+      "kind": "questionResponse",
+      "title": "Question 24",
+      "audioScript": "Why is the west entrance locked? A. Use the westbound platform. B. I left my key at home. C. It is being painted this morning."
+    },
+    {
+      "id": "p2-audio-25",
+      "kind": "questionResponse",
+      "title": "Question 25",
+      "audioScript": "Has the invoice been corrected yet? A. Yes, the updated one is attached. B. The invoice total is high. C. I attached the poster to the wall."
+    },
+    {
+      "id": "p3-conversation-1",
+      "kind": "conversation",
+      "title": "호텔 예약",
+      "audioScript": "Woman: Good morning. I booked a room for two nights, but my confirmation shows only one.\nMan: I can correct that. May I see your confirmation number?\nWoman: Certainly. It is H-4821. I also requested a room away from the elevator."
+    },
+    {
+      "id": "p3-conversation-2",
+      "kind": "conversation",
+      "title": "제품 시연",
+      "audioScript": "Man: The client moved tomorrow’s product demonstration to three o’clock.\nWoman: Then we have time to test the new projector in the morning.\nMan: Good idea. I’ll also bring printed copies of the pricing sheet."
+    },
+    {
+      "id": "p3-conversation-3",
+      "kind": "conversation",
+      "title": "배송 문의",
+      "audioScript": "Woman: My tracking page says the office chairs were delivered, but they are not here.\nMan: Let me contact the driver. The shipment may have been left at the loading entrance.\nWoman: Please ask the facilities team to check there as well."
+    },
+    {
+      "id": "p3-conversation-4",
+      "kind": "conversation",
+      "title": "교육 일정",
+      "audioScript": "Man: Are you attending the spreadsheet workshop on Friday?\nWoman: I planned to, but my supervisor scheduled a client call at the same time.\nMan: The trainer is offering the workshop again next Tuesday."
+    },
+    {
+      "id": "p3-conversation-5",
+      "kind": "conversation",
+      "title": "식당 행사",
+      "audioScript": "Woman: We need a vegetarian option for the company dinner.\nMan: The chef can prepare mushroom pasta if we confirm the number by Wednesday.\nWoman: I’ll survey the staff this afternoon."
+    },
+    {
+      "id": "p3-conversation-6",
+      "kind": "conversation",
+      "title": "인쇄 오류",
+      "audioScript": "Man: These brochures have the old telephone number on the back.\nWoman: I sent the printer a corrected file yesterday.\nMan: I’ll call them before they produce the remaining copies."
+    },
+    {
+      "id": "p3-conversation-7",
+      "kind": "conversation",
+      "title": "공항 이동",
+      "audioScript": "Woman: Our flight leaves at eight, so the airport shuttle at six should work.\nMan: The hotel clerk said road construction may add thirty minutes.\nWoman: Then let’s take the five-thirty shuttle instead."
+    },
+    {
+      "id": "p3-conversation-8",
+      "kind": "conversation",
+      "title": "채용 면접",
+      "audioScript": "Man: The first candidate has strong technical experience.\nWoman: Yes, but we should ask more about project leadership in the second interview.\nMan: I’ll add that topic to our interview notes."
+    },
+    {
+      "id": "p3-conversation-9",
+      "kind": "conversation",
+      "title": "전시 부스",
+      "audioScript": "Woman: Our booth is next to the main entrance this year.\nMan: That should bring more visitors, but we need another staff member during lunch.\nWoman: I’ll ask Daniel whether he can cover that hour."
+    },
+    {
+      "id": "p3-conversation-10",
+      "kind": "conversation",
+      "title": "소프트웨어 갱신",
+      "audioScript": "Man: The accounting software license expires at the end of the month.\nWoman: The annual plan is cheaper than paying monthly.\nMan: I’ll send the annual-plan quote to the department head."
+    },
+    {
+      "id": "p3-conversation-11",
+      "kind": "conversation",
+      "title": "회의실 변경",
+      "audioScript": "Woman: The large conference room is unavailable because the air conditioner is being repaired.\nMan: Could we use the training room on the second floor?\nWoman: Yes, I’ll update the calendar invitation."
+    },
+    {
+      "id": "p3-conversation-12",
+      "kind": "conversation",
+      "title": "재고 확인",
+      "audioScript": "Man: We have only twelve blue folders left.\nWoman: The supplier offers free shipping for orders over fifty units.\nMan: Let’s order sixty, since the new employees arrive next week."
+    },
+    {
+      "id": "p3-conversation-13",
+      "kind": "conversation",
+      "title": "고객 행사",
+      "audioScript": "Woman: Registration for Saturday’s customer event is higher than expected.\nMan: We should move the welcome desk into the lobby to reduce the line.\nWoman: I’ll ask security to open the side doors too."
+    },
+    {
+      "id": "p4-talk-1",
+      "kind": "talk",
+      "title": "도서관 안내",
+      "audioScript": "Attention, library visitors. The second-floor reading room will close at six today for carpet cleaning. The first-floor study area will remain open until nine. Please return reserved books at the service desk before leaving."
+    },
+    {
+      "id": "p4-talk-2",
+      "kind": "talk",
+      "title": "항공편 안내",
+      "audioScript": "Passengers traveling on Flight 318 to Manila should proceed to Gate 22. Boarding will begin fifteen minutes later than scheduled while the aircraft is serviced. Passengers needing assistance may speak with the agent at the gate."
+    },
+    {
+      "id": "p4-talk-3",
+      "kind": "talk",
+      "title": "상점 광고",
+      "audioScript": "This weekend only, Brookfield Home Store is offering twenty percent off all desk lamps. Customers who spend over one hundred dollars will also receive free delivery. Visit our Web site to check store hours."
+    },
+    {
+      "id": "p4-talk-4",
+      "kind": "talk",
+      "title": "직원 교육",
+      "audioScript": "All new employees must complete the online security course by September 18. The course takes about forty minutes and can be accessed from the staff portal. Send completion questions to Ms. Rivera in Information Technology."
+    },
+    {
+      "id": "p4-talk-5",
+      "kind": "talk",
+      "title": "박물관 투어",
+      "audioScript": "Welcome to the City Design Museum. Our guided tour begins in the glass gallery and lasts approximately one hour. Photography is permitted, but please do not use flash near the historic drawings."
+    },
+    {
+      "id": "p4-talk-6",
+      "kind": "talk",
+      "title": "공장 안전",
+      "audioScript": "Before entering the production area, visitors must put on the safety glasses provided beside the door. Stay inside the yellow walking lanes and remain with your guide at all times."
+    },
+    {
+      "id": "p4-talk-7",
+      "kind": "talk",
+      "title": "라디오 교통",
+      "audioScript": "Drivers should avoid King Street this morning because crews are repairing a water pipe. Buses will use Pine Avenue until the work is completed at approximately two o’clock."
+    },
+    {
+      "id": "p4-talk-8",
+      "kind": "talk",
+      "title": "회의 개회사",
+      "audioScript": "Thank you for attending our quarterly sales meeting. First, Ms. Chen will review regional results. After a short break, we will discuss the product launch scheduled for November."
+    },
+    {
+      "id": "p4-talk-9",
+      "kind": "talk",
+      "title": "음성 메시지",
+      "audioScript": "Hello, this is Omar from Westside Repairs. The replacement motor for your copier arrived this morning. A technician can visit tomorrow between one and three. Please call us to confirm that time."
+    },
+    {
+      "id": "p4-talk-10",
+      "kind": "talk",
+      "title": "호텔 조식",
+      "audioScript": "Breakfast is served in the Garden Room from six thirty to ten. Guests leaving before six thirty may request a boxed meal at the front desk by nine the previous evening."
+    },
+    {
+      "id": "p6-document-1",
+      "kind": "document",
+      "title": "사내 공지",
+      "body": "To: All Staff\nSubject: Bicycle Storage\nBeginning Monday, employees should use the new bicycle racks behind Building B. The racks are covered and are available on a first-come basis. [1] Employees should register their bicycle with Security. [2] A registration sticker will be issued at no charge. [3] Bicycles left near the front entrance may be moved. [4]"
+    },
+    {
+      "id": "p6-document-2",
+      "kind": "document",
+      "title": "고객 이메일",
+      "body": "Dear Ms. Park,\nThank you for ordering the Luma desk chair. [1] Your order will leave our warehouse on June 12. [2] Delivery normally takes three business days. [3] We will send a tracking link as soon as the carrier collects the package. [4]\nSincerely,\nNorthline Furnishings"
+    },
+    {
+      "id": "p6-document-3",
+      "kind": "document",
+      "title": "시설 안내",
+      "body": "The Westbrook Fitness Center pool will be unavailable from August 2 through August 5 for routine maintenance. [1] During this period, members may use the pool at our Eastside location by showing their membership card. [2] Swimming classes scheduled for those dates will be moved to the following week. [3] Contact the front desk if you need to change a class reservation. [4]"
+    },
+    {
+      "id": "p6-document-4",
+      "kind": "document",
+      "title": "프로젝트 메모",
+      "body": "The Web site redesign team will present its first prototype on October 6. [1] Before the presentation, each department should review the draft pages shared in the project folder. [2] Comments must be added by October 3 so the design team has time to make revisions. [3] Department heads will receive a calendar invitation this afternoon. [4]"
+    },
+    {
+      "id": "p7-single-1",
+      "kind": "document",
+      "title": "회의실 예약",
+      "body": "Room 4A will be unavailable on Tuesday morning while new video equipment is installed. Meetings already scheduled there have been moved to Room 3C. The online calendar has been updated."
+    },
+    {
+      "id": "p7-single-2",
+      "kind": "document",
+      "title": "채용 공고",
+      "body": "Riverton Foods seeks a purchasing assistant with two years of office experience. Applicants should submit a résumé and cover letter by May 8. Knowledge of inventory software is preferred but not required."
+    },
+    {
+      "id": "p7-single-3",
+      "kind": "document",
+      "title": "공연 안내",
+      "body": "The Lakeside Theater performance on Saturday will begin at 7:30 P.M. Doors open forty-five minutes earlier. Tickets may be collected at the box office with photo identification."
+    },
+    {
+      "id": "p7-single-4",
+      "kind": "document",
+      "title": "환불 정책",
+      "body": "Unopened electronics may be returned within fourteen days with the original receipt. Opened software and personalized products cannot be returned. Refunds are issued to the original payment method."
+    },
+    {
+      "id": "p7-single-5",
+      "kind": "document",
+      "title": "배송 메시지",
+      "body": "Your order 7742 is scheduled for delivery on Wednesday between 1 and 4 P.M. Someone must be present to sign for the package. To change the date, use the link below before noon on Tuesday."
+    },
+    {
+      "id": "p7-single-6",
+      "kind": "document",
+      "title": "강좌 소개",
+      "body": "The introductory photography course meets on four consecutive Thursdays. Participants should bring a camera to the first class. Editing software will be provided in the computer lab."
+    },
+    {
+      "id": "p7-single-7",
+      "kind": "document",
+      "title": "식당 공지",
+      "body": "Harbor Café will open one hour later than usual on Monday because of a staff meeting. Online breakfast orders placed before eight will be available for pickup at the side window."
+    },
+    {
+      "id": "p7-single-8",
+      "kind": "document",
+      "title": "박람회 초대",
+      "body": "Register by March 20 for free admission to the Green Building Expo. Workshops require separate reservations because seating is limited. A complete schedule is available on the event Web site."
+    },
+    {
+      "id": "p7-single-9",
+      "kind": "document",
+      "title": "서비스 보고",
+      "body": "A technician inspected the elevator in Building C this morning. No mechanical fault was found, but the door sensor was cleaned and tested. Normal service resumed at 11:15."
+    },
+    {
+      "id": "p7-single-10",
+      "kind": "document",
+      "title": "회원 갱신",
+      "body": "Your museum membership expires on December 31. Renew online by December 15 to receive two complimentary guest passes. New cards will be mailed within five business days."
+    },
+    {
+      "id": "p7-multiple-1",
+      "kind": "document",
+      "title": "교육 신청",
+      "body": "E-mail from Training Office:\nThe presentation workshop on July 9 is full. A second session has been added on July 16 from 2 to 5 P.M. Register through the staff portal.\n\nReply from Mina:\nPlease enroll me in the July 16 session. I will be meeting a supplier on July 9, and the later date works better."
+    },
+    {
+      "id": "p7-multiple-2",
+      "kind": "document",
+      "title": "호텔과 교통",
+      "body": "Hotel notice:\nThe airport shuttle departs every hour from 6 A.M. to 10 P.M. Reservations are required after 8 P.M.\n\nGuest message:\nMy flight lands at 8:20 P.M. on Friday. Please reserve a seat for me on the 9 P.M. shuttle."
+    },
+    {
+      "id": "p7-multiple-3",
+      "kind": "document",
+      "title": "주문과 재고",
+      "body": "Supplier e-mail:\nThe gray filing cabinets are temporarily out of stock. Black cabinets can ship immediately, or gray units will be available next month.\n\nBuyer reply:\nPlease send six black cabinets now. Our records room opens in two weeks, so we cannot wait until next month."
+    },
+    {
+      "id": "p7-multiple-4",
+      "kind": "document",
+      "title": "행사와 날씨",
+      "body": "Event notice:\nThe outdoor concert is planned for Riverside Park at 7 P.M. In case of heavy rain, it will move to Central Hall.\n\nWeather alert:\nHeavy rain is expected after 5 P.M. today. Travelers should allow extra time because several roads may close."
+    },
+    {
+      "id": "p7-multiple-5",
+      "kind": "document",
+      "title": "수리와 청구",
+      "body": "Repair invoice:\nLaptop screen replacement: $180\nExpress service: $25\nTotal: $205\n\nCustomer e-mail:\nThank you for finishing the repair today. The invoice includes express service, but I requested standard three-day service. Please review the charge before I pay."
+    }
+  ],
+  "questions": [
+    {
+      "id": "p1-q1",
+      "part": 1,
+      "prompt": "장면을 가장 정확하게 설명한 문장을 고르세요.",
+      "choices": [
+        "Two coworkers are reviewing documents at a conference table.",
+        "The chairs are being stacked outside.",
+        "A man is repairing a window.",
+        "The room is completely empty."
+      ],
+      "correctIndex": 0,
+      "explanation": "장면의 인물과 행동을 모두 직접 설명하는 문장은 “Two coworkers are reviewing documents at a conference table.”입니다.",
+      "choiceExplanations": [
+        "정답입니다. 장면의 인물과 행동을 모두 직접 설명하는 문장은 “Two coworkers are reviewing documents at a conference table.”입니다.",
+        "“The chairs are being stacked outside.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A man is repairing a window.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The room is completely empty.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "현재진행형과 장면 묘사",
+      "difficulty": "foundation",
+      "stimulusId": "p1-scene-1"
+    },
+    {
+      "id": "p1-q2",
+      "part": 1,
+      "prompt": "장면을 가장 정확하게 설명한 문장을 고르세요.",
+      "choices": [
+        "Several passengers are boarding a ship.",
+        "A traveler is checking a departure board.",
+        "A suitcase is being weighed at a counter.",
+        "The display screen has been removed."
+      ],
+      "correctIndex": 1,
+      "explanation": "장면의 인물과 행동을 모두 직접 설명하는 문장은 “A traveler is checking a departure board.”입니다.",
+      "choiceExplanations": [
+        "“Several passengers are boarding a ship.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 장면의 인물과 행동을 모두 직접 설명하는 문장은 “A traveler is checking a departure board.”입니다.",
+        "“A suitcase is being weighed at a counter.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The display screen has been removed.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "현재진행형과 장면 묘사",
+      "difficulty": "foundation",
+      "stimulusId": "p1-scene-2"
+    },
+    {
+      "id": "p1-q3",
+      "part": 1,
+      "prompt": "장면을 가장 정확하게 설명한 문장을 고르세요.",
+      "choices": [
+        "The customers are washing the dishes.",
+        "The tables have been folded for storage.",
+        "A server is placing dishes on an outdoor table.",
+        "A chef is painting a wall."
+      ],
+      "correctIndex": 2,
+      "explanation": "장면의 인물과 행동을 모두 직접 설명하는 문장은 “A server is placing dishes on an outdoor table.”입니다.",
+      "choiceExplanations": [
+        "“The customers are washing the dishes.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The tables have been folded for storage.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 장면의 인물과 행동을 모두 직접 설명하는 문장은 “A server is placing dishes on an outdoor table.”입니다.",
+        "“A chef is painting a wall.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "현재진행형과 장면 묘사",
+      "difficulty": "intermediate",
+      "stimulusId": "p1-scene-3"
+    },
+    {
+      "id": "p1-q4",
+      "part": 1,
+      "prompt": "장면을 가장 정확하게 설명한 문장을 고르세요.",
+      "choices": [
+        "A delivery truck is leaving the warehouse.",
+        "The shelves are being taken apart.",
+        "Some boxes are floating in water.",
+        "A worker is arranging boxes on a shelf."
+      ],
+      "correctIndex": 3,
+      "explanation": "장면의 인물과 행동을 모두 직접 설명하는 문장은 “A worker is arranging boxes on a shelf.”입니다.",
+      "choiceExplanations": [
+        "“A delivery truck is leaving the warehouse.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The shelves are being taken apart.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Some boxes are floating in water.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 장면의 인물과 행동을 모두 직접 설명하는 문장은 “A worker is arranging boxes on a shelf.”입니다."
+      ],
+      "skill": "현재진행형과 장면 묘사",
+      "difficulty": "intermediate",
+      "stimulusId": "p1-scene-4"
+    },
+    {
+      "id": "p1-q5",
+      "part": 1,
+      "prompt": "장면을 가장 정확하게 설명한 문장을 고르세요.",
+      "choices": [
+        "A woman is speaking on a headset at her desk.",
+        "She is hanging a picture on the wall.",
+        "The computers are covered with cloth.",
+        "She is carrying the desk downstairs."
+      ],
+      "correctIndex": 0,
+      "explanation": "장면의 인물과 행동을 모두 직접 설명하는 문장은 “A woman is speaking on a headset at her desk.”입니다.",
+      "choiceExplanations": [
+        "정답입니다. 장면의 인물과 행동을 모두 직접 설명하는 문장은 “A woman is speaking on a headset at her desk.”입니다.",
+        "“She is hanging a picture on the wall.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The computers are covered with cloth.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“She is carrying the desk downstairs.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "현재진행형과 장면 묘사",
+      "difficulty": "intermediate",
+      "stimulusId": "p1-scene-5"
+    },
+    {
+      "id": "p1-q6",
+      "part": 1,
+      "prompt": "장면을 가장 정확하게 설명한 문장을 고르세요.",
+      "choices": [
+        "Visitors are crossing a bridge.",
+        "A gardener is watering plants beside a walkway.",
+        "The path is covered with snow.",
+        "A fountain is being repaired indoors."
+      ],
+      "correctIndex": 1,
+      "explanation": "장면의 인물과 행동을 모두 직접 설명하는 문장은 “A gardener is watering plants beside a walkway.”입니다.",
+      "choiceExplanations": [
+        "“Visitors are crossing a bridge.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 장면의 인물과 행동을 모두 직접 설명하는 문장은 “A gardener is watering plants beside a walkway.”입니다.",
+        "“The path is covered with snow.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A fountain is being repaired indoors.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "현재진행형과 장면 묘사",
+      "difficulty": "intermediate",
+      "stimulusId": "p1-scene-6"
+    },
+    {
+      "id": "p2-q1",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "On the counter by the door.",
+        "They arrived yesterday.",
+        "No, I did not order lunch."
+      ],
+      "correctIndex": 0,
+      "explanation": "where는 장소를 묻기 때문에 문 옆 카운터라는 장소 응답이 맞습니다.",
+      "choiceExplanations": [
+        "정답입니다. where는 장소를 묻기 때문에 문 옆 카운터라는 장소 응답이 맞습니다.",
+        "“They arrived yesterday.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“No, I did not order lunch.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-1"
+    },
+    {
+      "id": "p2-q2",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "In the main conference room.",
+        "At ten thirty.",
+        "The budget was approved."
+      ],
+      "correctIndex": 1,
+      "explanation": "when은 시간을 묻기 때문에 시각을 말한 응답이 맞습니다.",
+      "choiceExplanations": [
+        "“In the main conference room.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. when은 시간을 묻기 때문에 시각을 말한 응답이 맞습니다.",
+        "“The budget was approved.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-2"
+    },
+    {
+      "id": "p2-q3",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "It lasts about an hour.",
+        "In the training room.",
+        "Ms. Patel from Human Resources."
+      ],
+      "correctIndex": 2,
+      "explanation": "who는 사람을 묻습니다.",
+      "choiceExplanations": [
+        "“It lasts about an hour.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“In the training room.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. who는 사람을 묻습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-3"
+    },
+    {
+      "id": "p2-q4",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "There was a problem at the port.",
+        "By express delivery.",
+        "About twenty boxes."
+      ],
+      "correctIndex": 0,
+      "explanation": "why에는 지연 원인을 설명해야 합니다.",
+      "choiceExplanations": [
+        "정답입니다. why에는 지연 원인을 설명해야 합니다.",
+        "“By express delivery.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“About twenty boxes.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-4"
+    },
+    {
+      "id": "p2-q5",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The inspector is downstairs.",
+        "Once every three months.",
+        "It is very reliable."
+      ],
+      "correctIndex": 1,
+      "explanation": "how often은 빈도를 묻습니다.",
+      "choiceExplanations": [
+        "“The inspector is downstairs.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. how often은 빈도를 묻습니다.",
+        "“It is very reliable.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-5"
+    },
+    {
+      "id": "p2-q6",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The train was on time.",
+        "I revised the price.",
+        "Sure, I will e-mail it now."
+      ],
+      "correctIndex": 2,
+      "explanation": "요청에 대한 수락과 실행 응답이 자연스럽습니다.",
+      "choiceExplanations": [
+        "“The train was on time.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“I revised the price.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 요청에 대한 수락과 실행 응답이 자연스럽습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-6"
+    },
+    {
+      "id": "p2-q7",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "Yes, in Singapore last year.",
+        "The show starts at noon.",
+        "I will introduce the speaker."
+      ],
+      "correctIndex": 0,
+      "explanation": "부정 의문문이어도 만난 사실을 확인하는 응답이 맞습니다.",
+      "choiceExplanations": [
+        "정답입니다. 부정 의문문이어도 만난 사실을 확인하는 응답이 맞습니다.",
+        "“The show starts at noon.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“I will introduce the speaker.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-7"
+    },
+    {
+      "id": "p2-q8",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "I printed fifty copies.",
+        "The one next to the supply cabinet.",
+        "The paper is recyclable."
+      ],
+      "correctIndex": 1,
+      "explanation": "which는 선택 대상을 묻습니다.",
+      "choiceExplanations": [
+        "“I printed fifty copies.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. which는 선택 대상을 묻습니다.",
+        "“The paper is recyclable.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "foundation",
+      "stimulusId": "p2-audio-8"
+    },
+    {
+      "id": "p2-q9",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "Yes, I liked the café.",
+        "The cups are in the cabinet.",
+        "Coffee, please."
+      ],
+      "correctIndex": 2,
+      "explanation": "선택 의문문에는 제시된 항목 중 하나를 답합니다.",
+      "choiceExplanations": [
+        "“Yes, I liked the café.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The cups are in the cabinet.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 선택 의문문에는 제시된 항목 중 하나를 답합니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-9"
+    },
+    {
+      "id": "p2-q10",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "Yes, only the lighting remains.",
+        "I finished the report yesterday.",
+        "The lobby is on the first floor."
+      ],
+      "correctIndex": 0,
+      "explanation": "평서문에 동의하며 남은 공사를 덧붙이는 응답이 자연스럽습니다.",
+      "choiceExplanations": [
+        "정답입니다. 평서문에 동의하며 남은 공사를 덧붙이는 응답이 자연스럽습니다.",
+        "“I finished the report yesterday.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The lobby is on the first floor.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-10"
+    },
+    {
+      "id": "p2-q11",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The order form is blue.",
+        "I’ll check the latest message.",
+        "We met the client downstairs."
+      ],
+      "correctIndex": 1,
+      "explanation": "확실히 모를 때 확인하겠다는 간접 응답이 적절합니다.",
+      "choiceExplanations": [
+        "“The order form is blue.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 확실히 모를 때 확인하겠다는 간접 응답이 적절합니다.",
+        "“We met the client downstairs.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-11"
+    },
+    {
+      "id": "p2-q12",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The entrance fee is ten dollars.",
+        "I moved here last month.",
+        "That should attract more visitors."
+      ],
+      "correctIndex": 2,
+      "explanation": "제안의 기대 효과에 동의하는 응답입니다.",
+      "choiceExplanations": [
+        "“The entrance fee is ten dollars.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“I moved here last month.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 제안의 기대 효과에 동의하는 응답입니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-12"
+    },
+    {
+      "id": "p2-q13",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "Six in total.",
+        "For the accounting position.",
+        "At the downtown office."
+      ],
+      "correctIndex": 0,
+      "explanation": "how many는 수량을 묻습니다.",
+      "choiceExplanations": [
+        "정답입니다. how many는 수량을 묻습니다.",
+        "“For the accounting position.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“At the downtown office.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-13"
+    },
+    {
+      "id": "p2-q14",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The soup was delicious.",
+        "No, it closed at two.",
+        "I served on the committee."
+      ],
+      "correctIndex": 1,
+      "explanation": "영업 여부에 대한 직접 응답입니다.",
+      "choiceExplanations": [
+        "“The soup was delicious.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 영업 여부에 대한 직접 응답입니다.",
+        "“I served on the committee.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-14"
+    },
+    {
+      "id": "p2-q15",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The director signed it.",
+        "We renewed it for a year.",
+        "It’s in the top drawer."
+      ],
+      "correctIndex": 2,
+      "explanation": "where에 장소로 답했습니다.",
+      "choiceExplanations": [
+        "“The director signed it.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“We renewed it for a year.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. where에 장소로 답했습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-15"
+    },
+    {
+      "id": "p2-q16",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The auditorium would be safer.",
+        "The reservation is under Lee.",
+        "The speech was interesting."
+      ],
+      "correctIndex": 0,
+      "explanation": "두 장소 중 하나를 선택하는 응답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 두 장소 중 하나를 선택하는 응답입니다.",
+        "“The reservation is under Lee.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The speech was interesting.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-16"
+    },
+    {
+      "id": "p2-q17",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The fee is included.",
+        "They are already on their way.",
+        "I fixed the date on the form."
+      ],
+      "correctIndex": 1,
+      "explanation": "수리 가능 여부에 팀이 오고 있다는 간접 긍정 응답입니다.",
+      "choiceExplanations": [
+        "“The fee is included.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 수리 가능 여부에 팀이 오고 있다는 간접 긍정 응답입니다.",
+        "“I fixed the date on the form.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-17"
+    },
+    {
+      "id": "p2-q18",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "Nearly two hundred people.",
+        "They completed it online.",
+        "A discount coupon."
+      ],
+      "correctIndex": 2,
+      "explanation": "what은 받은 대상을 묻습니다.",
+      "choiceExplanations": [
+        "“Nearly two hundred people.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“They completed it online.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. what은 받은 대상을 묻습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-18"
+    },
+    {
+      "id": "p2-q19",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "She asked for one more day.",
+        "The proposal has three sections.",
+        "Yes, Maria designed the logo."
+      ],
+      "correctIndex": 0,
+      "explanation": "제출하지 못한 사유를 간접적으로 설명합니다.",
+      "choiceExplanations": [
+        "정답입니다. 제출하지 못한 사유를 간접적으로 설명합니다.",
+        "“The proposal has three sections.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Yes, Maria designed the logo.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-19"
+    },
+    {
+      "id": "p2-q20",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The guests arrived early.",
+        "Use the password on your badge.",
+        "The network meeting was canceled."
+      ],
+      "correctIndex": 1,
+      "explanation": "how는 방법을 묻습니다.",
+      "choiceExplanations": [
+        "“The guests arrived early.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. how는 방법을 묻습니다.",
+        "“The network meeting was canceled.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-20"
+    },
+    {
+      "id": "p2-q21",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The machine needs three parts.",
+        "I replaced the batteries.",
+        "Sometime on Thursday afternoon."
+      ],
+      "correctIndex": 2,
+      "explanation": "도착 예정 시점을 답했습니다.",
+      "choiceExplanations": [
+        "“The machine needs three parts.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“I replaced the batteries.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 도착 예정 시점을 답했습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-21"
+    },
+    {
+      "id": "p2-q22",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "I believe the finance director did.",
+        "Travel takes about two hours.",
+        "The policy starts next month."
+      ],
+      "correctIndex": 0,
+      "explanation": "승인한 사람을 답했습니다.",
+      "choiceExplanations": [
+        "정답입니다. 승인한 사람을 답했습니다.",
+        "“Travel takes about two hours.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The policy starts next month.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-22"
+    },
+    {
+      "id": "p2-q23",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "The volume is on the shelf.",
+        "Not at all—I’ll turn it down.",
+        "I lowered the price yesterday."
+      ],
+      "correctIndex": 1,
+      "explanation": "Would you mind 요청에는 수락 의사를 표현해야 합니다.",
+      "choiceExplanations": [
+        "“The volume is on the shelf.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. Would you mind 요청에는 수락 의사를 표현해야 합니다.",
+        "“I lowered the price yesterday.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-23"
+    },
+    {
+      "id": "p2-q24",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "Use the westbound platform.",
+        "I left my key at home.",
+        "It is being painted this morning."
+      ],
+      "correctIndex": 2,
+      "explanation": "출입구가 잠긴 이유를 설명합니다.",
+      "choiceExplanations": [
+        "“Use the westbound platform.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“I left my key at home.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 출입구가 잠긴 이유를 설명합니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-24"
+    },
+    {
+      "id": "p2-q25",
+      "part": 2,
+      "prompt": "질문에 가장 알맞은 응답을 고르세요.",
+      "choices": [
+        "Yes, the updated one is attached.",
+        "The invoice total is high.",
+        "I attached the poster to the wall."
+      ],
+      "correctIndex": 0,
+      "explanation": "완료 여부와 수정본 위치를 함께 답했습니다.",
+      "choiceExplanations": [
+        "정답입니다. 완료 여부와 수정본 위치를 함께 답했습니다.",
+        "“The invoice total is high.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“I attached the poster to the wall.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "의문사와 자연스러운 응답",
+      "difficulty": "intermediate",
+      "stimulusId": "p2-audio-25"
+    },
+    {
+      "id": "p3-q1",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "호텔 예약 내용을 수정하려고",
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 0,
+      "explanation": "대화 전체가 호텔 예약 내용을 수정하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "정답입니다. 대화 전체가 호텔 예약 내용을 수정하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-1"
+    },
+    {
+      "id": "p3-q2",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "예약 확인 번호",
+        "주차 요금",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 1,
+      "explanation": "대화에서 “예약 확인 번호”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “예약 확인 번호”에 해당하는 내용이 직접 언급됩니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-1"
+    },
+    {
+      "id": "p3-q3",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "객실 위치 요청을 확인한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 2,
+      "explanation": "마지막 발화에서 객실 위치 요청을 확인한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 객실 위치 요청을 확인한다고 밝혔습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-1"
+    },
+    {
+      "id": "p3-q4",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "제품 시연 준비를 논의하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 1,
+      "explanation": "대화 전체가 제품 시연 준비를 논의하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 제품 시연 준비를 논의하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-2"
+    },
+    {
+      "id": "p3-q5",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "주차 요금",
+        "오전",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 2,
+      "explanation": "대화에서 “오전”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “오전”에 해당하는 내용이 직접 언급됩니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-2"
+    },
+    {
+      "id": "p3-q6",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다",
+        "가격표를 인쇄해 가져간다"
+      ],
+      "correctIndex": 3,
+      "explanation": "마지막 발화에서 가격표를 인쇄해 가져간다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 가격표를 인쇄해 가져간다고 밝혔습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-2"
+    },
+    {
+      "id": "p3-q7",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "누락된 배송품을 찾으려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 2,
+      "explanation": "대화 전체가 누락된 배송품을 찾으려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 누락된 배송품을 찾으려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-3"
+    },
+    {
+      "id": "p3-q8",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "주차 요금",
+        "웹사이트 비밀번호",
+        "상하차 출입구"
+      ],
+      "correctIndex": 3,
+      "explanation": "대화에서 “상하차 출입구”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “상하차 출입구”에 해당하는 내용이 직접 언급됩니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-3"
+    },
+    {
+      "id": "p3-q9",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "운전기사에게 연락한다",
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 0,
+      "explanation": "마지막 발화에서 운전기사에게 연락한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "정답입니다. 마지막 발화에서 운전기사에게 연락한다고 밝혔습니다.",
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-3"
+    },
+    {
+      "id": "p3-q10",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고",
+        "교육 참석 일정을 조정하려고"
+      ],
+      "correctIndex": 3,
+      "explanation": "대화 전체가 교육 참석 일정을 조정하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 교육 참석 일정을 조정하려고 관련된 정보와 다음 행동을 다룹니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-4"
+    },
+    {
+      "id": "p3-q11",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "고객 통화",
+        "분기 매출",
+        "주차 요금",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 0,
+      "explanation": "대화에서 “고객 통화”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "정답입니다. 대화에서 “고객 통화”에 해당하는 내용이 직접 언급됩니다.",
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-4"
+    },
+    {
+      "id": "p3-q12",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "다음 화요일 교육에 참석한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 1,
+      "explanation": "마지막 발화에서 다음 화요일 교육에 참석한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 다음 화요일 교육에 참석한다고 밝혔습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-4"
+    },
+    {
+      "id": "p3-q13",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "회사 저녁 메뉴를 정하려고",
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 0,
+      "explanation": "대화 전체가 회사 저녁 메뉴를 정하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "정답입니다. 대화 전체가 회사 저녁 메뉴를 정하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-5"
+    },
+    {
+      "id": "p3-q14",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "수요일",
+        "주차 요금",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 1,
+      "explanation": "대화에서 “수요일”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “수요일”에 해당하는 내용이 직접 언급됩니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-5"
+    },
+    {
+      "id": "p3-q15",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "직원에게 식단 선호를 조사한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 2,
+      "explanation": "마지막 발화에서 직원에게 식단 선호를 조사한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 직원에게 식단 선호를 조사한다고 밝혔습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-5"
+    },
+    {
+      "id": "p3-q16",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "브로슈어 인쇄 오류를 해결하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 1,
+      "explanation": "대화 전체가 브로슈어 인쇄 오류를 해결하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 브로슈어 인쇄 오류를 해결하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-6"
+    },
+    {
+      "id": "p3-q17",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "주차 요금",
+        "전화번호",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 2,
+      "explanation": "대화에서 “전화번호”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “전화번호”에 해당하는 내용이 직접 언급됩니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-6"
+    },
+    {
+      "id": "p3-q18",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다",
+        "인쇄업체에 전화한다"
+      ],
+      "correctIndex": 3,
+      "explanation": "마지막 발화에서 인쇄업체에 전화한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 인쇄업체에 전화한다고 밝혔습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-6"
+    },
+    {
+      "id": "p3-q19",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "공항 출발 시간을 정하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 2,
+      "explanation": "대화 전체가 공항 출발 시간을 정하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 공항 출발 시간을 정하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-7"
+    },
+    {
+      "id": "p3-q20",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "주차 요금",
+        "웹사이트 비밀번호",
+        "도로 공사"
+      ],
+      "correctIndex": 3,
+      "explanation": "대화에서 “도로 공사”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “도로 공사”에 해당하는 내용이 직접 언급됩니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-7"
+    },
+    {
+      "id": "p3-q21",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "5시 30분 셔틀을 탄다",
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 0,
+      "explanation": "마지막 발화에서 5시 30분 셔틀을 탄다고 밝혔습니다.",
+      "choiceExplanations": [
+        "정답입니다. 마지막 발화에서 5시 30분 셔틀을 탄다고 밝혔습니다.",
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-7"
+    },
+    {
+      "id": "p3-q22",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고",
+        "지원자 평가를 논의하려고"
+      ],
+      "correctIndex": 3,
+      "explanation": "대화 전체가 지원자 평가를 논의하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 지원자 평가를 논의하려고 관련된 정보와 다음 행동을 다룹니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-8"
+    },
+    {
+      "id": "p3-q23",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "프로젝트 리더십",
+        "분기 매출",
+        "주차 요금",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 0,
+      "explanation": "대화에서 “프로젝트 리더십”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "정답입니다. 대화에서 “프로젝트 리더십”에 해당하는 내용이 직접 언급됩니다.",
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-8"
+    },
+    {
+      "id": "p3-q24",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "면접 노트에 질문을 추가한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 1,
+      "explanation": "마지막 발화에서 면접 노트에 질문을 추가한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 면접 노트에 질문을 추가한다고 밝혔습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-8"
+    },
+    {
+      "id": "p3-q25",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "전시 부스 운영을 계획하려고",
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 0,
+      "explanation": "대화 전체가 전시 부스 운영을 계획하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "정답입니다. 대화 전체가 전시 부스 운영을 계획하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-9"
+    },
+    {
+      "id": "p3-q26",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "점심시간 인력",
+        "주차 요금",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 1,
+      "explanation": "대화에서 “점심시간 인력”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “점심시간 인력”에 해당하는 내용이 직접 언급됩니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-9"
+    },
+    {
+      "id": "p3-q27",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "Daniel에게 지원을 요청한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 2,
+      "explanation": "마지막 발화에서 Daniel에게 지원을 요청한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 Daniel에게 지원을 요청한다고 밝혔습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-9"
+    },
+    {
+      "id": "p3-q28",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "소프트웨어 계약을 갱신하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 1,
+      "explanation": "대화 전체가 소프트웨어 계약을 갱신하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 소프트웨어 계약을 갱신하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-10"
+    },
+    {
+      "id": "p3-q29",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "주차 요금",
+        "연간 요금제",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 2,
+      "explanation": "대화에서 “연간 요금제”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “연간 요금제”에 해당하는 내용이 직접 언급됩니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-10"
+    },
+    {
+      "id": "p3-q30",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다",
+        "부서장에게 견적을 보낸다"
+      ],
+      "correctIndex": 3,
+      "explanation": "마지막 발화에서 부서장에게 견적을 보낸다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 부서장에게 견적을 보낸다고 밝혔습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-10"
+    },
+    {
+      "id": "p3-q31",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "회의 장소를 변경하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 2,
+      "explanation": "대화 전체가 회의 장소를 변경하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 회의 장소를 변경하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-11"
+    },
+    {
+      "id": "p3-q32",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "주차 요금",
+        "웹사이트 비밀번호",
+        "에어컨 수리"
+      ],
+      "correctIndex": 3,
+      "explanation": "대화에서 “에어컨 수리”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “에어컨 수리”에 해당하는 내용이 직접 언급됩니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-11"
+    },
+    {
+      "id": "p3-q33",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "일정 초대를 수정한다",
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 0,
+      "explanation": "마지막 발화에서 일정 초대를 수정한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "정답입니다. 마지막 발화에서 일정 초대를 수정한다고 밝혔습니다.",
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-11"
+    },
+    {
+      "id": "p3-q34",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고",
+        "사무용품을 주문하려고"
+      ],
+      "correctIndex": 3,
+      "explanation": "대화 전체가 사무용품을 주문하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화 전체가 사무용품을 주문하려고 관련된 정보와 다음 행동을 다룹니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-12"
+    },
+    {
+      "id": "p3-q35",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "60개",
+        "분기 매출",
+        "주차 요금",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 0,
+      "explanation": "대화에서 “60개”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "정답입니다. 대화에서 “60개”에 해당하는 내용이 직접 언급됩니다.",
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-12"
+    },
+    {
+      "id": "p3-q36",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "신입 직원 도착에 대비한다",
+        "계약을 취소한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 1,
+      "explanation": "마지막 발화에서 신입 직원 도착에 대비한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 신입 직원 도착에 대비한다고 밝혔습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-12"
+    },
+    {
+      "id": "p3-q37",
+      "part": 3,
+      "prompt": "화자들이 대화하는 주된 목적은 무엇입니까?",
+      "choices": [
+        "고객 행사 동선을 개선하려고",
+        "휴가 일정을 승인하려고",
+        "신제품을 환불하려고",
+        "직원 평가를 제출하려고"
+      ],
+      "correctIndex": 0,
+      "explanation": "대화 전체가 고객 행사 동선을 개선하려고 관련된 정보와 다음 행동을 다룹니다.",
+      "choiceExplanations": [
+        "정답입니다. 대화 전체가 고객 행사 동선을 개선하려고 관련된 정보와 다음 행동을 다룹니다.",
+        "“휴가 일정을 승인하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품을 환불하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 평가를 제출하려고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "대화의 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-13"
+    },
+    {
+      "id": "p3-q38",
+      "part": 3,
+      "prompt": "대화에서 직접 언급된 핵심 정보는 무엇입니까?",
+      "choices": [
+        "분기 매출",
+        "등록 인원 증가",
+        "주차 요금",
+        "웹사이트 비밀번호"
+      ],
+      "correctIndex": 1,
+      "explanation": "대화에서 “등록 인원 증가”에 해당하는 내용이 직접 언급됩니다.",
+      "choiceExplanations": [
+        "“분기 매출”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대화에서 “등록 인원 증가”에 해당하는 내용이 직접 언급됩니다.",
+        "“주차 요금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“웹사이트 비밀번호”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보 듣기",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-13"
+    },
+    {
+      "id": "p3-q39",
+      "part": 3,
+      "prompt": "화자 중 한 명이 다음에 할 일은 무엇입니까?",
+      "choices": [
+        "건물을 폐쇄한다",
+        "계약을 취소한다",
+        "보안팀에 측문 개방을 요청한다",
+        "해외 지사로 이동한다"
+      ],
+      "correctIndex": 2,
+      "explanation": "마지막 발화에서 보안팀에 측문 개방을 요청한다고 밝혔습니다.",
+      "choiceExplanations": [
+        "“건물을 폐쇄한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“계약을 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 마지막 발화에서 보안팀에 측문 개방을 요청한다고 밝혔습니다.",
+        "“해외 지사로 이동한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "다음 행동 추론",
+      "difficulty": "intermediate",
+      "stimulusId": "p3-conversation-13"
+    },
+    {
+      "id": "p4-q1",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "도서관 시설 운영 변경",
+        "직원 채용 결과를 발표하기 위해",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 0,
+      "explanation": "첫 문장과 이어지는 세부 내용이 도서관 시설 운영 변경라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 도서관 시설 운영 변경라는 목적을 뒷받침합니다.",
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-1"
+    },
+    {
+      "id": "p4-q2",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "2층 열람실",
+        "직원 식사 쿠폰",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 1,
+      "explanation": "원문에서 “2층 열람실”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “2층 열람실”에 관한 정보가 직접 나옵니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-1"
+    },
+    {
+      "id": "p4-q3",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "예약 도서를 서비스 데스크에 반납한다",
+        "새 계정을 만든다"
+      ],
+      "correctIndex": 2,
+      "explanation": "안내의 행동 지침은 예약 도서를 서비스 데스크에 반납한다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 예약 도서를 서비스 데스크에 반납한다는 것입니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-1"
+    },
+    {
+      "id": "p4-q4",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "직원 채용 결과를 발표하기 위해",
+        "항공편 탑승 안내",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 1,
+      "explanation": "첫 문장과 이어지는 세부 내용이 항공편 탑승 안내라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 항공편 탑승 안내라는 목적을 뒷받침합니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-2"
+    },
+    {
+      "id": "p4-q5",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "직원 식사 쿠폰",
+        "15분",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 2,
+      "explanation": "원문에서 “15분”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “15분”에 관한 정보가 직접 나옵니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-2"
+    },
+    {
+      "id": "p4-q6",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "새 계정을 만든다",
+        "Gate 22로 이동한다"
+      ],
+      "correctIndex": 3,
+      "explanation": "안내의 행동 지침은 Gate 22로 이동한다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 Gate 22로 이동한다는 것입니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-2"
+    },
+    {
+      "id": "p4-q7",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "직원 채용 결과를 발표하기 위해",
+        "설문 참여를 요청하기 위해",
+        "주말 할인 행사를 알리기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 2,
+      "explanation": "첫 문장과 이어지는 세부 내용이 주말 할인 행사를 알리기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 주말 할인 행사를 알리기 위해라는 목적을 뒷받침합니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-3"
+    },
+    {
+      "id": "p4-q8",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "직원 식사 쿠폰",
+        "온라인 결제 오류",
+        "책상용 조명"
+      ],
+      "correctIndex": 3,
+      "explanation": "원문에서 “책상용 조명”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “책상용 조명”에 관한 정보가 직접 나옵니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-3"
+    },
+    {
+      "id": "p4-q9",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "웹사이트에서 영업시간을 확인한다",
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "새 계정을 만든다"
+      ],
+      "correctIndex": 0,
+      "explanation": "안내의 행동 지침은 웹사이트에서 영업시간을 확인한다는 것입니다.",
+      "choiceExplanations": [
+        "정답입니다. 안내의 행동 지침은 웹사이트에서 영업시간을 확인한다는 것입니다.",
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-3"
+    },
+    {
+      "id": "p4-q10",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "직원 채용 결과를 발표하기 위해",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해",
+        "보안 교육 이수를 안내하기 위해"
+      ],
+      "correctIndex": 3,
+      "explanation": "첫 문장과 이어지는 세부 내용이 보안 교육 이수를 안내하기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 보안 교육 이수를 안내하기 위해라는 목적을 뒷받침합니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-4"
+    },
+    {
+      "id": "p4-q11",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "9월 18일",
+        "연회장 대관료",
+        "직원 식사 쿠폰",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 0,
+      "explanation": "원문에서 “9월 18일”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "정답입니다. 원문에서 “9월 18일”에 관한 정보가 직접 나옵니다.",
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-4"
+    },
+    {
+      "id": "p4-q12",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "직원 포털에서 강의를 연다",
+        "행사를 취소한다",
+        "새 계정을 만든다"
+      ],
+      "correctIndex": 1,
+      "explanation": "안내의 행동 지침은 직원 포털에서 강의를 연다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 직원 포털에서 강의를 연다는 것입니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-4"
+    },
+    {
+      "id": "p4-q13",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "박물관 관람 규칙을 설명하기 위해",
+        "직원 채용 결과를 발표하기 위해",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 0,
+      "explanation": "첫 문장과 이어지는 세부 내용이 박물관 관람 규칙을 설명하기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 박물관 관람 규칙을 설명하기 위해라는 목적을 뒷받침합니다.",
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-5"
+    },
+    {
+      "id": "p4-q14",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "유리 전시관",
+        "직원 식사 쿠폰",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 1,
+      "explanation": "원문에서 “유리 전시관”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “유리 전시관”에 관한 정보가 직접 나옵니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-5"
+    },
+    {
+      "id": "p4-q15",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "플래시를 사용하지 않는다",
+        "새 계정을 만든다"
+      ],
+      "correctIndex": 2,
+      "explanation": "안내의 행동 지침은 플래시를 사용하지 않는다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 플래시를 사용하지 않는다는 것입니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-5"
+    },
+    {
+      "id": "p4-q16",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "직원 채용 결과를 발표하기 위해",
+        "공장 방문 안전 수칙을 알리기 위해",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 1,
+      "explanation": "첫 문장과 이어지는 세부 내용이 공장 방문 안전 수칙을 알리기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 공장 방문 안전 수칙을 알리기 위해라는 목적을 뒷받침합니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-6"
+    },
+    {
+      "id": "p4-q17",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "직원 식사 쿠폰",
+        "안전 안경",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 2,
+      "explanation": "원문에서 “안전 안경”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “안전 안경”에 관한 정보가 직접 나옵니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-6"
+    },
+    {
+      "id": "p4-q18",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "새 계정을 만든다",
+        "노란 보행선 안에 머문다"
+      ],
+      "correctIndex": 3,
+      "explanation": "안내의 행동 지침은 노란 보행선 안에 머문다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 노란 보행선 안에 머문다는 것입니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-6"
+    },
+    {
+      "id": "p4-q19",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "직원 채용 결과를 발표하기 위해",
+        "설문 참여를 요청하기 위해",
+        "교통 우회 정보를 전하기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 2,
+      "explanation": "첫 문장과 이어지는 세부 내용이 교통 우회 정보를 전하기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 교통 우회 정보를 전하기 위해라는 목적을 뒷받침합니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-7"
+    },
+    {
+      "id": "p4-q20",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "직원 식사 쿠폰",
+        "온라인 결제 오류",
+        "수도관 수리"
+      ],
+      "correctIndex": 3,
+      "explanation": "원문에서 “수도관 수리”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “수도관 수리”에 관한 정보가 직접 나옵니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-7"
+    },
+    {
+      "id": "p4-q21",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "Pine Avenue를 이용한다",
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "새 계정을 만든다"
+      ],
+      "correctIndex": 0,
+      "explanation": "안내의 행동 지침은 Pine Avenue를 이용한다는 것입니다.",
+      "choiceExplanations": [
+        "정답입니다. 안내의 행동 지침은 Pine Avenue를 이용한다는 것입니다.",
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-7"
+    },
+    {
+      "id": "p4-q22",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "직원 채용 결과를 발표하기 위해",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해",
+        "분기 영업회의 순서를 소개하기 위해"
+      ],
+      "correctIndex": 3,
+      "explanation": "첫 문장과 이어지는 세부 내용이 분기 영업회의 순서를 소개하기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 분기 영업회의 순서를 소개하기 위해라는 목적을 뒷받침합니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-8"
+    },
+    {
+      "id": "p4-q23",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "지역별 실적",
+        "연회장 대관료",
+        "직원 식사 쿠폰",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 0,
+      "explanation": "원문에서 “지역별 실적”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "정답입니다. 원문에서 “지역별 실적”에 관한 정보가 직접 나옵니다.",
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-8"
+    },
+    {
+      "id": "p4-q24",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "11월 제품 출시를 논의한다",
+        "행사를 취소한다",
+        "새 계정을 만든다"
+      ],
+      "correctIndex": 1,
+      "explanation": "안내의 행동 지침은 11월 제품 출시를 논의한다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 11월 제품 출시를 논의한다는 것입니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-8"
+    },
+    {
+      "id": "p4-q25",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "복사기 수리 일정을 잡기 위해",
+        "직원 채용 결과를 발표하기 위해",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 0,
+      "explanation": "첫 문장과 이어지는 세부 내용이 복사기 수리 일정을 잡기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 복사기 수리 일정을 잡기 위해라는 목적을 뒷받침합니다.",
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-9"
+    },
+    {
+      "id": "p4-q26",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "교체용 모터",
+        "직원 식사 쿠폰",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 1,
+      "explanation": "원문에서 “교체용 모터”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “교체용 모터”에 관한 정보가 직접 나옵니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-9"
+    },
+    {
+      "id": "p4-q27",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "방문 시간을 확인해 전화한다",
+        "새 계정을 만든다"
+      ],
+      "correctIndex": 2,
+      "explanation": "안내의 행동 지침은 방문 시간을 확인해 전화한다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 방문 시간을 확인해 전화한다는 것입니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-9"
+    },
+    {
+      "id": "p4-q28",
+      "part": 4,
+      "prompt": "이 안내의 목적은 무엇입니까?",
+      "choices": [
+        "직원 채용 결과를 발표하기 위해",
+        "호텔 조식 이용법을 알리기 위해",
+        "설문 참여를 요청하기 위해",
+        "분실물을 찾기 위해"
+      ],
+      "correctIndex": 1,
+      "explanation": "첫 문장과 이어지는 세부 내용이 호텔 조식 이용법을 알리기 위해라는 목적을 뒷받침합니다.",
+      "choiceExplanations": [
+        "“직원 채용 결과를 발표하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장과 이어지는 세부 내용이 호텔 조식 이용법을 알리기 위해라는 목적을 뒷받침합니다.",
+        "“설문 참여를 요청하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "담화 목적 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-10"
+    },
+    {
+      "id": "p4-q29",
+      "part": 4,
+      "prompt": "안내에서 언급된 것은 무엇입니까?",
+      "choices": [
+        "연회장 대관료",
+        "직원 식사 쿠폰",
+        "Garden Room",
+        "온라인 결제 오류"
+      ],
+      "correctIndex": 2,
+      "explanation": "원문에서 “Garden Room”에 관한 정보가 직접 나옵니다.",
+      "choiceExplanations": [
+        "“연회장 대관료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원 식사 쿠폰”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 원문에서 “Garden Room”에 관한 정보가 직접 나옵니다.",
+        "“온라인 결제 오류”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "핵심 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-10"
+    },
+    {
+      "id": "p4-q30",
+      "part": 4,
+      "prompt": "청자가 해야 할 일로 가장 알맞은 것은 무엇입니까?",
+      "choices": [
+        "영수증을 폐기한다",
+        "행사를 취소한다",
+        "새 계정을 만든다",
+        "전날 밤 9시까지 도시락을 요청한다"
+      ],
+      "correctIndex": 3,
+      "explanation": "안내의 행동 지침은 전날 밤 9시까지 도시락을 요청한다는 것입니다.",
+      "choiceExplanations": [
+        "“영수증을 폐기한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사를 취소한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“새 계정을 만든다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 안내의 행동 지침은 전날 밤 9시까지 도시락을 요청한다는 것입니다."
+      ],
+      "skill": "행동 지침 이해",
+      "difficulty": "intermediate",
+      "stimulusId": "p4-talk-10"
+    },
+    {
+      "id": "p5-q1",
+      "part": 5,
+      "prompt": "All expense reports must be submitted _____ Friday afternoon.",
+      "choices": [
+        "by",
+        "at",
+        "from",
+        "during"
+      ],
+      "correctIndex": 0,
+      "explanation": "마감 시점 앞에는 전치사 by를 사용합니다.",
+      "choiceExplanations": [
+        "정답입니다. 마감 시점 앞에는 전치사 by를 사용합니다.",
+        "“at”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“from”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“during”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "전치사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q2",
+      "part": 5,
+      "prompt": "The marketing team is looking for a designer who can work _____.",
+      "choices": [
+        "independent",
+        "independently",
+        "independence",
+        "independently of"
+      ],
+      "correctIndex": 1,
+      "explanation": "동사 work를 수식하는 부사 independently가 필요합니다.",
+      "choiceExplanations": [
+        "“independent”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 동사 work를 수식하는 부사 independently가 필요합니다.",
+        "“independence”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“independently of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "품사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q3",
+      "part": 5,
+      "prompt": "Ms. Lopez will lead the meeting _____ the director is away.",
+      "choices": [
+        "despite",
+        "unless",
+        "while",
+        "because of"
+      ],
+      "correctIndex": 2,
+      "explanation": "뒤에 완전한 절이 오며 두 상황이 동시에 이어지므로 while이 맞습니다.",
+      "choiceExplanations": [
+        "“despite”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“unless”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 뒤에 완전한 절이 오며 두 상황이 동시에 이어지므로 while이 맞습니다.",
+        "“because of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "접속사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q4",
+      "part": 5,
+      "prompt": "The new software is much easier to use _____ the previous version.",
+      "choices": [
+        "as",
+        "from",
+        "then",
+        "than"
+      ],
+      "correctIndex": 3,
+      "explanation": "비교급 easier 뒤에는 than을 사용합니다.",
+      "choiceExplanations": [
+        "“as”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“from”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“then”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 비교급 easier 뒤에는 than을 사용합니다."
+      ],
+      "skill": "비교급",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q5",
+      "part": 5,
+      "prompt": "Please contact reception if you require any additional _____.",
+      "choices": [
+        "assistance",
+        "assist",
+        "assisted",
+        "assisting"
+      ],
+      "correctIndex": 0,
+      "explanation": "형용사 additional 뒤 목적어 자리에는 명사 assistance가 필요합니다.",
+      "choiceExplanations": [
+        "정답입니다. 형용사 additional 뒤 목적어 자리에는 명사 assistance가 필요합니다.",
+        "“assist”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“assisted”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“assisting”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "품사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q6",
+      "part": 5,
+      "prompt": "The factory increased production _____ meet growing demand.",
+      "choices": [
+        "for",
+        "to",
+        "so",
+        "by"
+      ],
+      "correctIndex": 1,
+      "explanation": "목적을 나타내는 to부정사가 필요합니다.",
+      "choiceExplanations": [
+        "“for”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 목적을 나타내는 to부정사가 필요합니다.",
+        "“so”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“by”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "to부정사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q7",
+      "part": 5,
+      "prompt": "Neither the manager nor the assistants _____ available yesterday.",
+      "choices": [
+        "was",
+        "be",
+        "were",
+        "has been"
+      ],
+      "correctIndex": 2,
+      "explanation": "neither A nor B는 가까운 주어 assistants에 수를 맞춰 were를 씁니다.",
+      "choiceExplanations": [
+        "“was”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“be”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. neither A nor B는 가까운 주어 assistants에 수를 맞춰 were를 씁니다.",
+        "“has been”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "수일치",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q8",
+      "part": 5,
+      "prompt": "Customers may exchange unopened items _____ thirty days.",
+      "choices": [
+        "between",
+        "throughout",
+        "beside",
+        "within"
+      ],
+      "correctIndex": 3,
+      "explanation": "정해진 기간 안을 뜻하는 within이 맞습니다.",
+      "choiceExplanations": [
+        "“between”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“throughout”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“beside”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 정해진 기간 안을 뜻하는 within이 맞습니다."
+      ],
+      "skill": "전치사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q9",
+      "part": 5,
+      "prompt": "The board has not _____ approved the revised proposal.",
+      "choices": [
+        "yet",
+        "ever",
+        "already",
+        "still of"
+      ],
+      "correctIndex": 0,
+      "explanation": "현재완료 부정문에서 아직을 뜻하는 yet이 자연스럽습니다.",
+      "choiceExplanations": [
+        "정답입니다. 현재완료 부정문에서 아직을 뜻하는 yet이 자연스럽습니다.",
+        "“ever”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“already”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“still of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "부사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q10",
+      "part": 5,
+      "prompt": "A confirmation e-mail will be sent _____ your payment is processed.",
+      "choices": [
+        "during",
+        "once",
+        "therefore",
+        "even"
+      ],
+      "correctIndex": 1,
+      "explanation": "결제가 처리되는 즉시라는 시간 조건 접속사 once가 필요합니다.",
+      "choiceExplanations": [
+        "“during”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 결제가 처리되는 즉시라는 시간 조건 접속사 once가 필요합니다.",
+        "“therefore”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“even”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "접속사",
+      "difficulty": "foundation"
+    },
+    {
+      "id": "p5-q11",
+      "part": 5,
+      "prompt": "The conference attracted _____ five hundred participants.",
+      "choices": [
+        "approximate",
+        "approximated",
+        "approximately",
+        "approximation"
+      ],
+      "correctIndex": 2,
+      "explanation": "수량을 수식하는 부사 approximately가 맞습니다.",
+      "choiceExplanations": [
+        "“approximate”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“approximated”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 수량을 수식하는 부사 approximately가 맞습니다.",
+        "“approximation”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "품사",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q12",
+      "part": 5,
+      "prompt": "Employees are encouraged _____ public transportation.",
+      "choices": [
+        "use",
+        "using",
+        "used",
+        "to use"
+      ],
+      "correctIndex": 3,
+      "explanation": "be encouraged to do 구조이므로 to use가 맞습니다.",
+      "choiceExplanations": [
+        "“use”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“using”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“used”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. be encouraged to do 구조이므로 to use가 맞습니다."
+      ],
+      "skill": "동사 패턴",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q13",
+      "part": 5,
+      "prompt": "The warranty remains valid _____ the product is used as directed.",
+      "choices": [
+        "provided that",
+        "in spite of",
+        "due to",
+        "as if of"
+      ],
+      "correctIndex": 0,
+      "explanation": "조건을 나타내며 뒤에 절이 오므로 provided that이 맞습니다.",
+      "choiceExplanations": [
+        "정답입니다. 조건을 나타내며 뒤에 절이 오므로 provided that이 맞습니다.",
+        "“in spite of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“due to”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“as if of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "조건 접속사",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q14",
+      "part": 5,
+      "prompt": "This quarter’s sales figures are _____ than analysts expected.",
+      "choices": [
+        "high",
+        "higher",
+        "highest",
+        "highly"
+      ],
+      "correctIndex": 1,
+      "explanation": "than과 함께 비교급 higher가 필요합니다.",
+      "choiceExplanations": [
+        "“high”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. than과 함께 비교급 higher가 필요합니다.",
+        "“highest”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“highly”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "비교급",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q15",
+      "part": 5,
+      "prompt": "We apologize for any inconvenience _____ by the maintenance work.",
+      "choices": [
+        "causing",
+        "cause",
+        "caused",
+        "causes"
+      ],
+      "correctIndex": 2,
+      "explanation": "inconvenience를 수식하는 과거분사 caused가 맞습니다.",
+      "choiceExplanations": [
+        "“causing”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“cause”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. inconvenience를 수식하는 과거분사 caused가 맞습니다.",
+        "“causes”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "분사",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q16",
+      "part": 5,
+      "prompt": "The committee will review each application _____.",
+      "choices": [
+        "careful",
+        "care",
+        "more careful",
+        "carefully"
+      ],
+      "correctIndex": 3,
+      "explanation": "동사 review를 수식하는 부사가 필요합니다.",
+      "choiceExplanations": [
+        "“careful”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“care”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“more careful”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 동사 review를 수식하는 부사가 필요합니다."
+      ],
+      "skill": "품사",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q17",
+      "part": 5,
+      "prompt": "No changes can be made after the contract has been _____.",
+      "choices": [
+        "signed",
+        "signing",
+        "signature",
+        "sign"
+      ],
+      "correctIndex": 0,
+      "explanation": "수동태 has been 뒤에는 과거분사 signed가 필요합니다.",
+      "choiceExplanations": [
+        "정답입니다. 수동태 has been 뒤에는 과거분사 signed가 필요합니다.",
+        "“signing”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“signature”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“sign”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "수동태",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q18",
+      "part": 5,
+      "prompt": "The museum is closed on Mondays, _____ national holidays.",
+      "choices": [
+        "because",
+        "except for",
+        "among",
+        "until"
+      ],
+      "correctIndex": 1,
+      "explanation": "제외 대상을 나타내는 except for가 맞습니다.",
+      "choiceExplanations": [
+        "“because”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 제외 대상을 나타내는 except for가 맞습니다.",
+        "“among”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“until”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "전치사 표현",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q19",
+      "part": 5,
+      "prompt": "Ms. Tanaka is responsible for _____ supplier contracts.",
+      "choices": [
+        "negotiate",
+        "negotiated",
+        "negotiating",
+        "negotiation of the"
+      ],
+      "correctIndex": 2,
+      "explanation": "전치사 for 뒤에는 동명사 negotiating이 자연스럽습니다.",
+      "choiceExplanations": [
+        "“negotiate”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“negotiated”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 전치사 for 뒤에는 동명사 negotiating이 자연스럽습니다.",
+        "“negotiation of the”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "동명사",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q20",
+      "part": 5,
+      "prompt": "The package should arrive _____, according to the courier.",
+      "choices": [
+        "recent",
+        "previous",
+        "daily of",
+        "tomorrow"
+      ],
+      "correctIndex": 3,
+      "explanation": "문장 전체의 도착 시점을 나타내는 부사 tomorrow가 맞습니다.",
+      "choiceExplanations": [
+        "“recent”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“previous”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“daily of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 문장 전체의 도착 시점을 나타내는 부사 tomorrow가 맞습니다."
+      ],
+      "skill": "시간 부사",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q21",
+      "part": 5,
+      "prompt": "Only applicants with relevant experience will be _____ for an interview.",
+      "choices": [
+        "considered",
+        "considering",
+        "consideration",
+        "consider"
+      ],
+      "correctIndex": 0,
+      "explanation": "수동 의미이므로 be considered가 맞습니다.",
+      "choiceExplanations": [
+        "정답입니다. 수동 의미이므로 be considered가 맞습니다.",
+        "“considering”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“consideration”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“consider”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "수동태",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q22",
+      "part": 5,
+      "prompt": "Our latest model consumes _____ energy than its predecessor.",
+      "choices": [
+        "few",
+        "less",
+        "fewer",
+        "least of"
+      ],
+      "correctIndex": 1,
+      "explanation": "셀 수 없는 energy의 비교급은 less입니다.",
+      "choiceExplanations": [
+        "“few”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 셀 수 없는 energy의 비교급은 less입니다.",
+        "“fewer”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“least of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "수량 표현",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q23",
+      "part": 5,
+      "prompt": "The restaurant expanded its seating area _____ customer demand.",
+      "choices": [
+        "on behalf",
+        "apart from",
+        "in response to",
+        "regardless"
+      ],
+      "correctIndex": 2,
+      "explanation": "수요에 대응하여라는 뜻의 in response to가 맞습니다.",
+      "choiceExplanations": [
+        "“on behalf”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“apart from”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 수요에 대응하여라는 뜻의 in response to가 맞습니다.",
+        "“regardless”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "어휘 표현",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q24",
+      "part": 5,
+      "prompt": "Mr. Singh will speak with the vendor _____ the pricing issue.",
+      "choices": [
+        "among",
+        "along",
+        "toward of",
+        "about"
+      ],
+      "correctIndex": 3,
+      "explanation": "speak with 사람 about 주제 구조가 자연스럽습니다.",
+      "choiceExplanations": [
+        "“among”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“along”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“toward of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. speak with 사람 about 주제 구조가 자연스럽습니다."
+      ],
+      "skill": "전치사",
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "p5-q25",
+      "part": 5,
+      "prompt": "The report contains information that is highly _____.",
+      "choices": [
+        "confidential",
+        "confidence",
+        "confidentially",
+        "confide"
+      ],
+      "correctIndex": 0,
+      "explanation": "be동사 뒤 보어 자리에는 형용사 confidential이 필요합니다.",
+      "choiceExplanations": [
+        "정답입니다. be동사 뒤 보어 자리에는 형용사 confidential이 필요합니다.",
+        "“confidence”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“confidentially”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“confide”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "품사",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "p5-q26",
+      "part": 5,
+      "prompt": "Visitors must wear their identification badges at _____ times.",
+      "choices": [
+        "every",
+        "all",
+        "whole",
+        "each of"
+      ],
+      "correctIndex": 1,
+      "explanation": "항상이라는 고정 표현 at all times가 맞습니다.",
+      "choiceExplanations": [
+        "“every”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 항상이라는 고정 표현 at all times가 맞습니다.",
+        "“whole”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“each of”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "관용 표현",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "p5-q27",
+      "part": 5,
+      "prompt": "The renovation was completed ahead of _____.",
+      "choices": [
+        "scheduled",
+        "scheduling",
+        "schedule",
+        "schedules are"
+      ],
+      "correctIndex": 2,
+      "explanation": "예정보다 일찍이라는 고정 표현 ahead of schedule입니다.",
+      "choiceExplanations": [
+        "“scheduled”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“scheduling”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 예정보다 일찍이라는 고정 표현 ahead of schedule입니다.",
+        "“schedules are”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "관용 표현",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "p5-q28",
+      "part": 5,
+      "prompt": "We will notify participants if the venue _____.",
+      "choices": [
+        "will change",
+        "changing",
+        "has change",
+        "changes"
+      ],
+      "correctIndex": 3,
+      "explanation": "조건절에서는 미래 의미라도 현재형 changes를 사용합니다.",
+      "choiceExplanations": [
+        "“will change”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“changing”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“has change”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 조건절에서는 미래 의미라도 현재형 changes를 사용합니다."
+      ],
+      "skill": "조건절",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "p5-q29",
+      "part": 5,
+      "prompt": "The technician found the device to be fully _____.",
+      "choices": [
+        "operational",
+        "operate",
+        "operation",
+        "operationally"
+      ],
+      "correctIndex": 0,
+      "explanation": "be 뒤 보어로 형용사 operational이 필요합니다.",
+      "choiceExplanations": [
+        "정답입니다. be 뒤 보어로 형용사 operational이 필요합니다.",
+        "“operate”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“operation”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“operationally”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "품사",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "p5-q30",
+      "part": 5,
+      "prompt": "_____ receiving approval, the team began the installation.",
+      "choices": [
+        "Although",
+        "After",
+        "Because",
+        "Unless"
+      ],
+      "correctIndex": 1,
+      "explanation": "동명사 receiving 앞에서 시간의 선후를 나타내는 After가 맞습니다.",
+      "choiceExplanations": [
+        "“Although”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 동명사 receiving 앞에서 시간의 선후를 나타내는 After가 맞습니다.",
+        "“Because”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Unless”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "전치사·접속사",
+      "difficulty": "advanced"
+    },
+    {
+      "id": "p6-q1",
+      "part": 6,
+      "prompt": "Where are the new racks located?",
+      "choices": [
+        "Behind Building B",
+        "Inside the lobby",
+        "Next to the cafeteria",
+        "Under the parking garage"
+      ],
+      "correctIndex": 0,
+      "explanation": "첫 두 문장에서 Building B 뒤라고 명시합니다.",
+      "choiceExplanations": [
+        "정답입니다. 첫 두 문장에서 Building B 뒤라고 명시합니다.",
+        "“Inside the lobby”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Next to the cafeteria”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Under the parking garage”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-1"
+    },
+    {
+      "id": "p6-q2",
+      "part": 6,
+      "prompt": "Who should register a bicycle?",
+      "choices": [
+        "Only security officers",
+        "Employees who use the racks",
+        "Visitors attending meetings",
+        "Delivery drivers"
+      ],
+      "correctIndex": 1,
+      "explanation": "자전거 보관대를 이용하는 직원에게 등록을 요구합니다.",
+      "choiceExplanations": [
+        "“Only security officers”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 자전거 보관대를 이용하는 직원에게 등록을 요구합니다.",
+        "“Visitors attending meetings”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Delivery drivers”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "지시 대상",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-1"
+    },
+    {
+      "id": "p6-q3",
+      "part": 6,
+      "prompt": "How much does a sticker cost?",
+      "choices": [
+        "Five dollars",
+        "A monthly fee",
+        "It is free.",
+        "The notice does not say."
+      ],
+      "correctIndex": 2,
+      "explanation": "at no charge는 무료라는 뜻입니다.",
+      "choiceExplanations": [
+        "“Five dollars”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A monthly fee”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. at no charge는 무료라는 뜻입니다.",
+        "“The notice does not say.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "동의 표현",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-1"
+    },
+    {
+      "id": "p6-q4",
+      "part": 6,
+      "prompt": "Which sentence best completes [4]?",
+      "choices": [
+        "The annual picnic was held last Friday.",
+        "Building B has twelve meeting rooms.",
+        "The cafeteria menu changes daily.",
+        "Please remove personal items from bicycles before leaving them overnight."
+      ],
+      "correctIndex": 3,
+      "explanation": "자전거 보관 지침과 이어지는 문장만 문맥상 적절합니다.",
+      "choiceExplanations": [
+        "“The annual picnic was held last Friday.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Building B has twelve meeting rooms.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The cafeteria menu changes daily.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 자전거 보관 지침과 이어지는 문장만 문맥상 적절합니다."
+      ],
+      "skill": "문장 삽입",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-1"
+    },
+    {
+      "id": "p6-q5",
+      "part": 6,
+      "prompt": "What product was ordered?",
+      "choices": [
+        "A lamp",
+        "A desk chair",
+        "A bookshelf",
+        "A conference table"
+      ],
+      "correctIndex": 1,
+      "explanation": "첫 문단에 Luma desk chair라고 나옵니다.",
+      "choiceExplanations": [
+        "“A lamp”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문단에 Luma desk chair라고 나옵니다.",
+        "“A bookshelf”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A conference table”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-2"
+    },
+    {
+      "id": "p6-q6",
+      "part": 6,
+      "prompt": "When will the order leave the warehouse?",
+      "choices": [
+        "June 3",
+        "June 15",
+        "June 12",
+        "July 12"
+      ],
+      "correctIndex": 2,
+      "explanation": "둘째 문장에서 출고일을 명시합니다.",
+      "choiceExplanations": [
+        "“June 3”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“June 15”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 둘째 문장에서 출고일을 명시합니다.",
+        "“July 12”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "날짜 파악",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-2"
+    },
+    {
+      "id": "p6-q7",
+      "part": 6,
+      "prompt": "What will the customer receive later?",
+      "choices": [
+        "A store coupon",
+        "An assembly video",
+        "A new invoice",
+        "A tracking link"
+      ],
+      "correctIndex": 3,
+      "explanation": "운송사가 수거하면 tracking link를 보낸다고 했습니다.",
+      "choiceExplanations": [
+        "“A store coupon”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“An assembly video”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A new invoice”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 운송사가 수거하면 tracking link를 보낸다고 했습니다."
+      ],
+      "skill": "후속 조치",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-2"
+    },
+    {
+      "id": "p6-q8",
+      "part": 6,
+      "prompt": "Which sentence best fits at [1]?",
+      "choices": [
+        "We are pleased to confirm that the item is now ready for shipment.",
+        "Our showroom closes at six on Sundays.",
+        "The chair was designed by an architect.",
+        "Please apply for the vacant position online."
+      ],
+      "correctIndex": 0,
+      "explanation": "주문 감사와 출고 일정 사이에는 출고 준비 완료 확인이 가장 자연스럽습니다.",
+      "choiceExplanations": [
+        "정답입니다. 주문 감사와 출고 일정 사이에는 출고 준비 완료 확인이 가장 자연스럽습니다.",
+        "“Our showroom closes at six on Sundays.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“The chair was designed by an architect.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Please apply for the vacant position online.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "문장 삽입",
+      "difficulty": "intermediate",
+      "stimulusId": "p6-document-2"
+    },
+    {
+      "id": "p6-q9",
+      "part": 6,
+      "prompt": "Why will the pool close?",
+      "choices": [
+        "For a private event",
+        "Because of bad weather",
+        "For routine maintenance",
+        "To train new staff"
+      ],
+      "correctIndex": 2,
+      "explanation": "첫 문장에서 정기 유지보수가 이유라고 밝힙니다.",
+      "choiceExplanations": [
+        "“For a private event”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Because of bad weather”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장에서 정기 유지보수가 이유라고 밝힙니다.",
+        "“To train new staff”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "원인 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-3"
+    },
+    {
+      "id": "p6-q10",
+      "part": 6,
+      "prompt": "What must members show at Eastside?",
+      "choices": [
+        "A receipt",
+        "A class schedule",
+        "A photo application",
+        "A membership card"
+      ],
+      "correctIndex": 3,
+      "explanation": "Eastside 수영장 이용 시 membership card를 제시해야 합니다.",
+      "choiceExplanations": [
+        "“A receipt”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A class schedule”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A photo application”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. Eastside 수영장 이용 시 membership card를 제시해야 합니다."
+      ],
+      "skill": "조건 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-3"
+    },
+    {
+      "id": "p6-q11",
+      "part": 6,
+      "prompt": "What will happen to swimming classes?",
+      "choices": [
+        "They will be held the following week.",
+        "They will move outdoors.",
+        "They will become free.",
+        "They will be canceled permanently."
+      ],
+      "correctIndex": 0,
+      "explanation": "해당 수업은 다음 주로 옮겨집니다.",
+      "choiceExplanations": [
+        "정답입니다. 해당 수업은 다음 주로 옮겨집니다.",
+        "“They will move outdoors.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“They will become free.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“They will be canceled permanently.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "일정 변경",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-3"
+    },
+    {
+      "id": "p6-q12",
+      "part": 6,
+      "prompt": "Which sentence best fits at [2]?",
+      "choices": [
+        "Membership fees increased last year.",
+        "The Eastside pool is open from seven in the morning until eight in the evening.",
+        "The parking lot was recently painted.",
+        "A new instructor wrote a book."
+      ],
+      "correctIndex": 1,
+      "explanation": "대체 수영장 이용 안내 뒤에는 영업시간 정보가 자연스럽습니다.",
+      "choiceExplanations": [
+        "“Membership fees increased last year.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 대체 수영장 이용 안내 뒤에는 영업시간 정보가 자연스럽습니다.",
+        "“The parking lot was recently painted.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A new instructor wrote a book.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "문장 삽입",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-3"
+    },
+    {
+      "id": "p6-q13",
+      "part": 6,
+      "prompt": "What will be presented?",
+      "choices": [
+        "A hiring policy",
+        "A sales contract",
+        "A building plan",
+        "A Web site prototype"
+      ],
+      "correctIndex": 3,
+      "explanation": "첫 문장에 Web site redesign의 first prototype이라고 나옵니다.",
+      "choiceExplanations": [
+        "“A hiring policy”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A sales contract”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“A building plan”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 문장에 Web site redesign의 first prototype이라고 나옵니다."
+      ],
+      "skill": "주제 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-4"
+    },
+    {
+      "id": "p6-q14",
+      "part": 6,
+      "prompt": "Where can departments find the draft pages?",
+      "choices": [
+        "In the project folder",
+        "On a public poster",
+        "At the reception desk",
+        "In a printed handbook"
+      ],
+      "correctIndex": 0,
+      "explanation": "project folder에 공유했다고 명시합니다.",
+      "choiceExplanations": [
+        "정답입니다. project folder에 공유했다고 명시합니다.",
+        "“On a public poster”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“At the reception desk”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“In a printed handbook”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "위치 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-4"
+    },
+    {
+      "id": "p6-q15",
+      "part": 6,
+      "prompt": "Why are comments due by October 3?",
+      "choices": [
+        "To reserve a meeting room",
+        "To allow time for revisions",
+        "To calculate travel costs",
+        "To order new computers"
+      ],
+      "correctIndex": 1,
+      "explanation": "디자인 팀의 수정 시간을 확보하기 위해서입니다.",
+      "choiceExplanations": [
+        "“To reserve a meeting room”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 디자인 팀의 수정 시간을 확보하기 위해서입니다.",
+        "“To calculate travel costs”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“To order new computers”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "목적 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-4"
+    },
+    {
+      "id": "p6-q16",
+      "part": 6,
+      "prompt": "Which sentence best fits at [4]?",
+      "choices": [
+        "The cafeteria serves breakfast every day.",
+        "Several employees commute by train.",
+        "Please accept the invitation to confirm your attendance.",
+        "Office chairs are available in three colors."
+      ],
+      "correctIndex": 2,
+      "explanation": "캘린더 초대 안내 다음에는 참석 확인 요청이 자연스럽습니다.",
+      "choiceExplanations": [
+        "“The cafeteria serves breakfast every day.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“Several employees commute by train.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 캘린더 초대 안내 다음에는 참석 확인 요청이 자연스럽습니다.",
+        "“Office chairs are available in three colors.”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "문장 삽입",
+      "difficulty": "advanced",
+      "stimulusId": "p6-document-4"
+    },
+    {
+      "id": "p7-s1-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "회의실 변경을 알리기 위해",
+        "설문 결과를 비교하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 0,
+      "explanation": "글 전체가 회의실 변경을 알리기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "정답입니다. 글 전체가 회의실 변경을 알리기 위해 필요한 내용을 제공합니다.",
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-1"
+    },
+    {
+      "id": "p7-s1-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "새 영상 장비 설치",
+        "해외 배송료",
+        "전화 면접"
+      ],
+      "correctIndex": 1,
+      "explanation": "본문에 “새 영상 장비 설치”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “새 영상 장비 설치”에 해당하는 표현이 직접 나옵니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-1"
+    },
+    {
+      "id": "p7-s1-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 서비스가 영구 중단된다",
+        "독자는 반드시 현금을 내야 한다",
+        "온라인 일정에서 새 장소를 확인할 수 있다",
+        "행사는 해외에서만 열린다"
+      ],
+      "correctIndex": 2,
+      "explanation": "본문의 조건과 일정을 종합하면 온라인 일정에서 새 장소를 확인할 수 있다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문의 조건과 일정을 종합하면 온라인 일정에서 새 장소를 확인할 수 있다는 것을 알 수 있습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-1"
+    },
+    {
+      "id": "p7-s2-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "설문 결과를 비교하기 위해",
+        "구매 보조 직원을 채용하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 1,
+      "explanation": "글 전체가 구매 보조 직원을 채용하기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 글 전체가 구매 보조 직원을 채용하기 위해 필요한 내용을 제공합니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-2"
+    },
+    {
+      "id": "p7-s2-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "해외 배송료",
+        "2년의 사무 경험",
+        "전화 면접"
+      ],
+      "correctIndex": 2,
+      "explanation": "본문에 “2년의 사무 경험”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “2년의 사무 경험”에 해당하는 표현이 직접 나옵니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-2"
+    },
+    {
+      "id": "p7-s2-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 서비스가 영구 중단된다",
+        "독자는 반드시 현금을 내야 한다",
+        "행사는 해외에서만 열린다",
+        "재고 프로그램 경험은 필수가 아니다"
+      ],
+      "correctIndex": 3,
+      "explanation": "본문의 조건과 일정을 종합하면 재고 프로그램 경험은 필수가 아니다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문의 조건과 일정을 종합하면 재고 프로그램 경험은 필수가 아니다는 것을 알 수 있습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-2"
+    },
+    {
+      "id": "p7-s3-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "설문 결과를 비교하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "공연 관람 정보를 제공하기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 2,
+      "explanation": "글 전체가 공연 관람 정보를 제공하기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 글 전체가 공연 관람 정보를 제공하기 위해 필요한 내용을 제공합니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-3"
+    },
+    {
+      "id": "p7-s3-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "해외 배송료",
+        "전화 면접",
+        "사진이 있는 신분증"
+      ],
+      "correctIndex": 3,
+      "explanation": "본문에 “사진이 있는 신분증”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “사진이 있는 신분증”에 해당하는 표현이 직접 나옵니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-3"
+    },
+    {
+      "id": "p7-s3-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "입장은 공연 45분 전에 시작된다",
+        "모든 서비스가 영구 중단된다",
+        "독자는 반드시 현금을 내야 한다",
+        "행사는 해외에서만 열린다"
+      ],
+      "correctIndex": 0,
+      "explanation": "본문의 조건과 일정을 종합하면 입장은 공연 45분 전에 시작된다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "정답입니다. 본문의 조건과 일정을 종합하면 입장은 공연 45분 전에 시작된다는 것을 알 수 있습니다.",
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-3"
+    },
+    {
+      "id": "p7-s4-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "설문 결과를 비교하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해",
+        "상품 반품 조건을 설명하기 위해"
+      ],
+      "correctIndex": 3,
+      "explanation": "글 전체가 상품 반품 조건을 설명하기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 글 전체가 상품 반품 조건을 설명하기 위해 필요한 내용을 제공합니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-4"
+    },
+    {
+      "id": "p7-s4-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "원본 영수증",
+        "무료 주차권",
+        "해외 배송료",
+        "전화 면접"
+      ],
+      "correctIndex": 0,
+      "explanation": "본문에 “원본 영수증”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "정답입니다. 본문에 “원본 영수증”에 해당하는 표현이 직접 나옵니다.",
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-4"
+    },
+    {
+      "id": "p7-s4-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 서비스가 영구 중단된다",
+        "개인 맞춤 상품은 반품할 수 없다",
+        "독자는 반드시 현금을 내야 한다",
+        "행사는 해외에서만 열린다"
+      ],
+      "correctIndex": 1,
+      "explanation": "본문의 조건과 일정을 종합하면 개인 맞춤 상품은 반품할 수 없다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문의 조건과 일정을 종합하면 개인 맞춤 상품은 반품할 수 없다는 것을 알 수 있습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-4"
+    },
+    {
+      "id": "p7-s5-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "배송 일정을 알려 주기 위해",
+        "설문 결과를 비교하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 0,
+      "explanation": "글 전체가 배송 일정을 알려 주기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "정답입니다. 글 전체가 배송 일정을 알려 주기 위해 필요한 내용을 제공합니다.",
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-5"
+    },
+    {
+      "id": "p7-s5-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "수령 서명",
+        "해외 배송료",
+        "전화 면접"
+      ],
+      "correctIndex": 1,
+      "explanation": "본문에 “수령 서명”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “수령 서명”에 해당하는 표현이 직접 나옵니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-5"
+    },
+    {
+      "id": "p7-s5-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 서비스가 영구 중단된다",
+        "독자는 반드시 현금을 내야 한다",
+        "화요일 정오 전에 날짜를 바꿔야 한다",
+        "행사는 해외에서만 열린다"
+      ],
+      "correctIndex": 2,
+      "explanation": "본문의 조건과 일정을 종합하면 화요일 정오 전에 날짜를 바꿔야 한다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문의 조건과 일정을 종합하면 화요일 정오 전에 날짜를 바꿔야 한다는 것을 알 수 있습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-5"
+    },
+    {
+      "id": "p7-s6-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "설문 결과를 비교하기 위해",
+        "사진 강좌 준비물을 안내하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 1,
+      "explanation": "글 전체가 사진 강좌 준비물을 안내하기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 글 전체가 사진 강좌 준비물을 안내하기 위해 필요한 내용을 제공합니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-6"
+    },
+    {
+      "id": "p7-s6-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "해외 배송료",
+        "카메라",
+        "전화 면접"
+      ],
+      "correctIndex": 2,
+      "explanation": "본문에 “카메라”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “카메라”에 해당하는 표현이 직접 나옵니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-6"
+    },
+    {
+      "id": "p7-s6-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 서비스가 영구 중단된다",
+        "독자는 반드시 현금을 내야 한다",
+        "행사는 해외에서만 열린다",
+        "편집 프로그램은 실습실에서 제공된다"
+      ],
+      "correctIndex": 3,
+      "explanation": "본문의 조건과 일정을 종합하면 편집 프로그램은 실습실에서 제공된다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문의 조건과 일정을 종합하면 편집 프로그램은 실습실에서 제공된다는 것을 알 수 있습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-6"
+    },
+    {
+      "id": "p7-s7-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "설문 결과를 비교하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "월요일 영업시간 변경을 알리기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 2,
+      "explanation": "글 전체가 월요일 영업시간 변경을 알리기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 글 전체가 월요일 영업시간 변경을 알리기 위해 필요한 내용을 제공합니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-7"
+    },
+    {
+      "id": "p7-s7-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "해외 배송료",
+        "전화 면접",
+        "직원 회의"
+      ],
+      "correctIndex": 3,
+      "explanation": "본문에 “직원 회의”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “직원 회의”에 해당하는 표현이 직접 나옵니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-7"
+    },
+    {
+      "id": "p7-s7-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "온라인 주문은 측면 창구에서 찾는다",
+        "모든 서비스가 영구 중단된다",
+        "독자는 반드시 현금을 내야 한다",
+        "행사는 해외에서만 열린다"
+      ],
+      "correctIndex": 0,
+      "explanation": "본문의 조건과 일정을 종합하면 온라인 주문은 측면 창구에서 찾는다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "정답입니다. 본문의 조건과 일정을 종합하면 온라인 주문은 측면 창구에서 찾는다는 것을 알 수 있습니다.",
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-7"
+    },
+    {
+      "id": "p7-s8-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "설문 결과를 비교하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해",
+        "건축 박람회 등록을 권하기 위해"
+      ],
+      "correctIndex": 3,
+      "explanation": "글 전체가 건축 박람회 등록을 권하기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 글 전체가 건축 박람회 등록을 권하기 위해 필요한 내용을 제공합니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-8"
+    },
+    {
+      "id": "p7-s8-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "워크숍 별도 예약",
+        "무료 주차권",
+        "해외 배송료",
+        "전화 면접"
+      ],
+      "correctIndex": 0,
+      "explanation": "본문에 “워크숍 별도 예약”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "정답입니다. 본문에 “워크숍 별도 예약”에 해당하는 표현이 직접 나옵니다.",
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-8"
+    },
+    {
+      "id": "p7-s8-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 서비스가 영구 중단된다",
+        "좌석 수가 제한되어 있다",
+        "독자는 반드시 현금을 내야 한다",
+        "행사는 해외에서만 열린다"
+      ],
+      "correctIndex": 1,
+      "explanation": "본문의 조건과 일정을 종합하면 좌석 수가 제한되어 있다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문의 조건과 일정을 종합하면 좌석 수가 제한되어 있다는 것을 알 수 있습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-8"
+    },
+    {
+      "id": "p7-s9-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "승강기 점검 결과를 보고하기 위해",
+        "설문 결과를 비교하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 0,
+      "explanation": "글 전체가 승강기 점검 결과를 보고하기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "정답입니다. 글 전체가 승강기 점검 결과를 보고하기 위해 필요한 내용을 제공합니다.",
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-9"
+    },
+    {
+      "id": "p7-s9-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "문 센서",
+        "해외 배송료",
+        "전화 면접"
+      ],
+      "correctIndex": 1,
+      "explanation": "본문에 “문 센서”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “문 센서”에 해당하는 표현이 직접 나옵니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-9"
+    },
+    {
+      "id": "p7-s9-q3",
+      "part": 7,
+      "prompt": "글을 통해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 서비스가 영구 중단된다",
+        "독자는 반드시 현금을 내야 한다",
+        "기계적 결함은 발견되지 않았다",
+        "행사는 해외에서만 열린다"
+      ],
+      "correctIndex": 2,
+      "explanation": "본문의 조건과 일정을 종합하면 기계적 결함은 발견되지 않았다는 것을 알 수 있습니다.",
+      "choiceExplanations": [
+        "“모든 서비스가 영구 중단된다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“독자는 반드시 현금을 내야 한다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문의 조건과 일정을 종합하면 기계적 결함은 발견되지 않았다는 것을 알 수 있습니다.",
+        "“행사는 해외에서만 열린다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-single-9"
+    },
+    {
+      "id": "p7-s10-q1",
+      "part": 7,
+      "prompt": "이 글의 주된 목적은 무엇입니까?",
+      "choices": [
+        "설문 결과를 비교하기 위해",
+        "박물관 회원권 갱신을 안내하기 위해",
+        "직원의 승진을 축하하기 위해",
+        "분실물의 주인을 찾기 위해"
+      ],
+      "correctIndex": 1,
+      "explanation": "글 전체가 박물관 회원권 갱신을 안내하기 위해 필요한 내용을 제공합니다.",
+      "choiceExplanations": [
+        "“설문 결과를 비교하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 글 전체가 박물관 회원권 갱신을 안내하기 위해 필요한 내용을 제공합니다.",
+        "“직원의 승진을 축하하기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“분실물의 주인을 찾기 위해”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "글의 목적",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-10"
+    },
+    {
+      "id": "p7-s10-q2",
+      "part": 7,
+      "prompt": "글에서 직접 언급된 것은 무엇입니까?",
+      "choices": [
+        "무료 주차권",
+        "해외 배송료",
+        "무료 동반 입장권 두 장",
+        "전화 면접"
+      ],
+      "correctIndex": 2,
+      "explanation": "본문에 “무료 동반 입장권 두 장”에 해당하는 표현이 직접 나옵니다.",
+      "choiceExplanations": [
+        "“무료 주차권”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 배송료”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 본문에 “무료 동반 입장권 두 장”에 해당하는 표현이 직접 나옵니다.",
+        "“전화 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-single-10"
+    },
+    {
+      "id": "p7-m1-q1",
+      "part": 7,
+      "prompt": "두 문서는 주로 무엇에 관한 것입니까?",
+      "choices": [
+        "발표 워크숍 일정 변경",
+        "직원 건강검진",
+        "신제품 광고",
+        "사무실 이전"
+      ],
+      "correctIndex": 0,
+      "explanation": "두 문서의 공통 주제입니다. 따라서 “발표 워크숍 일정 변경”이 정답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 두 문서의 공통 주제입니다. 따라서 “발표 워크숍 일정 변경”이 정답입니다.",
+        "“직원 건강검진”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품 광고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“사무실 이전”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 주제",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-1"
+    },
+    {
+      "id": "p7-m1-q2",
+      "part": 7,
+      "prompt": "두 문서에서 확인할 수 있는 정보는 무엇입니까?",
+      "choices": [
+        "12월 1일",
+        "7월 16일",
+        "무료 점심",
+        "온라인 면접"
+      ],
+      "correctIndex": 1,
+      "explanation": "두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “7월 16일”이 정답입니다.",
+      "choiceExplanations": [
+        "“12월 1일”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “7월 16일”이 정답입니다.",
+        "“무료 점심”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "정보 연결",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-1"
+    },
+    {
+      "id": "p7-m1-q3",
+      "part": 7,
+      "prompt": "첫 번째 문서에서 중요한 조건은 무엇입니까?",
+      "choices": [
+        "신분증 재발급",
+        "해외 송금",
+        "직원 포털",
+        "주차장 폐쇄"
+      ],
+      "correctIndex": 2,
+      "explanation": "첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “직원 포털”이 정답입니다.",
+      "choiceExplanations": [
+        "“신분증 재발급”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 송금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “직원 포털”이 정답입니다.",
+        "“주차장 폐쇄”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "첫 지문 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-1"
+    },
+    {
+      "id": "p7-m1-q4",
+      "part": 7,
+      "prompt": "두 번째 문서의 작성자가 결정을 내린 이유는 무엇입니까?",
+      "choices": [
+        "휴가를 떠나기 때문에",
+        "가격이 무료이기 때문에",
+        "관리자가 퇴사했기 때문에",
+        "공급업체와 회의가 있어서"
+      ],
+      "correctIndex": 3,
+      "explanation": "두 번째 문서에서 이유를 직접 설명합니다. 따라서 “공급업체와 회의가 있어서”이 정답입니다.",
+      "choiceExplanations": [
+        "“휴가를 떠나기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“가격이 무료이기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“관리자가 퇴사했기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 번째 문서에서 이유를 직접 설명합니다. 따라서 “공급업체와 회의가 있어서”이 정답입니다."
+      ],
+      "skill": "이유 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-1"
+    },
+    {
+      "id": "p7-m1-q5",
+      "part": 7,
+      "prompt": "두 문서를 종합해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "Mina는 추가 회차에 참석하려 한다",
+        "모든 예약이 취소됐다",
+        "작성자가 답장을 받지 못했다",
+        "서비스가 영구 종료됐다"
+      ],
+      "correctIndex": 0,
+      "explanation": "두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “Mina는 추가 회차에 참석하려 한다”이 정답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “Mina는 추가 회차에 참석하려 한다”이 정답입니다.",
+        "“모든 예약이 취소됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“작성자가 답장을 받지 못했다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“서비스가 영구 종료됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-1"
+    },
+    {
+      "id": "p7-m2-q1",
+      "part": 7,
+      "prompt": "두 문서는 주로 무엇에 관한 것입니까?",
+      "choices": [
+        "직원 건강검진",
+        "공항 셔틀 이용",
+        "신제품 광고",
+        "사무실 이전"
+      ],
+      "correctIndex": 1,
+      "explanation": "두 문서의 공통 주제입니다. 따라서 “공항 셔틀 이용”이 정답입니다.",
+      "choiceExplanations": [
+        "“직원 건강검진”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 공통 주제입니다. 따라서 “공항 셔틀 이용”이 정답입니다.",
+        "“신제품 광고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“사무실 이전”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 주제",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-2"
+    },
+    {
+      "id": "p7-m2-q2",
+      "part": 7,
+      "prompt": "두 문서에서 확인할 수 있는 정보는 무엇입니까?",
+      "choices": [
+        "12월 1일",
+        "무료 점심",
+        "오후 9시",
+        "온라인 면접"
+      ],
+      "correctIndex": 2,
+      "explanation": "두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “오후 9시”이 정답입니다.",
+      "choiceExplanations": [
+        "“12월 1일”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“무료 점심”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “오후 9시”이 정답입니다.",
+        "“온라인 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "정보 연결",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-2"
+    },
+    {
+      "id": "p7-m2-q3",
+      "part": 7,
+      "prompt": "첫 번째 문서에서 중요한 조건은 무엇입니까?",
+      "choices": [
+        "신분증 재발급",
+        "해외 송금",
+        "주차장 폐쇄",
+        "오후 8시 이후 예약 필요"
+      ],
+      "correctIndex": 3,
+      "explanation": "첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “오후 8시 이후 예약 필요”이 정답입니다.",
+      "choiceExplanations": [
+        "“신분증 재발급”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 송금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차장 폐쇄”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “오후 8시 이후 예약 필요”이 정답입니다."
+      ],
+      "skill": "첫 지문 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-2"
+    },
+    {
+      "id": "p7-m2-q4",
+      "part": 7,
+      "prompt": "두 번째 문서의 작성자가 결정을 내린 이유는 무엇입니까?",
+      "choices": [
+        "비행기가 8시 20분에 도착해서",
+        "휴가를 떠나기 때문에",
+        "가격이 무료이기 때문에",
+        "관리자가 퇴사했기 때문에"
+      ],
+      "correctIndex": 0,
+      "explanation": "두 번째 문서에서 이유를 직접 설명합니다. 따라서 “비행기가 8시 20분에 도착해서”이 정답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 두 번째 문서에서 이유를 직접 설명합니다. 따라서 “비행기가 8시 20분에 도착해서”이 정답입니다.",
+        "“휴가를 떠나기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“가격이 무료이기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“관리자가 퇴사했기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "이유 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-2"
+    },
+    {
+      "id": "p7-m2-q5",
+      "part": 7,
+      "prompt": "두 문서를 종합해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 예약이 취소됐다",
+        "투숙객은 늦은 셔틀을 예약했다",
+        "작성자가 답장을 받지 못했다",
+        "서비스가 영구 종료됐다"
+      ],
+      "correctIndex": 1,
+      "explanation": "두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “투숙객은 늦은 셔틀을 예약했다”이 정답입니다.",
+      "choiceExplanations": [
+        "“모든 예약이 취소됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “투숙객은 늦은 셔틀을 예약했다”이 정답입니다.",
+        "“작성자가 답장을 받지 못했다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“서비스가 영구 종료됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-2"
+    },
+    {
+      "id": "p7-m3-q1",
+      "part": 7,
+      "prompt": "두 문서는 주로 무엇에 관한 것입니까?",
+      "choices": [
+        "직원 건강검진",
+        "신제품 광고",
+        "캐비닛 주문 변경",
+        "사무실 이전"
+      ],
+      "correctIndex": 2,
+      "explanation": "두 문서의 공통 주제입니다. 따라서 “캐비닛 주문 변경”이 정답입니다.",
+      "choiceExplanations": [
+        "“직원 건강검진”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품 광고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 공통 주제입니다. 따라서 “캐비닛 주문 변경”이 정답입니다.",
+        "“사무실 이전”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 주제",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-3"
+    },
+    {
+      "id": "p7-m3-q2",
+      "part": 7,
+      "prompt": "두 문서에서 확인할 수 있는 정보는 무엇입니까?",
+      "choices": [
+        "12월 1일",
+        "무료 점심",
+        "온라인 면접",
+        "검은색 6개"
+      ],
+      "correctIndex": 3,
+      "explanation": "두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “검은색 6개”이 정답입니다.",
+      "choiceExplanations": [
+        "“12월 1일”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“무료 점심”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “검은색 6개”이 정답입니다."
+      ],
+      "skill": "정보 연결",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-3"
+    },
+    {
+      "id": "p7-m3-q3",
+      "part": 7,
+      "prompt": "첫 번째 문서에서 중요한 조건은 무엇입니까?",
+      "choices": [
+        "회색 제품 품절",
+        "신분증 재발급",
+        "해외 송금",
+        "주차장 폐쇄"
+      ],
+      "correctIndex": 0,
+      "explanation": "첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “회색 제품 품절”이 정답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “회색 제품 품절”이 정답입니다.",
+        "“신분증 재발급”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 송금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차장 폐쇄”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "첫 지문 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-3"
+    },
+    {
+      "id": "p7-m3-q4",
+      "part": 7,
+      "prompt": "두 번째 문서의 작성자가 결정을 내린 이유는 무엇입니까?",
+      "choices": [
+        "휴가를 떠나기 때문에",
+        "기록실이 2주 후 열려서",
+        "가격이 무료이기 때문에",
+        "관리자가 퇴사했기 때문에"
+      ],
+      "correctIndex": 1,
+      "explanation": "두 번째 문서에서 이유를 직접 설명합니다. 따라서 “기록실이 2주 후 열려서”이 정답입니다.",
+      "choiceExplanations": [
+        "“휴가를 떠나기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 번째 문서에서 이유를 직접 설명합니다. 따라서 “기록실이 2주 후 열려서”이 정답입니다.",
+        "“가격이 무료이기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“관리자가 퇴사했기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "이유 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-3"
+    },
+    {
+      "id": "p7-m3-q5",
+      "part": 7,
+      "prompt": "두 문서를 종합해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 예약이 취소됐다",
+        "작성자가 답장을 받지 못했다",
+        "구매자는 빠른 배송을 우선했다",
+        "서비스가 영구 종료됐다"
+      ],
+      "correctIndex": 2,
+      "explanation": "두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “구매자는 빠른 배송을 우선했다”이 정답입니다.",
+      "choiceExplanations": [
+        "“모든 예약이 취소됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“작성자가 답장을 받지 못했다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “구매자는 빠른 배송을 우선했다”이 정답입니다.",
+        "“서비스가 영구 종료됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-3"
+    },
+    {
+      "id": "p7-m4-q1",
+      "part": 7,
+      "prompt": "두 문서는 주로 무엇에 관한 것입니까?",
+      "choices": [
+        "직원 건강검진",
+        "신제품 광고",
+        "사무실 이전",
+        "콘서트 장소 변경 가능성"
+      ],
+      "correctIndex": 3,
+      "explanation": "두 문서의 공통 주제입니다. 따라서 “콘서트 장소 변경 가능성”이 정답입니다.",
+      "choiceExplanations": [
+        "“직원 건강검진”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품 광고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“사무실 이전”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 공통 주제입니다. 따라서 “콘서트 장소 변경 가능성”이 정답입니다."
+      ],
+      "skill": "복수 지문 주제",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-4"
+    },
+    {
+      "id": "p7-m4-q2",
+      "part": 7,
+      "prompt": "두 문서에서 확인할 수 있는 정보는 무엇입니까?",
+      "choices": [
+        "Central Hall",
+        "12월 1일",
+        "무료 점심",
+        "온라인 면접"
+      ],
+      "correctIndex": 0,
+      "explanation": "두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “Central Hall”이 정답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “Central Hall”이 정답입니다.",
+        "“12월 1일”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“무료 점심”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "정보 연결",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-4"
+    },
+    {
+      "id": "p7-m4-q3",
+      "part": 7,
+      "prompt": "첫 번째 문서에서 중요한 조건은 무엇입니까?",
+      "choices": [
+        "신분증 재발급",
+        "폭우 예보",
+        "해외 송금",
+        "주차장 폐쇄"
+      ],
+      "correctIndex": 1,
+      "explanation": "첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “폭우 예보”이 정답입니다.",
+      "choiceExplanations": [
+        "“신분증 재발급”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “폭우 예보”이 정답입니다.",
+        "“해외 송금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“주차장 폐쇄”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "첫 지문 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-4"
+    },
+    {
+      "id": "p7-m4-q4",
+      "part": 7,
+      "prompt": "두 번째 문서의 작성자가 결정을 내린 이유는 무엇입니까?",
+      "choices": [
+        "휴가를 떠나기 때문에",
+        "가격이 무료이기 때문에",
+        "일부 도로가 닫힐 수 있어서",
+        "관리자가 퇴사했기 때문에"
+      ],
+      "correctIndex": 2,
+      "explanation": "두 번째 문서에서 이유를 직접 설명합니다. 따라서 “일부 도로가 닫힐 수 있어서”이 정답입니다.",
+      "choiceExplanations": [
+        "“휴가를 떠나기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“가격이 무료이기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 번째 문서에서 이유를 직접 설명합니다. 따라서 “일부 도로가 닫힐 수 있어서”이 정답입니다.",
+        "“관리자가 퇴사했기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "이유 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-4"
+    },
+    {
+      "id": "p7-m4-q5",
+      "part": 7,
+      "prompt": "두 문서를 종합해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "모든 예약이 취소됐다",
+        "작성자가 답장을 받지 못했다",
+        "서비스가 영구 종료됐다",
+        "행사는 실내에서 열릴 가능성이 높다"
+      ],
+      "correctIndex": 3,
+      "explanation": "두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “행사는 실내에서 열릴 가능성이 높다”이 정답입니다.",
+      "choiceExplanations": [
+        "“모든 예약이 취소됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“작성자가 답장을 받지 못했다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“서비스가 영구 종료됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “행사는 실내에서 열릴 가능성이 높다”이 정답입니다."
+      ],
+      "skill": "복수 지문 추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-4"
+    },
+    {
+      "id": "p7-m5-q1",
+      "part": 7,
+      "prompt": "두 문서는 주로 무엇에 관한 것입니까?",
+      "choices": [
+        "수리 청구 금액 문의",
+        "직원 건강검진",
+        "신제품 광고",
+        "사무실 이전"
+      ],
+      "correctIndex": 0,
+      "explanation": "두 문서의 공통 주제입니다. 따라서 “수리 청구 금액 문의”이 정답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 두 문서의 공통 주제입니다. 따라서 “수리 청구 금액 문의”이 정답입니다.",
+        "“직원 건강검진”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“신제품 광고”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“사무실 이전”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 주제",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-5"
+    },
+    {
+      "id": "p7-m5-q2",
+      "part": 7,
+      "prompt": "두 문서에서 확인할 수 있는 정보는 무엇입니까?",
+      "choices": [
+        "12월 1일",
+        "$205",
+        "무료 점심",
+        "온라인 면접"
+      ],
+      "correctIndex": 1,
+      "explanation": "두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “$205”이 정답입니다.",
+      "choiceExplanations": [
+        "“12월 1일”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 문서의 일정·수량·금액 정보를 연결하면 확인할 수 있습니다. 따라서 “$205”이 정답입니다.",
+        "“무료 점심”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“온라인 면접”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "정보 연결",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-5"
+    },
+    {
+      "id": "p7-m5-q3",
+      "part": 7,
+      "prompt": "첫 번째 문서에서 중요한 조건은 무엇입니까?",
+      "choices": [
+        "신분증 재발급",
+        "해외 송금",
+        "특급 서비스 비용",
+        "주차장 폐쇄"
+      ],
+      "correctIndex": 2,
+      "explanation": "첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “특급 서비스 비용”이 정답입니다.",
+      "choiceExplanations": [
+        "“신분증 재발급”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“해외 송금”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 첫 번째 문서가 제시한 조건 또는 변경 사항입니다. 따라서 “특급 서비스 비용”이 정답입니다.",
+        "“주차장 폐쇄”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "첫 지문 세부 정보",
+      "difficulty": "intermediate",
+      "stimulusId": "p7-multiple-5"
+    },
+    {
+      "id": "p7-m5-q4",
+      "part": 7,
+      "prompt": "두 번째 문서의 작성자가 결정을 내린 이유는 무엇입니까?",
+      "choices": [
+        "휴가를 떠나기 때문에",
+        "가격이 무료이기 때문에",
+        "관리자가 퇴사했기 때문에",
+        "일반 서비스를 요청했기 때문에"
+      ],
+      "correctIndex": 3,
+      "explanation": "두 번째 문서에서 이유를 직접 설명합니다. 따라서 “일반 서비스를 요청했기 때문에”이 정답입니다.",
+      "choiceExplanations": [
+        "“휴가를 떠나기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“가격이 무료이기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“관리자가 퇴사했기 때문에”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "정답입니다. 두 번째 문서에서 이유를 직접 설명합니다. 따라서 “일반 서비스를 요청했기 때문에”이 정답입니다."
+      ],
+      "skill": "이유 파악",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-5"
+    },
+    {
+      "id": "p7-m5-q5",
+      "part": 7,
+      "prompt": "두 문서를 종합해 알 수 있는 것은 무엇입니까?",
+      "choices": [
+        "청구서 수정이 필요할 수 있다",
+        "모든 예약이 취소됐다",
+        "작성자가 답장을 받지 못했다",
+        "서비스가 영구 종료됐다"
+      ],
+      "correctIndex": 0,
+      "explanation": "두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “청구서 수정이 필요할 수 있다”이 정답입니다.",
+      "choiceExplanations": [
+        "정답입니다. 두 문서의 시간·조건·요청을 함께 보면 가능한 결론입니다. 따라서 “청구서 수정이 필요할 수 있다”이 정답입니다.",
+        "“모든 예약이 취소됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“작성자가 답장을 받지 못했다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다.",
+        "“서비스가 영구 종료됐다”은(는) 질문이나 지문의 핵심 근거와 맞지 않습니다."
+      ],
+      "skill": "복수 지문 추론",
+      "difficulty": "advanced",
+      "stimulusId": "p7-multiple-5"
+    }
+  ]
+}

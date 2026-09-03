@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "updatedAt": "2026-09-03T03:00:00.000Z",
+  "packs": [
+    {
+      "id": "sprache-business-english-practice-1",
+      "title": "비즈니스 영어 실전 문제팩 1",
+      "description": "Part 1~7 구성의 독자 제작 200문제와 정답 근거·선택지 풀이를 제공합니다.",
+      "language": "en",
+      "version": "1.0.0",
+      "revision": 1,
+      "questionCount": 200,
+      "sizeBytes": 223382,
+      "sha256": "69822708f208d48d0568e35d9c409138d31b55826791ed59f512f7c583619ce0",
+      "path": "packs/sprache-business-english-practice-1.json",
+      "license": "Sprache-original-practice-content",
+      "attribution": "Original questions authored for the Sprache project; format references ETS public test descriptions only."
+    }
+  ]
+}

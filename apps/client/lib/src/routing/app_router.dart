@@ -8,6 +8,8 @@ import '../domain/study_interaction_preferences.dart';
 import '../screens/course_path_screen.dart';
 import '../screens/content_quality_screen.dart';
 import '../screens/data_health_screen.dart';
+import '../screens/exam_hub_screen.dart';
+import '../screens/exam_session_screen.dart';
 import '../screens/flashcard_screen.dart';
 import '../screens/group_organizer_screen.dart';
 import '../screens/home_screen.dart';
@@ -231,6 +233,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (context, state) => const DataHealthScreen(),
               ),
             ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/exam',
+        builder: (context, state) => const ExamHubScreen(),
+        routes: [
+          GoRoute(
+            path: 'session',
+            builder: (context, state) => const ExamSessionScreen(),
           ),
         ],
       ),
