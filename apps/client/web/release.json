@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "version": "1.40.1",
-  "buildNumber": 82,
-  "publishedAt": "2026-09-03T04:51:44.5181945Z",
-  "title": "Sprache 1.40.1",
+  "version": "1.40.2",
+  "buildNumber": 83,
+  "publishedAt": "2026-09-03T07:43:55.4142746Z",
+  "title": "Sprache 1.40.2",
   "notes": [
-    "예전 영어 언어팩에서 자동 생성된 잘못된 한글 발음 표기를 제거했습니다.",
-    "앱 시작·Google Drive 병합·백업 복원 때 같은 정리 규칙을 적용합니다.",
-    "직접 등록하거나 수정한 발음과 현재 검수된 발음은 그대로 유지합니다.",
-    "영어 발음은 발음 듣기 버튼으로 실제 음성을 확인할 수 있습니다."
+    "영어 언어팩의 부정확한 한글식 발음 표기를 버전과 관계없이 제거했습니다.",
+    "기본 영어 자료는 실제 기기 음성으로 발음을 확인합니다.",
+    "Drive 병합이나 백업 복원 뒤에도 언어팩 한글 발음이 되살아나지 않습니다.",
+    "사용자가 직접 입력한 개인 발음 표기는 그대로 유지합니다."
   ],
-  "releasePageUrl": "https://github.com/youkdonghun/Sprache/releases/tag/v1.40.1",
+  "releasePageUrl": "https://github.com/youkdonghun/Sprache/releases/tag/v1.40.2",
   "artifacts": {
     "windows": {
       "kind": "installer",
-      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.40.1/Sprache-Windows-Setup-1.40.1-google-x64.exe",
-      "fileName": "Sprache-Windows-Setup-1.40.1-google-x64.exe",
-      "sha256": "9278805528b085b0a40bec7e7c8684553bc8ceef49d4a07c2da75740debd6603",
-      "sizeBytes": 21479654
+      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.40.2/Sprache-Windows-Setup-1.40.2-google-x64.exe",
+      "fileName": "Sprache-Windows-Setup-1.40.2-google-x64.exe",
+      "sha256": "ee19524e384ff734aa3bfb62fd2c90f1e73976984ae74f35c60a6d21a9ba2963",
+      "sizeBytes": 21476101
     },
     "android": {
       "kind": "apk",
-      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.40.1/Sprache-Android-1.40.1-google-debug-signed.apk",
-      "fileName": "Sprache-Android-1.40.1-google-debug-signed.apk",
-      "sha256": "38123dc30631326087ff1fa3856fbd5b3ce27c52fdcd54c0ea48f5a2e2e20335",
+      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.40.2/Sprache-Android-1.40.2-google-debug-signed.apk",
+      "fileName": "Sprache-Android-1.40.2-google-debug-signed.apk",
+      "sha256": "ce221fc8ab1fd7e1d096d8de1dcbecf3460d79828adf3016fd61022024444e16",
       "sizeBytes": 108453305
     },
     "pwa": {
