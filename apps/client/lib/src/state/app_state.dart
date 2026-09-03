@@ -18,6 +18,7 @@ import '../domain/daily_queue.dart';
 import '../domain/duplicate_repair.dart';
 import '../domain/import_distribution.dart';
 import '../domain/language.dart';
+import '../domain/legacy_english_pronunciation_migration.dart';
 import '../domain/learning_group.dart';
 import '../domain/learning_item.dart';
 import '../domain/learning_item_codec.dart';
@@ -306,7 +307,10 @@ class AppController extends StateNotifier<AppState> {
       _store.loadPendingSnapshotSync(),
     ]);
     final profile = results[0] as StoredProfile;
-    final customItems = results[1] as List<LearningItem>;
+    final pronunciationMigration = migrateLegacyEnglishPronunciations(
+      results[1] as List<LearningItem>,
+    );
+    final customItems = pronunciationMigration.items;
     final customItemTombstones = results[2] as Map<String, DateTime>;
     var preferences = results[3] as StudyPreferences;
     final recentSessions = results[4] as List<StudySessionSummary>;
@@ -366,6 +370,9 @@ class AppController extends StateNotifier<AppState> {
     if (preferencesChanged) {
       await _store.savePreferences(preferences);
     }
+    if (pronunciationMigration.changed) {
+      await _store.saveCustomItems(pronunciationMigration.changedItems);
+    }
     final hydratedDailyXpByCourse = profile.dailyXpByCourse.isEmpty
         ? profile.dailyXp > 0
               ? {courseIdForSubject(activeSubjectId): profile.dailyXp}
@@ -406,6 +413,9 @@ class AppController extends StateNotifier<AppState> {
       lastStudyDate: profile.lastStudyDate,
     );
     unawaited(_reconcileStudyNotifications(preferences));
+    if (pronunciationMigration.changed) {
+      unawaited(_queueSyncIfDriveConnected());
+    }
   }
 
   Future<StudyNotificationPermission>
@@ -4434,20 +4444,26 @@ class AppController extends StateNotifier<AppState> {
     final remoteSnapshotAt =
         _optionalDate(remote['updatedAt']) ??
         DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
-    final remoteItems = <String, LearningItem>{};
+    final parsedRemoteItems = <LearningItem>[];
     for (final raw in (remote['customItems'] as List<Object?>?) ?? const []) {
       var item = _itemCodec.fromJson(Map<String, Object?>.from(raw! as Map));
       item = item.updatedAt == null
           ? item.copyWith(updatedAt: remoteSnapshotAt)
           : item;
-      remoteItems[item.id] = item;
+      parsedRemoteItems.add(item);
     }
+    final localPronunciationMigration = migrateLegacyEnglishPronunciations(
+      state.customItems,
+    );
+    final remotePronunciationMigration = migrateLegacyEnglishPronunciations(
+      parsedRemoteItems,
+    );
     final remoteItemTombstones = _customItemTombstonesFromJson(
       remote['customItemTombstones'],
     );
     final mergedContent = _mergeCustomContent(
-      localItems: state.customItems,
-      remoteItems: remoteItems.values,
+      localItems: localPronunciationMigration.items,
+      remoteItems: remotePronunciationMigration.items,
       localTombstones: state.customItemTombstones,
       remoteTombstones: remoteItemTombstones,
       itemCodec: _itemCodec,
@@ -4959,7 +4975,7 @@ class AppController extends StateNotifier<AppState> {
     );
     final snapshotAt =
         _optionalDate(snapshot['updatedAt']) ?? DateTime.now().toUtc();
-    final customItems = <LearningItem>[];
+    final parsedCustomItems = <LearningItem>[];
     for (final raw
         in (snapshot['customItems'] as List<Object?>?) ?? const <Object?>[]) {
       if (raw is! Map) continue;
@@ -4967,8 +4983,11 @@ class AppController extends StateNotifier<AppState> {
       if (item.updatedAt == null) {
         item = item.copyWith(updatedAt: snapshotAt);
       }
-      customItems.add(item);
+      parsedCustomItems.add(item);
     }
+    final customItems = migrateLegacyEnglishPronunciations(
+      parsedCustomItems,
+    ).items.toList();
     final tombstones = _customItemTombstonesFromJson(
       snapshot['customItemTombstones'],
     );
