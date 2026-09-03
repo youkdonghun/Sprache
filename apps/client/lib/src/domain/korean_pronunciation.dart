@@ -1,10 +1,10 @@
 import 'language.dart';
 
-/// Builds an offline Korean reading aid for bundled content that does not have
-/// an editor-reviewed Hangul pronunciation yet.
+/// Builds an offline Korean reading aid from an actual phonetic reading.
 ///
-/// The result is intentionally a study aid rather than an IPA replacement.
-/// Audio remains the source of truth for pronunciation practice.
+/// Latin spelling is intentionally not transcribed: it is not a phonetic source
+/// and previously produced confident but wrong aids. Audio remains the source
+/// of truth for pronunciation practice.
 String? tryDeriveKoreanPronunciation({
   required LanguageTag language,
   required String text,
@@ -36,8 +36,7 @@ String? tryDeriveKoreanPronunciation({
     case LanguageTag.german:
     case LanguageTag.french:
     case LanguageTag.spanish:
-      if (!_isSafeLatinSource(trimmedText)) return null;
-      return _nonEmptyOrNull(_transcribeLatin(language, trimmedText));
+      return null;
     case LanguageTag.korean:
       return trimmedText;
   }
@@ -328,6 +327,10 @@ String _pinyinSyllable(String source) {
   return onset == null ? rime : _replaceFirstOnset(rime, onset);
 }
 
+// Kept only as an editor-side preview implementation for possible future
+// phonetic-source support. Production content never calls this spelling-based
+// helper because Latin orthography alone is not a reliable pronunciation aid.
+// ignore: unused_element
 String _transcribeLatin(LanguageTag language, String source) {
   final normalized = _foldLatin(source).toLowerCase();
   final entireOverride = _latinOverrides[language]?[normalized.trim()];

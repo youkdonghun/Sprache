@@ -4,38 +4,41 @@ import 'package:sprache/src/domain/language.dart';
 
 void main() {
   group('deriveKoreanPronunciation', () {
-    test('uses curated starter-word readings for Latin languages', () {
+    test('does not guess pronunciation from Latin spelling', () {
       expect(
-        deriveKoreanPronunciation(language: LanguageTag.english, text: 'beef'),
-        '비프',
+        tryDeriveKoreanPronunciation(
+          language: LanguageTag.english,
+          text: 'beef',
+        ),
+        isNull,
       );
       expect(
-        deriveKoreanPronunciation(
+        tryDeriveKoreanPronunciation(
           language: LanguageTag.english,
           text: 'friend',
         ),
-        '프렌드',
+        isNull,
       );
       expect(
-        deriveKoreanPronunciation(
+        tryDeriveKoreanPronunciation(
           language: LanguageTag.german,
           text: 'Sprache',
         ),
-        '슈프라헤',
+        isNull,
       );
       expect(
-        deriveKoreanPronunciation(
+        tryDeriveKoreanPronunciation(
           language: LanguageTag.french,
           text: 'aujourd’hui',
         ),
-        '오주르뒤',
+        isNull,
       );
       expect(
-        deriveKoreanPronunciation(
+        tryDeriveKoreanPronunciation(
           language: LanguageTag.spanish,
           text: 'habitación',
         ),
-        '아비타시온',
+        isNull,
       );
     });
 
@@ -96,26 +99,21 @@ void main() {
       );
     });
 
-    test('keeps sentence spacing and punctuation without Latin leftovers', () {
-      final result = deriveKoreanPronunciation(
-        language: LanguageTag.spanish,
-        text: '¿Dónde está la estación?',
+    test('Latin sentences and ligatures also require reviewed readings', () {
+      expect(
+        tryDeriveKoreanPronunciation(
+          language: LanguageTag.spanish,
+          text: '¿Dónde está la estación?',
+        ),
+        isNull,
       );
-
-      expect(result, contains(' '));
-      expect(result, endsWith('?'));
-      expect(result, isNot(matches(RegExp(r'[A-Za-z]'))));
-      expect(result, matches(RegExp(r'[가-힣]')));
-    });
-
-    test('accepts common Latin ligatures without leaking source letters', () {
-      final result = tryDeriveKoreanPronunciation(
-        language: LanguageTag.french,
-        text: 'cœur',
+      expect(
+        tryDeriveKoreanPronunciation(
+          language: LanguageTag.french,
+          text: 'cœur',
+        ),
+        isNull,
       );
-
-      expect(result, isNotNull);
-      expect(result, isNot(matches(RegExp(r'[A-Za-zœ]'))));
     });
 
     test('automatic Latin readings skip terms containing digits', () {
@@ -128,17 +126,14 @@ void main() {
       );
     });
 
-    test(
-      'does not silently drop a terminal consonant without a Hangul coda',
-      () {
-        expect(
-          deriveKoreanPronunciation(
-            language: LanguageTag.english,
-            text: 'reef',
-          ),
-          endsWith('프'),
-        );
-      },
-    );
+    test('throwing API rejects Latin spelling without a phonetic source', () {
+      expect(
+        () => deriveKoreanPronunciation(
+          language: LanguageTag.english,
+          text: 'reef',
+        ),
+        throwsArgumentError,
+      );
+    });
   });
 }

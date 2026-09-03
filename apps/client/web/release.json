@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "version": "1.39.1",
-  "buildNumber": 79,
-  "publishedAt": "2026-09-02T23:28:13.1921329Z",
-  "title": "Sprache 1.39.1",
+  "version": "1.39.2",
+  "buildNumber": 80,
+  "publishedAt": "2026-09-03T00:33:13.0963791Z",
+  "title": "Sprache 1.39.2",
   "notes": [
-    "언어팩 발음 표기를 바로잡고 검수되지 않은 한글 추측 표기를 숨겼습니다.",
-    "여섯 언어의 TUFS 전체 어휘팩을 복원하고 여러 뜻을 빠짐없이 합쳤습니다.",
-    "언어팩 설치 뒤 화면 버벅임을 줄이고 기존 축소판 업데이트를 지원합니다."
+    "영어·일본어·독일어·프랑스어·스페인어·중국어 발음을 언어별 음성으로 재검증했습니다.",
+    "TOSS 기본 어휘 721개와 TOEIC 기본 어휘 1,250개를 별도 다운로드 팩으로 추가했습니다.",
+    "검수되지 않은 영어 한글 발음 추측을 숨기고 정확한 기기 음성을 사용합니다."
   ],
-  "releasePageUrl": "https://github.com/youkdonghun/Sprache/releases/tag/v1.39.1",
+  "releasePageUrl": "https://github.com/youkdonghun/Sprache/releases/tag/v1.39.2",
   "artifacts": {
     "windows": {
       "kind": "installer",
-      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.39.1/Sprache-Windows-Setup-1.39.1-google-x64.exe",
-      "fileName": "Sprache-Windows-Setup-1.39.1-google-x64.exe",
-      "sha256": "57de81edd0230bcaf7d2aaf9fcbf30098fb9eb6d8d76d13376a6c8544c87e1c5",
-      "sizeBytes": 21450738
+      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.39.2/Sprache-Windows-Setup-1.39.2-google-x64.exe",
+      "fileName": "Sprache-Windows-Setup-1.39.2-google-x64.exe",
+      "sha256": "8b939d9163122b3c07403b8e40162862cce7fdaf67c497b0bf5933f0ac54f09e",
+      "sizeBytes": 21443623
     },
     "android": {
       "kind": "apk",
-      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.39.1/Sprache-Android-1.39.1-google-debug-signed.apk",
-      "fileName": "Sprache-Android-1.39.1-google-debug-signed.apk",
-      "sha256": "6a50ca64a22768c8737f172c477c87a39436b482b21102a09008262ce36d2e48",
-      "sizeBytes": 108158145
+      "url": "https://github.com/youkdonghun/Sprache/releases/download/v1.39.2/Sprache-Android-1.39.2-google-debug-signed.apk",
+      "fileName": "Sprache-Android-1.39.2-google-debug-signed.apk",
+      "sha256": "c67608cf20148802cbf497875a2973ea274d50c097bde658f9fae478cdb0d552",
+      "sizeBytes": 108125377
     },
     "pwa": {
       "kind": "web",

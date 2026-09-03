@@ -89,6 +89,30 @@ void main() {
     },
   );
 
+  test(
+    'configures the exact course locale for every supported language',
+    () async {
+      const expectedLocales = <LanguageTag, String>{
+        LanguageTag.english: 'en-US',
+        LanguageTag.japanese: 'ja-JP',
+        LanguageTag.german: 'de-DE',
+        LanguageTag.french: 'fr-FR',
+        LanguageTag.spanish: 'es-ES',
+        LanguageTag.simplifiedChinese: 'zh-CN',
+      };
+
+      for (final entry in expectedLocales.entries) {
+        final platform = _FakeTtsPlatform(const []);
+        final service = TtsService(platform: platform);
+
+        final selection = await service.configure(entry.key);
+
+        expect(selection.locale, entry.value, reason: entry.key.code);
+        expect(platform.languages, [entry.value], reason: entry.key.code);
+      }
+    },
+  );
+
   test('configures and speaks with the selected device-local voice', () async {
     final platform = _FakeTtsPlatform([
       {'name': 'Cloud', 'locale': 'de-DE', 'network_required': true},

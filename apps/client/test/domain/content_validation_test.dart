@@ -279,7 +279,7 @@ void main() {
             item.source.name == ContentSource.starterCatalog.name &&
             item.source.license == 'project-internal' &&
             item.source.sourceVersion == '2026.09' &&
-            item.source.contentVersion == 4,
+            item.source.contentVersion == 5,
       ),
       isTrue,
     );

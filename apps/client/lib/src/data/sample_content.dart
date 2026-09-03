@@ -55,17 +55,8 @@ List<LearningItem> _buildWords(LanguageTag language, List<_WordSeed> seeds) {
         translations: [seed.korean],
         acceptedAnswers: [seed.korean],
         readings: [
-          Reading(
-            scheme: ReadingScheme.hangul,
-            value:
-                seed.koreanPronunciation ??
-                deriveKoreanPronunciation(
-                  language: language,
-                  text: seed.text,
-                  reading: seed.reading,
-                  romanization: seed.romanization,
-                ),
-          ),
+          if (_safeBundledHangulReading(language, seed) case final reading?)
+            Reading(scheme: ReadingScheme.hangul, value: reading),
           if (seed.reading != null)
             Reading(
               scheme: language == LanguageTag.simplifiedChinese
@@ -103,17 +94,8 @@ List<LearningItem> _buildSentences(
         translations: [seed.korean],
         acceptedAnswers: [seed.korean],
         readings: [
-          Reading(
-            scheme: ReadingScheme.hangul,
-            value:
-                seed.koreanPronunciation ??
-                deriveKoreanPronunciation(
-                  language: language,
-                  text: seed.text,
-                  reading: seed.reading,
-                  romanization: seed.romanization,
-                ),
-          ),
+          if (_safeBundledHangulReading(language, seed) case final reading?)
+            Reading(scheme: ReadingScheme.hangul, value: reading),
           if (seed.reading != null)
             Reading(
               scheme: language == LanguageTag.simplifiedChinese
@@ -137,6 +119,40 @@ List<LearningItem> _buildSentences(
         source: ContentSource.starterCatalog,
       ),
   ];
+}
+
+String? _safeBundledHangulReading(LanguageTag language, Object seed) {
+  final (text, reading, romanization, reviewed) = switch (seed) {
+    final _WordSeed value => (
+      value.text,
+      value.reading,
+      value.romanization,
+      value.koreanPronunciation,
+    ),
+    final _SentenceSeed value => (
+      value.text,
+      value.reading,
+      value.romanization,
+      value.koreanPronunciation,
+    ),
+    _ => throw ArgumentError.value(seed, 'seed'),
+  };
+  if (reviewed != null && reviewed.trim().isNotEmpty) return reviewed.trim();
+
+  // Latin spelling is not a pronunciation alphabet. Guessing from the written
+  // form produced misleading aids such as `beef` -> `비`, so bundled Latin-
+  // script courses expose only editor-reviewed Hangul. Japanese and Chinese
+  // remain safe to derive because the source supplies kana/romaji or pinyin.
+  if (language != LanguageTag.japanese &&
+      language != LanguageTag.simplifiedChinese) {
+    return null;
+  }
+  return tryDeriveKoreanPronunciation(
+    language: language,
+    text: text,
+    reading: reading,
+    romanization: romanization,
+  );
 }
 
 class _WordSeed {
@@ -304,7 +320,7 @@ int _sentenceUnit(String korean) => switch (korean) {
 };
 
 const _englishWords = <_WordSeed>[
-  _WordSeed('hello', '안녕하세요', koreanPronunciation: '헬로우'),
+  _WordSeed('hello', '안녕하세요', koreanPronunciation: '헬로'),
   _WordSeed('goodbye', '안녕히 가세요', koreanPronunciation: '굿바이'),
   _WordSeed('please', '부탁합니다', koreanPronunciation: '플리즈'),
   _WordSeed('thank you', '감사합니다', koreanPronunciation: '땡큐'),
@@ -619,7 +635,7 @@ const _japaneseSentences = <_SentenceSeed>[
     ['お元気', 'ですか。'],
     reading: 'おげんきですか',
     romanization: 'ogenki desu ka',
-    koreanPronunciation: '오겐키 데스까',
+    koreanPronunciation: '오겐키 데스카',
   ),
   _SentenceSeed(
     '私の名前はミナです。',
@@ -846,7 +862,7 @@ const _germanSentences = <_SentenceSeed>[
     'geht',
     'es',
     'Ihnen?',
-  ], koreanPronunciation: '비 게이트 에스 이넨?'),
+  ], koreanPronunciation: '비 게트 에스 이넨?'),
   _SentenceSeed('Ich heiße Mina.', '제 이름은 미나예요.', [
     'Ich',
     'heiße',
@@ -856,7 +872,7 @@ const _germanSentences = <_SentenceSeed>[
     'Freut mich, Sie kennenzulernen.',
     '만나서 반가워요.',
     ['Freut', 'mich,', 'Sie', 'kennenzulernen.'],
-    koreanPronunciation: '프로이트 미히, 지 케넨출레르넨.',
+    koreanPronunciation: '프로이트 미히, 지 케넨추레르넨.',
   ),
   _SentenceSeed('Wo ist der Bahnhof?', '역은 어디예요?', [
     'Wo',

@@ -33,6 +33,36 @@
       "sha256": "c5b9313c85459027c367aed1c54a914b1cec698db34f6cebda62e939194de7d4"
     },
     {
+      "id": "sprache-en-toeic-service-core-2026-09",
+      "title": "TOEIC 기본 어휘 1,250",
+      "description": "업무와 시험 문맥에서 자주 쓰는 핵심 어휘입니다. 공식 시험 문제가 아닌 TOEIC Service List 1.2 기반 자료입니다.",
+      "language": "en",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-03T00:00:00.000Z",
+      "license": "CC-BY-SA-4.0",
+      "attribution": "TOEIC Service List 1.2 by Browne and Culligan; Korean meanings from TUFS, Korean Wiktionary, and Sprache editorial additions",
+      "path": "packs/sprache-en-toeic-service-core-2026-09.json",
+      "itemCount": 1250,
+      "sizeBytes": 486403,
+      "sha256": "7802a44f3f4c882a53cce406a8b440e72895cc89db53710958eb41001bdbccb0"
+    },
+    {
+      "id": "sprache-en-toss-speaking-core-2026-09",
+      "title": "TOSS 기본 어휘 721",
+      "description": "토익 스피킹에 필요한 일상 회화 중심 어휘입니다. 공식 시험 문제가 아닌 NGSL-Spoken 1.2 기반 자료입니다.",
+      "language": "en",
+      "version": "2026.09.1",
+      "revision": 1,
+      "publishedAt": "2026-09-03T00:00:00.000Z",
+      "license": "CC-BY-SA-4.0",
+      "attribution": "NGSL-Spoken 1.2 by Browne and Culligan; Korean meanings from TUFS, Korean Wiktionary, and Sprache editorial additions",
+      "path": "packs/sprache-en-toss-speaking-core-2026-09.json",
+      "itemCount": 721,
+      "sizeBytes": 256893,
+      "sha256": "fa46024f13f9f7051ff7a503e122963807b5a5e45c28ffdc01f6798f874b1482"
+    },
+    {
       "id": "sprache-es-tufs-core-2026-09",
       "title": "스페인어 생활 핵심 어휘 449",
       "description": "TUFS의 한국어 대응 생활 핵심 어휘 전체본입니다. 앱 기본 자료와 겹치면 중복 없이 합쳐집니다.",

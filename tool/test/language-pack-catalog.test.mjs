@@ -116,6 +116,51 @@ test('English pack keeps the reviewed beef pronunciation', async () => {
   assert.equal(beef.korean_pronunciation, '비프');
 });
 
+test('publishes complete and separate TOSS and TOEIC vocabulary packs', async () => {
+  const catalog = await buildLanguagePackCatalog(repositoryRoot);
+  const expected = new Map([
+    ['sprache-en-toss-speaking-core-2026-09', 721],
+    ['sprache-en-toeic-service-core-2026-09', 1250],
+  ]);
+  for (const [id, count] of expected) {
+    const descriptor = catalog.packs.find((pack) => pack.id === id);
+    assert.ok(descriptor, `${id} is missing`);
+    assert.equal(descriptor.language, 'en');
+    assert.equal(descriptor.itemCount, count);
+    assert.equal(descriptor.license, 'CC-BY-SA-4.0');
+  }
+});
+
+test('English exam packs keep reviewed meanings and never guess Hangul pronunciation', async () => {
+  const expectations = {
+    'sprache-en-toss-speaking-core-2026-09': {
+      account: '계정, 계좌, 설명',
+      board: '판, 이사회',
+      train: '기차, 훈련하다',
+    },
+    'sprache-en-toeic-service-core-2026-09': {
+      occupation: '직업',
+      receipt: '영수증',
+      subscription: '구독, 구독료',
+      terminal: '터미널, 종착역',
+    },
+  };
+  for (const [id, meanings] of Object.entries(expectations)) {
+    const pack = JSON.parse(await readFile(
+      join(repositoryRoot, 'language-packs', 'packs', `${id}.json`),
+      'utf8',
+    ));
+    for (const item of pack.items) {
+      assert.equal(item.korean_pronunciation, undefined, item.term);
+      assert.match(item.meaning, /[가-힣]/u, item.term);
+      assert.doesNotMatch(item.meaning, /[A-Za-z〔〕]/u, item.term);
+    }
+    for (const [term, meaning] of Object.entries(meanings)) {
+      assert.equal(pack.items.find((item) => item.term === term)?.meaning, meaning);
+    }
+  }
+});
+
 test('same spelling keeps every aligned Korean meaning without duplicate cards', async () => {
   const pack = JSON.parse(await readFile(
     join(repositoryRoot, 'language-packs', 'packs', 'sprache-en-tufs-core-2026-09.json'),

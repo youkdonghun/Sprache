@@ -98,7 +98,7 @@ class ContentSource {
     name: 'Sprache starter catalog',
     license: 'project-internal',
     sourceVersion: '2026.09',
-    contentVersion: 4,
+    contentVersion: 5,
   );
 
   final String name;

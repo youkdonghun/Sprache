@@ -18,7 +18,7 @@
     "capture:runtime:android": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\capture-android-runtime-evidence.ps1",
     "test:windows:ui-e2e": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\test-windows-ui-e2e.ps1",
     "test:release-bundle": "node --test ./tool/test/release-bundle.test.mjs",
-    "test:language-packs": "node ./tool/refresh-language-packs.mjs --check && node --test ./tool/test/language-pack-catalog.test.mjs && node ./tool/build-language-pack-catalog.mjs --check",
+    "test:language-packs": "node ./tool/refresh-language-packs.mjs --check && node ./tool/refresh-english-exam-packs.mjs --check && node --test ./tool/test/language-pack-catalog.test.mjs && node ./tool/build-language-pack-catalog.mjs --check",
     "build:language-pack-catalog": "node ./tool/build-language-pack-catalog.mjs",
     "create:release-bundle": "node ./tool/release-bundle.mjs create",
     "verify:release": "powershell -NoProfile -ExecutionPolicy Bypass -File .\\tool\\verify-release.ps1",

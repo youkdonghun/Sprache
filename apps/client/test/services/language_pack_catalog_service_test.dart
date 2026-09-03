@@ -152,7 +152,7 @@ void main() {
     );
   });
 
-  test('repository catalog downloads and parses all six real packs', () async {
+  test('repository catalog downloads and parses every real pack', () async {
     final repositoryRoot = Directory.current.parent.parent;
     final catalogUri = Uri.parse(
       'https://raw.githubusercontent.com/youkdonghun/Sprache/main/'
@@ -178,14 +178,14 @@ void main() {
     );
 
     final catalog = await service.fetchCatalog();
-    expect(catalog.packs, hasLength(6));
+    expect(catalog.packs, hasLength(8));
     expect(catalog.packs.map((pack) => pack.language).toSet(), {
       LanguageTag.english,
       LanguageTag.japanese,
       LanguageTag.german,
       LanguageTag.french,
       LanguageTag.spanish,
-        LanguageTag.simplifiedChinese,
+      LanguageTag.simplifiedChinese,
     });
 
     for (final descriptor in catalog.packs) {

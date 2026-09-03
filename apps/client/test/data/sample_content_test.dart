@@ -62,10 +62,31 @@ void main() {
     }
   });
 
-  test('all 1080 starter items include a Korean pronunciation aid', () {
-    for (final language in LanguageTag.values.where(
-      (value) => value.available,
-    )) {
+  test('starter catalog never guesses Hangul from Latin spelling', () {
+    for (final language in const [
+      LanguageTag.english,
+      LanguageTag.german,
+      LanguageTag.french,
+      LanguageTag.spanish,
+    ]) {
+      final pronunciations = sampleContent
+          .where((item) => item.learningLanguage == language)
+          .map((item) => item.reading(ReadingScheme.hangul))
+          .whereType<String>()
+          .toList(growable: false);
+      expect(pronunciations, hasLength(9), reason: language.code);
+      for (final pronunciation in pronunciations) {
+        expect(pronunciation, isNot(matches(RegExp(r'[A-Za-z]'))));
+        expect(pronunciation, matches(RegExp(r'[가-힣]')));
+      }
+    }
+  });
+
+  test('kana and pinyin backed starter aids stay valid Hangul', () {
+    for (final language in const [
+      LanguageTag.japanese,
+      LanguageTag.simplifiedChinese,
+    ]) {
       final items = sampleContent.where(
         (item) => item.learningLanguage == language,
       );
@@ -73,25 +94,19 @@ void main() {
       for (final item in items) {
         final pronunciation = item.reading(ReadingScheme.hangul);
         expect(pronunciation, isNotNull, reason: item.id);
-        expect(pronunciation, isNotEmpty, reason: item.id);
+        expect(pronunciation, matches(RegExp(r'[가-힣]')), reason: item.id);
         expect(
           pronunciation,
           isNot(matches(RegExp(r'[A-Za-z]'))),
           reason: item.id,
         );
-        expect(pronunciation, matches(RegExp(r'[가-힣]')), reason: item.id);
-        expect(pronunciation, isNot(contains(r'$')), reason: item.id);
       }
     }
   });
 
   test('curated sentence readings remain readable across six languages', () {
     const expected = <String, String>{
-      'Where is the station?': '웨어 이즈 더 스테이션?',
       '駅はどこですか。': '에키 와 도코 데스 카',
-      'Wo ist der Bahnhof?': '보 이스트 데어 반호프?',
-      'Où est la gare ?': '우 에 라 가르?',
-      '¿Dónde está la estación?': '돈데 에스타 라 에스타시온?',
       '车站在哪里？': '처 잔 자이 나 리',
     };
 
@@ -105,7 +120,13 @@ void main() {
       sampleContent
           .singleWhere((item) => item.id == 'en-starter-word-1')
           .reading(ReadingScheme.hangul),
-      '헬로우',
+      '헬로',
+    );
+    expect(
+      sampleContent
+          .singleWhere((item) => item.text == 'Where is the station?')
+          .reading(ReadingScheme.hangul),
+      isNull,
     );
   });
 
