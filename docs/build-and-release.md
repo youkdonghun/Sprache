@@ -157,6 +157,25 @@ powershell -NoProfile -ExecutionPolicy Bypass `
 - 설치 EXE 제품 버전과 선택적 Authenticode 강제
 - 선택 시 설치→실행→제거와 HKCU 제거 레지스트리 정리
 
+## 앱 업데이트 정보 게시
+
+APK와 Windows 설치본을 GitHub Release에 올린 뒤 `release.json`도 반드시 같은
+릴리스 자산으로 게시한다. 아래 명령은 manifest의 버전·빌드 번호, APK/EXE의
+파일명과 크기를 먼저 대조한 뒤 `release.json`을 올리고, 앱이 실제로 요청하는
+`releases/latest/download/release.json` 공개 주소까지 확인한다.
+
+```powershell
+npm run publish:update-manifest
+```
+
+서버 상태만 다시 확인할 때는 파일을 변경하지 않는 검증 명령을 사용한다.
+
+```powershell
+npm run verify:update-server
+```
+
+두 명령 중 하나라도 실패하면 앱 업데이트 배포가 끝난 것으로 간주하지 않는다.
+
 ## 1.34.1 네 플랫폼 번들 manifest
 
 Windows·Android 실제 연결 산출물과 Codemagic에서 받은 Apple REAL-configured
